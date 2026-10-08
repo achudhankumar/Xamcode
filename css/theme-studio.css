@@ -1,0 +1,479 @@
+/* ============================================================
+   THEME STUDIO — 3D theme gallery · token inspector · quick rail
+   Loaded after genz.css. Fully self-contained & removable:
+   delete this file + js/theme-studio.js + their tags in
+   XamCode.html. The app keeps working with its 4 themes.
+   ============================================================ */
+
+/* ---------- shared studio tokens ---------- */
+#themeModal .ts-studio,
+#tsRail{
+  --ts-spring:cubic-bezier(.34,1.56,.64,1);
+  --ts-line:color-mix(in srgb,var(--text) 13%,transparent);
+  --ts-line-soft:color-mix(in srgb,var(--text) 7%,transparent);
+  --ts-panel:color-mix(in srgb,var(--surface) 92%,var(--bg));
+  --ts-well:color-mix(in srgb,var(--bg) 78%,var(--surface));
+  --ts-chip:color-mix(in srgb,var(--text) 5%,transparent);
+  --ts-accent-soft:color-mix(in srgb,var(--accent) 16%,transparent);
+}
+
+/* ============================================================
+   1 · MODAL SHELL
+   ============================================================ */
+#themeModal{align-items:center;justify-content:center;overflow-y:auto}
+.ts-studio{
+  position:relative;
+  width:100%;max-width:1180px;margin:auto;
+  border-radius:26px;padding:24px 24px 20px;
+  background:
+    radial-gradient(120% 90% at 0% 0%,var(--ts-accent-soft),transparent 58%),
+    var(--ts-panel);
+  border:1px solid var(--ts-line);
+  box-shadow:0 40px 110px -30px var(--shadow),0 0 0 1px color-mix(in srgb,var(--accent) 10%,transparent);
+  color:var(--text);
+  font-family:var(--font-body,inherit);
+  animation:tsRise .42s var(--ts-spring) both;
+  max-height:min(92vh,900px);display:flex;flex-direction:column;
+}
+@keyframes tsRise{from{opacity:0;transform:translateY(22px) scale(.975)}to{opacity:1;transform:none}}
+
+.ts-head{display:flex;align-items:flex-start;gap:16px;padding:2px 46px 18px 2px}
+.ts-head h2{margin:0;font-size:21px;font-weight:800;letter-spacing:-.02em}
+.ts-head p{margin:5px 0 0;font-size:12.5px;color:var(--muted);line-height:1.5}
+.ts-head .ts-shuffle{
+  margin-left:auto;flex:none;width:38px;height:38px;border-radius:50%;
+  border:1px solid var(--ts-line);background:var(--ts-chip);color:var(--muted);
+  font-size:15px;cursor:pointer;font-family:inherit;line-height:1;
+  display:grid;place-items:center;transition:transform .3s var(--ts-spring),color .2s,border-color .2s
+}
+.ts-head .ts-shuffle:hover{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 45%,var(--ts-line));transform:rotate(-90deg) scale(1.08)}
+.ts-head .ts-shuffle:active{transform:rotate(-90deg) scale(.94)}
+
+.ts-body{
+  display:grid;grid-template-columns:minmax(0,1fr) 396px;
+  gap:18px;min-height:0;flex:1;
+}
+
+/* ============================================================
+   2 · THEME GALLERY — big 3D cards
+   ============================================================ */
+.ts-gallery{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:14px;align-content:start;overflow-y:auto;padding:2px 4px 6px 2px;
+  scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--accent) 40%,transparent) transparent;
+}
+.ts-gallery::-webkit-scrollbar{width:7px}
+.ts-gallery::-webkit-scrollbar-thumb{background:color-mix(in srgb,var(--accent) 34%,transparent);border-radius:99px}
+
+.ts-card{
+  position:relative;display:flex;flex-direction:column;
+  border:1px solid var(--ts-line-soft);border-radius:18px;overflow:hidden;
+  background:var(--ts-well);color:var(--text);
+  font-family:inherit;text-align:left;cursor:pointer;padding:0;
+  transform-style:preserve-3d;backface-visibility:hidden;
+  box-shadow:0 6px 20px -12px var(--shadow);
+  transition:transform .45s var(--ts-spring),box-shadow .4s ease,border-color .3s ease;
+}
+/* the entrance keyframe animates transform, so once it has played we drop
+   the animation; without tilt there is no --rx/--ry handover, but
+   fill-mode:both would still freeze the card's final keyframe state. */
+.ts-card.ts-ready{animation:none}
+/* plain hover feedback only — no 3D lean on this surface */
+.ts-card:hover{
+  border-color:color-mix(in srgb,var(--accent) 42%,var(--ts-line));
+  box-shadow:0 26px 55px -22px var(--shadow),0 0 30px -14px var(--glow,var(--accent));
+}
+.ts-card.is-active{border-color:color-mix(in srgb,var(--accent) 62%,var(--ts-line))}
+
+/* ---- the 3D art stage ---- */
+.ts-art{
+  position:relative;height:132px;flex:none;overflow:hidden;
+  perspective:1000px;transform-style:preserve-3d;
+  background:var(--ts-grad,linear-gradient(135deg,#111,#333));
+  isolation:isolate;
+}
+.ts-art::after{ /* soft glass sheen across every card */
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(150deg,rgba(255,255,255,.24) 0%,transparent 42%,rgba(0,0,0,.16) 100%);
+}
+.ts-art .ts-obj{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) translateZ(38px);
+  transform-style:preserve-3d;transition:transform .5s var(--ts-spring);
+}
+.ts-card:hover .ts-art .ts-obj{transform:translate(-50%,-50%) translateZ(64px) scale(1.06)}
+
+.ts-badge{
+  position:absolute;top:10px;left:10px;z-index:3;
+  font-size:9px;font-weight:850;letter-spacing:.13em;text-transform:uppercase;
+  padding:5px 9px;border-radius:99px;color:#04121a;
+  background:linear-gradient(135deg,var(--aurora-2,#7dd3fc),var(--aurora-1,#4ade80));
+  box-shadow:0 6px 18px -8px rgba(0,0,0,.6);
+}
+.ts-art .ts-hint{
+  position:absolute;right:10px;bottom:9px;z-index:3;
+  font-size:9px;font-weight:750;letter-spacing:.1em;text-transform:uppercase;
+  color:#fff;opacity:.72;
+}
+
+/* ---- card footer ---- */
+.ts-foot{
+  display:flex;align-items:center;gap:11px;
+  padding:12px 13px 13px;background:var(--ts-panel);
+  border-top:1px solid var(--ts-line-soft);
+}
+.ts-dot{
+  flex:none;width:34px;height:34px;border-radius:11px;display:grid;place-items:center;
+  font-size:15px;background:var(--ts-chip);border:1px solid var(--ts-line-soft);
+}
+.ts-meta{min-width:0;flex:1}
+.ts-meta b{display:block;font-size:13.5px;font-weight:800;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ts-meta span{display:block;font-size:10.5px;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ts-use{
+  flex:none;padding:8px 14px;border-radius:99px;border:1px solid transparent;
+  font-size:11.5px;font-weight:800;font-family:inherit;cursor:pointer;white-space:nowrap;
+  background:linear-gradient(135deg,var(--aurora-1,var(--accent)),var(--aurora-2,var(--accent-2)));
+  color:#06121b;box-shadow:0 8px 20px -10px var(--glow,var(--accent));
+  transition:transform .3s var(--ts-spring),filter .2s;
+}
+.ts-use:hover{transform:translateY(-1px);filter:brightness(1.08)}
+.ts-use:active{transform:scale(.95)}
+.ts-card.is-active .ts-use{
+  background:var(--ts-chip);color:var(--accent);
+  border-color:color-mix(in srgb,var(--accent) 50%,transparent);box-shadow:none;
+}
+
+/* ============================================================
+   3 · INSPECTOR — visual theme detail panel
+   ============================================================ */
+.ts-side{
+  min-height:0;overflow-y:auto;padding:2px 6px 8px 2px;
+  display:flex;flex-direction:column;gap:12px;
+  scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--accent) 40%,transparent) transparent;
+}
+.ts-side::-webkit-scrollbar{width:7px}
+.ts-side::-webkit-scrollbar-thumb{background:color-mix(in srgb,var(--accent) 34%,transparent);border-radius:99px}
+
+.ts-title-row{display:flex;align-items:center;gap:10px;padding-top:2px}
+.ts-title-row>div{min-width:0}
+.ts-title-row strong{display:block;font-size:16px;font-weight:800;letter-spacing:-.01em}
+.ts-title-row em{display:block;font-style:normal;font-size:11px;color:var(--muted);margin-top:2px}
+.ts-live{
+  margin-left:auto;flex:none;display:inline-flex;align-items:center;gap:6px;
+  font-size:9px;font-weight:850;letter-spacing:.12em;text-transform:uppercase;
+  padding:5px 10px;border-radius:99px;color:var(--accent);
+  background:var(--ts-accent-soft);border:1px solid color-mix(in srgb,var(--accent) 26%,transparent);
+}
+.ts-live::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--accent);animation:tsPulse 1.9s ease-in-out infinite}
+@keyframes tsPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(.7)}}
+
+/* big live preview of the theme */
+.ts-preview{
+  position:relative;height:132px;border-radius:18px;overflow:hidden;flex:none;
+  background:var(--ts-grad,var(--ts-well));
+  border:1px solid var(--ts-line-soft);
+  box-shadow:0 18px 40px -22px var(--shadow);
+  display:grid;place-items:center;transition:background .5s ease;
+}
+.ts-preview::after{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(80% 120% at 78% 0%,rgba(255,255,255,.32),transparent 62%);
+}
+.ts-preview-art{
+  position:absolute;inset:0;height:auto;width:100%;
+  background:transparent;overflow:visible;
+  animation:tsFloat 5.5s ease-in-out infinite;
+}
+.ts-preview-art::after{display:none}
+.ts-preview-art .ts-obj{transform:translate(-50%,-50%) translateZ(38px) scale(1.22)}
+.ts-preview-em{
+  position:absolute;left:12px;bottom:11px;width:34px;height:34px;border-radius:12px;
+  display:grid;place-items:center;font-size:17px;
+  background:rgba(10,10,20,.42);border:1px solid rgba(255,255,255,.22);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+}
+@keyframes tsFloat{0%,100%{transform:translateY(-4px)}50%{transform:translateY(4px)}}
+
+/* palette chips — visual only, nothing to read or copy */
+.ts-palette-wrap{display:flex;flex-direction:column;gap:8px;padding-top:12px;border-top:1px solid var(--ts-line-soft)}
+.ts-label{font-size:9.5px;font-weight:850;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.ts-palette{display:flex;flex-wrap:wrap;gap:6px}
+.ts-chip{
+  display:inline-flex;align-items:center;gap:7px;padding:6px 11px 6px 7px;border-radius:99px;
+  background:var(--ts-chip);border:1px solid var(--ts-line-soft);
+  font-size:10.5px;font-weight:750;color:var(--text);
+  transition:transform .28s var(--ts-spring),border-color .2s;
+}
+.ts-chip:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--c,var(--accent)) 60%,transparent)}
+.ts-chip i{
+  width:15px;height:15px;border-radius:50%;flex:none;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.35),0 3px 8px -3px rgba(0,0,0,.6);
+}
+.ts-chip b{font-weight:750;white-space:nowrap}
+
+/* appearance switch */
+.ts-appearance{display:flex;flex-direction:column;gap:8px;padding-top:12px;border-top:1px solid var(--ts-line-soft)}
+.ts-appear-row{display:flex;gap:8px}
+.ts-appear{
+  flex:1;display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  padding:11px 10px;border-radius:99px;cursor:pointer;font-family:inherit;
+  font-size:11.5px;font-weight:800;
+  background:var(--ts-chip);border:1px solid var(--ts-line);color:var(--text);
+  transition:transform .3s var(--ts-spring),background .2s,color .2s,border-color .2s;
+}
+.ts-appear:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--accent) 40%,var(--ts-line))}
+.ts-appear:active{transform:scale(.96)}
+.ts-appear.active{
+  background:linear-gradient(120deg,var(--aurora-1,var(--accent)),var(--aurora-2,var(--accent-2)));
+  color:var(--ts-btn-ink,#06121b);border-color:transparent;
+  box-shadow:0 12px 26px -14px var(--glow,var(--accent));
+}
+
+/* short human description */
+.ts-blurb{
+  margin:0;padding:12px 13px;border-radius:15px;font-size:11.5px;line-height:1.65;
+  color:var(--muted);background:var(--ts-accent-soft);
+  border:1px solid color-mix(in srgb,var(--accent) 22%,transparent);
+}
+
+/* ============================================================
+   4 · QUICK RAIL — persistent right-edge theme switcher
+   ============================================================ */
+#tsRail{
+  position:fixed;right:12px;top:50%;transform:translateY(-50%);
+  z-index:9998;display:flex;flex-direction:column;align-items:center;gap:8px;
+  padding:10px 8px;border-radius:99px;
+  background:color-mix(in srgb,var(--surface) 82%,transparent);
+  border:1px solid var(--ts-line);
+  box-shadow:0 20px 44px -22px var(--shadow);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  opacity:.62;transition:opacity .3s ease,transform .3s var(--ts-spring);
+}
+#tsRail:hover,#tsRail:focus-within{opacity:1;transform:translateY(-50%) translateX(-3px)}
+#tsRail.ts-off{opacity:0;pointer-events:none;transform:translateY(-50%) translateX(24px)}
+
+.ts-rail-sep{width:16px;height:1px;background:var(--ts-line-soft);margin:1px 0}
+
+.ts-rail-dot{
+  position:relative;width:26px;height:26px;border-radius:50%;cursor:pointer;padding:0;
+  border:1px solid rgba(255,255,255,.28);background:var(--dot,linear-gradient(135deg,#666,#999));
+  box-shadow:0 4px 12px -6px rgba(0,0,0,.7);
+  transition:transform .35s var(--ts-spring),box-shadow .3s ease;
+}
+.ts-rail-dot:hover{transform:scale(1.22)}
+.ts-rail-dot.is-active{
+  box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--accent),0 6px 16px -6px var(--accent);
+  transform:scale(1.1);
+}
+.ts-rail-dot::after{
+  content:attr(data-label);position:absolute;right:36px;top:50%;transform:translateY(-50%) translateX(6px);
+  font-size:10px;font-weight:750;white-space:nowrap;padding:5px 10px;border-radius:8px;
+  background:var(--surface);color:var(--text);border:1px solid var(--ts-line);
+  opacity:0;pointer-events:none;transition:opacity .2s ease,transform .2s ease;
+  box-shadow:0 10px 24px -14px var(--shadow);
+}
+.ts-rail-dot:hover::after{opacity:1;transform:translateY(-50%) translateX(0)}
+.ts-rail-label{
+  font-size:7px;font-weight:850;letter-spacing:.14em;color:var(--muted);
+  writing-mode:vertical-rl;margin-top:2px;
+}
+
+/* toast */
+#tsToast{
+  position:fixed;left:50%;bottom:34px;transform:translate(-50%,18px);
+  z-index:100000;pointer-events:none;
+  padding:11px 20px;border-radius:99px;font-size:12px;font-weight:750;
+  color:var(--ts-btn-ink,#06121b);background:var(--accent);
+  box-shadow:0 18px 40px -18px var(--glow,var(--accent));
+  opacity:0;transition:opacity .26s ease,transform .32s var(--ts-spring);
+}
+#tsToast.show{opacity:1;transform:translate(-50%,0)}
+
+/* ============================================================
+   6 · THEME ART — a bespoke 3D object per theme (pure CSS)
+   ============================================================ */
+.ts-art .ts-obj i{position:absolute;display:block;border-radius:50%}
+
+/* --- BUBBLEGUM · two frosted cards floating over a pink wash --- */
+.ts-art[data-art="bubblegum"] .ts-obj{width:112px;height:74px}
+.ts-art[data-art="bubblegum"] .ts-obj i:nth-child(1){
+  left:-6px;top:6px;width:64px;height:44px;border-radius:11px;
+  background:linear-gradient(160deg,rgba(255,255,255,.34),rgba(255,90,138,.24));
+  border:1px solid rgba(255,255,255,.4);
+  box-shadow:0 14px 30px -14px rgba(255,90,138,.8);
+  animation:tsFloatCard 4.2s ease-in-out infinite;
+}
+.ts-art[data-art="bubblegum"] .ts-obj i:nth-child(2){
+  right:0;top:0;width:56px;height:38px;border-radius:10px;
+  background:linear-gradient(160deg,rgba(255,255,255,.3),rgba(201,168,255,.26));
+  border:1px solid rgba(255,255,255,.38);
+  box-shadow:0 14px 30px -14px rgba(201,168,255,.75);
+  animation:tsFloatCard 5.4s ease-in-out infinite reverse;
+}
+.ts-art[data-art="bubblegum"] .ts-obj i:nth-child(3){
+  left:46px;top:40px;width:18px;height:18px;border-radius:0;background:#fff;
+  clip-path:polygon(50% 0,61% 39%,100% 50%,61% 61%,50% 100%,39% 61%,0 50%,39% 39%);
+  animation:tsTwinkle 2.6s ease-in-out infinite;
+}
+.ts-art[data-art="bubblegum"] .ts-obj i:nth-child(4){
+  right:14px;top:16px;width:5px;height:5px;background:#ffc8a0;
+  animation:tsTwinkle 3.2s ease-in-out .4s infinite;
+}
+
+/* --- DIGITAL · wireframe cube over a converging grid --- */
+.ts-art[data-art="digital"] .ts-obj{width:104px;height:104px}
+.ts-art[data-art="digital"] .ts-obj i:nth-child(1){
+  inset:8px;border-radius:0;
+  border:1.5px solid rgba(91,140,255,.9);
+  box-shadow:0 0 22px rgba(91,140,255,.4),inset 0 0 18px rgba(125,211,252,.2);
+  border-radius:2px;
+  animation:tsSpin 11s linear infinite;
+}
+.ts-art[data-art="digital"] .ts-obj i:nth-child(2){
+  left:50%;top:50%;width:0;height:0;border-radius:0;
+  border-left:52px solid transparent;border-right:52px solid transparent;
+  border-bottom:74px solid rgba(34,211,238,.14);
+  margin:-37px 0 0 -52px;
+}
+.ts-art[data-art="digital"] .ts-obj i:nth-child(3){
+  left:50%;top:50%;width:6px;height:6px;margin:-3px 0 0 -3px;
+  background:#7dd3fc;box-shadow:0 0 12px #7dd3fc;animation:tsOrbit 4.5s linear infinite;
+}
+
+/* --- COSMIC · orbital rings around a violet core --- */
+.ts-art[data-art="cosmic"] .ts-obj{width:104px;height:104px}
+.ts-art[data-art="cosmic"] .ts-obj i:nth-child(1){
+  inset:0;border-radius:50%;
+  background:radial-gradient(circle,#fff 0 12%,#ddd6fe 26%,#8b5cf6 56%,#3b1d6e 100%);
+  box-shadow:0 0 30px rgba(139,92,246,.75);
+  animation:tsCore 3.4s ease-in-out infinite;
+}
+.ts-art[data-art="cosmic"] .ts-obj i:nth-child(2){
+  inset:-14px;border-radius:50%;border:1px solid rgba(167,139,250,.8);
+  animation:tsSpin 8s linear infinite;
+}
+.ts-art[data-art="cosmic"] .ts-obj i:nth-child(3){
+  inset:-2px;border-radius:50%;
+  border:1px dashed rgba(59,130,246,.7);border-top-color:rgba(236,72,153,.85);
+  animation:tsSpinReverse 13s linear infinite;
+}
+.ts-art[data-art="cosmic"] .ts-obj i:nth-child(4){
+  left:50%;top:2px;width:5px;height:5px;margin-left:-2.5px;
+  background:#fff;box-shadow:0 0 10px #fff;animation:tsTwinkle 2.2s ease-in-out infinite;
+}
+
+/* --- ORGANIC · three metaballs merging over a liquid line --- */
+.ts-art[data-art="organic"] .ts-obj{width:112px;height:82px}
+.ts-art[data-art="organic"] .ts-obj i:nth-child(1),
+.ts-art[data-art="organic"] .ts-obj i:nth-child(2),
+.ts-art[data-art="organic"] .ts-obj i:nth-child(3){
+  top:14px;width:46px;height:46px;filter:blur(1px);
+  animation:tsMerge 5.6s ease-in-out infinite;
+}
+.ts-art[data-art="organic"] .ts-obj i:nth-child(1){
+  left:12px;
+  background:radial-gradient(circle at 40% 36%,#ffd4c7,#ff6b4a 58%,rgba(255,107,74,.2) 88%);
+}
+.ts-art[data-art="organic"] .ts-obj i:nth-child(2){
+  left:36px;animation-delay:-1.9s;
+  background:radial-gradient(circle at 40% 36%,#d4e4d0,#6fbf9f 58%,rgba(111,191,159,.2) 88%);
+}
+.ts-art[data-art="organic"] .ts-obj i:nth-child(3){
+  left:58px;animation-delay:-3.7s;
+  background:radial-gradient(circle at 40% 36%,#eefaf5,#b8e6d5 58%,rgba(184,230,213,.2) 88%);
+}
+.ts-art[data-art="organic"] .ts-obj i:nth-child(4){
+  left:0;bottom:6px;width:112px;height:7px;border-radius:99px;
+  background:linear-gradient(90deg,transparent,rgba(255,107,74,.55),rgba(184,230,213,.5),transparent);
+  animation:tsLiquid 6.4s ease-in-out infinite alternate;
+}
+
+/* ---------- 6b · art keyframes ---------- */
+@keyframes tsTwinkle{0%,100%{transform:scale(1) rotate(0deg);opacity:1}50%{transform:scale(.55) rotate(45deg);opacity:.6}}
+@keyframes tsSpin{to{transform:rotate(360deg)}}
+@keyframes tsSpinReverse{to{transform:rotate(-360deg)}}
+@keyframes tsCore{0%,100%{transform:scale(1);filter:brightness(1)}50%{transform:scale(1.22);filter:brightness(1.4)}}
+@keyframes tsOrbit{from{transform:rotate(0deg) translateX(52px)}to{transform:rotate(360deg) translateX(52px)}}
+/* bubblegum — two panes bobbing out of phase, like the floating cards */
+@keyframes tsFloatCard{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+/* organic — blobs sliding together and apart so they visibly merge */
+@keyframes tsMerge{0%,100%{transform:translateY(0)}50%{transform:translateY(9px)}}
+@keyframes tsLiquid{from{transform:translateX(-4%) scaleX(.94)}to{transform:translateX(4%) scaleX(1.04)}}
+
+/* ============================================================
+   7 · RESPONSIVE
+   ============================================================ */
+@media (max-width:1080px){
+  .ts-body{grid-template-columns:minmax(0,1fr) 340px}
+  .ts-studio{max-height:94vh}
+}
+@media (max-width:900px){
+  #tsRail{display:none}
+  .ts-body{grid-template-columns:minmax(0,1fr);overflow-y:auto}
+  .ts-gallery{overflow:visible}
+  .ts-side{overflow:visible}
+  .ts-studio{max-height:92vh;overflow-y:auto}
+}
+@media (max-width:620px){
+  .ts-studio{padding:18px 14px 16px;border-radius:20px}
+  .ts-head{padding-right:40px}
+  .ts-head h2{font-size:18px}
+  .ts-gallery{grid-template-columns:minmax(0,1fr);gap:12px}
+  .ts-art{height:118px}
+  .ts-preview{height:112px}
+  #themeModal{padding:12px}
+}
+
+/* keep the rail clear of open dialogs & the intro film */
+body.ts-dialog-open #tsRail,
+body.vi-playing #tsRail{opacity:0;pointer-events:none;transform:translateY(-50%) translateX(24px)}
+
+/* very short viewports: the rail would reach the creator badge */
+@media (max-height:640px){
+  #tsRail{display:none}
+}
+
+/* ============================================================
+   8 · MOTION & FEATURE SAFETY
+   ============================================================ */
+@media (prefers-reduced-motion:reduce){
+  .ts-studio,.ts-preview-art,.ts-gallery>*,.ts-side>*,
+  .ts-art .ts-obj i,.ts-live::before{animation:none !important}
+  .ts-card{transform:none !important}
+  .ts-card:hover{transform:none !important}
+  .ts-card:hover .ts-art .ts-obj{transform:translate(-50%,-50%) translateZ(38px)}
+  #tsToast{transition:opacity .2s ease}
+}
+
+/* graceful fallback where color-mix() is unsupported */
+@supports not (color:color-mix(in srgb,red,blue)){
+  .ts-studio,#tsRail{--ts-line:rgba(128,128,128,.28);--ts-line-soft:rgba(128,128,128,.16)}
+}
+
+/* staggered entrance for the gallery — matches the app's card rhythm */
+.ts-gallery>*{animation:tsRise .44s var(--ts-spring) both}
+.ts-gallery>*:nth-child(1){animation-delay:.02s}
+.ts-gallery>*:nth-child(2){animation-delay:.07s}
+.ts-gallery>*:nth-child(3){animation-delay:.12s}
+.ts-gallery>*:nth-child(4){animation-delay:.17s}
+.ts-side>*{animation:tsRise .44s var(--ts-spring) both}
+.ts-side>*:nth-child(1){animation-delay:.05s}
+.ts-side>*:nth-child(2){animation-delay:.1s}
+.ts-side>*:nth-child(3){animation-delay:.15s}
+.ts-side>*:nth-child(4){animation-delay:.2s}
+.ts-side>*:nth-child(5){animation-delay:.25s}
+.ts-side>*:nth-child(6){animation-delay:.3s}
+
+/* ============================================================
+   9 · OVERRIDES for reused components (close button)
+   colors are re-derived from tokens so light themes stay legible
+   ============================================================ */
+.ts-studio #themeClose{
+  top:18px;right:18px;z-index:5;
+  background:var(--ts-chip);border:1px solid var(--ts-line);color:var(--muted);
+  transition:transform .3s var(--ts-spring),color .2s,border-color .2s;
+}
+.ts-studio #themeClose:hover{
+  color:var(--accent);border-color:color-mix(in srgb,var(--accent) 50%,var(--ts-line));transform:rotate(90deg);
+}
+
+/*==THEME-STUDIO-END==*/

@@ -1,0 +1,16 @@
+.env
+node_modules/
+*.log
+
+# Ruflo local secrets and runtime data
+.env.local
+.env.*.local
+.claude-flow/data/
+.claude-flow/logs/
+.claude-flow/sessions/
+
+# Daily AI usage counters written by server.js at runtime.
+# Counters only - no keys, no uploaded documents.
+.xamcode-quota.json
+"node_modules/" 
+".env" 

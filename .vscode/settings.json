@@ -1,0 +1,8 @@
+{
+  // Do NOT use VS Code Live Server for XAMCODE: static previews cannot serve
+  // /api/health or /api/analyze (HTTP 404). Run `node server.js` and open
+  // http://127.0.0.1:4173 instead.
+  "liveServer.settings.NoBrowser": true,
+  "inlineChat.defaultModel": "Gemma4 12B (Ollama) (customendpoint)",
+  "inlineChat.askInChat": true
+}

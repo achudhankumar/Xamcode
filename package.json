@@ -1,0 +1,36 @@
+{
+  "name": "xamcode-ai",
+  "version": "1.0.0",
+  "private": true,
+  "description": "XamCode AI — a study app that turns lecture notes into animated lessons, formula cards, cheat sheets and a Vaathiyar quiz mode, with the AURA AI tutor.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "test": "npm run test:providers && npm run test:quiz && npm run test:content && npm run test:sections && npm run test:diagrams && npm run test:mermaid && npm run test:journey && npm run test:markup && npm run test:jobs && npm run test:jobs-http && npm run test:topics && npm run test:chunks && npm run test:render && npm run test:allowance",
+    "test:providers": "node test-provider-failover.js",
+    "test:chunks": "node test-chunk-units.js",
+    "test:render": "node test-chunk-render.js",
+    "test:quiz": "node test-quiz-flow.js",
+    "test:content": "node test-vaathiyar-content.js",
+    "test:sections": "node test-study-sections.js",
+    "test:diagrams": "node test-diagram-engine.js",
+    "test:mermaid": "node test-mermaid.js",
+    "test:journey": "node test-journey.js",
+    "test:markup": "node test-markup-structure.js",
+    "test:jobs": "node test-analyze-jobs.js",
+    "test:jobs-http": "node test-analyze-http.js",
+    "test:topics": "node test-topic-images.js",
+    "test:allowance": "node test-allowance-client.js",
+    "test:smoke": "node test-journey-smoke.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "education",
+    "computer-networks",
+    "study-app"
+  ],
+  "license": "UNLICENSED"
+}

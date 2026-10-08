@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>XamCode AI • Created By Achudhan</title>
+<!-- Fonts: Instrument Serif (display) + Geist Mono (data). Inter was
+     referenced by base.css but never actually loaded, so the whole
+     site was silently falling back to system-ui. preconnect keeps the
+     handshake off the critical path; display=swap means text paints
+     immediately in the fallback and swaps in when the webfont lands. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/themes.css">
+<link rel="stylesheet" href="css/layout.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/animations.css">
+<link rel="stylesheet" href="css/glass.css">
+<link rel="stylesheet" href="css/premium.css">
+<link rel="stylesheet" href="css/genz.css">
+<link rel="stylesheet" href="css/theme-studio.css">
+<link rel="stylesheet" href="css/experience.css">
+<!-- Loaded last on purpose: editorial.css is a pure override layer and
+     relies on winning the cascade at equal specificity. scenes.css adds
+     the per-theme 3D background geometry and must sit above the shared
+     #bg3d artwork it supersedes. -->
+<link rel="stylesheet" href="css/editorial.css">
+<link rel="stylesheet" href="css/scenes.css">
+<!-- Feature layer: login gate, search palette and the AURA assistant.
+     Loaded last so they win at equal specificity over the theme layers. -->
+<link rel="stylesheet" href="css/auth.css">
+<link rel="stylesheet" href="css/search.css">
+<link rel="stylesheet" href="css/aura.css">
+</head>
+<!-- SEO: Compliance metadata -->
+<meta name="description" content="XamCode AI - AI-powered study assistant. Upload PDFs to generate flashcards, quizzes, and study materials. DPDP Act compliant. Free to start.">
+<meta name="keywords" content="AI study assistant, PDF to flashcards, study tools, India, DPDP compliant">
+<meta name="author" content="XamCode AI (Achudhan) - support@xamcode.ai">
+<meta name="robots" content="index, follow">
+
+<!-- Cookie consent banner -->
+<div id="cookie-consent" style="display:none; position:fixed; bottom:0 left:0 right:0 z-9999; background:#1a1a2e; color:#e2e8f0; padding:12px 16px; font-family:Inter,system-ui,sans-serif; font-size:14px; border-top:1px solid #334155;">
+  <div style="max-width:1200px; margin:0 auto;">
+    <p>This site uses cookies to enhance your experience. <a href="/privacy-policy" style="color:#60a5fa;text-decoration:underline;">Learn more</a></p>
+    <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:8px;">
+      <button id="cookie-decline" style="padding:6px 12px; background:#475569; color:#e2e8f0; border:none; border-radius:4px; cursor:pointer; font-size:13px;">Decline</button>
+      <button id="cookie-accept" style="padding:6px 12px; background:#22c55e; color:#fff; border:none; border-radius:4px; cursor:pointer; font-size:13px;">Accept All</button>
+    </div>
+  </div>
+</div>
+<script>
+(function() {
+  try {
+    var c = document.cookie.split(';').some(function(item) {
+      return item.trim().startsWith('xamcode_consent=');
+    });
+    var el = document.getElementById('cookie-consent');
+    if (c) { el.style.display = 'none'; return; }
+    el.style.display = 'block';
+    document.getElementById('cookie-accept').addEventListener('click', function() {
+      document.cookie = 'xamcode_consent=accepted; path=/; max-age=31536000; SameSite=Lax';
+      el.style.display = 'none';
+    });
+    document.getElementById('cookie-decline').addEventListener('click', function() {
+      document.cookie = 'xamcode_consent=declined; path=/; max-age=31536000; SameSite=Lax';
+      el.style.display = 'none';
+    });
+  } catch (e) {}
+})();
+</script>
+
+<body data-theme="bubblegum" data-mode="dark">
+
+<div id="bootLoader" role="status" aria-live="polite" aria-label="XamCode AI is loading">
+  <div class="bl-mark" aria-hidden="true"><b>X</b></div>
+  <div class="bl-word" aria-hidden="true">Xamcode <b>AI</b></div>
+  <p class="bl-msg" id="bootMessage">Warming up the engine…</p>
+  <div class="bl-bar" aria-hidden="true"><i></i></div>
+</div>
+
+<div id="bg">
+  <div class="wash w1"></div><div class="wash w2"></div>
+  <div class="wash w3"></div><div class="wash w4"></div>
+  <div class="dots"></div>
+  <div class="theme-fx" aria-hidden="true"></div>
+</div>
+
+<svg id="bg3d" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" style="width:100%;height:100%">
+  <defs>
+    <filter id="blurB"><feGaussianBlur stdDeviation="90"/></filter>
+    <radialGradient id="gCard"><stop offset="0%" stop-color="#ffffff"/><stop offset="100%" stop-color="#f0faf8"/></radialGradient>
+    <radialGradient id="gCardP"><stop offset="0%" stop-color="#ffffff"/><stop offset="100%" stop-color="#f3ecff"/></radialGradient>
+    <radialGradient id="gCardY"><stop offset="0%" stop-color="#ffffff"/><stop offset="100%" stop-color="#fef3d5"/></radialGradient>
+  </defs>
+  <g data-parallax="8">
+    <circle cx="200" cy="150" r="220" fill="rgba(45,212,191,.10)" filter="url(#blurB)"/>
+    <circle cx="1400" cy="220" r="240" fill="rgba(167,139,250,.10)" filter="url(#blurB)"/>
+    <circle cx="800" cy="820" r="320" fill="rgba(244,114,182,.07)" filter="url(#blurB)"/>
+  </g>
+  <g transform="translate(110,120)"><g data-parallax="22">
+    <rect width="130" height="62" rx="12" fill="url(#gCard)" stroke="rgba(15,118,110,.5)" stroke-width="1.5"/>
+    <text x="14" y="28" font-size="15" fill="#2dd4bf">📚</text>
+    <rect x="38" y="18" width="65" height="4" rx="2" fill="#0f766e" opacity=".6"/>
+    <rect x="38" y="28" width="48" height="4" rx="2" fill="#6d28d9" opacity=".55"/>
+    <rect x="38" y="38" width="38" height="4" rx="2" fill="#a16207" opacity=".55"/>
+  </g></g>
+  <g transform="translate(1360,180)"><g data-parallax="26">
+    <rect width="115" height="56" rx="12" fill="url(#gCardP)" stroke="rgba(109,40,217,.5)" stroke-width="1.5"/>
+    <text x="14" y="26" font-size="15" fill="#a78bfa">📊</text>
+    <rect x="38" y="18" width="58" height="4" rx="2" fill="#6d28d9" opacity=".6"/>
+    <rect x="38" y="28" width="42" height="4" rx="2" fill="#0f766e" opacity=".55"/>
+  </g></g>
+  <g transform="translate(180,700)"><g data-parallax="20">
+    <rect width="120" height="60" rx="12" fill="url(#gCardY)" stroke="rgba(161,98,7,.5)" stroke-width="1.5"/>
+    <text x="14" y="28" font-size="15" fill="#d97706">🎯</text>
+    <rect x="38" y="18" width="60" height="4" rx="2" fill="#a16207" opacity=".6"/>
+    <rect x="38" y="28" width="44" height="4" rx="2" fill="#0f766e" opacity=".55"/>
+  </g></g>
+  <g transform="translate(1420,700)"><g data-parallax="24">
+    <rect width="110" height="54" rx="12" fill="url(#gCard)" stroke="rgba(15,118,110,.5)" stroke-width="1.5"/>
+    <text x="14" y="26" font-size="15" fill="#2dd4bf">💡</text>
+    <rect x="38" y="18" width="55" height="4" rx="2" fill="#0f766e" opacity=".6"/>
+  </g></g>
+  <g transform="translate(430,80)"><g data-parallax="30">
+    <rect width="80" height="28" rx="8" fill="url(#gCardP)" stroke="rgba(109,40,217,.55)" stroke-width="1.5"/>
+    <text x="40" y="19" text-anchor="middle" font-size="11" font-family="monospace" font-weight="700" fill="#6d28d9">&lt;html&gt;</text>
+  </g></g>
+  <g transform="translate(1290,560)"><g data-parallax="28">
+    <rect width="72" height="28" rx="8" fill="url(#gCard)" stroke="rgba(15,118,110,.55)" stroke-width="1.5"/>
+    <text x="36" y="19" text-anchor="middle" font-size="11" font-family="monospace" font-weight="700" fill="#0f766e">TCP/IP</text>
+  </g></g>
+  <g transform="translate(70,470)"><g data-parallax="32">
+    <rect width="76" height="28" rx="8" fill="url(#gCardY)" stroke="rgba(161,98,7,.55)" stroke-width="1.5"/>
+    <text x="38" y="19" text-anchor="middle" font-size="11" font-family="monospace" font-weight="700" fill="#a16207">0x7F</text>
+  </g></g>
+  <g transform="translate(1460,380)"><g data-parallax="30">
+    <rect width="60" height="28" rx="8" fill="url(#gCard)" stroke="rgba(15,118,110,.55)" stroke-width="1.5"/>
+    <text x="30" y="19" text-anchor="middle" font-size="11" font-family="monospace" font-weight="700" fill="#0f766e">OSI</text>
+  </g></g>
+  <g transform="translate(560,780)"><g data-parallax="26">
+    <rect width="70" height="26" rx="8" fill="url(#gCardP)" stroke="rgba(109,40,217,.55)" stroke-width="1.5"/>
+    <text x="35" y="18" text-anchor="middle" font-size="10.5" font-family="monospace" font-weight="700" fill="#6d28d9">router</text>
+  </g></g>
+  <g data-parallax="36">
+    <circle cx="640" cy="220" r="10" fill="#2dd4bf"><animate attributeName="cy" values="220;200;220" dur="5s" repeatCount="indefinite"/></circle>
+    <circle cx="1160" cy="380" r="8" fill="#a78bfa"><animate attributeName="cy" values="380;360;380" dur="5.5s" repeatCount="indefinite"/></circle>
+    <circle cx="300" cy="620" r="9" fill="#facc15"><animate attributeName="cy" values="620;600;620" dur="6s" repeatCount="indefinite"/></circle>
+  </g>
+</svg>
+
+<!-- COSMIC FIELD — layer 1 (canvas) + layer 2 (orbit rings).
+     Both are inert unless body[data-theme="cosmic"]; the canvas engine
+     in js/cosmic.js parks itself on every other theme so it costs
+     nothing. Kept ahead of #scenes so DOM order gives the intended
+     paint order: base -> canvas -> rings -> scene cards. -->
+<canvas id="cosmicCanvas" aria-hidden="true"></canvas>
+<div id="cosmicOrbits" aria-hidden="true">
+  <div class="orbit orbit-1"></div>
+  <div class="orbit orbit-2"></div>
+  <div class="orbit orbit-3"></div>
+</div>
+
+<!-- Per-theme 3D scenes. #bg3d (above) renders the SAME artwork for every
+     theme — only hue-rotated — at opacity .05, so themes never really
+     differed in 3D. These give each theme its own geometry instead.
+     MUST stay after #bg3d: both are z-index 0, so DOM order decides
+     which paints on top. Still below #app (z-index 2). Pure CSS. -->
+<div id="scenes" aria-hidden="true">
+  <!-- geometry is defined per scene in css/scenes.css; the markup is
+       deliberately just classed <i> elements so the whole layer stays
+       declarative and removable in one edit -->
+  <div class="scene scene-bubblegum">
+    <i class="scene-wash sw1"></i><i class="scene-wash sw2"></i><i class="scene-wash sw3"></i>
+    <i class="float-card fc1"></i><i class="float-card fc2"></i>
+    <i class="float-card fc3"></i><i class="float-card fc4"></i>
+  </div>
+  <div class="scene scene-digital">
+    <i class="floor"></i>
+    <i class="cube cb1"></i><i class="cube cb2"></i><i class="cube cb3"></i>
+    <i class="stream st1"></i><i class="stream st2"></i>
+    <i class="stream st3"></i><i class="stream st4"></i>
+  </div>
+  <div class="scene scene-cosmic">
+    <i class="glass-card gc-1" data-parallax="8"><b></b></i><i class="glass-card gc-2" data-parallax="22"><b></b></i>
+    <i class="glass-card gc-3" data-parallax="26"><b></b></i><i class="glass-card gc-4" data-parallax="20"><b></b></i>
+  </div>
+  <div class="scene scene-organic">
+    <i class="liquid l1"></i><i class="liquid l2"></i><i class="liquid l3"></i>
+    <i class="blob b1"></i><i class="blob b2"></i><i class="blob b3"></i>
+    <i class="blob b4"></i><i class="blob b5"></i>
+  </div>
+</div>
+
+<div id="videoIntro" role="dialog" aria-modal="true" aria-labelledby="introTitle" aria-describedby="introDescription">
+  <h1 class="vi-visually-hidden" id="introTitle">XamCode AI cinematic introduction</h1>
+  <p class="vi-visually-hidden" id="introDescription">A short cinematic clip introducing XamCode AI, which transforms any subject's study PDF into organized concepts, visual explanations, and interactive practice.</p>
+  <video class="vi-intro-video" id="introVideo" autoplay muted playsinline preload="auto" aria-hidden="true">
+    <source src="assets/xamcode-ai-intro.mp4?v=5-hd" type="video/mp4">
+  </video>
+  <div class="vi-cine-top" aria-hidden="true"></div>
+  <div class="vi-cine-bottom" aria-hidden="true"></div>
+  <div class="vi-brand" aria-hidden="true">
+    <p class="vi-eyebrow"><span class="vi-eyebrow-dot"></span> Your PDF, ready to teach</p>
+    <p class="vi-brand-title">XamCode <em>AI</em></p>
+    <p class="vi-brand-sub">Turn any PDF into a study space that gets you — clear lessons, visual steps, quizzes &amp; flashcards.</p>
+    <ul class="vi-beats">
+      <li data-beat="0">📄 PDF in</li>
+      <li data-beat="1">🧠 Lessons out</li>
+      <li data-beat="2">🎨 Visual steps</li>
+      <li data-beat="3">✅ Quiz yourself</li>
+    </ul>
+  </div>
+  <div class="vi-video-shade" aria-hidden="true"></div>
+  <div class="vi-progress" aria-hidden="true"><i id="introProgress"></i></div>
+  <div class="vi-video-controls">
+    <p class="vi-video-status" id="introVideoStatus" role="status" aria-live="polite"></p>
+    <div class="vi-video-actions">
+      <button class="vi-sound-toggle" id="introSound" type="button" aria-pressed="false">Enable sound</button>
+      <button class="vi-skip" id="skipIntro" type="button">Skip intro</button>
+    </div>
+  </div>
+</div>
+<div id="grain" aria-hidden="true"></div>
+<div id="cursorGlow" aria-hidden="true"></div>
+<div id="themeVeil" aria-hidden="true"></div>
+<div id="app"></div>
+
+<button id="flash">🎴 Flashcards</button>
+<div id="fcOverlay">
+  <div class="fc-card" id="fcCard">
+    <button class="fc-close" id="fcClose">✕</button>
+    <div class="fc-face"><div class="fc-tag" id="fcTag">FLASHCARD</div><div class="fc-q" id="fcQ">…</div><div class="fc-hint">Click card to flip</div></div>
+    <div class="fc-face fc-back"><div class="fc-tag">ANSWER</div><div class="fc-a" id="fcA">…</div><div class="fc-hint">Click card to flip back</div></div>
+  </div>
+  <div class="fc-nav"><button id="fcPrev">← Prev</button><span class="fc-counter" id="fcCounter">1 / 1</span><button id="fcNext">Next →</button></div>
+</div>
+<div id="themeModal">
+  <div class="ts-studio" role="dialog" aria-modal="true" aria-labelledby="themeTitle">
+    <button id="themeClose" type="button" aria-label="Close theme studio">✕</button>
+
+    <div class="ts-head">
+      <div>
+        <h2 id="themeTitle">🎨 Theme studio</h2>
+        <p>4 themes · light &amp; dark · pick a vibe and go. ✨</p>
+      </div>
+      <button class="ts-shuffle" type="button" title="Surprise me" aria-label="Pick a random theme">⟳</button>
+    </div>
+
+    <div class="ts-body">
+      <div class="ts-gallery" id="tsGallery" aria-label="Theme gallery"></div>
+      <div class="ts-side" id="tsSide" aria-label="Active theme details"></div>
+    </div>
+  </div>
+</div>
+<dialog id="uploadModal" class="upload-modal" aria-labelledby="uploadTitle">
+  <form id="pdfUploadForm" class="upload-modal-content">
+    <button type="button" class="upload-modal-close" data-upload-close aria-label="Close PDF import">✕</button>
+    <div class="upload-modal-eyebrow"><span class="upload-eyebrow-mark">✦</span> YOUR AI STUDY SPACE</div>
+    <h2 id="uploadTitle">Your PDF, transformed into a study plan.</h2>
+    <p class="upload-intro">Bring your notes, textbook chapter, or research paper. Get clear explanations, visual learning steps, practice, and flashcards—all tailored to your material.</p>
+    <div class="upload-fields">
+      <label class="ai-field-label" for="studyPdf">Your document</label>
+      <label id="pdfDropzone" class="pdf-dropzone" for="studyPdf">
+        <span class="pdf-dropzone-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M13.5 2.75H6.75A1.75 1.75 0 0 0 5 4.5v15A1.75 1.75 0 0 0 6.75 21h10.5A1.75 1.75 0 0 0 19 19.25V8.25l-5.5-5.5Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M13 3v5.5h5.5M8.5 14h7M8.5 17h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        <span class="pdf-dropzone-copy"><strong>Drop your PDF here</strong><span>or <span class="pdf-browse-link">browse files</span></span></span>
+        <span class="pdf-dropzone-limit">PDF · UP TO 20 MB</span>
+        <input id="studyPdf" name="pdf" type="file" accept="application/pdf,.pdf" required aria-describedby="pdfDropzoneHint">
+      </label>
+      <span id="pdfDropzoneHint" class="vi-visually-hidden">Choose one PDF file, up to 20 megabytes.</span>
+      <div id="selectedPdf" class="selected-pdf" hidden>
+        <span class="selected-pdf-icon" aria-hidden="true">PDF</span>
+        <span class="selected-pdf-copy"><strong id="selectedPdfName"></strong><span id="selectedPdfSize"></span></span>
+        <span class="selected-pdf-check" aria-hidden="true">✓</span>
+      </div>
+      <label class="ai-field-label" for="studyLevel">How should we explain it?</label>
+      <select id="studyLevel" name="level">
+        <option value="beginner">Start simple · Explain as I learn</option>
+        <option value="intermediate">Build on what I know</option>
+        <option value="advanced">Go deeper · Advanced detail</option>
+      </select>
+      <p class="ai-privacy-note"><span aria-hidden="true">◈</span> Your PDF is sent to the configured AI provider for analysis and is not saved by XAMCODE. Maximum size: 20 MB.</p>
+      <div id="pdfQuotaPanel" class="pdf-quota-panel" role="status" aria-live="polite" data-state="loading">
+        <div class="pdf-quota-head">
+          <span class="pdf-quota-dot" aria-hidden="true"></span>
+          <span class="pdf-quota-title">Your PDF allowance</span>
+          <span class="pdf-quota-reset" id="pdfQuotaReset"></span>
+        </div>
+        <p class="pdf-allowance" id="pdfAllowanceText">Checking your daily allowance…</p>
+        <div class="pdf-quota-models" id="pdfQuotaModels"></div>
+        <p class="pdf-quota-foot" id="pdfQuotaFoot">Checking which models still have free quota…</p>
+      </div>
+    </div>
+    <section id="pdfUploadProgress" class="pdf-upload-progress" aria-labelledby="pdfProgressTitle" hidden>
+      <div class="pdf-progress-heading">
+        <span class="pdf-progress-orbit" aria-hidden="true"><span></span></span>
+        <div>
+          <div class="pdf-progress-eyebrow">YOUR STUDY SPACE IS IN PROGRESS</div>
+          <h3 id="pdfProgressTitle">Getting your PDF ready</h3>
+          <p id="pdfProgressDescription">Preparing your document for XAMCODE AI.</p>
+        </div>
+      </div>
+      <div class="pdf-progress-track" role="progressbar" aria-label="PDF preparation progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+        <span id="pdfProgressBar"></span>
+      </div>
+      <div id="pdfJourney" class="pdf-journey" aria-hidden="true">
+        <!--
+          A shooting star stands in for the old stickman arena: a comet
+          crosses a night sky from left to right, and the glowing trail
+          behind it IS the percentage. The numbers still come from the real
+          pipeline - the timed ease only fills the gaps between milestones.
+          Decorative by design: the progressbar above carries the value for
+          assistive tech, so nothing in here needs a label of its own.
+        -->
+        <div class="journey-sky">
+          <span class="journey-starlet" style="--x:8%;--y:32%;--d:.2s"></span>
+          <span class="journey-starlet" style="--x:19%;--y:70%;--d:1.1s"></span>
+          <span class="journey-starlet" style="--x:31%;--y:26%;--d:2s"></span>
+          <span class="journey-starlet" style="--x:44%;--y:74%;--d:.6s"></span>
+          <span class="journey-starlet" style="--x:57%;--y:30%;--d:1.5s"></span>
+          <span class="journey-starlet" style="--x:69%;--y:68%;--d:2.4s"></span>
+          <span class="journey-starlet" style="--x:82%;--y:24%;--d:.9s"></span>
+          <span class="journey-starlet" style="--x:93%;--y:64%;--d:1.8s"></span>
+          <!-- The background meteor keeps the sky reading as a shooting-star
+               sky even while the comet itself is parked at the start. -->
+          <span class="journey-meteor"></span>
+          <div class="journey-lane">
+            <span id="journeyFill" class="journey-fill" style="width:0%">
+              <span class="journey-star"></span>
+            </span>
+          </div>
+        </div>
+        <p id="journeyCaption" class="journey-caption">Preparing your document</p>
+      </div>
+      <ol class="pdf-progress-steps" aria-label="Study generation steps">
+        <li data-progress-step="reading"><span class="pdf-step-number">01</span><span>Prepare PDF</span><span class="pdf-step-indicator" aria-hidden="true"></span></li>
+        <li data-progress-step="uploading"><span class="pdf-step-number">02</span><span>Send PDF</span><span class="pdf-step-indicator" aria-hidden="true"></span></li>
+        <li data-progress-step="analyzing"><span class="pdf-step-number">03</span><span>Understand content</span><span class="pdf-step-indicator" aria-hidden="true"></span></li>
+        <li data-progress-step="building"><span class="pdf-step-number">04</span><span>Build your study</span><span class="pdf-step-indicator" aria-hidden="true"></span></li>
+      </ol>
+      <p id="pdfProgressStatus" class="pdf-progress-status" role="status" aria-live="polite">Reading your PDF on this device…</p>
+      <p id="pdfProgressElapsed" class="pdf-progress-elapsed" aria-label="Elapsed time: 0 seconds">0:00 elapsed</p>
+      <p class="pdf-progress-note">Larger documents can take a little longer. Keep this window open.</p>
+    </section>
+    <p id="pdfUploadStatus" class="ai-upload-status" role="status" aria-live="polite"></p>
+    <button id="analyzePdfButton" type="submit" class="btn-primary"><span>Build my study space</span><span aria-hidden="true">↗</span></button>
+    <button type="button" id="journeyPreviewButton" class="journey-preview-trigger">Preview the processing journey</button>
+  </form>
+</dialog>
+<div class="badge-creator"><div class="dot"></div>Created By Achudhan • XamCode AI</div>
+
+<script src="js/data-topics.js"></script>
+<script src="js/data-formulas.js"></script>
+<script src="js/data-formula-notes.js"></script>
+<script src="js/data-cheatcodes.js"></script>
+<script src="js/data-vaathiyar.js"></script>
+<script src="js/data-vaathiyar-unit2.js"></script>
+<script src="js/data-vaathiyar-unit3.js"></script>
+<script src="js/data-visuals.js"></script>
+<script src="js/data-formula-visuals.js"></script>
+<!-- auth.js must come before app.js: app.js reads XC.auth at boot to decide
+     whether to render the app at all. search.js and aura.js come after so
+     XC.app already exists when they mount. -->
+<script src="js/auth.js"></script>
+<script src="js/library.js"></script>
+<script src="js/app.js"></script>
+<script src="js/search.js"></script>
+<script src="js/aura.js"></script>
+<script src="js/genz.js"></script>
+<script src="js/theme-studio.js"></script>
+<script src="js/cosmic.js"></script>
+    }, 1000);
+  }, 700);
+})();
+</script>
+</body>
+</html>

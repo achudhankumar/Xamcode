@@ -1,0 +1,133 @@
+/* ============================================================
+   AURA AI — floating assistant
+   ------------------------------------------------------------
+   Fixed to the viewport and outside #app, because #app is replaced
+   wholesale on every render() — anything inside it would be destroyed.
+   ============================================================ */
+.aura{position:fixed;right:22px;bottom:22px;z-index:3000;display:flex;flex-direction:column;align-items:flex-end;gap:12px;pointer-events:none}
+/* The container is a tall flex box — 390x620 even with the panel closed —
+   and it sits at z-index 3000 over the header (z-index 60). Left at the
+   default `auto`, that empty box swallowed every click on the lower half
+   of the account dropdown, including Sign out. The container must be
+   transparent to the pointer; only the launcher and the open panel
+   opt back in below. */
+.aura.aura-hidden{display:none}
+.aura-launcher{
+  pointer-events:auto;
+  position:relative;display:inline-flex;align-items:center;gap:9px;
+  padding:12px 18px 12px 14px;border-radius:999px;border:1px solid rgba(45,212,191,.4);
+  background:linear-gradient(135deg,rgba(45,212,191,.2),rgba(167,139,250,.2)),var(--surface,#111a2e);
+  color:var(--text,#f8fafc);cursor:pointer;font-family:inherit;font-size:13px;font-weight:750;
+  letter-spacing:.06em;box-shadow:0 14px 34px -12px rgba(45,212,191,.5);
+  transition:transform .22s var(--spring,ease),box-shadow .22s ease;
+}
+.aura-launcher:hover{transform:translateY(-2px);box-shadow:0 20px 42px -14px rgba(45,212,191,.62)}
+.aura-launcher-mark{
+  width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,var(--accent,#2dd4bf),var(--accent-2,#a78bfa));
+  color:#06201c;font-size:12px;flex:0 0 auto;
+}
+/* Soft pulsing halo, disabled for anyone who asked for less motion. */
+.aura-launcher-ring{
+  position:absolute;inset:-4px;border-radius:999px;pointer-events:none;
+  border:1px solid rgba(45,212,191,.45);animation:aura-pulse 2.6s ease-out infinite;
+}
+@keyframes aura-pulse{
+  0%{transform:scale(1);opacity:.6}
+  70%{transform:scale(1.12);opacity:0}
+  100%{transform:scale(1.12);opacity:0}
+}
+.aura-panel{
+  width:min(390px,calc(100vw - 32px));height:min(560px,calc(100vh - 140px));
+  display:flex;flex-direction:column;overflow:hidden;
+  background:var(--surface,#111a2e);border:1px solid var(--line,rgba(255,255,255,.12));
+  border-radius:18px;box-shadow:0 34px 80px rgba(0,0,0,.5);
+  opacity:0;transform:translateY(14px) scale(.98);transform-origin:bottom right;
+  pointer-events:none;transition:opacity .22s ease,transform .22s var(--spring,ease);
+}
+.aura.open .aura-panel{opacity:1;transform:none;pointer-events:auto}
+.aura-head{
+  display:flex;align-items:center;gap:11px;padding:14px 16px;
+  border-bottom:1px solid var(--line,rgba(255,255,255,.08));
+  background:linear-gradient(135deg,rgba(45,212,191,.12),rgba(167,139,250,.10));
+}
+.aura-head-mark{
+  width:30px;height:30px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,var(--accent,#2dd4bf),var(--accent-2,#a78bfa));
+  color:#06201c;font-size:14px;flex:0 0 auto;
+}
+.aura-head-text{display:grid;min-width:0;flex:1}
+.aura-head-text strong{font-size:13.5px;font-weight:800;letter-spacing:.06em;color:var(--text,#f8fafc)}
+.aura-head-text small{font-size:10.5px;color:var(--muted,#9ca3af);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.aura-icon-btn{
+  width:28px;height:28px;border-radius:8px;border:1px solid var(--line,rgba(255,255,255,.1));
+  background:transparent;color:var(--muted,#9ca3af);cursor:pointer;font-size:13px;flex:0 0 auto;
+  transition:all .16s ease;
+}
+.aura-icon-btn:hover{color:var(--text,#f8fafc);border-color:var(--muted,#6b7280)}
+.aura-thread{
+  flex:1;min-height:0;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:14px;
+  scroll-behavior:smooth;
+}
+@media(prefers-reduced-motion:reduce){
+  .aura-launcher-ring{animation:none}
+  .aura-msg,.aura-typing i{animation:none}
+  .aura-thread{scroll-behavior:auto}
+}
+.aura-msg{display:grid;gap:4px;animation:aura-in .26s ease both}
+@keyframes aura-in{ from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
+.aura-msg-who{font-size:8.5px;font-weight:800;letter-spacing:.14em;color:var(--muted,#6b7280)}
+.aura-msg[data-role="user"] .aura-msg-who{color:var(--accent,#2dd4bf)}
+.aura-msg-body{
+  padding:11px 14px;border-radius:14px;font-size:13px;line-height:1.65;
+  background:var(--surface-strong,#0a1020);border:1px solid var(--line,rgba(255,255,255,.08));
+  color:var(--text,#e2e8f0);overflow-wrap:anywhere;
+}
+.aura-msg[data-role="user"] .aura-msg-body{
+  background:rgba(45,212,191,.1);border-color:rgba(45,212,191,.28);color:#d7f5ef;margin-left:28px;
+}
+.aura-msg[data-role="aura"] .aura-msg-body{margin-right:14px}
+.aura-typing{display:flex;gap:5px;align-items:center;padding:14px}
+.aura-typing i{width:6px;height:6px;border-radius:50%;background:var(--muted,#9ca3af);animation:aura-dot 1.1s ease-in-out infinite}
+.aura-typing i:nth-child(2){animation-delay:.16s}
+.aura-typing i:nth-child(3){animation-delay:.32s}
+@keyframes aura-dot{0%,60%,100%{opacity:.3;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
+.aura-hello{display:grid;gap:9px;padding:8px 2px;text-align:center}
+.aura-hello-mark{
+  width:46px;height:46px;margin:0 auto;border-radius:15px;
+  display:flex;align-items:center;justify-content:center;font-size:22px;
+  background:linear-gradient(135deg,var(--accent,#2dd4bf),var(--accent-2,#a78bfa));color:#06201c;
+}
+.aura-hello strong{font-size:15px;color:var(--text,#f8fafc)}
+.aura-hello>span{font-size:12.5px;line-height:1.6;color:var(--muted,#9ca3af);padding-inline:8px}
+.aura-suggest{display:grid;gap:7px;margin-top:8px}
+.aura-suggest-btn{
+  padding:9px 13px;border-radius:11px;text-align:left;cursor:pointer;
+  border:1px solid var(--line,rgba(255,255,255,.1));background:var(--surface-strong,#0a1020);
+  color:var(--muted,#cbd5e1);font-family:inherit;font-size:12px;line-height:1.45;
+  transition:all .16s ease;
+}
+.aura-suggest-btn:hover{border-color:var(--accent,#2dd4bf);color:var(--text,#f8fafc)}
+.aura-form{display:flex;gap:8px;padding:12px 14px;border-top:1px solid var(--line,rgba(255,255,255,.08))}
+.aura-input{
+  flex:1;min-width:0;padding:11px 13px;border-radius:12px;font-family:inherit;font-size:13px;
+  background:var(--surface-strong,#0a1020);border:1px solid var(--line,rgba(255,255,255,.1));
+  color:var(--text,#f8fafc);
+}
+.aura-input::placeholder{color:#64748b}
+.aura-input:focus{outline:none;border-color:var(--accent,#2dd4bf);box-shadow:0 0 0 3px rgba(45,212,191,.16)}
+.aura-input:disabled{opacity:.55}
+.aura-send{
+  width:40px;flex:0 0 auto;border-radius:12px;border:0;cursor:pointer;font-size:16px;font-weight:800;
+  background:var(--accent,#2dd4bf);color:#06201c;transition:filter .18s ease;
+}
+.aura-send:hover:not(:disabled){filter:brightness(1.08)}
+.aura-send:disabled{opacity:.5;cursor:not-allowed}
+.aura-note{margin:0;padding:0 14px 12px;font-size:9.5px;line-height:1.5;color:var(--muted,#6b7280);text-align:center}
+
+@media(max-width:640px){
+  .aura{right:14px;bottom:14px}
+  .aura-launcher-label{display:none}
+  .aura-launcher{padding:12px}
+  .aura-panel{width:calc(100vw - 24px);height:min(70vh,520px)}
+}

@@ -1,0 +1,4 @@
+[671958f1-06e7-4edd-943b-92063a2fa966] Gemini request failed (429): Rate limit exceeded for model gemini-3.5-flash (limit: 20 requests per day on Free Tier). Please retry in 9h25m38s or upgrade your tier at https://ai.dev/rate-limit.
+[671958f1-06e7-4edd-943b-92063a2fa966] Google Gemini failed (429); failing over to the next provider.
+[671958f1-06e7-4edd-943b-92063a2fa966] Groq request failed (401): Invalid API Key
+[671958f1-06e7-4edd-943b-92063a2fa966] Groq failed (401); no provider left to try.

@@ -1,0 +1,125 @@
+/* ============================================================
+   THEMES — 4 themes x 2 modes
+   Variables used everywhere: --bg, --surface, --surface-strong,
+   --text, --muted, --accent, --accent-2, --accent-3, --line, --shadow
+   ------------------------------------------------------------
+   Palettes are ported from the four "$100 Background 3D UI"
+   reference designs. Each theme's 3D geometry in scenes.css
+   and its motion in animations.css follow the same source.
+
+     bubblegum · soft washes, floating cards (pink -> lavender)
+     digital   · grid, wireframes, data streams
+     cosmic    · starfield, nebula, orbital rings
+     organic   · metaballs merging, flowing lines
+
+   The page canvas is `body` itself; #bg, #bg3d and #scenes are
+   fixed layers above it. --grain-alpha feeds the shared #grain
+   overlay in genz.css, so each world gets its own film stock.
+   ============================================================ */
+
+/* -------- DEFAULT (Bubblegum Dark) -------- */
+:root{
+  --bg:#0f0612;
+  --surface:#1e1020;
+  --surface-strong:#2a1828;
+  --text:#fcf8ff;
+  --muted:#a08aa0;
+  --accent:#ff5a8a;
+  --accent-2:#c9a8ff;
+  --accent-3:#ffc8a0;
+  --line:rgba(255,255,255,.09);
+  --shadow:rgba(60,6,40,.55);
+  --radius-sm:6px;
+  --radius-md:12px;
+  --radius-lg:16px;
+  --radius-pill:999px;
+  --font-body:'Inter',system-ui,-apple-system,sans-serif;
+  --font-mono:ui-monospace,'SF Mono',monospace;
+  --motion-speed:40s;
+  --aurora-1:#ff5a8a;
+  --aurora-2:#c9a8ff;
+  --aurora-3:#ffc8a0;
+  --aurora-opacity:.95;
+  --glass-blur:20px;
+  --glass-opacity:.42;
+  --grain-alpha:.03;
+  --grain-alpha-light:.03;
+}
+
+/* -------- BUBBLEGUM (soft washes · floating cards) -------- */
+body[data-theme="bubblegum"][data-mode="dark"]{
+  --bg:#0f0612;--surface:#1e1020;--surface-strong:#2a1828;
+  --text:#fcf8ff;--muted:#a08aa0;
+  --accent:#ff5a8a;--accent-2:#c9a8ff;--accent-3:#ffc8a0;
+  --line:rgba(255,255,255,.09);--shadow:rgba(60,6,40,.55);
+  --aurora-1:#ff5a8a;--aurora-2:#c9a8ff;--aurora-3:#ffc8a0;--aurora-opacity:.95;
+  --grain-alpha:.03;--grain-alpha-light:.03;
+}
+body[data-theme="bubblegum"][data-mode="light"]{
+  --bg:#fff4f8;--surface:#fffdfd;--surface-strong:#ffe7f0;
+  --text:#3b1026;--muted:#8a5c74;
+  --accent:#db2777;--accent-2:#8b5cf6;--accent-3:#f97316;
+  --line:rgba(59,16,38,.09);--shadow:rgba(150,30,90,.14);
+  --aurora-1:#db2777;--aurora-2:#8b5cf6;--aurora-3:#f97316;--aurora-opacity:.4;
+  --glass-opacity:.55;
+  --grain-alpha:.03;--grain-alpha-light:.03;
+}
+
+/* -------- DIGITAL (grid · wireframes · data streams) -------- */
+body[data-theme="digital"][data-mode="dark"]{
+  --bg:#07080a;--surface:#0d1117;--surface-strong:#151b24;
+  --text:#e8f0ff;--muted:#7a8ab0;
+  --accent:#5b8cff;--accent-2:#7dd3fc;--accent-3:#22d3ee;
+  --line:rgba(91,140,255,.18);--shadow:rgba(0,4,12,.6);
+  --aurora-1:#5b8cff;--aurora-2:#22d3ee;--aurora-3:#a78bfa;--aurora-opacity:.95;
+  --grain-alpha:.04;--grain-alpha-light:.03;
+}
+body[data-theme="digital"][data-mode="light"]{
+  --bg:#f1f5ff;--surface:#ffffff;--surface-strong:#e4ebff;
+  --text:#0a1220;--muted:#5a6b8c;
+  --accent:#2563eb;--accent-2:#0891b2;--accent-3:#7c3aed;
+  --line:rgba(10,18,32,.1);--shadow:rgba(20,40,90,.13);
+  --aurora-1:#2563eb;--aurora-2:#0891b2;--aurora-3:#7c3aed;--aurora-opacity:.4;
+  --glass-opacity:.6;
+  --grain-alpha:.04;--grain-alpha-light:.03;
+}
+
+/* -------- COSMIC (starfield · nebula · orbital rings) -------- */
+body[data-theme="cosmic"][data-mode="dark"]{
+  --bg:#050508;--surface:#0b0a18;--surface-strong:#141230;
+  --text:#ede8ff;--muted:#9a8ab8;
+  --accent:#8b5cf6;--accent-2:#3b82f6;--accent-3:#ec4899;
+  --line:rgba(139,92,246,.18);--shadow:rgba(4,2,16,.62);
+  --aurora-1:#8b5cf6;--aurora-2:#3b82f6;--aurora-3:#ec4899;--aurora-opacity:.95;
+  --grain-alpha:.035;--grain-alpha-light:.03;
+}
+body[data-theme="cosmic"][data-mode="light"]{
+  --bg:#f7f5ff;--surface:#ffffff;--surface-strong:#ece7ff;
+  --text:#140f2e;--muted:#6b5f8c;
+  --accent:#7c3aed;--accent-2:#2563eb;--accent-3:#db2777;
+  --line:rgba(20,15,46,.1);--shadow:rgba(45,25,110,.13);
+  --aurora-1:#7c3aed;--aurora-2:#2563eb;--aurora-3:#db2777;--aurora-opacity:.4;
+  --glass-opacity:.58;
+  --grain-alpha:.035;--grain-alpha-light:.03;
+}
+
+/* -------- ORGANIC (metaballs · flowing lines) --------
+   The reference design is a light world, so organic's light mode
+   is the true expression of it and dark is its lamplit twin. */
+body[data-theme="organic"][data-mode="dark"]{
+  --bg:#16130f;--surface:#211d18;--surface-strong:#2c2620;
+  --text:#f7f1e9;--muted:#b5a695;
+  --accent:#ff6b4a;--accent-2:#b8e6d5;--accent-3:#d4e4d0;
+  --line:rgba(255,240,225,.1);--shadow:rgba(20,10,0,.5);
+  --aurora-1:#ff6b4a;--aurora-2:#b8e6d5;--aurora-3:#d4e4d0;--aurora-opacity:.8;
+  --grain-alpha:.04;--grain-alpha-light:.03;
+}
+body[data-theme="organic"][data-mode="light"]{
+  --bg:#fafaf8;--surface:#ffffff;--surface-strong:#f4ece0;
+  --text:#1a1a1a;--muted:#8a7a74;
+  --accent:#ff6b4a;--accent-2:#6fbf9f;--accent-3:#7c9a6e;
+  --line:rgba(26,26,26,.09);--shadow:rgba(90,60,40,.13);
+  --aurora-1:#ff6b4a;--aurora-2:#6fbf9f;--aurora-3:#7c9a6e;--aurora-opacity:.35;
+  --glass-opacity:.6;
+  --grain-alpha:.04;--grain-alpha-light:.04;
+}

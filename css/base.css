@@ -1,0 +1,42 @@
+/* ============================================================
+   BASE — reset, body, fonts, scrollbar, selections
+   ============================================================ */
+*,
+:after,
+:before{box-sizing:border-box;margin:0;padding:0}
+
+html{line-height:1.5;font-family:'Inter',system-ui,-apple-system,sans-serif;-webkit-text-size-adjust:100%}
+
+body{
+  font-family:var(--font-body,'Inter',system-ui,-apple-system,sans-serif);
+  background:var(--bg,#070b1e);
+  color:var(--text,#fff);
+  min-height:100vh;
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  transition:background .3s ease,color .3s ease;
+  letter-spacing:-0.012em;
+}
+
+button{cursor:pointer;font-family:inherit;background:none;border:none;color:inherit}
+
+a{color:inherit;text-decoration:none}
+
+img,svg,video{max-width:100%;display:block}
+
+input,textarea,select{font-family:inherit;color:inherit;background:none;border:none;outline:none}
+
+/* Selection and scrollbars follow the active theme rather than a
+   hardcoded teal — the first thing that made the UI feel generic. */
+::selection{background:color-mix(in srgb,var(--accent) 35%,transparent)}
+
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-thumb{background:color-mix(in srgb,var(--accent) 45%,#1e2a44);border-radius:10px}
+::-webkit-scrollbar-track{background:transparent}
+body[data-mode="light"] ::-webkit-scrollbar-thumb{background:color-mix(in srgb,var(--accent) 40%,#cbd5e1)}
+
+:focus-visible{
+  outline:2px solid var(--accent,#2dd4bf);
+  outline-offset:3px;
+}

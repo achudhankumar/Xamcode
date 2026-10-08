@@ -1,0 +1,3982 @@
+(function(){
+'use strict';
+
+/* ============================================================
+   EXTERNAL DATA ALIASES — read from window.XC.*
+   These are populated by js/data-topics.js, data-formulas.js, etc.
+   ============================================================ */
+const TOPICS     = window.XC.TOPICS;
+const FORMULAS   = window.XC.FORMULAS;
+const CHEATCODES = window.XC.CHEATCODES;
+const VAATHIYAR  = window.XC.VAATHIYAR;
+
+/* Upload size cap. Kept in one place so the dropzone label, the file
+   picker validation and the server limit cannot drift apart. The server
+   is authoritative and reads the same value from MAX_PDF_MB. */
+const MAX_PDF_MB = 20;
+
+/* ============================================================
+   MINI VISUAL DISPATCHER — delegates to data-visuals.js
+   ============================================================ */
+function mini(type){
+  return (window.XC && window.XC.SVG && window.XC.SVG.miniSvg)
+    ? window.XC.SVG.miniSvg(type)
+    : `<svg viewBox="0 0 200 100" style="width:100%;height:100px"><rect x="60" y="35" width="80" height="30" rx="6" fill="#111a2e" stroke="#2dd4bf"/><text x="100" y="54" text-anchor="middle" font-size="9" fill="#fff">?</text></svg>`;
+}
+
+/* ============================================================
+   CONTENT
+   ============================================================ */
+/* ============================================================
+   STATE
+   ============================================================ */
+const state = {
+  view:'landing',
+  topicIdx: 0,
+  step: 0,
+  studyTab: 'visual',
+  answers: loadSavedAnswers(),
+  /* Sequential quiz flow: qStep is the question on screen, qDone flips
+     when the last question has been passed and the results screen
+     takes over. Neither is persisted — they are per-topic session state
+     re-seeded by resetQuizFlow() whenever a topic is opened. */
+  qStep: 0,
+  qDone: false,
+  playing: true,
+  autoTimer: null,
+  resumeTimer: null,
+  autoMs: 4000,
+  fcIdx: 0,
+  fcDeck: [],
+  fcOpen: false,
+  formulaId: null,
+  vaathiyarMode: 'crash',
+  vaathiyarCrashIdx: 0,
+  vaathiyarCrashPlaying: false,
+  vaathiyarCrashTimer: null,
+  vaathiyarSolveStep: 0,
+  vaathiyarSolveAuto: false,
+  vaathiyarSolveTimer: null,
+  vaathiyarFlashIdx: 0,
+  vaathiyarFlashFlipped: false,
+  vaathiyarEli5: 'kid',
+  collapsedUnits: {},
+  aiStudy: null,
+  aiPage: {type:'plan'},
+  aiLessonMode: 'crash',
+  aiVisualStep: 0,
+  aiVisualPlaying: false,
+aiQuizVisualStep: 0,
+  aiVisualTimer: null,
+  aiLessonFlashIdx: 0,
+  aiLessonFlashFlipped: false,
+  aiExplanationLevel: 'simple',
+  aiQuizAnswers: {},
+  aiFlashIdx: 0,
+  aiFlashFlipped: false,
+  aiMessages: [],
+  aiChatBusy: false,
+  /* Per-topic 2D images (MiniMax image-01, one per concept). The job id that
+     produced the finished study is kept so POST /api/topic-images can bind
+     image requests to it — no new PDF is consumed, so the 5-PDF daily
+     allowance stays the single gate. Motion stays in the animated SVG layer;
+     the generated still is the lesson's header image. */
+  aiJobId: null,
+  aiTopicImages: {},
+  aiTopicImageBusy: {}
+};
+
+function escapeHtml(value){
+  return String(value ?? '').replace(/[&<>"']/g, character => ({
+    '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
+  })[character]);
+}
+
+function loadSavedAnswers(){
+  const raw = localStorage.getItem('xc-progress');
+  if(!raw) return {};
+  let saved;
+  try{
+    saved = JSON.parse(raw);
+  }catch(error){
+    console.warn('Saved quiz progress could not be parsed; starting with empty progress.', error);
+    return {};
+  }
+  if(!saved || typeof saved!=='object' || Array.isArray(saved)){
+    console.warn('Saved quiz progress has an invalid shape; starting with empty progress.');
+    return {};
+  }
+  const answers = {};
+  Object.entries(saved).forEach(([key, value])=>{
+    const match = /^(\d+)-(\d+)$/.exec(key);
+    if(!match){
+      console.warn('Skipping saved quiz answer with an invalid key:', key);
+      return;
+    }
+    const topicIdx = Number(match[1]);
+    const questionIdx = Number(match[2]);
+    const question = TOPICS[topicIdx]?.questions[questionIdx];
+    if(!question || !Number.isInteger(value) || value<0 || value>=question.opts.length){
+      console.warn('Skipping an invalid saved quiz answer:', key);
+      return;
+    }
+    answers[key] = value;
+  });
+  return answers;
+}
+
+function saveAnswers(){
+  try{
+    localStorage.setItem('xc-progress', JSON.stringify(state.answers));
+  }catch(error){
+    console.error('Could not save quiz progress to local storage.', error);
+  }
+}
+
+/* §11 — cinematic theme/mode shift: a veil in the destination world's
+   colors covers the swap, then the new theme fades back in (~850 ms).
+   The first call (boot) commits instantly — no sweep on page load. */
+let themeShiftTimers = [];
+let themeShiftStart = 0;
+function applyTheme(theme, mode){
+  const commit = ()=>{
+    document.body.setAttribute('data-theme', theme);
+    document.body.setAttribute('data-mode', mode);
+    localStorage.setItem('xc-theme', theme);
+    localStorage.setItem('xc-mode', mode);
+    document.querySelectorAll('.theme-card').forEach(el=>{
+      el.classList.toggle('active', el.dataset.setTheme===theme);
+    });
+    document.querySelectorAll('.mode-toggle').forEach(el=>{
+      el.classList.toggle('active', el.dataset.setMode===mode);
+    });
+    const knob = document.querySelector('#themeBtn .knob');
+    if(knob){
+      knob.textContent = mode==='light'?'☀':'🌙';
+      const label = mode==='light'?'Switch to dark mode':'Switch to light mode';
+      knob.parentElement?.setAttribute('aria-label', label);
+      knob.parentElement?.setAttribute('title', label);
+    }
+  };
+  if(!applyTheme.ready){
+    applyTheme.ready = true;
+    commit();
+    return;
+  }
+  const unchanged = document.body.getAttribute('data-theme')===theme
+                 && document.body.getAttribute('data-mode')===mode;
+  if(unchanged){ commit(); return; }
+  const reduceShift = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(reduceShift){ commit(); return; }
+  themeShiftTimers.forEach(clearTimeout);
+  themeShiftTimers = [];
+  const waitCover = ()=>Math.max(0, 320 - (performance.now() - themeShiftStart));
+  if(document.body.classList.contains('theme-shifting')){
+    /* rapid re-tap mid-sweep — land the new theme behind the current cover */
+    themeShiftTimers.push(setTimeout(commit, waitCover()));
+    themeShiftTimers.push(setTimeout(()=>document.body.classList.remove('theme-shifting'), waitCover() + 40));
+    return;
+  }
+  themeShiftStart = performance.now();
+  document.body.classList.add('theme-shifting');
+  themeShiftTimers.push(setTimeout(commit, 320));
+  themeShiftTimers.push(setTimeout(()=>document.body.classList.remove('theme-shifting'), 360));
+}
+
+/* ============================================================
+   AUTOPLAY
+   ============================================================ */
+function startAutoPlay(){
+  stopAutoPlay();
+  if(!state.playing) return;
+  if(state.view!=='study' && state.view!=='formula') return;
+  state.autoTimer = setInterval(()=>{
+    const steps = state.view==='formula'
+      ? (FORMULAS.find(x=>x.id===state.formulaId)||FORMULAS[0]).steps
+      : TOPICS[state.topicIdx].steps;
+    const next = (state.step + 1) % steps.length;
+    setStepInternal(next);
+  }, state.autoMs);
+}
+function stopAutoPlay(){
+  if(state.autoTimer){ clearInterval(state.autoTimer); state.autoTimer = null; }
+}
+function refreshPlayBtn(){
+  const btn = document.getElementById('playBtn');
+  if(!btn) return;
+  btn.textContent = state.playing ? '⏸ Pause' : '▶ Play';
+  btn.classList.toggle('paused', !state.playing);
+}
+
+/* ============================================================
+   HEADER
+   ============================================================ */
+/* Account chip in the header. auth.js owns the session and the
+   dropdown; this only renders the button and returns '' when there is
+   no session (guest mode, or auth.js unavailable). */
+function accountButton(){
+  const auth = window.XC && window.XC.auth;
+  if(!auth || typeof auth.session!=='function') return '';
+  const s = auth.session();
+  if(!s) return '';
+  const label = s.name || s.email || 'Account';
+  return `<button type="button" class="acct-btn" data-acct-toggle aria-expanded="false" aria-haspopup="true" aria-label="Account menu for ${escapeHtml(label)}">
+      <span class="acct-avatar" aria-hidden="true">${escapeHtml(label.charAt(0).toUpperCase())}</span>
+      <span class="acct-name">${escapeHtml(label)}</span>
+      <span class="acct-caret" aria-hidden="true">▾</span>
+    </button>`;
+}
+
+function header(){
+  const mode = (localStorage.getItem('xc-mode') || 'dark');
+  const activeView = state.view==='study'?'workspace':state.view==='formula'?'formulas':state.view;
+  const navItem = (view,label) => `<button type="button" data-nav="${view}" class="${activeView===view?'active':''}" ${activeView===view?'aria-current="page"':''}>${label}</button>`;
+  return `<header class="header"><div class="h-inner">
+    <div class="h-left">
+      <button type="button" class="logo-wrap" data-nav="landing" aria-label="XamCode AI home">
+        <span class="brand-mark logo" aria-hidden="true">
+          <svg viewBox="0 0 48 48" focusable="false">
+            <path class="mark-page" d="M23.5 14.5c-4.9-2.2-9.3-2.2-13.5-.3v20c4.1-1.9 8.6-1.9 13.5.3z"/>
+            <path class="mark-page" d="M24.5 14.5c4.9-2.2 9.3-2.2 13.5-.3v20c-4.1-1.9-8.6-1.9-13.5.3z"/>
+            <path class="mark-code" d="m19.5 21-3 3 3 3m9-6 3 3-3 3"/>
+            <path class="mark-spine" d="M24 15v19"/>
+          </svg>
+        </span>
+        <span class="brand">XamCode <span class="brand-ai">AI</span></span>
+      </button>
+      <nav class="nav" aria-label="Main navigation">
+        ${navItem('landing','Home')}
+        ${navItem('workspace','Workspace')}
+        ${navItem('formulas','Formulas')}
+        ${navItem('library','📚 Library')}
+      </nav>
+    </div>
+    <div class="h-center">
+      <button type="button" class="search-trigger" data-search-open aria-label="Search topics and formulas">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg>
+        <span class="search-trigger-text">Search topics &amp; formulas</span>
+        <kbd class="search-trigger-kbd" id="searchKbd">/</kbd>
+      </button>
+    </div>
+    <div class="h-right">
+      <button id="themeBtn" title="Toggle theme (D)" aria-label="Toggle light or dark mode"><div class="knob">${mode==='light'?'☀':'🌙'}</div></button>
+      <button class="btn-primary" data-open="upload">New AI study</button>
+      <button class="btn-ghost" id="themeOpen" style="display:inline-flex;align-items:center;gap:6px">🎨 Theme</button>
+      ${accountButton()}
+      <button type="button" class="mobile-menu-toggle" data-mobile-menu aria-expanded="false" aria-controls="mobileNav" aria-label="Open navigation">☰</button>
+    </div>
+    <nav class="mobile-nav" id="mobileNav" aria-label="Main navigation">
+      ${navItem('landing','Home')}
+      ${navItem('workspace','Workspace')}
+      ${navItem('formulas','Formulas')}
+    </nav>
+  </div></header>`;
+}
+
+/* ============================================================
+   LANDING PAGE
+   ============================================================ */
+function landingView(){
+  const totalQuestions = TOPICS.reduce((sum,t)=>sum+t.questions.length,0);
+  const unitCount = new Set(TOPICS.map(t=>t.unit||'I')).size;
+  return header()+`<main class="page-shell">
+    <section class="hero">
+      <div class="hero-copy">
+        <div class="hero-kicker"><span></span> YOUR PDF, READY TO TEACH</div>
+        <h1>Turn any PDF into<br>a study space <span class="accent">that gets you.</span></h1>
+        <p>Learn from your own material in any subject. XAMCODE AI turns it into clear explanations, visual learning steps, practice questions, and flashcards.</p>
+        <div class="hero-btns">
+          <button class="btn-hero" data-open="upload">Create an AI study space <span aria-hidden="true">↗</span></button>
+          <button class="btn-hero-outline" data-nav="workspace">Explore sample lessons</button>
+        </div>
+        <div class="hero-proof"><span class="proof-avatars" aria-hidden="true"><i>AI</i><i>PDF</i><i>↗</i></span><span>Start with the material you already have</span></div>
+        <div class="stats" aria-label="Sample course contents">
+          <span><b>${unitCount}</b><small>sample units</small></span>
+          <span><b>${TOPICS.length}</b><small>sample concepts</small></span>
+          <span><b>${totalQuestions}</b><small>sample questions</small></span>
+        </div>
+      </div>
+      <div class="preview">
+        <div class="pv-head"><span><i></i> SAMPLE COURSE PREVIEW</span><span class="tag">INTERACTIVE LESSON</span></div>
+        <div class="pv-scene">
+          <svg viewBox="0 0 640 440" role="img" aria-label="Illustration of data moving between devices through a network router">
+            <defs>
+              <linearGradient id="networkLine" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#6477ff" stop-opacity=".12"/><stop offset=".5" stop-color="#70e8d4" stop-opacity=".7"/><stop offset="1" stop-color="#6477ff" stop-opacity=".18"/></linearGradient>
+              <linearGradient id="networkRouter" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#273b5d"/><stop offset="1" stop-color="#131e32"/></linearGradient>
+              <radialGradient id="networkHalo"><stop stop-color="#47d8c3" stop-opacity=".22"/><stop offset="1" stop-color="#47d8c3" stop-opacity="0"/></radialGradient>
+              <filter id="networkBlur"><feGaussianBlur stdDeviation="25"/></filter>
+              <filter id="networkGlow"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+              <pattern id="networkGrid" width="36" height="36" patternUnits="userSpaceOnUse"><path d="M36 0H0v36" fill="none" stroke="#a7b6d1" stroke-opacity=".08"/></pattern>
+            </defs>
+            <rect width="640" height="440" fill="url(#networkGrid)"/>
+            <circle cx="322" cy="218" r="210" fill="url(#networkHalo)" filter="url(#networkBlur)"/>
+            <g fill="none" stroke="url(#networkLine)" stroke-width="2"><path d="M139 117 286 187M499 104 359 184M119 320l166-69m218 98-144-75M207 388l98-108"/><path d="M139 117 499 104 503 349 207 388 119 320z" stroke-opacity=".28" stroke-dasharray="4 10"/></g>
+            <g class="network-device" transform="translate(286 172)">
+              <path d="m0 28 72-39 72 39-72 42z" fill="#0c1727" stroke="#83f3e0" stroke-opacity=".55"/>
+              <path d="m0 28 72 42v78L0 106z" fill="#17263b" stroke="#83f3e0" stroke-opacity=".38"/>
+              <path d="m72 70 72-42v78l-72 42z" fill="#0e1a2c" stroke="#83f3e0" stroke-opacity=".32"/>
+              <path d="m20 34 52-28 49 28-49 28z" fill="url(#networkRouter)" stroke="#91f9e7"/>
+              <path d="m21 36 50 29v49L21 86z" fill="url(#networkRouter)" stroke="#61d9d2"/>
+              <path d="m71 65 49-29v49l-49 29z" fill="#172740" stroke="#61d9d2"/>
+              <path d="M42 75v10m14-2v10m14-2v10m14-22v10m14-18v10" stroke="#a3fff0" stroke-width="3" stroke-linecap="round" filter="url(#networkGlow)"/>
+            </g>
+            <g class="network-endpoint" transform="translate(103 78)"><rect width="72" height="88" rx="12" fill="#111e32" stroke="#91a4c5" stroke-opacity=".5"/><rect x="9" y="9" width="54" height="63" rx="6" fill="#182942"/><path d="m29 80 14 0m-7-8v8" stroke="#879ab9" stroke-width="3" stroke-linecap="round"/><circle cx="36" cy="40" r="11" fill="#78f0dc" fill-opacity=".16"/><path d="m33 35 8 5-8 5z" fill="#96f4e6"/></g>
+            <g class="network-endpoint" transform="translate(462 67)"><rect width="76" height="68" rx="13" fill="#111e32" stroke="#91a4c5" stroke-opacity=".5"/><rect x="9" y="9" width="58" height="42" rx="6" fill="#182942"/><path d="M26 60h24m-12-9v9m-10-30h8m5 0h8m-21 7h20" stroke="#91f3e2" stroke-width="2" stroke-linecap="round"/></g>
+            <g class="network-endpoint" transform="translate(82 290)"><rect width="76" height="54" rx="14" fill="#111e32" stroke="#91a4c5" stroke-opacity=".5"/><circle cx="19" cy="27" r="5" fill="#72ead9"/><circle cx="38" cy="27" r="5" fill="#667a9a"/><circle cx="57" cy="27" r="5" fill="#667a9a"/></g>
+            <g class="network-endpoint" transform="translate(468 313)"><path d="M8 24 38 7l30 17v39l-30 17L8 63z" fill="#14243a" stroke="#91a4c5" stroke-opacity=".5"/><path d="m8 24 30 18 30-18M38 42v38" fill="none" stroke="#61d9d2"/><circle cx="38" cy="40" r="5" fill="#80f2df" filter="url(#networkGlow)"/></g>
+            <g fill="#d6fff7" filter="url(#networkGlow)"><circle r="4"><animateMotion dur="3.2s" repeatCount="indefinite" path="M175 121 306 205"/></circle><circle r="4"><animateMotion dur="3.6s" begin="-1.2s" repeatCount="indefinite" path="M480 101 358 179"/></circle><circle r="4"><animateMotion dur="3.4s" begin="-2s" repeatCount="indefinite" path="M156 317 289 251"/></circle></g>
+            <g font-family="ui-monospace,monospace" font-size="10" font-weight="600" letter-spacing="1.3" fill="#9baec9"><text x="101" y="184">CLIENT</text><text x="465" y="153">SERVER</text><text x="82" y="366">DEVICE 03</text><text x="466" y="407">GATEWAY</text></g>
+          </svg>
+          <div class="pv-caption"><span class="pv-caption-icon">↗</span><span><b>Follow the packet</b><small>See how data finds its way home.</small></span><span class="pv-caption-step">01 <i>/</i> 05</span></div>
+        </div>
+      </div>
+    </section>
+    <section class="sec feature-section">
+      <div class="section-heading"><div><span class="section-kicker">MADE TO MAKE IT CLICK</span><h2>From your document<br><span>to real understanding.</span></h2></div><p class="sub">Your material becomes clear concepts, visual learning steps, practice, and revision—whatever the subject.</p></div>
+      <div class="grid-3">
+        <article class="card"><div class="feature-card-top"><div class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m10 9 5 3-5 3z"/></svg></div><span class="feature-index">01</span></div><h3>Visual learning steps</h3><p>Turn difficult ideas into clear sequences</p></article>
+        <article class="card"><div class="feature-card-top"><div class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4.5 7.2v9.6L12 21l7.5-4.2V7.2z"/><path d="m4.8 7.4 7.2 4.1 7.2-4.1M12 11.7V21"/></svg></div><span class="feature-index">02</span></div><h3>Key concepts</h3><p>Focus on the important ideas in your PDF</p></article>
+        <article class="card"><div class="feature-card-top"><div class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19h14M7 16l3-5 3 2 4-7"/><circle cx="17" cy="6" r="2"/></svg></div><span class="feature-index">03</span></div><h3>Relevant formulas</h3><p>Extract equations and explain what they mean</p></article>
+        <article class="card"><div class="feature-card-top"><div class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.5h14v15H5z"/><path d="m8 12 2.5 2.5L16 9"/></svg></div><span class="feature-index">04</span></div><h3>Practice questions</h3><p>Check your understanding with generated quizzes</p></article>
+        <article class="card"><div class="feature-card-top"><div class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21z"/><path d="M4 5.5v13A2.5 2.5 0 0 1 6.5 16H20"/></svg></div><span class="feature-index">05</span></div><h3>Active recall</h3><p>Study key ideas with AI-built flashcards</p></article>
+        <article class="card"><div class="feature-card-top"><div class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v2m0 14v2M3 12h2m14 0h2M5.6 5.6 7 7m10 10 1.4 1.4m0-12.8L17 7M7 17l-1.4 1.4"/><circle cx="12" cy="12" r="4"/></svg></div><span class="feature-index">06</span></div><h3>Grounded AI tutor</h3><p>Ask questions with your document as context</p></article>
+      </div>
+    </section>
+    <section class="course-cta">
+      <div class="course-cta-mark" aria-hidden="true">X<span>.</span></div>
+      <div><span class="section-kicker">YOUR NEXT CONCEPT IS CLOSER THAN YOU THINK</span><h2>Start with your PDF.<br><span>See the whole picture.</span></h2><p>Build a personal AI study space from the subject you’re learning.</p></div>
+      <button class="btn-hero" data-open="upload">Create your AI study space <span aria-hidden="true">↗</span></button>
+    </section>
+  </main>`;
+}
+
+/* LIBRARY VIEW — stored PDFs + outputs with 30-day trial banner.
+   Reopening restores the study JSON into state. Expiry is enforced
+   by XC.library: expired + not renewed => list is empty (purged). */
+let libraryCache = null;
+let libraryCacheAt = 0;
+function libraryView(){
+  const trial = window.XC?.library ? window.XC.library.trialStatus()
+    : { daysLeft: 30, expired: false };
+  const items = Array.isArray(libraryCache) ? libraryCache : [];
+  const banner = trial.expired
+    ? `<div class="ai-study-notice" role="alert">Your 30-day trial ended — stored studies were deleted. <button type="button" class="btn-primary" data-library-renew>Renew trial</button></div>`
+    : `<div class="ai-study-notice" role="status">Trial: <b>${trial.daysLeft} days left</b> of 30. Renew to keep your stored PDFs + outputs.</div>`;
+  return header()+`<main class="page-shell"><section class="ai-page-hero">
+    <div class="panel-tag">📚 MY LIBRARY · ${items.length} SAVED</div>
+    <h1>Your PDFs + outputs.</h1><p>Every analyzed PDF lands here with its lessons, quizzes, and images.</p>${banner}</section>
+    <div class="ai-concept-grid">${items.length ? items.map(e=>`
+      <article class="ai-concept-card"><div class="panel-tag">${escapeHtml(e.subject||'PDF')}</div>
+      <h3>${escapeHtml(e.title)}</h3><p>${escapeHtml((e.summary||'').slice(0,140))}</p>
+      <p class="ai-study-notice">${new Date(e.createdAt).toLocaleDateString()} · ${(e.study?.concepts?.length||0)} lessons</p>
+      <div class="ai-flashcard-actions"><button type="button" data-library-open="${escapeHtml(e.id)}">Open study →</button>
+      <button type="button" data-library-delete="${escapeHtml(e.id)}">Delete</button></div></article>`).join('')
+    : '<p class="ai-empty-state">No saved studies yet. Upload a PDF to build your first one.</p>'}</div>
+    <div class="hero-btns"><button class="btn-hero" data-open="upload">Analyze a PDF ↗</button></div></main>`;
+}
+async function refreshLibrary(){
+  try{
+    if(window.XC?.library){
+      await window.XC.library.trySync();
+      libraryCache = await window.XC.library.listStudies();
+      libraryCacheAt = Date.now();
+    } else libraryCache = [];
+  }catch{ libraryCache = []; }
+  if(state.view==='library') render();
+}
+
+function workspaceViewInner(){
+  const units = {};
+  TOPICS.forEach((t, i) => {
+    const u = t.unit || 'I';
+    if(!units[u]) units[u] = [];
+    units[u].push({ ...t, _idx: i });
+  });
+  const unitLabels = {
+    'I':'UNIT I: Introduction to Networks',
+    'II':'UNIT II: Data Link Layer',
+    'III':'UNIT III: Network Layer',
+    'IV':'UNIT IV: Transport Layer',
+    'V':'UNIT V: Application Layer'
+  };
+  const totalConcepts = TOPICS.length;
+  const totalQuestions = TOPICS.reduce((s,t)=>s+t.questions.length,0);
+  const totalVisuals = TOPICS.filter(t=>typeof t.visual==='function').length;
+  const isCollapsed = u => state.collapsedUnits[u] === true;
+
+  return header()+`<main>
+    <div class="ws-head">
+      <div class="ws-eyebrow">SAMPLE COURSE • COMPUTER NETWORKS</div>
+      <h1 class="ws-title">Computer Networks — Unit Wise</h1>
+      <div class="ws-pills">
+        <span class="ws-pill"><b>${Object.keys(units).length}</b> UNITS</span>
+        <span class="ws-pill"><b>${totalConcepts}</b> CONCEPTS</span>
+        <span class="ws-pill"><b>${totalQuestions}</b> QUESTIONS</span>
+        <span class="ws-pill"><b>${totalVisuals}</b> VISUAL LESSONS</span>
+      </div>
+    </div>
+
+
+    <div class="ws-body">
+      <aside class="tree">
+        <div class="tree-title">TOPIC TREE</div>
+        ${Object.keys(units).map(u => {
+          const collapsed = isCollapsed(u);
+          return `
+          <div class="tree-item">
+            <button type="button" class="tree-btn ${collapsed?'':'active'}" data-toggle-unit="${u}" aria-expanded="${!collapsed}" aria-controls="tree-unit-${u}">
+              <span class="caret">${collapsed?'▸':'▾'}</span>
+              <span>${unitLabels[u]}</span>
+            </button>
+            <div class="tree-sub" id="tree-unit-${u}" ${collapsed?'style="display:none"':''}>
+              ${units[u].map(t => `<button class="tree-sub-btn" data-study="${t._idx}">${t.title}</button>`).join('')}
+            </div>
+          </div>`;
+        }).join('')}
+      </aside>
+
+      <div class="ws-cards">
+        ${Object.keys(units).map(u => {
+          const collapsed = isCollapsed(u);
+          return `
+          <div class="unit-block" style="margin-bottom:28px">
+            <h2 class="unit-heading">
+              <button type="button" class="unit-heading-toggle" data-toggle-unit="${u}" aria-expanded="${!collapsed}" aria-controls="cards-unit-${u}">
+                <span class="unit-chev" aria-hidden="true">${collapsed?'▸':'▾'}</span>
+                <span>${unitLabels[u]}</span>
+                <span class="unit-count">${units[u].length} topics · ${units[u].length} concepts</span>
+              </button>
+            </h2>
+            <div class="unit-grid" id="cards-unit-${u}" ${collapsed?'style="display:none"':''}>
+              ${units[u].map(t => `<button class="concept-card" data-study="${t._idx}"><div class="cc-head"><span>${t.topic.toUpperCase()}</span><span>${t.visId}</span></div><div class="cc-title">${t.title}</div><div class="cc-foot"><span>🎬 Visual</span><span>❓ ${t.questions.length} Q</span></div></button>`).join('')}
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+  </main>`;
+}
+
+function aiStudyPageButton(type,label,indices={},className=''){
+  const data=Object.entries(indices).map(([key,value])=>`data-${key}="${value}"`).join(' ');
+  return `<button type="button" class="ai-page-link ${className}" data-ai-page="${type}" ${data}>${label}</button>`;
+}
+
+/* ============================================================
+   2D DIAGRAM ENGINE — topic-specific layouts
+   ------------------------------------------------------------
+   The AI supplies node labels and a coarse `layout`. That was enough
+   for the renderer, but it made every diagram structurally identical:
+   four archetypes over the same card grid, so two very different topics
+   still produced the same picture. Content repetition was only half the
+   bug; structural repetition was the other half.
+
+   So the layout is chosen HERE, deterministically, from the concept's
+   own text, and each archetype draws genuinely different chrome. Two
+   topics can never render the same shape twice, even if the model
+   hands back similar labels, because the archetype is a function of
+   the content rather than of the model's whim.
+   ============================================================ */
+
+/* FNV-1a. Small, fast and stable across runs, so a concept always gets
+   the same diagram and the workspace never reshuffles on re-render. */
+function aiHash(text){
+  let h=0x811c9dc5;
+  for(let i=0;i<text.length;i++){
+    h^=text.charCodeAt(i);
+    h=Math.imul(h,0x01000193)>>>0;
+  }
+  return h>>>0;
+}
+
+/* Keyword hints win over the hash so the picture matches the idea: a
+   "stack" should draw as layers, a "repeat" as a cycle. The hash only
+   breaks ties when no hint applies, which is what guarantees variety. */
+const AI_LAYOUT_HINTS=[
+  [/layer|stack|tier|level[s]?\b|protocol|encapsulat/i,'layers'],
+  [/cycle|loop|repeat|recurs|cyclic|iterat|feedback/i,'cycle'],
+  [/versus|\bvs\b|compare|contrast|difference|similar|instead of|rather than/i,'compare'],
+  [/type|kind|branch|split|classif|categor|either|options?/i,'tree'],
+  /* Request/response is checked before "process", because a process word
+     alone is vague while an explicit request/response exchange is not. */
+  [/flow|move|transfer|route|path|send|request|response/i,'flow'],
+  [/stage|step|first|then|next|finally|process|order|sequence|workflow|pipeline/i,'stepchain'],
+  [/timeline|history|era|evol|chronol|origin|over time/i,'timeline'],
+  [/matrix|grid|cross/i,'matrix'],
+  [/part|component|element|consist|anatom|make up/i,'stack']
+];
+
+function aiEngineLayout(serverLayout, step, conceptTitle){
+  /* Server speaks the 15 universal layouts; the canvas engine draws 8
+     geometries. Map 1:1 where possible so a HIERARCHY lesson draws as a
+     hierarchy instead of falling through to a radial circle. Unknown or
+     missing layouts fall back to the content-driven picker. */
+  const s = String(serverLayout || '').toLowerCase().trim();
+  const map = { flow: 'flow', arch: 'stack', seq: 'timeline',
+    compare: 'compare', hierarchy: 'hierarchy', state: 'radial',
+    erd: 'matrix', fbd: 'flow', wave: 'timeline', isometric: 'layers',
+    mindmap: 'radial', matrix: 'matrix', equation: 'stepchain',
+    cycle: 'cycle', layer: 'layers',
+    tree: 'tree', layers: 'layers', stack: 'stack',
+    timeline: 'timeline', stepchain: 'stepchain', radial: 'radial' };
+  if (map[s]) return map[s];
+  return aiPickLayout(step, conceptTitle);
+}
+
+function aiPickLayout(step,conceptTitle){
+  const hay=`${conceptTitle||''} ${step.title||''} ${step.description||''} ${
+    (step.nodes||[]).map(n=>n.label).join(' ')}`;
+  for(const [pattern,layout] of AI_LAYOUT_HINTS){
+    if(pattern.test(hay)) return layout;
+  }
+  /* No hint: derive from content so the same topic is always drawn the
+     same way, while different topics land on different archetypes. */
+  const extra=['layers','tree','timeline','stepchain','matrix','radial','flow'];
+  return extra[aiHash(hay)%extra.length];
+}
+
+function aiDiagramPositions(layout,count){
+  const centerX=300,centerY=156,cardWidth=112,cardHeight=68;
+  if(layout==='hierarchy'||layout==='layers'||layout==='stack'){
+    if(layout==='layers'){
+      /* Stacked bands: each idea is a level of one system. */
+      const band=Math.min(46,(236/(count||1)));
+      return Array.from({length:count},(_,index)=>({
+        x:centerX,y:52+index*band+band/2
+      }));
+    }
+    const children=count-1;
+    return [
+      {x:centerX,y:72},
+      ...Array.from({length:children},(_,index)=>({
+        x:centerX+(index-(children-1)/2)*Math.min(156,360/Math.max(1,children-1)),
+        y:242
+      }))
+    ];
+  }
+  if(layout==='compare'||layout==='matrix'){
+    if(layout==='matrix'){
+      const cols=Math.ceil(Math.sqrt(count));
+      const rows=Math.ceil(count/cols);
+      return Array.from({length:count},(_,index)=>({
+        x:150+(index%cols)*(300/Math.max(1,cols-1)),
+        y:96+Math.floor(index/cols)*(rows>1?150/(rows-1):0)
+      }));
+    }
+    const sideCount=Math.ceil(count/2);
+    /* Space both columns by the actual node count. A fixed 104px pitch
+       pushed the third node of a 5-node diagram to y=312, which is off
+       the bottom of the 312-unit canvas. */
+    const span=sideCount>1?176:0;
+    return Array.from({length:count},(_,index)=>({
+      x:index<sideCount?157:443,
+      y:sideCount>1?68+(index%sideCount)*(span/(sideCount-1)):156
+    }));
+  }
+  if(layout==='stepchain'){
+    /* Alternating staircase so consecutive steps stay visually distinct. */
+    return Array.from({length:count},(_,index)=>({
+      x:count===1?centerX:78+index*(444/Math.max(1,count-1)),
+      y:index%2?212:100
+    }));
+  }
+  if(layout==='timeline'){
+    /* One spine; nodes alternate above and below it. */
+    return Array.from({length:count},(_,index)=>({
+      x:count===1?centerX:72+index*(456/Math.max(1,count-1)),
+      y:index%2?96:216
+    }));
+  }
+  if(layout==='tree'){
+    /* Root with a binary fan below, which is what "branches" implies. */
+    const root={x:centerX,y:74};
+    const kids=Array.from({length:Math.max(1,count-1)},(_,index)=>({
+      x:centerX+(index-(count-2)/2)*Math.min(150,330/Math.max(1,count-2)),
+      y:238
+    }));
+    return [root,...kids];
+  }
+  if(layout==='flow'){
+    if(count===5){
+      return [{x:96,y:96},{x:300,y:96},{x:504,y:96},{x:504,y:225},{x:300,y:225}];
+    }
+    return Array.from({length:count},(_,index)=>({
+      x:count===1?centerX:70+index*(460/(count-1)),
+      y:centerY
+    }));
+  }
+  const radius=count===3?94:count===4?105:116;
+  return Array.from({length:count},(_,index)=>{
+    const angle=-Math.PI/2+(Math.PI*2*index/count);
+    return {x:centerX+Math.cos(angle)*radius,y:centerY+Math.sin(angle)*radius};
+  });
+}
+
+/* Edge topology per archetype. Separated from geometry so the same node
+   count can be wired completely differently per idea. */
+function aiDiagramPairs(layout,nodes){
+  const count=nodes.length;
+  if(!count) return [];
+  if(layout==='hierarchy'||layout==='tree') return nodes.slice(1).map((_,i)=>[0,i+1]);
+  if(layout==='compare') return count>=4?[[0,2],[1,3]]:nodes.slice(0,-1).map((_,i)=>[i,i+1]);
+  if(layout==='layers'||layout==='stack') return nodes.slice(0,-1).map((_,i)=>[i,i+1]);
+  if(layout==='matrix') return nodes.slice(1).map((_,i)=>[0,i+1]);
+  if(layout==='stepchain'||layout==='timeline') return nodes.slice(0,-1).map((_,i)=>[i,i+1]);
+  if(layout==='flow'){
+    if(count===5) return [[0,1],[1,2],[2,3],[3,4]];
+    return nodes.slice(0,-1).map((_,i)=>[i,i+1]);
+  }
+  const pairs=nodes.slice(0,-1).map((_,i)=>[i,i+1]);
+  if(count>2) pairs.push([nodes.length-1,0]);
+  return pairs;
+}
+
+function aiDiagramEdge(from,to,width,height,delay,index,markerId){
+  const dx=to.x-from.x,dy=to.y-from.y;
+  const distance=Math.hypot(dx,dy)||1;
+  const ux=dx/distance,uy=dy/distance;
+  const insetX=width/2+2,insetY=height/2+2;
+  const startOffset=Math.min(insetX/Math.max(Math.abs(ux),.001),insetY/Math.max(Math.abs(uy),.001));
+  const endOffset=Math.min(insetX/Math.max(Math.abs(ux),.001),insetY/Math.max(Math.abs(uy),.001));
+  const x1=from.x+ux*startOffset,y1=from.y+uy*startOffset;
+  const x2=to.x-ux*endOffset,y2=to.y-uy*endOffset;
+  const bend=from.y===to.y?0:(index%2===0?-10:10);
+  return `<path class="ai-diagram-edge" pathLength="1" style="--diagram-delay:${delay}ms" d="M ${x1.toFixed(1)} ${y1.toFixed(1)} Q ${((x1+x2)/2).toFixed(1)} ${((y1+y2)/2+bend).toFixed(1)} ${x2.toFixed(1)} ${y2.toFixed(1)}" marker-end="url(#${markerId})"/>`;
+}
+
+/* ============================================================
+   MERMAID UPGRADE — structured diagrams the engine cannot draw
+   ------------------------------------------------------------
+   The custom engine covers flow, cycle, hierarchy, comparison and
+   friends. Mermaid adds four shapes it genuinely cannot express:
+   sequence diagrams (ordered exchanges), state machines, entity
+   relationships and class structure.
+
+   Three rules govern this integration:
+     1. Mermaid is LAZY. Nothing is fetched until a concept actually
+        asks for one of those four shapes, so the common case never
+        pays the download.
+     2. It is a progressive enhancement. Every slot renders the custom
+        engine's SVG first and Mermaid replaces it only on success, so
+        a CDN failure or a parse error is invisible.
+     3. The text stays real SVG text, which is the whole point. A
+        diffusion image generator cannot label a diagram legibly.
+   ============================================================ */
+
+/* Only these four shapes route to Mermaid. Everything else keeps using
+   the bespoke engine, which matches the app's visual language better. */
+const AI_MERMAID_HINTS=[
+  [/state machine|lifecycle|life cycle|transition|idle|terminated|state diagram/i,'state'],
+  [/handshake|request.?response|round.?trip|\back\b|syn.?ack|packet|exchange between/i,'sequence'],
+  [/entity.?relationship|\ber\b diagram|database schema|primary key|foreign key|each table|relation between/i,'er'],
+  [/class diagram|inheritance|encapsulat|superclass|subclass|\boop\b|polymorphi/i,'class']
+];
+
+function aiPickMermaidType(step,conceptTitle){
+  const hay=`${conceptTitle||''} ${step.title||''} ${step.description||''} ${
+    (step.nodes||[]).map(n=>`${n.label} ${n.detail}`).join(' ')}`;
+  for(const [pattern,type] of AI_MERMAID_HINTS) if(pattern.test(hay)) return type;
+  return null;
+}
+
+/* Mermaid parses strictly and throws on quotes, brackets and colons in
+   labels, which the AI writes freely. Strip them rather than escape, so
+   a bad label degrades to slightly dull text instead of failing the
+   whole render. */
+function aiMermaidSafe(text){
+  return String(text??'')
+    .replace(/["'`]/g,'')
+    .replace(/[[\]{}()|#<>]/g,' ')
+    .replace(/[:;]/g,' -')
+    .replace(/\s+/g,' ')
+    .trim()
+    .slice(0,38)||'step';
+}
+
+/* Builds the syntax from the concept's OWN node labels, so the diagram is
+   still grounded in the PDF rather than in a generic template. */
+function aiMermaidSyntax(type,step){
+  const nodes=step.nodes||[];
+  const label=i=>aiMermaidSafe(nodes[i]?.label??nodes[i]?.title??`Step ${i+1}`);
+  const detail=i=>aiMermaidSafe(nodes[i]?.detail??nodes[i]?.description??'');
+  const ident=s=>aiMermaidSafe(s).replace(/\s+/g,'_').replace(/[^\w]/g,'')||'Item';
+
+  if(type==='sequence'){
+    const a=label(0),b=label(1);
+    const lines=[`sequenceDiagram`,`autonumber`,`participant ${ident(a)} as ${a}`,`participant ${ident(b)} as ${b}`];
+    nodes.slice(2).forEach((_,i)=>{
+      const to=i%2===0?ident(b):ident(a), from=i%2===0?ident(a):ident(b);
+      lines.push(`${from}->>${to}: ${label(i+2)}`);
+    });
+    lines.push(`${ident(a)}-->>${ident(b)}: ${detail(2)||'Result'}`);
+    return lines.join('\n');
+  }
+  if(type==='state'){
+    const lines=[`stateDiagram-v2`,`    [*] --> ${ident(label(0))}`];
+    nodes.slice(1).forEach((node,i)=>lines.push(`    ${ident(label(i+1))} --> ${ident(node.state||detail(i+1)||label(i+1))}`));
+    lines.push(`    ${ident(nodes[nodes.length-1]?.state||label(nodes.length-1))} --> [*]`);
+    return lines.join('\n');
+  }
+  if(type==='er'){
+    const lines=[`erDiagram`];
+    for(let i=0;i<Math.max(2,nodes.length-1);i+=2){
+      lines.push(`    ${ident(label(i))} ||--o{ ${ident(label(i+1))} : "${detail(i)||'relates to'}"`);
+    }
+    return lines.join('\n');
+  }
+  const lines=[`classDiagram`];
+  nodes.forEach((node,i)=>{
+    lines.push(`    class ${ident(label(i))} {`);
+    lines.push(`        +${(aiMermaidSafe(node.method||node.detail||'run')).replace(/[^\w]/g,'')}()`);
+    lines.push('    }');
+  });
+  for(let i=1;i<nodes.length;i++) lines.push(`    ${ident(label(i-1))} <|-- ${ident(label(i))}`);
+  return lines.join('\n');
+}
+
+/* Slot payloads live in a Map, not a data attribute: Mermaid syntax is
+   full of quotes and angle brackets that would otherwise have to survive
+   an HTML attribute round-trip. */
+const aiMermaidSlots=new Map();
+let aiMermaidSlotSeq=0;
+
+/* Emits a slot that ALREADY contains the fallback SVG. Mermaid only ever
+   replaces it, so a failure leaves the user with a correct diagram. */
+function aiMermaidSlot(type,step,fallbackSvg,caption){
+  const key=`mmd-${++aiMermaidSlotSeq}`;
+  aiMermaidSlots.set(key,{type,syntax:aiMermaidSyntax(type,step),fallback:fallbackSvg,caption});
+  return `<div class="ai-mermaid" data-mermaid-slot="${key}">${fallbackSvg}</div>`;
+}
+
+let aiMermaidLoading=null;
+function ensureAiMermaid(){
+  if(window.mermaid?.render) return Promise.resolve(window.mermaid);
+  if(aiMermaidLoading) return aiMermaidLoading;
+  const url='https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  aiMermaidLoading=import(/* webpackIgnore: true */ url)
+    .then(async mod=>{
+      const api=mod.default;
+      api.initialize({startOnLoad:false,securityLevel:'strict',theme:'dark',fontFamily:'inherit'});
+      window.mermaid=api;
+      return api;
+    })
+    .catch(error=>{ aiMermaidLoading=null; throw error; });
+  return aiMermaidLoading;
+}
+
+/* Walks the freshly rendered view and upgrades any slot. Never throws, so
+   a blocked CDN degrades to the bespoke engine instead of breaking the
+   lesson. A timeout covers a CDN that hangs rather than erroring. */
+async function hydrateAiMermaid(root=document){
+  const slots=[...root.querySelectorAll('[data-mermaid-slot]')];
+  if(!slots.length) return;
+  const withTimeout=promise=>Promise.race([
+    promise,
+    new Promise((_,reject)=>setTimeout(()=>reject(new Error('mermaid timed out')),9000))
+  ]);
+  let mermaid;
+  try{
+    mermaid=await withTimeout(ensureAiMermaid());
+  }catch{
+    return;
+  }
+  for(const slot of slots){
+    const payload=aiMermaidSlots.get(slot.dataset.mermaidSlot);
+    if(!payload) continue;
+    try{
+      const {svg}=await mermaid.render(`mmd-out-${slot.dataset.mermaidSlot}`,payload.syntax);
+      if(!svg||!svg.includes('<svg')) throw new Error('empty render');
+      slot.innerHTML=svg;
+      slot.dataset.diagramSource='mermaid';
+      /* Mermaid emits an unlabelled graphic, so restore the accessible
+         name the bespoke engine provided. */
+      slot.firstElementChild?.setAttribute('role','img');
+      slot.firstElementChild?.setAttribute('aria-label',payload.caption||payload.type);
+    }catch{
+      slot.dataset.diagramSource='fallback';
+    }
+  }
+}
+
+/* Per-archetype chrome. This is what actually makes two diagrams look
+   different rather than just being the same boxes in new positions. */
+function aiDiagramChrome(layout,nodes,positions,id){
+  const kind=`ai-chrome-${layout}`;
+  const yOf=i=>positions[i]?positions[i].y:156;
+  const xOf=i=>positions[i]?positions[i].x:300;
+  if(layout==='hierarchy'){
+    /* True top-down tree: one spine from the root card down to the child
+       row, then a bus linking every child. Your screenshot showed three
+       disconnected parts (badge, arrow, curve) because the old chrome was
+       a decorative ellipse that never touched the cards. */
+    const n=nodes.length;
+    if(n<2) return '';
+    const rootBottom=yOf(0)+34, childTop=yOf(1)-34;
+    const midY=(rootBottom+childTop)/2;
+    const xs=[]; for(let i=1;i<n;i++) xs.push(xOf(i));
+    const x0=Math.min(...xs), x1=Math.max(...xs);
+    return `<g class="${kind}">
+      <line x1="${xOf(0).toFixed(1)}" y1="${rootBottom.toFixed(1)}" x2="${xOf(0).toFixed(1)}" y2="${midY.toFixed(1)}" class="ai-chrome-spine"/>
+      <line x1="${x0.toFixed(1)}" y1="${midY.toFixed(1)}" x2="${x1.toFixed(1)}" y2="${midY.toFixed(1)}" class="ai-chrome-spine"/>
+      ${xs.map(x=>`<line x1="${x.toFixed(1)}" y1="${midY.toFixed(1)}" x2="${x.toFixed(1)}" y2="${childTop.toFixed(1)}" class="ai-chrome-spine"/>`).join('')}
+    </g>`;
+  }
+  if(layout==='layers'||layout==='stack'){
+    return `<g class="${kind}">${positions.map((p,i)=>
+      `<rect x="${(p.x-236).toFixed(1)}" y="${(p.y-19).toFixed(1)}" width="472" height="38" rx="9"
+        style="--diagram-delay:${i*90}ms" class="ai-chrome-band"/>`).join('')}</g>`;
+  }
+  if(layout==='timeline'){
+    return `<g class="${kind}">
+      <line x1="56" y1="156" x2="544" y2="156" class="ai-chrome-spine"/>
+      ${positions.map((p,i)=>`<circle cx="${p.x.toFixed(1)}" cy="156" r="5" class="ai-chrome-tick" style="--diagram-delay:${i*90}ms"/>`).join('')}
+    </g>`;
+  }
+  if(layout==='matrix'){
+    return `<g class="${kind}">${nodes.map((_,i)=>
+      `<rect x="${(positions[i].x-62).toFixed(1)}" y="${(positions[i].y-30).toFixed(1)}" width="124" height="60" rx="10"
+        class="ai-chrome-cell" style="--diagram-delay:${i*90}ms"/>`).join('')}</g>`;
+  }
+  if(layout==='compare'){
+    return `<g class="${kind}">
+      <line x1="300" y1="52" x2="300" y2="268" class="ai-chrome-divider"/>
+      ${positions.map(p=>`<line x1="${p.x}" y1="${(p.y-40).toFixed(1)}" x2="${p.x}" y2="${(p.y+40).toFixed(1)}" class="ai-chrome-divider is-soft"/>`).join('')}
+    </g>`;
+  }
+  if(layout==='cycle'||layout==='radial'){
+    return `<g class="${kind}"><circle cx="300" cy="156" r="116" class="ai-chrome-ring"/></g>`;
+  }
+  if(layout==='tree'){
+    return `<g class="${kind}"><ellipse cx="300" cy="156" rx="248" ry="98" class="ai-chrome-ring"/></g>`;
+  }
+  if(layout==='stepchain'){
+    return `<g class="${kind}"><path d="M64 236 L536 76" class="ai-chrome-spine"/></g>`;
+  }
+  return '';
+}
+
+function aiDiagramSvg(step,conceptIndex,stepIndex,conceptTitle){
+  const nodes=step.nodes;
+  /* The archetype is chosen from the content, not trusted blindly from
+     the model, so a lesson can never render as another lesson's picture. */
+  const layout=aiEngineLayout(step.layout, step, conceptTitle);
+  const positions=aiDiagramPositions(layout,nodes.length);
+  const width=112,height=68;
+  const id=`ai-diagram-${conceptIndex}-${stepIndex}`;
+  const markerId=`${id}-arrow`;
+  const pairs=aiDiagramPairs(layout,nodes);
+  const edges=pairs.map(([from,to],index)=>
+    aiDiagramEdge(positions[from],positions[to],width,height,index*90,index,markerId)
+  ).join('');
+  const chrome=aiDiagramChrome(layout,nodes,positions,id);
+  const nodeMarkup=nodes.map((node,index)=>{
+    const {x,y}=positions[index];
+    const label=String(node.label).trim().slice(0,20);
+    const detail=String(node.detail).trim().slice(0,38);
+    /* Code-aware nodes: the model supplies the exact one-line syntax from
+       the PDF (statement, call, loop header). It renders as a monospace
+       syntax line in the second detail row, so the card keeps its 112x68
+       geometry and all positions/edges/chrome stay untouched. Syntax wins
+       the row over wrapped prose, since the statement is the point. */
+    const code=typeof node.code==='string'&&node.code.trim()?node.code.trim().slice(0,80):'';
+    const detailLines=detail.split(/\s+/).reduce((lines,word)=>{
+      const last=lines[lines.length-1];
+      if(!last||`${last} ${word}`.length>19) lines.push(word);
+      else lines[lines.length-1]=`${last} ${word}`;
+      return lines;
+    },['']).filter(Boolean).slice(0,code?1:2);
+    const codeLine=code?`<text class="ai-diagram-node-code" x="12" y="55" textLength="${Math.max(20,Math.min(87,code.length*4.4)).toFixed(1)}" lengthAdjust="spacingAndGlyphs">${escapeHtml(code)}</text>`
+      :detailLines[1]?`<text class="ai-diagram-node-detail" x="12" y="55" textLength="${Math.max(20,Math.min(87,detailLines[1].length*4.7)).toFixed(1)}" lengthAdjust="spacingAndGlyphs">${escapeHtml(detailLines[1])}</text>`:'';
+    return `<g class="ai-diagram-node ${index===0?'is-origin':''}" style="--diagram-delay:${120+index*105}ms" transform="translate(${(x-width/2).toFixed(1)} ${(y-height/2).toFixed(1)})">
+      <rect class="ai-diagram-node-card" width="${width}" height="${height}" rx="13"/>
+      <circle class="ai-diagram-node-dot" cx="13" cy="17" r="3"/>
+      <text class="ai-diagram-node-label" x="23" y="21" textLength="82" lengthAdjust="spacingAndGlyphs">${escapeHtml(label)}</text>
+      <text class="ai-diagram-node-detail" x="12" y="43" textLength="${Math.max(20,Math.min(87,detailLines[0].length*4.7)).toFixed(1)}" lengthAdjust="spacingAndGlyphs">${escapeHtml(detailLines[0])}</text>
+      ${codeLine}
+    </g>`;
+  }).join('');
+  const svg=`<svg class="ai-diagram-svg" data-diagram-layout="${escapeHtml(layout)}" viewBox="0 0 600 312" role="img" aria-labelledby="${id}-title ${id}-description" xmlns="http://www.w3.org/2000/svg">
+    <title id="${id}-title">${escapeHtml(step.title)}: ${escapeHtml(step.description)}</title>
+    <desc id="${id}-description">${escapeHtml(nodes.map(node=>`${node.label}: ${node.detail}`).join('. '))}</desc>
+    <defs><marker id="${markerId}" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto" markerUnits="strokeWidth"><path d="M0 0L8 4.5L0 9z" fill="currentColor"/></marker><pattern id="${id}-grid" width="24" height="24" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" fill="currentColor"/></pattern></defs>
+    <rect class="ai-diagram-grid" width="600" height="312" fill="url(#${id}-grid)"/>
+    ${chrome}
+    <g class="ai-diagram-edges">${edges}</g>
+    <g class="ai-diagram-nodes">${nodeMarkup}</g>
+    <text class="ai-diagram-layout-label" x="20" y="292">${escapeHtml(step.layout.toUpperCase())} · ${String(nodes.length).padStart(2,'0')} CONNECTED IDEAS</text>
+  </svg>`;
+
+  /* Shapes the bespoke engine cannot express are handed to Mermaid, which
+     renders into the SAME svg string first and is upgraded after paint.
+     Nothing is lost if Mermaid never arrives. */
+  const mermaidType=aiPickMermaidType(step,conceptTitle);
+  if(!mermaidType) return svg;
+  return aiMermaidSlot(mermaidType,step,svg,`${step.title}: ${step.description}`);
+}
+
+/* VISUAL RECOMMENDATION — tells the learner which visual explains this
+   question best (diagram scene vs MiniMax still), so the quiz never feels
+   imageless even before an answer is picked. */
+function aiVisualRecommendation(question){
+  const v = question && question.visual;
+  const layout = v && v.layout ? String(v.layout).toUpperCase() : null;
+  if (layout) return `<p class="ai-visual-recommend" role="note"><span aria-hidden="true">🖼</span> Visual recommendation: <b>${escapeHtml(layout)} diagram</b> — answer to unlock the step-by-step 2D visual.</p>`;
+  return `<p class="ai-visual-recommend" role="note"><span aria-hidden="true">🖼</span> Visual recommendation: <b>topic illustration</b> — open the Crash Lesson image for this topic.</p>`;
+}
+
+function aiQuestionCard(question,index,position,total){
+  const selected=state.aiQuizAnswers[index];
+  return `<article class="ai-question-card">
+    <div class="panel-tag">Q${position} · ${escapeHtml(question.category)} · ${escapeHtml(question.difficulty)}</div>
+    <h3>${escapeHtml(question.question)}</h3>
+    ${aiVisualRecommendation(question)}
+    ${selected===undefined?`<details class="ai-question-hint"><summary>Show hint</summary><p>${escapeHtml(question.hint)}</p></details>`:''}
+    ${question.options.map((option,optionIndex)=>{
+      const isCorrect=selected!==undefined&&optionIndex===question.answerIndex;
+      const isWrong=selected===optionIndex&&selected!==question.answerIndex;
+      return `<button type="button" class="ai-answer-option ${isCorrect?'correct':isWrong?'incorrect':''}" data-ai-answer="${index}:${optionIndex}" ${selected!==undefined?'disabled':''}>${String.fromCharCode(65+optionIndex)}. ${escapeHtml(option)}</button>`;
+    }).join('')}
+    ${selected!==undefined?`<div class="ai-answer-feedback"><b>${selected===question.answerIndex?'Correct.':'Not quite.'}</b> ${escapeHtml(question.optionExplanations[selected])}<p>${escapeHtml(question.explanation)}</p><details><summary>Explain it simply</summary><p>${escapeHtml(question.eli5)}</p></details></div>${aiQuestionVisual(question,index)}`:''}
+  </article>`;
+}
+
+/* CHEATCODES PANEL — mirrors the sample workspace's CheatCode tab so a
+   generated lesson is missing no section the hand-authored one has. */
+function aiCheatCodePanel(concept){
+  const cc=concept.cheatCode;
+  if(!cc) return '<section class="ai-detail-card"><p class="ai-empty-state">No cheat codes were generated for this lesson.</p></section>';
+  return `<section class="ai-detail-card ai-cheatcode-panel" aria-label="Cheat codes for ${escapeHtml(concept.title)}">
+    <div class="panel-tag">CHEATCODE · QUICK REVISION</div>
+    <div class="ai-cheatcode-grid">
+      <article class="ai-cheatcode-card ai-cc-why"><span class="ai-cheatcode-icon" aria-hidden="true">💡</span><div><div class="ai-cheatcode-label">WHY IT WORKS</div><p>${escapeHtml(cc.why)}</p></div></article>
+      <article class="ai-cheatcode-card ai-cc-like"><span class="ai-cheatcode-icon" aria-hidden="true">🔮</span><div><div class="ai-cheatcode-label">THINK OF IT LIKE</div><p>${escapeHtml(cc.like)}</p></div></article>
+      <article class="ai-cheatcode-card ai-cc-wrong"><span class="ai-cheatcode-icon" aria-hidden="true">❌</span><div><div class="ai-cheatcode-label">COMMON MISTAKE</div><p>${escapeHtml(cc.wrong)}</p></div></article>
+      <article class="ai-cheatcode-card ai-cc-right"><span class="ai-cheatcode-icon" aria-hidden="true">✅</span><div><div class="ai-cheatcode-label">THE TRUTH</div><p>${escapeHtml(cc.right)}</p></div></article>
+    </div>
+    ${cc.mnemonic?`<article class="ai-cheatcode-card ai-cc-mnemonic"><span class="ai-cheatcode-icon" aria-hidden="true">🧠</span><div><div class="ai-cheatcode-label">MEMORY TRICK</div><p>${escapeHtml(cc.mnemonic)}</p></div></article>`:''}
+    ${Array.isArray(cc.see)&&cc.see.length?`<article class="ai-cheatcode-card ai-cc-see"><div class="ai-cheatcode-label">SEE IT IN THE REAL WORLD</div><ul class="ai-cheatcode-chips">${cc.see.map(item=>`<li>${escapeHtml(item)}</li>`).join('')}</ul></article>`:''}
+    <p class="ai-comparison-takeaway"><b>ONE LINE · </b>${escapeHtml(cc.oneLine)}</p>
+  </section>`;
+}
+
+/* QUIZ 2D VISUAL — a per-question diagram that shows what is being
+   asked and walks the reasoning to the correct option. Reuses the same
+   SVG renderer as the lesson visual so both look identical. */
+function aiQuestionVisual(question,index){
+  const visual=question.visual;
+  if(!visual||!Array.isArray(visual.steps)||!visual.steps.length) return '';
+  const stepIndex=Math.min(state.aiQuizVisualStep||0,visual.steps.length-1);
+  const step=visual.steps[stepIndex];
+  const stepObject={...step,layout:visual.layout};
+  return `<section class="ai-question-visual" aria-label="Visual explanation for this question">
+    <div class="ai-visual-stage-head"><div><div class="panel-tag">2D VISUAL · STEP ${stepIndex+1}/${visual.steps.length}</div><h3>${escapeHtml(step.title)}</h3></div><span class="ai-visual-stage-id">${escapeHtml(visual.caption)}</span></div>
+    <figure class="ai-diagram-figure" data-layout="${escapeHtml(visual.layout)}">${aiDiagramSvg(stepObject,900+index,stepIndex,escapeHtml(question.question))}<figcaption><span>${escapeHtml(visual.layout.toUpperCase())}</span><p>${escapeHtml(step.description)}</p></figcaption></figure>
+    ${visual.steps.length>1?`<div class="ai-visual-step-track">${visual.steps.map((s,i)=>`<button type="button" class="ai-visual-step ${i===stepIndex?'active':i<stepIndex?'done':''}" data-ai-quiz-visual="${index}:${i}"><span>${String(i+1).padStart(2,'0')}</span><b>${escapeHtml(s.title)}</b></button>`).join('')}</div>`:''}
+  </section>`;
+}
+
+function stopAIVisualAutoplay(){
+  if(state.aiVisualTimer){
+    clearInterval(state.aiVisualTimer);
+    state.aiVisualTimer=null;
+  }
+  state.aiVisualPlaying=false;
+}
+
+function validateAIStudyForDisplay(study){
+  if(!study||!Array.isArray(study.units)||!Array.isArray(study.concepts)||
+     !Array.isArray(study.questions)||!Array.isArray(study.flashcards)||
+     !Array.isArray(study.formulas)){
+    return 'The AI response is missing the course outline. Restart XAMCODE with `node server.js`, then upload the PDF again.';
+  }
+  /* Chunked studies deliver Unit 1 first: every unit of the plan is
+     present but only unlocked ones carry topics, so the outline floor
+     drops to 1 unit / 3 lessons while every other rule stays identical. */
+  const chunked = study.chunked===true;
+  const minUnits = chunked?1:3;
+  const minConcepts = chunked?3:4;
+  if(study.units.length<minUnits||study.concepts.length<minConcepts||study.questions.length<8||
+     study.flashcards.length<8){
+    return 'The AI returned an incomplete study plan. Please try the PDF again.';
+  }
+  const text=value=>typeof value==='string'&&value.trim().length>0;
+  /* Code-aware nodes: `code` is optional, but when the model supplies it
+     the line must be real syntax, not whitespace, and fit the card. */
+  const codeOk=node=>node?.code===undefined||
+    (typeof node.code==='string'&&text(node.code)&&node.code.trim().length<=80);
+  if(!study.units.every(unit=>text(unit?.title)&&text(unit?.overview)&&
+      Array.isArray(unit.learningGoals)&&unit.learningGoals.length>0&&
+      Array.isArray(unit.topics)&&(unit.locked||unit.topics.length>0)&&
+      unit.topics.every(topic=>text(topic?.title)&&
+        Array.isArray(topic.conceptIndices)&&topic.conceptIndices.length>0))){
+    return 'The AI returned an incomplete unit or topic outline. Please try the PDF again.';
+  }
+  if(!study.concepts.every(concept=>text(concept?.title)&&text(concept?.summary)&&
+      text(concept?.sourceExcerpt)&&
+      (text(concept?.sourcePage)||(Number.isInteger(concept?.sourcePage)&&concept.sourcePage>0))&&
+      Array.isArray(concept?.keyPoints)&&concept.keyPoints.length>0&&
+      text(concept?.explanation)&&text(concept?.whyItMatters)&&text(concept?.analogy)&&
+      concept.explanationLevels&&text(concept.explanationLevels.simple)&&
+      text(concept.explanationLevels.everyday)&&text(concept.explanationLevels.advanced)&&
+      concept.comparison&&text(concept.comparison.firstLabel)&&
+      text(concept.comparison.secondLabel)&&Array.isArray(concept.comparison.rows)&&
+      concept.comparison.rows.length>0&&text(concept.comparison.takeaway)&&
+      text(concept?.originStory)&&text(concept?.commonTrap)&&text(concept?.correctiveTruth)&&
+      Array.isArray(concept?.realWorldExamples)&&concept.realWorldExamples.length>0&&
+      concept.workedExample&&Array.isArray(concept.workedExample.steps)&&
+      concept.workedExample.steps.length>0&&text(concept.workedExample.answer)&&
+      concept.visualization&&Array.isArray(concept.visualization.steps)&&
+      concept.visualization.steps.length>0&&concept.visualization.steps.every(step=>
+        text(step?.title)&&text(step?.description)&&
+        ['flow','arch','seq','compare','hierarchy','state','erd','fbd','wave','isometric','mindmap','matrix','equation','cycle','layer'].includes(step.layout)&&
+        Array.isArray(step.nodes)&&step.nodes.length>=3&&
+        step.nodes.every(node=>text(node?.label)&&text(node?.detail)&&codeOk(node)))&&
+      concept.cheatCode&&text(concept.cheatCode.why)&&text(concept.cheatCode.like)&&
+      text(concept.cheatCode.wrong)&&text(concept.cheatCode.right)&&
+      text(concept.cheatCode.oneLine)&&text(concept.cheatCode.mnemonic)&&
+      Array.isArray(concept.cheatCode.see)&&concept.cheatCode.see.length>=3&&
+      concept.cheatCode.see.every(text)&&
+      text(concept.quickRecall))){
+    return 'The AI response is missing lesson teaching sections (CheatCodes or a teaching mode). Restart XAMCODE with `node server.js`, then upload the PDF again.';
+  }
+  const assignedConcepts=[];
+  for(const unit of study.units){
+    for(const topic of unit.topics){
+      for(const index of topic.conceptIndices){
+        if(!Number.isInteger(index)||index<0||index>=study.concepts.length){
+          return 'The AI returned an invalid course outline. Please try the PDF again.';
+        }
+        assignedConcepts.push(index);
+      }
+    }
+  }
+  if(assignedConcepts.length!==study.concepts.length||
+     new Set(assignedConcepts).size!==study.concepts.length){
+    return 'The AI course outline does not include each lesson exactly once. Please try the PDF again.';
+  }
+  if(!study.questions.every(question=>Array.isArray(question?.options)&&
+      question.options.length===4&&Array.isArray(question.optionExplanations)&&
+      question.optionExplanations.length===4&&
+      Number.isInteger(question.conceptIndex)&&question.conceptIndex>=0&&
+      question.conceptIndex<study.concepts.length&&
+      question.visual&&Array.isArray(question.visual.steps)&&
+      question.visual.steps.length>0&&question.visual.steps.every(step=>
+        Array.isArray(step.nodes)&&step.nodes.length>=2&&
+        step.nodes.every(node=>text(node?.label)&&text(node?.detail)&&codeOk(node))))){
+    return 'The AI returned incomplete lesson practice. Every question needs its own 2D visual. Please try the PDF again.';
+  }
+  /* Mirrors the server-side rule: a diagram reused across topics was the
+     original complaint, so reject it here too rather than rendering it. */
+  const visualKey=(step)=>String(step.layout||'')+':'+
+    (step.nodes||[]).map(node=>String(node.label||'').trim().toLowerCase()).join('>');
+  const conceptVisuals=study.concepts.flatMap(concept=>
+    (concept.visualization?.steps||[]).map(visualKey));
+  if(new Set(conceptVisuals).size!==conceptVisuals.length){
+    return 'The AI reused the same diagram across lessons. Each topic needs its own visual. Please try the PDF again.';
+  }
+  if(!study.flashcards.every(card=>Number.isInteger(card?.conceptIndex)&&
+      card.conceptIndex>=0&&card.conceptIndex<study.concepts.length)){
+    return 'The AI returned incomplete lesson flashcards. Please try the PDF again.';
+  }
+  return '';
+}
+
+function aiStudyView(){
+  const study=state.aiStudy;
+  if(!study) return header()+`<main class="ai-study-shell"><p class="ai-empty-state">No AI study is open. Upload a PDF to build a new study space.</p></main>`;
+  const studyError=validateAIStudyForDisplay(study);
+  if(studyError) return header()+`<main class="ai-study-shell"><section class="ai-study-error" role="alert"><div class="panel-tag">STUDY COULD NOT BE OPENED</div><h1>Your study needs to be generated again.</h1><p>${escapeHtml(studyError)}</p><button type="button" class="btn-primary" data-open="upload">Upload PDF again</button></section></main>`;
+  const page=state.aiPage||{type:'plan'};
+  const locationByConcept=new Map();
+  study.units.forEach((unit,unitIndex)=>unit.topics.forEach((topic,topicIndex)=>{
+    topic.conceptIndices.forEach(conceptIndex=>locationByConcept.set(conceptIndex,{unitIndex,topicIndex}));
+  }));
+  const relatedQuestions=conceptIndex=>study.questions.map((question,index)=>({question,index}))
+    .filter(({question,index})=>(question.conceptIndex??index%study.concepts.length)===conceptIndex);
+  let pageTitle=study.title;
+  let content='';
+
+  if(page.type==='plan'){
+    const lessonCount=study.concepts.length;
+    const firstLocation=study.units.find((unit)=>unit.topics.some(topic=>topic.conceptIndices.length));
+    const firstTopic=firstLocation?.topics.find(topic=>topic.conceptIndices.length);
+    const firstConcept=firstTopic?.conceptIndices[0]??0;
+    /* Chunked builds surface their live ledger: which unit is being
+       written now, what is still queued, and anything that failed. */
+    const unitStates=Array.isArray(study.unitStates)?study.unitStates:[];
+    const pending=Array.isArray(study.pendingUnits)?study.pendingUnits:[];
+    const failed=unitStates.filter(s=>s.status==='failed');
+    const building=unitStates.find(s=>s.status==='building');
+    let chunkStrip='';
+    if(study.chunked&&pending.length){
+      const bits=[];
+      if(building) bits.push(`Unit ${building.index+1} is being written right now`);
+      bits.push(`${pending.length} unit${pending.length===1?'':'s'} unlock in the background while you study`);
+      chunkStrip=`<div class="ai-study-notice" role="status">🔓 ${bits.join(' · ')}.</div>`;
+      if(state.aiChunkNote) chunkStrip+=`<div class="ai-study-notice" role="alert">${escapeHtml(state.aiChunkNote)}</div>`;
+      if(failed.length) chunkStrip+=`<div class="ai-study-notice" role="alert">⚠️ Unit${failed.length===1?'':'s'} ${failed.map(s=>s.index+1).join(', ')} could not be prepared. The rest of the study works normally.</div>`;
+    }
+    content=`<section class="ai-plan-hero">
+      <div><div class="panel-tag">YOUR PERSONAL STUDY PLAN · ${escapeHtml(study.subject)}</div><h1>${escapeHtml(study.title)}</h1><p>${escapeHtml(study.summary)}</p></div>
+      <div class="ai-plan-stats"><div><strong>${study.units.length}</strong><span>UNITS</span></div><div><strong>${lessonCount}</strong><span>LESSONS</span></div><div><strong>${study.questions.length}</strong><span>QUESTIONS</span></div></div>
+      ${aiStudyPageButton('concept','Start learning', { 'concept-index':firstConcept },'ai-primary-link')}
+    </section>${chunkStrip}
+    <div class="ai-plan-heading"><div><div class="panel-tag">THE LEARNING PATH</div><h2>Study plan</h2></div><p>Work through each unit in order. Every topic opens as its own lesson with explanations, visuals and practice.</p></div>
+    <div class="ai-unit-list">${study.units.map((unit,unitIndex)=>{
+      const st=unitStates[unitIndex];
+      const locked=unit.locked||(st&&st.status!=='ready');
+      if(locked){
+        const status=(st&&st.status)||'locked';
+        const line=status==='building'?'⏳ Being prepared in the background right now…'
+          :status==='failed'?'⚠️ This unit could not be prepared. The rest of the study works normally.'
+          :'🔒 Queued — unlocks automatically while you study.';
+        return `<article class="ai-unit-card ai-unit-card-locked">
+          <div class="ai-unit-card-heading"><span class="ai-unit-number">${String(unitIndex+1).padStart(2,'0')}</span><div><div class="panel-tag">UNIT ${String(unitIndex+1).padStart(2,'0')} · ${status==='building'?'BUILDING':status==='failed'?'UNAVAILABLE':'LOCKED'}</div><h3>${escapeHtml(unit.title)}</h3><p>${escapeHtml(unit.overview)}</p></div></div>
+          <div class="ai-unit-lock" role="status">${line}</div>
+        </article>`;
+      }
+      return `<article class="ai-unit-card">
+      <div class="ai-unit-card-heading"><span class="ai-unit-number">${String(unitIndex+1).padStart(2,'0')}</span><div><div class="panel-tag">UNIT ${String(unitIndex+1).padStart(2,'0')}</div><h3>${escapeHtml(unit.title)}</h3><p>${escapeHtml(unit.overview)}</p></div>${aiStudyPageButton('unit','Open unit',{ 'unit-index':unitIndex },'ai-text-link')}</div>
+      <div class="ai-unit-goals"><span>YOU WILL LEARN</span>${unit.learningGoals.map(goal=>`<span class="ai-goal-chip">${escapeHtml(goal)}</span>`).join('')}</div>
+      <div class="ai-topic-list">${unit.topics.map((topic,topicIndex)=>`<section class="ai-topic-row">
+        ${aiStudyPageButton('topic',`<span class="ai-topic-arrow" aria-hidden="true">↗</span><span class="ai-topic-copy"><b>${escapeHtml(topic.title)}</b><span>${escapeHtml(topic.overview)}</span></span><span class="ai-topic-count">${topic.conceptIndices.length} ${topic.conceptIndices.length===1?'lesson':'lessons'}</span>`,{'unit-index':unitIndex,'topic-index':topicIndex},'ai-topic-link')}
+        ${topic.conceptIndices.map(conceptIndex=>aiStudyPageButton('concept',`<span class="ai-lesson-dot" aria-hidden="true"></span>${escapeHtml(study.concepts[conceptIndex].title)}<span class="ai-open-mark" aria-hidden="true">→</span>`,{'concept-index':conceptIndex},'ai-plan-lesson-link')).join('')}
+      </section>`).join('')}
+    </article>`;
+    }).join('')}</div>
+    <section class="ai-plan-tools"><div><div class="panel-tag">READY WHEN YOU ARE</div><h2>Practice, revise, or ask a question.</h2></div><div>${aiStudyPageButton('quiz',`Practice · ${study.questions.length} questions`,{},'ai-secondary-link')}${aiStudyPageButton('flashcards','Review flashcards',{},'ai-secondary-link')}${aiStudyPageButton('ask','Ask XAMCODE AI',{},'ai-secondary-link')}</div></section>`;
+  }else if(page.type==='unit'){
+    const unit=study.units[page.unitIndex];
+    /* A locked unit has no topics yet; its card is not clickable, but a
+       stale breadcrumb must never render an empty unit page. */
+    if(!unit||unit.locked){state.aiPage={type:'plan'};return aiStudyView();}
+    pageTitle=unit.title;
+    content=`<div class="ai-breadcrumbs">${aiStudyPageButton('plan',escapeHtml(study.title))}<span>/</span><span>Unit ${page.unitIndex+1}</span></div>
+      <section class="ai-page-hero"><div class="panel-tag">UNIT ${String(page.unitIndex+1).padStart(2,'0')} · ${study.units.length} UNITS</div><h1>${escapeHtml(unit.title)}</h1><p>${escapeHtml(unit.overview)}</p></section>
+      <section class="ai-detail-card ai-objectives"><div class="panel-tag">BY THE END OF THIS UNIT, YOU CAN</div><ol>${unit.learningGoals.map(goal=>`<li>${escapeHtml(goal)}</li>`).join('')}</ol></section>
+      <div class="ai-plan-heading"><div><div class="panel-tag">UNIT ${String(page.unitIndex+1).padStart(2,'0')}</div><h2>Topics in this unit</h2></div></div>
+      <div class="ai-topic-page-list">${unit.topics.map((topic,topicIndex)=>`<article class="ai-topic-page-card"><div class="panel-tag">TOPIC ${String(topicIndex+1).padStart(2,'0')}</div><h3>${escapeHtml(topic.title)}</h3><p>${escapeHtml(topic.overview)}</p><div class="ai-topic-page-lessons">${topic.conceptIndices.map(conceptIndex=>aiStudyPageButton('concept',`<span><small>LESSON ${String(conceptIndex+1).padStart(2,'0')}</small><b>${escapeHtml(study.concepts[conceptIndex].title)}</b><span>${escapeHtml(study.concepts[conceptIndex].summary)}</span></span><span aria-hidden="true">→</span>`,{'concept-index':conceptIndex},'ai-topic-page-lesson')).join('')}</div>${aiStudyPageButton('topic','Open topic',{ 'unit-index':page.unitIndex,'topic-index':topicIndex },'ai-text-link')}</article>`).join('')}</div>`;
+  }else if(page.type==='topic'){
+    const unit=study.units[page.unitIndex];
+    const topic=unit?.topics[page.topicIndex];
+    if(!topic){state.aiPage={type:'plan'};return aiStudyView();}
+    pageTitle=topic.title;
+    content=`<div class="ai-breadcrumbs">${aiStudyPageButton('plan',escapeHtml(study.title))}<span>/</span>${aiStudyPageButton('unit',escapeHtml(unit.title),{'unit-index':page.unitIndex})}<span>/</span><span>${escapeHtml(topic.title)}</span></div>
+      <section class="ai-page-hero"><div class="panel-tag">UNIT ${String(page.unitIndex+1).padStart(2,'0')} · TOPIC ${String(page.topicIndex+1).padStart(2,'0')}</div><h1>${escapeHtml(topic.title)}</h1><p>${escapeHtml(topic.overview)}</p></section>
+      <div class="ai-plan-heading"><div><div class="panel-tag">LESSONS IN THIS TOPIC</div><h2>Learn step by step</h2></div><p>Open a lesson for the complete sample-style teaching method and topic-specific practice.</p></div>
+      <div class="ai-topic-page-list">${topic.conceptIndices.map((conceptIndex,index)=>`<article class="ai-topic-page-card ai-concept-page-card"><div class="panel-tag">LESSON ${String(index+1).padStart(2,'0')}</div><h3>${escapeHtml(study.concepts[conceptIndex].title)}</h3><p>${escapeHtml(study.concepts[conceptIndex].summary)}</p>${aiStudyPageButton('concept','Open full lesson',{ 'concept-index':conceptIndex },'ai-primary-link')}</article>`).join('')}</div>`;
+  }else if(page.type==='concept'){
+    const conceptIndex=page.conceptIndex;
+    const concept=study.concepts[conceptIndex];
+    if(!concept){state.aiPage={type:'plan'};return aiStudyView();}
+    const location=locationByConcept.get(conceptIndex);
+    const unit=location?study.units[location.unitIndex]:null;
+    const topic=location?unit.topics[location.topicIndex]:null;
+    const questions=relatedQuestions(conceptIndex);
+    const visualSteps=concept.visualization.steps;
+    const visualStep=Math.min(state.aiVisualStep,visualSteps.length-1);
+    const currentVisual=visualSteps[visualStep];
+    const previous=conceptIndex>0?conceptIndex-1:null;
+    const next=conceptIndex<study.concepts.length-1?conceptIndex+1:null;
+    pageTitle=concept.title;
+    const lessonModes=[
+      ['crash','Crash Lesson'],['compare','Compare'],['solve','Solve Problem'],['life','Real-Life'],
+      ['history','History'],['flash','Flashcards'],['cheat','CheatCodes'],
+      ['exam','Exam Mode'],['eli5','ELI5 → Advanced']
+    ];
+    const conceptCards=study.flashcards.filter(card=>card.conceptIndex===conceptIndex);
+    const currentConceptCard=conceptCards[state.aiLessonFlashIdx%conceptCards.length];
+    const lessonBody=state.aiLessonMode==='crash'
+      ? `<section class="ai-visual-stage-card"><div class="ai-visual-stage-head"><div><div class="panel-tag">CRASH LESSON · SCENE ${visualStep+1}/${visualSteps.length}</div><h3>${escapeHtml(currentVisual.title)}</h3></div><span class="ai-visual-stage-id">${escapeHtml(concept.visualization.caption)}</span></div><figure class="ai-diagram-figure" data-layout="${escapeHtml(currentVisual.layout)}">${aiDiagramSvg(currentVisual,conceptIndex,visualStep,escapeHtml(concept.title))}<figcaption><span>SCENE ${String(visualStep+1).padStart(2,'0')} · ${escapeHtml(currentVisual.layout.toUpperCase())}</span><p>${escapeHtml(currentVisual.description)}</p></figcaption></figure>${topicImageSlot(conceptIndex)}<div class="ai-visual-step-track">${visualSteps.map((step,index)=>`<button type="button" class="ai-visual-step ${index===visualStep?'active':index<visualStep?'done':''}" data-ai-visual="${index}" aria-current="${index===visualStep?'step':'false'}"><span>${String(index+1).padStart(2,'0')}</span><b>${escapeHtml(step.title)}</b></button>`).join('')}</div><div class="ai-visual-controls"><button type="button" data-ai-visual-play>${state.aiVisualPlaying?'Pause lesson':'▶ Play lesson'}</button><span>${visualStep+1} of ${visualSteps.length} scenes</span><div><button type="button" data-ai-visual="${Math.max(0,visualStep-1)}" ${visualStep===0?'disabled':''}>← Previous</button><button type="button" data-ai-visual="${Math.min(visualSteps.length-1,visualStep+1)}" ${visualStep===visualSteps.length-1?'disabled':''}>Next scene →</button></div></div></section>`
+      :state.aiLessonMode==='compare'
+        ? `<section class="ai-detail-card ai-comparison-panel"><div class="panel-tag">SIDE-BY-SIDE COMPARISON</div><div class="ai-comparison-head"><h3>${escapeHtml(concept.comparison.firstLabel)}</h3><span>VS</span><h3>${escapeHtml(concept.comparison.secondLabel)}</h3></div><div class="ai-comparison-table"><div class="ai-comparison-row ai-comparison-labels"><span>ASPECT</span><b>${escapeHtml(concept.comparison.firstLabel)}</b><b>${escapeHtml(concept.comparison.secondLabel)}</b></div>${concept.comparison.rows.map(row=>`<div class="ai-comparison-row"><strong>${escapeHtml(row.aspect)}</strong><span>${escapeHtml(row.first)}</span><span>${escapeHtml(row.second)}</span></div>`).join('')}</div><p class="ai-comparison-takeaway"><b>KEY DIFFERENCE · </b>${escapeHtml(concept.comparison.takeaway)}</p></section>`
+        :state.aiLessonMode==='solve'
+          ? `<div class="ai-vaathiyar-panels"><section class="ai-detail-card"><div class="panel-tag">PROBLEM</div><h3>${escapeHtml(concept.workedExample.scenario)}</h3></section><section class="ai-detail-card"><div class="panel-tag">STEP-BY-STEP SOLUTION</div><ol class="ai-worked-steps">${concept.workedExample.steps.map(step=>`<li><b>${escapeHtml(step.label)} · ${escapeHtml(step.action)}</b><span>${escapeHtml(step.reasoning)}</span></li>`).join('')}</ol><p class="ai-worked-answer"><b>ANSWER · </b>${escapeHtml(concept.workedExample.answer)}</p></section></div>`
+          :state.aiLessonMode==='life'
+            ? `<div class="ai-mode-panels">${concept.realWorldExamples.map((example,index)=>`<article class="ai-mode-panel ai-mode-example"><span class="ai-mode-icon" aria-hidden="true">${String(index+1).padStart(2,'0')}</span><div class="panel-tag">REAL-LIFE CONNECTION</div><h3>${escapeHtml(example.title)}</h3><p>${escapeHtml(example.description)}</p></article>`).join('')}<article class="ai-mode-panel ai-mode-recall"><span class="ai-mode-icon" aria-hidden="true">⚡</span><div class="panel-tag">ONE-LINE REVISION</div><p>${escapeHtml(concept.quickRecall)}</p></article></div>`
+            :state.aiLessonMode==='history'
+              ? `<section class="ai-detail-card ai-history-panel"><div class="panel-tag">ORIGIN STORY · SOURCE-BASED</div><div class="ai-history-marker" aria-hidden="true">↗</div><p>${escapeHtml(concept.originStory)}</p><div class="ai-history-source">Grounded in the uploaded document</div></section>`
+              :state.aiLessonMode==='flash'
+                ? `<section class="ai-concept-flashcard-wrap" aria-label="Lesson flashcards"><div class="panel-tag">ACTIVE RECALL · ${state.aiLessonFlashIdx+1} OF ${conceptCards.length}</div><button type="button" class="ai-flashcard" data-ai-concept-flip aria-label="${state.aiLessonFlashFlipped?'Show question':'Reveal answer'}"><small>${state.aiLessonFlashFlipped?'ANSWER':'QUESTION'}</small><p>${escapeHtml(state.aiLessonFlashFlipped?currentConceptCard.back:currentConceptCard.front)}</p></button><div class="ai-flashcard-actions"><button type="button" data-ai-concept-flash="prev" aria-label="Previous lesson flashcard">← Previous</button><button type="button" data-ai-concept-flip>${state.aiLessonFlashFlipped?'Show question':'Reveal answer'}</button><button type="button" data-ai-concept-flash="next" aria-label="Next lesson flashcard">Next →</button></div></section>`
+                :state.aiLessonMode==='cheat'
+              ? aiCheatCodePanel(concept)
+            :state.aiLessonMode==='exam'
+                  ? `<div class="ai-exam-mode"><div class="ai-study-notice">Answer these questions to check your understanding of ${escapeHtml(concept.title)}.</div>${questions.map(({question,index},position)=>aiQuestionCard(question,index,position+1,questions.length)).join('')}</div>`
+                  : `<section class="ai-detail-card ai-depth-panel"><div class="panel-tag">CHOOSE YOUR EXPLANATION LEVEL</div><div class="ai-depth-tabs" role="tablist" aria-label="Explanation depth">${[['simple','Simple'],['everyday','Everyday'],['advanced','Advanced']].map(([level,label])=>`<button type="button" role="tab" aria-selected="${state.aiExplanationLevel===level}" class="${state.aiExplanationLevel===level?'active':''}" data-ai-explanation-level="${level}">${label}</button>`).join('')}</div><div class="ai-depth-copy"><div class="ai-depth-level">${state.aiExplanationLevel==='simple'?'START HERE':state.aiExplanationLevel==='everyday'?'CONNECT IT':'GO DEEPER'}</div><p>${escapeHtml(concept.explanationLevels[state.aiExplanationLevel])}</p></div></section>`;
+    content=`<div class="ai-breadcrumbs">${aiStudyPageButton('plan',escapeHtml(study.title))}<span>/</span>${unit?aiStudyPageButton('unit',escapeHtml(unit.title),{'unit-index':location.unitIndex}):''}${unit?'<span>/</span>':''}${topic?aiStudyPageButton('topic',escapeHtml(topic.title),{'unit-index':location.unitIndex,'topic-index':location.topicIndex}):''}<span>/</span><span>${escapeHtml(concept.title)}</span></div>
+      <div class="ai-learning-layout"><div class="ai-learning-main"><header class="ai-lesson-heading"><div class="panel-tag">LESSON ${String(conceptIndex+1).padStart(2,'0')} · ${escapeHtml(topic?.title||study.subject)}</div><h1>${escapeHtml(concept.title)}</h1><p>${escapeHtml(concept.summary)}</p></header>
+        <section class="ai-lesson-source"><article><div class="panel-tag">PDF EXCERPT · ${escapeHtml(concept.sourcePage)}</div><blockquote>${escapeHtml(concept.sourceExcerpt)}</blockquote></article><article><div class="panel-tag">KEY POINTS</div><ul class="ai-key-points">${concept.keyPoints.map(point=>`<li>${escapeHtml(point)}</li>`).join('')}</ul></article></section>
+        <div class="ai-lesson-mode-tabs" role="tablist" aria-label="Eight lesson teaching methods">${lessonModes.map(([mode,label])=>`<button type="button" role="tab" aria-selected="${state.aiLessonMode===mode}" class="${state.aiLessonMode===mode?'active':''}" data-ai-mode="${mode}">${label}</button>`).join('')}</div>
+        ${lessonBody}
+        <div class="ai-lesson-pagination">${previous!==null?aiStudyPageButton('concept','← Previous lesson',{'concept-index':previous},'ai-secondary-link'):`<span></span>`}<span>LESSON ${conceptIndex+1} OF ${study.concepts.length}</span>${next!==null?aiStudyPageButton('concept','Next lesson →',{'concept-index':next},'ai-primary-link'):aiStudyPageButton('plan','Back to study plan',{},'ai-primary-link')}</div>
+      </div><aside class="ai-lesson-practice"><div class="ai-practice-sticky"><div class="ai-practice-heading"><div><div class="panel-tag">CHECK YOUR UNDERSTANDING</div><h2>Practice</h2></div><span>${questions.length} Q</span></div>${questions.length?questions.map(({question,index},position)=>aiQuestionCard(question,index,position+1,questions.length)).join(''):'<p class="ai-empty-state">Practice questions for this lesson are being prepared.</p>'}${aiStudyPageButton('quiz','Open all practice questions →',{},'ai-text-link')}</div></aside></div>`;
+  }else if(page.type==='quiz'){
+    const answered=Object.keys(state.aiQuizAnswers).length;
+    const correct=Object.entries(state.aiQuizAnswers).filter(([index,answer])=>study.questions[Number(index)]?.answerIndex===answer).length;
+    pageTitle='Practice';
+    content=`<div class="ai-breadcrumbs">${aiStudyPageButton('plan',escapeHtml(study.title))}<span>/</span><span>Practice</span></div><section class="ai-page-hero"><div class="panel-tag">PRACTICE · ${study.questions.length} QUESTIONS</div><h1>Check what you know.</h1><p>Choose an answer to see why it is right or wrong. Use a hint if you need a nudge.</p><div class="ai-study-notice" role="status">${answered} of ${study.questions.length} answered${answered?` · ${correct} correct`:''}</div></section><div class="ai-quiz-grid">${study.questions.map((question,index)=>aiQuestionCard(question,index,index+1,study.questions.length)).join('')}</div>`;
+  }else if(page.type==='flashcards'){
+    const cards=study.flashcards;
+    const index=state.aiFlashIdx%cards.length;
+    const card=cards[index];
+    pageTitle='Flashcards';
+    content=`<div class="ai-breadcrumbs">${aiStudyPageButton('plan',escapeHtml(study.title))}<span>/</span><span>Flashcards</span></div><section class="ai-page-hero"><div class="panel-tag">ACTIVE RECALL · ${cards.length} CARDS</div><h1>Review the key ideas.</h1><p>Try to recall the answer before revealing the back of each card.</p></section><section class="ai-flashcard-page" aria-label="AI-generated flashcards"><button type="button" class="ai-flashcard" data-ai-flip aria-label="${state.aiFlashFlipped?'Show question':'Reveal answer'}"><small>${state.aiFlashFlipped?'ANSWER':'QUESTION'} · ${index+1} / ${cards.length}</small><p>${escapeHtml(state.aiFlashFlipped?card.back:card.front)}</p></button><div class="ai-flashcard-actions"><button type="button" data-ai-flash="prev" aria-label="Previous flashcard">← Previous</button><button type="button" data-ai-flip>${state.aiFlashFlipped?'Show question':'Reveal answer'}</button><button type="button" data-ai-flash="next" aria-label="Next flashcard">Next →</button></div></section>`;
+  }else if(page.type==='ask'){
+    pageTitle='Ask XAMCODE AI';
+    content=`<div class="ai-breadcrumbs">${aiStudyPageButton('plan',escapeHtml(study.title))}<span>/</span><span>Ask XAMCODE AI</span></div><section class="ai-page-hero"><div class="panel-tag">YOUR DOCUMENT, YOUR TUTOR</div><h1>What would you like to understand?</h1><p>Ask a follow-up question about ${escapeHtml(study.title)}. Answers use your generated study pack as context.</p></section><section class="ai-chat-panel" aria-label="Ask questions about your PDF"><div class="ai-chat-messages" id="aiChatMessages" aria-live="polite">${state.aiMessages.length?state.aiMessages.map(message=>`<article class="ai-chat-message" data-role="${message.role}"><small>${message.role==='user'?'YOU':'XAMCODE AI'}</small>${escapeHtml(message.text)}</article>`).join(''):'<div class="ai-empty-state">Ask about a concept, request another explanation, or check your understanding.</div>'}${state.aiChatBusy?'<div class="ai-chat-message" role="status"><small>XAMCODE AI</small>Thinking about your study…</div>':''}</div><form class="ai-chat-form" id="aiChatForm"><input name="question" type="text" maxlength="1200" placeholder="Ask a question about this PDF…" aria-label="Ask a question about this PDF" required ${state.aiChatBusy?'disabled':''}><button type="submit" ${state.aiChatBusy?'disabled':''}>Ask</button></form><div class="ai-study-notice">If the PDF does not provide enough detail, XAMCODE AI will say so.</div></section>`;
+  }else{
+    pageTitle='Formulas';
+    content=`<div class="ai-breadcrumbs">${aiStudyPageButton('plan',escapeHtml(study.title))}<span>/</span><span>Formulas</span></div><section class="ai-page-hero"><div class="panel-tag">REFERENCE · ${study.formulas.length} ITEMS</div><h1>Formulas from your PDF.</h1><p>Key expressions identified in your document, with a plain-language explanation.</p></section>${study.formulas.length?`<div class="ai-formula-grid">${study.formulas.map(formula=>`<article class="ai-formula-card ai-detail-card"><h3>${escapeHtml(formula.name)}</h3><code>${escapeHtml(formula.expression)}</code><p>${escapeHtml(formula.meaning)}</p></article>`).join('')}</div>`:'<section class="ai-detail-card"><p>No formulas were identified in this document.</p></section>'}`;
+  }
+
+  const activeConcept=page.type==='concept'?page.conceptIndex:-1;
+  const activeUnit=page.type==='unit'?page.unitIndex:(page.type==='topic'?page.unitIndex:(activeConcept>=0?locationByConcept.get(activeConcept)?.unitIndex:-1));
+  const activeTopic=page.type==='topic'?page.topicIndex:(activeConcept>=0?locationByConcept.get(activeConcept)?.topicIndex:-1);
+  const outline=`<aside class="ai-course-outline"><div class="ai-outline-heading"><div class="panel-tag">YOUR COURSE</div><strong>Study plan</strong></div>${aiStudyPageButton('plan','<span aria-hidden="true">⌂</span> Course overview',{},`ai-outline-plan ${page.type==='plan'?'active':''}`)}<div class="ai-outline-tree">${study.units.map((unit,unitIndex)=>`<section class="ai-outline-unit"><div class="ai-outline-unit-head">${aiStudyPageButton('unit',`<span class="ai-outline-index">${String(unitIndex+1).padStart(2,'0')}</span><span>${escapeHtml(unit.title)}</span>`,{'unit-index':unitIndex},`ai-outline-unit-link ${activeUnit===unitIndex&&page.type==='unit'?'active':''}`)}</div>${unit.topics.map((topic,topicIndex)=>`<div class="ai-outline-topic">${aiStudyPageButton('topic',escapeHtml(topic.title),{'unit-index':unitIndex,'topic-index':topicIndex},`ai-outline-topic-link ${activeUnit===unitIndex&&activeTopic===topicIndex&&page.type==='topic'?'active':''}`)}${topic.conceptIndices.map(conceptIndex=>aiStudyPageButton('concept',escapeHtml(study.concepts[conceptIndex].title),{'concept-index':conceptIndex},`ai-outline-lesson-link ${activeConcept===conceptIndex?'active':''}`)).join('')}</div>`).join('')}</section>`).join('')}</div><div class="ai-outline-tools">${aiStudyPageButton('quiz','Practice',{},page.type==='quiz'?'active':'')}${aiStudyPageButton('flashcards','Flashcards',{},page.type==='flashcards'?'active':'')}${aiStudyPageButton('formulas','Formulas',{},page.type==='formulas'?'active':'')}${aiStudyPageButton('ask','Ask XAMCODE AI',{},page.type==='ask'?'active':'')}</div></aside>`;
+  return header()+`<main class="ai-study-shell">
+    <div class="ai-study-top"><button type="button" class="back-btn" data-nav="landing">← Home</button><span class="ai-study-subject">${escapeHtml(study.subject)}</span><span class="ai-study-top-title">${escapeHtml(pageTitle)}</span><button type="button" class="btn-primary" data-open="upload">Analyze another PDF</button></div>
+    <div class="ai-study-workspace">${outline}<section class="ai-study-page" aria-label="${escapeHtml(pageTitle)}">${content}<footer class="ai-study-disclaimer">Generated from your uploaded PDF. AI can make mistakes—check important facts against the original document. This study clears when you refresh.</footer></section></div>
+  </main>`;
+}
+
+/* ============================================================
+   STUDY VIEW
+   ============================================================ */
+function studyView(){
+  const c=TOPICS[state.topicIdx];
+  const attempted=Object.keys(state.answers).filter(k=>k.startsWith(state.topicIdx+'-')).length;
+  const correct=Object.keys(state.answers).filter(k=>k.startsWith(state.topicIdx+'-') && state.answers[k]===c.questions[+k.split('-')[1]].a).length;
+  const score = attempted===0?'—':`${correct}/${attempted}`;
+  const pct = attempted ? correct/attempted : 0;
+  const badge = attempted===0?'—':pct>=0.8?'Strong':pct>=0.5?'Improving':'Needs review';
+  const badgeCls = pct>=0.8?'strong':pct>=0.5?'ok':'weak';
+  return header()+`<div class="study-bar">
+    <button class="back-btn" data-nav="workspace">← Back to workspace</button>
+    <span style="color:#1e2a44">/</span>
+    <span class="study-title">${c.title} • UNIT ${c.unit||'I'}</span>
+    <span class="badge" style="margin-left:auto">${c.visId} • FIXED</span>
+  </div>
+  <div class="study-grid">
+    <div style="display:flex;flex-direction:column;gap:14px;min-width:0">
+      <div class="panel">
+        <div class="panel-tag">${c.unit==='II'?'UNIT II: Data Link Layer':'UNIT I: Introduction to Networks'} • ${c.topic}</div>
+        <h2>${c.title}</h2>
+        <p class="desc">${c.explanation}</p>
+        <div class="kp-grid">
+          <div class="kp"><div class="kp-tag">PDF EXCERPT</div><div class="kp-quote">"${c.pdfQuote}"</div><div class="kp-tag accent" style="margin-top:8px">${c.pdfPage}</div></div>
+          <div class="kp"><div class="kp-tag accent">KEY POINTS</div><ul>${c.keyPoints.map(k=>`<li>${k}</li>`).join('')}</ul></div>
+        </div>
+      </div>
+${state.studyTab==='cheat' ? cheatcodeTabView() : state.studyTab==='quiz' ? vaathiyarTabView() : `
+      <div class="panel">
+        <div class="visual-head"><span>ANIMATED 2D VISUAL • STEP ${state.step+1}/${c.steps.length}</span><span>${c.visId}</span></div>
+        <div class="visual-box">
+          <div class="visual-inner" id="mainVisual">${c.visual(state.step)}</div>
+          <div class="narration-bar show" id="narration">${c.steps[state.step].desc}</div>
+        </div>
+        <div class="visual-cap" id="visualCap"><span class="cap-step">STEP ${state.step+1}/${c.steps.length}</span><b>${c.steps[state.step].title}</b> — ${c.steps[state.step].desc}</div>
+        <div class="step-controls">
+          <div class="step-dots">${c.steps.map((_,i)=>`<button type="button" class="step-dot ${i===state.step?'active':''}" data-step="${i}" aria-label="Show step ${i+1}: ${c.steps[i].title}" aria-pressed="${i===state.step}"></button>`).join('')}</div>
+          <button class="play-btn ${state.playing?'':'paused'}" id="playBtn" data-play>${state.playing?'⏸ Pause':'▶ Play'}</button>
+        </div>
+        <div class="step-grid">${c.steps.map((s,i)=>`<button class="step-card ${i===state.step?'active':''}" data-step="${i}"><b>STEP ${i+1}</b><span>${s.title}</span></button>`).join('')}</div>
+      </div>
+`}
+              <div class="study-tabs">
+          <button class="study-tab ${state.studyTab==='visual'?'active':''}" data-tab="visual">📺 Visual</button>
+          <button class="study-tab ${state.studyTab==='cheat'?'active':''}" data-tab="cheat">🎯 CheatCode</button>
+          <button class="study-tab ${state.studyTab==='quiz'?'active':''}" data-tab="quiz">👨‍🏫 Vaathiyar Mode</button>
+        </div>
+    </div>
+
+    <div style="min-width:0">
+      <div class="panel" style="margin-bottom:14px">
+        <div class="quiz-head"><span>VAATHIYAR MODE • ${c.questions.length} Qs</span><span>${attempted}/${c.questions.length} attempted</span></div>
+        <div class="score-bar" role="status" aria-live="polite">
+          <div class="score-row">
+            <span style="font-weight:600">Score: ${score}</span>
+            <span class="score-badge ${badgeCls}">${badge}</span>
+          </div>
+          <div class="progress"><div style="width:${c.questions.length?(correct/c.questions.length*100):0}%"></div></div>
+        </div>
+      </div>
+      ${quizFlow(c)}
+    </div>
+  </div>`;
+}
+
+/* ============================================================
+   QUIZ FLOW — strictly sequential, one question at a time
+   ------------------------------------------------------------
+   The quiz used to render every question as one long list. The
+   brief is now: Quiz 1 -> Quiz 2 -> Quiz 3 ... with no way to
+   skip ahead, plus a Results screen at the end.
+
+   state.qStep is the index on screen; state.qDone flips once the
+   last question has been passed. Only ONE qCard is rendered at a
+   time — rendering the full list would leave later questions
+   reachable by scrolling, which is exactly the skip the brief
+   rules out. The dots are inert <li> markers, not buttons, for
+   the same reason.
+
+   Results are NOT derived from "everything answered" alone: they
+   are reached only by pressing Next on the final question, so the
+   user still gets the closing step after their last answer. */
+function quizFlow(c){
+  const total=c.questions.length;
+  if(!total) return '<div class="q-card"><p class="q-text">No questions for this topic yet.</p></div>';
+  if(state.qDone) return quizResults(c);
+
+  const step=Math.min(Math.max(0,state.qStep), total-1);
+  const q=c.questions[step];
+  const answered=state.answers[`${state.topicIdx}-${step}`]!==undefined;
+  const last=step===total-1;
+  return `
+    ${qCard(c,q,step)}
+    <div class="q-step-bar">
+      <ol class="q-dots" aria-label="Quiz progress">
+        ${c.questions.map((_,i)=>{
+          const st=i<step?'done':i===step?'current':'todo';
+          return `<li class="q-dot ${st}" aria-label="Question ${i+1} of ${total}${i<step?', completed':i===step?', current':''}"${i===step?' aria-current="step"':''}></li>`;
+        }).join('')}
+      </ol>
+      <div class="q-step-actions">
+        <span class="q-step-label">${step+1} of ${total}</span>
+        <button type="button" class="q-next" data-qnext${answered?'':' disabled title="Answer this question first"'}>
+          ${last?'See Results':'Next Question'} <span aria-hidden="true">→</span>
+        </button>
+      </div>
+    </div>`;
+}
+
+/* ---------- Final results / answers screen ---------- */
+function quizResults(c){
+  const total=c.questions.length;
+  const correct=c.questions.filter((q,qi)=>state.answers[`${state.topicIdx}-${qi}`]===q.a).length;
+  const pct=total?Math.round(correct/total*100):0;
+  const verdict=pct>=0.8?'Strong — you have this topic locked in.'
+            :pct>=0.5?'Improving — review the wrong answers below.'
+            :'Needs review — read the explanations again, then retry.';
+  const rows=c.questions.map((q,qi)=>{
+    const chosen=state.answers[`${state.topicIdx}-${qi}`];
+    const isCorrect=chosen===q.a;
+    return `<li class="q-final ${isCorrect?'ok':'bad'}">
+        <span class="q-final-n">${qi+1}</span>
+        <div class="q-final-body">
+          <div class="q-final-q">${q.q}</div>
+          <div class="q-final-row"><span class="q-final-k">Your answer</span><span class="q-final-v">${String.fromCharCode(65+chosen)}. ${q.opts[chosen]}</span></div>
+          ${isCorrect?'':`<div class="q-final-row"><span class="q-final-k">Correct answer</span><span class="q-final-v good">${String.fromCharCode(65+q.a)}. ${q.opts[q.a]}</span></div>`}
+        </div>
+        <span class="q-final-mark" aria-label="${isCorrect?'Correct':'Incorrect'}">${isCorrect?'✓':'✕'}</span>
+      </li>`;
+  }).join('');
+  return `<div class="q-results">
+      <div class="q-results-hero">
+        <div class="q-results-tag">FINAL RESULTS • ${c.title}</div>
+        <div class="q-results-score">${correct}<span>/${total}</span></div>
+        <div class="q-results-pct">${pct}% correct</div>
+        <div class="progress"><div style="width:${pct}%"></div></div>
+        <p class="q-results-verdict">${verdict}</p>
+      </div>
+      <div class="q-final-head">Your answers</div>
+      <ol class="q-final-list">${rows}</ol>
+      <div class="q-results-actions">
+        <button type="button" class="btn-ghost" data-qretry>↻ Retry quiz</button>
+        <button type="button" class="btn-primary" data-nav="workspace">← Back to workspace</button>
+      </div>
+    </div>`;
+}
+
+function qCard(c,q,qi){
+  const key = `${state.topicIdx}-${qi}`;
+  const chosen=state.answers[key];
+  const done=chosen!==undefined;
+  const isCorrect=done&&chosen===q.a;
+  const opts=q.opts.map((o,oi)=>{
+    const isChosen=chosen===oi, isAns=q.a===oi;
+    let cls='opt';
+    if(done){
+      if(isChosen&&isAns) cls+=' correct';
+      else if(isChosen&&!isAns) cls+=' wrong';
+      else if(!isChosen&&isAns) cls+=' reveal';
+      else cls+=' faded';
+    }
+    const mark=done&&isAns?'<span style="font-weight:900">✓</span>':done&&isChosen?'<span style="font-weight:900">✕</span>':'';
+    return `<button class="${cls}" ${done?'disabled':''} data-ans="${oi}" data-q="${qi}"><span>${String.fromCharCode(65+oi)}. ${o}</span>${mark}</button>`;
+  }).join('');
+  const explain=done?`
+    <div class="explain good"><span class="head">✅ WHY CORRECT:</span>${q.why}</div>
+    <div class="explain bad"><span class="head">❌ WHY OTHERS WRONG:</span><ul>${q.opts.map((o,oi)=>oi!==q.a?`<li><b>${String.fromCharCode(65+oi)}.</b> ${o} — ${q.wrong[oi]}</li>`:'').join('')}</ul></div>
+    <div class="pdf-q"><div class="q">"${q.quote}"</div><div class="p">${q.page} • FROM YOUR PDF</div></div>
+  `:'';
+  return `<div class="q-card ${done?(isCorrect?'correct':'wrong'):''}">
+    <div class="q-meta">
+      <span class="pill cat">Q${qi+1} • ${q.cat}</span>
+      <span class="pill ${q.diff==='Easy'?'easy':'medium'}">${q.diff.toUpperCase()}</span>
+      ${done?`<span class="pill ${isCorrect?'correct':'wrong'}">${isCorrect?'CORRECT':'WRONG'}</span>`:''}
+    </div>
+    <div class="mini-visual"><div class="mini-tag"><span>VISUAL FOR THIS QUESTION</span><span>${q.cat}</span></div>${mini(q.mini)}<div class="mini-cap">${q.cap}</div></div>
+    <div class="q-text">${q.q}</div>
+    <div class="opts">${opts}</div>
+    <div class="actions">
+      ${!done?`<button class="act hint" data-hint="${qi}">💡 Show Hint</button>`:''}
+      ${done?`<button class="act eli" data-eli="${qi}">🧠 Explain like I'm 5</button>`:''}
+    </div>
+    ${explain}
+  </div>`;
+}
+
+/* ============================================================
+   FORMULA CATALOG VIEW
+   ============================================================ */
+function formulasView(){
+  const unitLabels = {'I':'UNIT I: Introduction to Networks','II':'UNIT II: Data Link Layer','III':'UNIT III: Network Layer','IV':'UNIT IV: Transport Layer','V':'UNIT V: Application Layer'};
+  const byUnit = {};
+  FORMULAS.forEach(f => { if(!byUnit[f.unit]) byUnit[f.unit]=[]; byUnit[f.unit].push(f); });
+  return header()+`<main class="page-shell formula-catalog">
+    <div class="ws-head">
+      <div class="ws-eyebrow">FORMULA REFERENCE • AUTO-GROUPED BY UNIT</div>
+      <h1 class="ws-title">All Formulas</h1>
+      <div class="ws-pills">
+        <span class="ws-pill"><b>${Object.keys(byUnit).length}</b> UNITS</span>
+        <span class="ws-pill"><b>${FORMULAS.length}</b> FORMULAS</span>
+      </div>
+    </div>
+    <div style="padding:20px 0 60px;max-width:1400px;width:100%;margin:0 auto">
+      ${Object.keys(byUnit).sort().map(u => `
+        <section style="margin-bottom:36px">
+          <h2 style="font-size:16px;font-weight:700;margin-bottom:14px;display:flex;align-items:baseline;gap:12px">
+            ${unitLabels[u]}
+            <span style="font-size:10px;color:#6b7280;font-weight:600;letter-spacing:.1em">${byUnit[u].length} FORMULAS</span>
+          </h2>
+          <div class="formula-grid">
+            ${byUnit[u].map(f => `
+              <div class="formula-card" data-formula="${f.id}">
+                <div class="fc-head">
+                  <span class="fc-unit">UNIT ${f.unit}</span>
+                  <span class="fc-cat">${f.cat}</span>
+                </div>
+                <div class="fc-title">${f.title}</div>
+                <div class="fc-eq">${f.formula.replace(/\n/g,'<br>')}</div>
+                <div class="fc-visual">${mini(f.mini)}</div>
+                <div class="fc-cta">Click to open →</div>
+              </div>
+            `).join('')}
+          </div>
+        </section>
+      `).join('')}
+    </div>
+  </main>`;
+}
+
+/* ============================================================
+   FORMULA STUDY VIEW
+   ------------------------------------------------------------
+   The right rail is a walkthrough, not a static list. Every
+   derivation step and every worked-example line is a button that
+   drives the stage visual on the left, so a student can step
+   through "what happens at step 1, then 2, ... then the answer"
+   one click at a time instead of reading all the maths at once.
+
+   Worked-example lines map onto derivation steps, so clicking a
+   line shows the matching diagram state. Formulas whose example
+   has a different number of lines than steps are mapped by
+   proportion, so no line is ever left unclickable.
+   ============================================================ */
+
+/* Map each worked-example line to the derivation step it demonstrates.
+   Exact 1:1 when the counts match, otherwise spread evenly across the
+   steps so every line still lands on a real, meaningful stage. */
+function exLineStepMap(f){
+  const lines = f.workedExample.s.length, steps = f.steps.length;
+  if(!lines || !steps) return [];
+  if(lines === steps) return f.workedExample.s.map((_, i) => i);
+  return f.workedExample.s.map((_, i) =>
+    Math.min(steps - 1, Math.round((i * (steps - 1)) / (lines - 1)))
+  );
+}
+
+/* One entry of the derivation rail. `why` carries the longer
+   explanation from data-formula-notes.js when it exists. */
+function formulaStepRail(f){
+  const cur = state.step;
+  return `<div class="f-rail" role="list" aria-label="Formula derivation steps">${f.steps.map((s,i)=>{
+    const st = (f.notes && f.notes.why && f.notes.why[i]) || s.desc;
+    return `<button type="button" role="listitem" class="f-step-card ${i===cur?'active':''} ${i<cur?'done':''}" data-fstep="${i}" aria-current="${i===cur?'step':'false'}">
+      <span class="f-step-rail" aria-hidden="true"></span>
+      <span class="f-step-num">${i+1}</span>
+      <span class="f-step-body">
+        <span class="f-step-top">
+          <span class="f-step-title">${s.title}</span>
+          ${i===cur?'<span class="f-step-now">SHOWING</span>':(i<cur?'<span class="f-step-tick" aria-hidden="true">&#10003;</span>':'')}
+        </span>
+        <span class="f-step-math">${s.math}</span>
+        <span class="f-step-desc">${s.desc}</span>
+        <span class="f-step-why">${st}</span>
+      </span>
+    </button>`;
+  }).join('')}</div>`;
+}
+
+/* Worked example rendered as a second, clickable rail. */
+function formulaExampleRail(f){
+  const map = exLineStepMap(f);
+  return f.workedExample.s.map((line,i)=>{
+    const st = map[i], active = st === state.step;
+    return `<li><button type="button" class="f-ex-line ${active?'active':''}" data-fstep="${st}" aria-current="${active?'step':'false'}">
+      <span class="f-ex-mark" aria-hidden="true">${active?'&#9654;':String(i+1).padStart(2,'0')}</span>
+      <span class="f-ex-text">${line}</span>
+      <span class="f-ex-link">step ${st+1}</span>
+    </button></li>`;
+  }).join('');
+}
+
+function formulaStudyView(){
+  const f = FORMULAS.find(x => x.id === state.formulaId) || FORMULAS[0];
+  const visual = window.XC.SVG[f.visual];
+  /* Every FORMULAS[].visual key resolves to a stage generator in
+     data-formula-visuals.js. If one ever goes missing, fall back to the
+     formula's *Min thumbnail so the panel still shows a diagram. */
+  const vis = typeof visual === 'function'
+    ? visual(state.step)
+    : (window.XC.SVG.miniSvg ? window.XC.SVG.miniSvg(f.mini) : '');
+  const notes = f.notes || { lead:f.meaning, why:[], takeaway:f.meaning, pitfall:'' };
+  const step = f.steps[state.step];
+  const total = f.steps.length;
+  const isLast = state.step === total - 1;
+  return header()+`<div class="study-bar">
+    <button class="back-btn" data-nav="formulas">← All formulas</button>
+    <span style="color:#1e2a44">/</span>
+    <span class="study-title">${f.title} • UNIT ${f.unit}</span>
+    <span class="badge" style="margin-left:auto">FORMULA • ${f.cat}</span>
+  </div>
+  <div class="study-grid">
+    <div style="display:flex;flex-direction:column;gap:14px;min-width:0">
+      <div class="panel">
+        <div class="panel-tag">UNIT ${f.unit}: ${f.cat} • ${f.page}</div>
+        <h2>${f.title}</h2>
+        <div class="f-bigeq">${f.formula.replace(/\n/g,'<br>')}</div>
+        <div class="f-meaning"><b>MEANING:</b> ${f.meaning}</div>
+        <p class="desc">${f.explanation}</p>
+        <div class="f-lead"><b>HOW TO READ THIS:</b> ${notes.lead}</div>
+        <div class="kp" style="margin-top:14px">
+          <div class="kp-tag accent">PDF EXCERPT — ${f.page}</div>
+          <div class="kp-quote">"${f.quote}"</div>
+        </div>
+        <div class="kp" style="margin-top:10px">
+          <div class="kp-tag accent">KEY POINTS</div>
+          <ul>${f.keyPoints.map(k=>`<li>${k}</li>`).join('')}</ul>
+        </div>
+      </div>
+
+      <div class="panel f-stage">
+        <div class="visual-head"><span>ANIMATED FORMULA VISUAL • STEP ${state.step+1}/${total}</span><span>UNIT ${f.unit}</span></div>
+        <div class="visual-box">
+          <div class="visual-inner" id="formulaVisual">${vis}</div>
+          <div class="narration-bar show" id="formulaNarration">${(notes.why && notes.why[state.step]) || step.desc}</div>
+        </div>
+        <div class="visual-cap" id="formulaCap"><span class="cap-step">STEP ${state.step+1}/${total}</span><b>${step.title}</b> — ${step.desc}</div>
+        <div class="step-controls">
+          <div class="step-dots">${f.steps.map((_,i)=>`<button type="button" class="step-dot ${i===state.step?'active':''}" data-fstep="${i}" aria-label="Show step ${i+1}: ${f.steps[i].title}" aria-pressed="${i===state.step}"></button>`).join('')}</div>
+          <button class="play-btn ${state.playing?'':'paused'}" data-play>${state.playing?'⏸ Pause':'▶ Play'}</button>
+        </div>
+        <div class="f-nav">
+          <button type="button" class="f-nav-btn" data-fstep="${Math.max(0,state.step-1)}" ${state.step===0?'disabled':''}>← Back</button>
+          <span class="f-nav-count">Step <b>${state.step+1}</b> of ${total}</span>
+          ${isLast
+            ? `<button type="button" class="f-nav-btn go" data-fstep="0">↺ Run it again</button>`
+            : `<button type="button" class="f-nav-btn go" data-fstep="${state.step+1}">Next step →</button>`}
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="panel" style="margin-bottom:14px">
+        <div class="panel-tag">STEP-BY-STEP DERIVATION</div>
+        <p class="f-rail-hint">Click any step to show it on the diagram. It runs ${total} stages from the starting values to the answer.</p>
+        ${formulaStepRail(f)}
+      </div>
+
+      <div class="panel">
+        <div class="panel-tag">WORKED EXAMPLE</div>
+        <div class="f-worked" style="margin-top:12px">
+          <div class="f-worked-head">❓ QUESTION</div>
+          <div class="f-worked-q">${f.workedExample.q}</div>
+          <div class="f-worked-head" style="margin-top:14px">✅ SOLUTION — click a line to see it on the diagram</div>
+          <ol class="f-worked-steps">${formulaExampleRail(f)}</ol>
+        </div>
+        <div class="f-takeaway">
+          <div class="f-take-row"><span class="f-take-tag">REMEMBER</span><span>${notes.takeaway}</span></div>
+          ${notes.pitfall ? `<div class="f-take-row pit"><span class="f-take-tag">COMMON MISTAKE</span><span>${notes.pitfall}</span></div>` : ''}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ============================================================
+   VAATHIYAR MODE — event handlers
+   ============================================================ */
+document.addEventListener('click', (e)=>{
+  if(e.target.closest('[data-v-mode]')){
+    state.vaathiyarMode = e.target.closest('[data-v-mode]').dataset.vMode;
+    render();
+    return;
+  }
+  if(e.target.closest('[data-v-crash]')){
+    const a = e.target.closest('[data-v-crash]').dataset.vCrash;
+    const t = TOPICS[state.topicIdx];
+    const v = getVaathiyar(t.id);
+    if(!v) return;
+    if(a === 'play'){
+      state.vaathiyarCrashPlaying = !state.vaathiyarCrashPlaying;
+      render();
+      if(state.vaathiyarCrashPlaying) startVaathiyarCrashProgress();
+      else clearVaathiyarCrashTimer();
+    } else if(a === 'next'){
+      state.vaathiyarCrashPlaying = false; clearVaathiyarCrashTimer();
+      state.vaathiyarCrashIdx = Math.min(state.vaathiyarCrashIdx+1, v.crash.length-1);
+      render();
+    } else if(a === 'prev'){
+      state.vaathiyarCrashPlaying = false; clearVaathiyarCrashTimer();
+      state.vaathiyarCrashIdx = Math.max(state.vaathiyarCrashIdx-1, 0);
+      render();
+    } else if(a === 'reset'){
+      state.vaathiyarCrashPlaying = false; clearVaathiyarCrashTimer();
+      state.vaathiyarCrashIdx = 0;
+      render();
+    }
+    return;
+  }
+  if(e.target.closest('[data-v-scene]')){
+    state.vaathiyarCrashPlaying = false; clearVaathiyarCrashTimer();
+    state.vaathiyarCrashIdx = +e.target.closest('[data-v-scene]').dataset.vScene;
+    render();
+    return;
+  }
+  if(e.target.closest('[data-v-solve]')){
+    const a = e.target.closest('[data-v-solve]').dataset.vSolve;
+    const t = TOPICS[state.topicIdx];
+    const v = getVaathiyar(t.id);
+    if(!v) return;
+    if(a === 'auto'){
+      state.vaathiyarSolveAuto = !state.vaathiyarSolveAuto;
+      if(state.vaathiyarSolveAuto){
+        if(state.vaathiyarSolveStep >= v.solve.steps.length-1) state.vaathiyarSolveStep = 0;
+        render();
+        runVaathiyarSolveAutoPlay();
+      } else {
+        clearVaathiyarSolveTimer();
+        render();
+      }
+    } else if(a === 'next'){
+      state.vaathiyarSolveAuto = false; clearVaathiyarSolveTimer();
+      state.vaathiyarSolveStep = Math.min(state.vaathiyarSolveStep+1, v.solve.steps.length-1);
+      render();
+    } else if(a === 'reset'){
+      state.vaathiyarSolveAuto = false; clearVaathiyarSolveTimer();
+      state.vaathiyarSolveStep = 0;
+      render();
+    }
+    return;
+  }
+  if(e.target.closest('[data-v-flip]')){
+    state.vaathiyarFlashFlipped = !state.vaathiyarFlashFlipped;
+    render();
+    return;
+  }
+  if(e.target.closest('[data-v-flash]')){
+    const a = e.target.closest('[data-v-flash]').dataset.vFlash;
+    const t = TOPICS[state.topicIdx];
+    const v = getVaathiyar(t.id);
+    if(!v) return;
+    if(a === 'next') state.vaathiyarFlashIdx = (state.vaathiyarFlashIdx+1) % v.flash.length;
+    if(a === 'prev') state.vaathiyarFlashIdx = (state.vaathiyarFlashIdx-1+v.flash.length) % v.flash.length;
+    state.vaathiyarFlashFlipped = false;
+    render();
+    return;
+  }
+  if(e.target.closest('[data-v-eli5]')){
+    state.vaathiyarEli5 = e.target.closest('[data-v-eli5]').dataset.vEli5;
+    render();
+    return;
+  }
+});
+
+/* ============================================================
+   VAATHIYAR MODE — 8 sub-modes
+   ============================================================ */
+function vaathiyarTabView(){
+  const t = TOPICS[state.topicIdx];
+  const v = getVaathiyar(t.id);
+  if(!v){
+    return `<div class="panel">
+      <div class="panel-tag">👨‍🏫 VAATHIYAR MODE</div>
+      <h2 style="font-size:16px;margin:12px 0 8px">Content coming soon</h2>
+      <p class="desc">Vaathiyar Mode for <b>${t.title}</b> is being prepared.</p>
+    </div>`;
+  }
+  const modes = [
+    {id:'crash', icon:'🅰️', name:'Crash Lesson',  sub:'Auto-play scenes'},
+    {id:'compare', icon:'🅳️', name:'Compare',      sub:'Side-by-side'},
+    {id:'solve', icon:'🅴️', name:'Solve Problem', sub:'Step walkthrough'},
+    {id:'life', icon:'🅵',  name:'Real-Life',     sub:'6 daily examples'},
+    {id:'history', icon:'🅷', name:'History',      sub:'Origin story'},
+    {id:'flash', icon:'🅺', name:'Flashcards',    sub:'Flip & memorise'},
+    {id:'exam', icon:'🅻', name:'Exam Mode',     sub:'Past Q & answers'},
+    {id:'eli5', icon:'🅾', name:'ELI5 → Engg',   sub:'3 depth levels'}
+  ];
+  const active = state.vaathiyarMode || 'crash';
+
+  const explain = (blocks) => !blocks ? '' : `<div class="v-explain-block">
+    <div class="panel-tag" style="font-size:11px">📚 UNDERSTAND DEEPER</div>
+    <p style="font-size:12px;color:#6b7280;margin:6px 0 14px">Not just what — but why it matters.</p>
+    ${blocks.map(e=>`<div class="v-row purple"><div class="ic">💡</div><div class="bd"><div class="h">${e.h}</div><div class="t">${e.t}</div></div></div>`).join('')}
+  </div>`;
+
+  let body = '';
+
+  if(active==='crash' && v.crash){
+    const idx = state.vaathiyarCrashIdx || 0;
+    const sc = v.crash[idx];
+    const playing = state.vaathiyarCrashPlaying;
+    body = `
+      <div class="v-stage" style="margin-bottom:14px">
+        <div class="v-progress-track"><div class="v-progress-fill" id="vProgFill"></div></div>
+        <div class="v-stage-svg">${sc.visual}</div>
+        <div class="v-overlay">
+          <span class="v-overlay-tag">${sc.tag}</span>
+          <div class="v-overlay-text">${sc.text}</div>
+        </div>
+      </div>
+      <div class="v-ctrls">
+        <button class="v-btn v-btn-primary" data-v-crash="play">${playing?'⏸ Pause':'▶ Play Lesson'}</button>
+        <button class="v-btn v-btn-ghost" data-v-crash="prev">← Prev</button>
+        <button class="v-btn v-btn-ghost" data-v-crash="next">Next →</button>
+        <button class="v-btn v-btn-ghost" data-v-crash="reset">⟲ Restart</button>
+      </div>
+      <div class="v-dots">
+        ${v.crash.map((_,i)=>`<button type="button" class="v-dot ${i===idx?'active':i<idx?'done':''}" data-v-scene="${i}" aria-label="Show scene ${i+1}" aria-pressed="${i===idx}"></button>`).join('')}
+      </div>
+      ${explain(v.crashExplain)}
+    `;
+  } else if(active==='compare' && v.compare){
+    body = `
+      <table class="v-cmp-table">
+        <thead><tr><th>Feature</th><th>${v.compare.left}</th><th>${v.compare.right}</th></tr></thead>
+        <tbody>${v.compare.rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('')}</tbody>
+      </table>
+      <div class="v-cmp-bars">
+        <div class="v-cmp-title">VISUAL COMPARISON</div>
+        <div class="v-cmp-legend">
+          <span class="v-cmp-key left">${v.compare.left}</span>
+          <span class="v-cmp-key right">${v.compare.right}</span>
+        </div>
+        ${v.compare.bars.map(b=>`
+          <div class="v-cmp-bar-row">
+            <div class="v-cmp-bar-label">${b.label}</div>
+            <div class="v-cmp-bar-track">
+              <div class="v-cmp-bar-left" style="width:${b.leftPct}%"><span>${b.leftTxt}</span></div>
+              <div class="v-cmp-bar-right" style="width:${b.rightPct}%"><span>${b.rightTxt}</span></div>
+            </div>
+          </div>`).join('')}
+      </div>
+      ${explain(v.compareExplain)}
+    `;
+  } else if(active==='solve' && v.solve){
+    const step = state.vaathiyarSolveStep || 0;
+    const all = v.solve.steps;
+    /* The stage was previously a hard-coded "200 bit packet / 2000 bits per
+       second / 0.1 seconds" timeline. That only makes sense for the
+       transmission-delay topics — everywhere else it showed a bit-rate
+       calculation that had nothing to do with the problem being solved.
+       It is now driven by an optional solve.figure; topics that genuinely
+       have a packet-timeline story supply one, everything else renders a
+       plain schematic instead of a misleading number. */
+    const f = v.solve.figure;
+    const figure = f ? `
+      <svg viewBox="0 0 500 100" style="width:100%;max-width:500px;height:100px">
+        <text x="20" y="16" font-size="10" font-weight="800" fill="#2dd4bf">${f.icon||'📦'} ${f.label||''}</text>
+        <line x1="30" y1="55" x2="470" y2="55" stroke="#1e2a44" stroke-width="3" stroke-dasharray="6 4"/>
+        <rect x="30" y="42" width="70" height="26" rx="5" fill="${step>=1?(f.fromColor||'#facc15'):'#1e2a44'}"/>
+        <text x="65" y="59" text-anchor="middle" font-size="11" font-weight="800" fill="${step>=1?'#000':'#6b7280'}">${f.amount||''}</text>
+        ${step>=1?`<circle r="7" fill="${f.fromColor||'#facc15'}"><animateMotion dur="2s" repeatCount="indefinite" path="M 105 55 L 435 55"/></circle>`:''}
+        <rect x="410" y="42" width="60" height="26" rx="5" fill="${step>=4?(f.toColor||'#22c55e'):'#1e2a44'}"/>
+        <text x="440" y="59" text-anchor="middle" font-size="11" font-weight="800" fill="${step>=4?'#000':'#6b7280'}">${step>=4?(f.result||'? s'):'? s'}</text>
+        ${step>=2?`<text x="250" y="85" text-anchor="middle" font-size="11" font-weight="800" fill="#2dd4bf">${f.mid||''}</text>`:''}
+        ${step>=4?`<text x="250" y="32" text-anchor="middle" font-size="12" font-weight="900" fill="#22c55e">${f.banner||''}</text>`:''}
+      </svg>` : `
+      <svg viewBox="0 0 500 100" style="width:100%;max-width:500px;height:100px">
+        <line x1="40" y1="50" x2="460" y2="50" stroke="#1e2a44" stroke-width="3" stroke-dasharray="6 4"/>
+        <circle cx="40" cy="50" r="9" fill="#1e2a44" stroke="#6b7280" stroke-width="2"/>
+        <circle cx="460" cy="50" r="9" fill="${step>=4?'#22c55e':'#1e2a44'}" stroke="${step>=4?'#22c55e':'#6b7280'}" stroke-width="2"/>
+        ${[1,2,3,4].map(i=>{
+          const x=110+(i-1)*90;
+          const on=i<=step+1;
+          return `<circle cx="${x}" cy="50" r="11" fill="${on?(i<=step?'#22c55e':'#facc15'):'#1e2a44'}" opacity="${on?1:.5}"/>
+            <text x="${x}" y="54" text-anchor="middle" font-size="10" font-weight="800" fill="${on?'#000':'#6b7280'}">${i}</text>`;
+        }).join('')}
+        ${step>=1?`<text x="250" y="86" text-anchor="middle" font-size="11" font-weight="700" fill="#cbd5e1">Work through the steps below</text>`:''}
+        ${step>=4?`<text x="250" y="24" text-anchor="middle" font-size="12" font-weight="900" fill="#22c55e">✓ SOLVED</text>`:''}
+      </svg>`;
+    body = `
+      <div class="v-problem-q"><b>❓ PROBLEM</b>${v.solve.q}</div>
+      <div class="v-figure">${figure}</div>
+      <div class="v-board">
+        ${all.map((s,i)=>`
+          <div class="v-step ${i<step?'done':i===step?'on':''}" style="opacity:${i<=step?1:0.22}">
+            <div style="font-size:10px;font-weight:800;letter-spacing:.08em;margin-bottom:4px;color:${i===step?'#2dd4bf':i<step?'#22c55e':'#6b7280'}">${s.label}</div>
+            <div style="font-size:16px;font-weight:800;font-family:ui-monospace,monospace;margin-bottom:4px;color:${i===step?'#2dd4bf':i<step?'#22c55e':'#cbd5e1'}">${s.math}</div>
+            <div style="font-size:11px;color:#6b7280">${s.note}</div>
+          </div>`).join('')}
+      </div>
+      <div class="v-ctrls">
+        <button class="v-btn v-btn-primary" data-v-solve="auto">${state.vaathiyarSolveAuto?'⏸ Pause Auto-Play':'▶ Auto-Play Solution'}</button>
+        <button class="v-btn v-btn-ghost" data-v-solve="next">Next Step →</button>
+        <button class="v-btn v-btn-ghost" data-v-solve="reset">↺ Reset</button>
+      </div>
+      ${explain(v.solveExplain)}
+    `;
+  } else if(active==='life' && v.life){
+    body = `${v.life.map(r=>`<div class="v-row purple"><div class="ic">${r.ic}</div><div class="bd"><div class="h">${r.h}</div><div class="t">${r.t}</div></div></div>`).join('')}${explain(v.lifeExplain)}`;
+  } else if(active==='history' && v.history){
+    body = `${v.history.map(r=>`<div class="v-row yellow"><div class="ic">📜</div><div class="bd"><div class="h">${r.yr} — ${r.h}</div><div class="t">${r.t}</div></div></div>`).join('')}${explain(v.historyExplain)}`;
+  } else if(active==='flash' && v.flash){
+    const ci = state.vaathiyarFlashIdx || 0;
+    const card = v.flash[ci];
+    body = `
+      <div class="v-flash ${state.vaathiyarFlashFlipped?'flipped':''}" data-v-flip>
+        <div class="q">${card.q}</div>
+        <div class="a">${card.a}</div>
+      </div>
+      <div class="v-flash-nav">
+        <button class="v-btn v-btn-ghost" data-v-flash="prev">← Prev</button>
+        <span class="v-flash-counter">${ci+1} / ${v.flash.length}</span>
+        <button class="v-btn v-btn-ghost" data-v-flash="next">Next →</button>
+      </div>
+      <p style="text-align:center;color:#6b7280;font-size:11px;margin-top:14px">Click the card to flip</p>
+      ${explain(v.flashExplain)}
+    `;
+  } else if(active==='exam' && v.exam){
+    body = `${v.exam.map((e,i)=>`
+      <div class="v-row">
+        <div class="ic">❓</div>
+        <div class="bd">
+          <div class="h">Q${i+1}</div>
+          <div class="t" style="margin-bottom:8px;color:#fff">${e.q}</div>
+          <div style="padding:10px 12px;background:rgba(34,197,94,.06);border-left:3px solid #22c55e;border-radius:6px;color:#a7f3d0;font-size:13px;line-height:1.6">✅ ${e.a}</div>
+        </div>
+      </div>`).join('')}${explain(v.examExplain)}`;
+  } else if(active==='eli5' && v.eli5){
+    const lvl = state.vaathiyarEli5 || 'kid';
+    body = `
+      <div class="v-eli5-tabs">
+        <button class="v-eli5-tab ${lvl==='kid'?'active':''}" data-v-eli5="kid">🧒 5-year-old</button>
+        <button class="v-eli5-tab ${lvl==='middle'?'active':''}" data-v-eli5="middle">🎓 10th standard</button>
+        <button class="v-eli5-tab ${lvl==='engg'?'active':''}" data-v-eli5="engg">🔬 Engineering</button>
+      </div>
+      <div class="v-eli5-body">${v.eli5[lvl]}</div>
+      ${explain(v.eli5Explain)}
+    `;
+  } else {
+    body = `<p style="color:#6b7280;font-size:13px">Content for this mode is coming soon.</p>`;
+  }
+
+  return `<div class="panel">
+    <div class="panel-tag">👨‍🏫 VAATHIYAR MODE • ${t.title}</div>
+    <p class="desc" style="margin-top:8px;margin-bottom:14px">8 ways to master this topic. Pick one.</p>
+    <div class="v-modes">
+      ${modes.map(m=>`
+        <button class="v-mode ${active===m.id?'active':''}" data-v-mode="${m.id}">
+          <span class="em">${m.icon}</span>
+          <div class="nm">${m.name}</div>
+          <div class="sb">${m.sub}</div>
+        </button>`).join('')}
+    </div>
+    <div class="v-content">${body}</div>
+  </div>`;
+}
+
+function startVaathiyarCrashProgress(){
+  clearVaathiyarCrashTimer();
+  const t = TOPICS[state.topicIdx];
+  const v = getVaathiyar(t.id);
+  if(!v || !v.crash) return;
+  const idx = state.vaathiyarCrashIdx || 0;
+  const ms = v.crash[idx].readMs;
+  const fill = document.getElementById('vProgFill');
+  if(!fill) return;
+  fill.style.transition='none'; fill.style.width='0%'; void fill.offsetWidth;
+  fill.style.transition=`width ${ms}ms linear`; fill.style.width='100%';
+  state.vaathiyarCrashTimer = setTimeout(()=>{
+    if(!state.vaathiyarCrashPlaying) return;
+    const v2 = getVaathiyar(TOPICS[state.topicIdx].id);
+    if(state.vaathiyarCrashIdx < v2.crash.length - 1){
+      state.vaathiyarCrashIdx++;
+      render();
+      startVaathiyarCrashProgress();
+    } else {
+      state.vaathiyarCrashPlaying = false;
+      render();
+    }
+  }, ms);
+}
+function clearVaathiyarCrashTimer(){
+  if(state.vaathiyarCrashTimer){ clearTimeout(state.vaathiyarCrashTimer); state.vaathiyarCrashTimer = null; }
+}
+
+function runVaathiyarSolveAutoPlay(){
+  clearVaathiyarSolveTimer();
+  const t = TOPICS[state.topicIdx];
+  const v = getVaathiyar(t.id);
+  if(!v || !v.solve) return;
+  state.vaathiyarSolveTimer = setTimeout(()=>{
+    if(!state.vaathiyarSolveAuto) return;
+    if(state.vaathiyarSolveStep < v.solve.steps.length - 1){
+      state.vaathiyarSolveStep++;
+      render();
+      runVaathiyarSolveAutoPlay();
+    } else {
+      state.vaathiyarSolveAuto = false;
+      render();
+    }
+  }, 2000);
+}
+function clearVaathiyarSolveTimer(){
+  if(state.vaathiyarSolveTimer){ clearTimeout(state.vaathiyarSolveTimer); state.vaathiyarSolveTimer = null; }
+}
+
+/* ============================================================
+   CHEATCODE TAB — short revision card
+   ============================================================ */
+function cheatcodeTabView(){
+  const t = TOPICS[state.topicIdx];
+  const cc = CHEATCODES[t.id];
+  if(!cc){
+    return `<div class="panel">
+      <div class="panel-tag">🎯 CHEATCODE</div>
+      <h2 style="font-size:16px;margin:12px 0 8px">Cheat sheet coming soon</h2>
+      <p class="desc">Short revision card for <b>${t.title}</b> is not ready yet. Check other topics meanwhile.</p>
+    </div>`;
+  }
+  return `<div class="panel">
+    <div class="panel-tag">🎯 CHEATCODE • ${t.title}</div>
+    <p class="desc" style="margin-top:8px;margin-bottom:14px">Everything you need in 30 seconds. No long words.</p>
+    <div class="cc-grid">
+
+      <div class="cc-card why">
+        <div class="cc-icon">🎯</div>
+        <div class="cc-head">Why it exists</div>
+        <div class="cc-text">${cc.why}</div>
+      </div>
+
+      <div class="cc-card like">
+        <div class="cc-icon">🧠</div>
+        <div class="cc-head">Think of it like</div>
+        <div class="cc-text">${cc.like}</div>
+      </div>
+
+      <div class="cc-trap-row">
+        <div class="cc-card trap">
+          <div class="cc-icon">❌</div>
+          <div class="cc-head">Careful</div>
+          <div class="cc-text">${cc.wrong}</div>
+        </div>
+        <div class="cc-card truth">
+          <div class="cc-icon">✅</div>
+          <div class="cc-head">Truth</div>
+          <div class="cc-text">${cc.right}</div>
+        </div>
+      </div>
+
+      <div class="cc-card see">
+        <div class="cc-icon">🌍</div>
+        <div class="cc-head">See it in</div>
+        <div class="cc-see">
+          ${cc.see.map(x => {
+            const parts = x.split(' ');
+            const emoji = parts[0];
+            const label = parts.slice(1).join(' ');
+            return `<span class="cc-chip"><span class="em">${emoji}</span>${label}</span>`;
+          }).join('')}
+        </div>
+      </div>
+
+      <div class="cc-card one">
+        <div class="cc-head">⚡ One line</div>
+        <div class="cc-oneline">${cc.oneLine}</div>
+      </div>
+
+    </div>
+  </div>`;
+}
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+let renderKey = null;
+/* ============================================================
+   AUTH GATE
+   ------------------------------------------------------------
+   js/auth.js loads before this file and publishes XC.auth. When it
+   is present and reports no session we skip rendering entirely, so
+   the login screen is the only thing on screen.
+
+   If auth.js ever fails to load, XC.auth is undefined and we fail
+   OPEN (render normally) rather than locking the user out of a
+   study app over a missing script. Sign out stays available in the
+   header either way.
+   ============================================================ */
+function isSignedIn(){
+  const auth = window.XC && window.XC.auth;
+  if(!auth || typeof auth.isSignedIn!=='function') return true;
+  return auth.isSignedIn();
+}
+
+function render(){
+  if(!isSignedIn()){
+    const app=document.getElementById('app');
+    if(app) app.innerHTML='';
+    return;
+  }
+  const app=document.getElementById('app');
+  const key = state.view+'|'+(state.aiPage?JSON.stringify(state.aiPage):'')
+            +'|'+state.topicIdx+'|'+state.formulaId;
+  app.innerHTML = state.view==='landing'?landingView():
+                  state.view==='workspace'?workspaceViewInner():
+                  state.view==='library'?libraryView():
+                  state.view==='ai-study'?aiStudyView():
+                  state.view==='formulas'?formulasView():
+                  state.view==='formula'?formulaStudyView():
+                  studyView();
+  const fab=document.getElementById('flash');
+  if(fab) fab.style.display = (state.view==='study')?'flex':'none';
+  /* Upgrade any sequence/state/ER/class diagram now that the view is in
+     the DOM. The fallback SVG is already painted, so this is invisible if
+     Mermaid cannot load. Fire and forget: rendering must never block. */
+  hydrateAiMermaid(app);
+  refreshPlayBtn();
+  /* §15 — enter transition only on a real page change, never on in-page
+     state re-renders (quiz clicks, autoplay ticks, chat messages…). */
+  if(renderKey!==null && key!==renderKey && !window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+    app.querySelectorAll(':scope > *:not(.header)').forEach(el=>{
+      el.classList.remove('view-enter');
+      void el.offsetWidth;            // restart the animation cleanly
+      el.classList.add('view-enter');
+    });
+  }
+  renderKey = key;
+  /* Header is rebuilt here, so anything in it that is not pure markup —
+     the search shortcut hint, for one — has to re-sync after the paint.
+     Guarded: app.js is also loaded by the headless test harnesses, whose
+     stub window has no dispatchEvent. */
+  if(typeof window.dispatchEvent==='function' && typeof CustomEvent==='function'){
+    window.dispatchEvent(new CustomEvent('xc:rerender'));
+  }
+}
+
+/* ============================================================
+   QUIZ FLOW RESET
+   ------------------------------------------------------------
+   Called whenever a topic is opened. Answers are persisted to
+   localStorage, so a returning user can land on a topic that is
+   already partly answered; this re-seeds the cursor to the FIRST
+   unanswered question instead of restarting at 0 and hiding the
+   answers they already gave. If everything is answered the quiz
+   opens straight on the results screen. */
+/* ============================================================
+   PUBLIC APP API
+   ------------------------------------------------------------
+   The search palette and the AURA assistant need to navigate the
+   SPA and read the current view, but app.js is a closed IIFE.
+   This is the single, deliberate seam between the app and those
+   modules — everything else stays private.
+   ============================================================ */
+window.XC.app = {
+  get state(){ return state; },
+  render,
+  TOPICS,
+  FORMULAS,
+  CHEATCODES,
+  /* go('study', {topicIdx}) / go('formula', {formulaId}) / go(view) */
+  go(view, options = {}){
+    if(view==='study'){
+      state.topicIdx = Number.isInteger(options.topicIdx) ? options.topicIdx : state.topicIdx;
+      state.step=0;
+      state.view='study';
+      stopAutoPlay();
+      /* Same seeding the sidebar click does, so opening a topic from
+         search lands on the right question rather than a stale one. */
+      resetQuizFlow();
+      render();
+      startAutoPlay();
+    } else if(view==='formula'){
+      state.formulaId = options.formulaId;
+      state.view='formula';
+      render();
+    } else {
+      state.view=view;
+      render();
+    }
+    window.scrollTo({top:0,behavior:'smooth'});
+  },
+  /* Short human label for wherever the user currently is, so AURA can
+     answer "what am I looking at?" without duplicating routing rules. */
+  contextLabel(){
+    if(state.view==='study'){
+      const t=TOPICS[state.topicIdx];
+      return t ? `${t.title} (Unit ${t.unit||'I'}, ${t.topic})` : 'a lesson';
+    }
+    if(state.view==='formula'){
+      const f=FORMULAS.find(x=>x.id===state.formulaId);
+      return f ? `${f.title} — ${f.cat}` : 'a formula';
+    }
+    if(state.view==='workspace') return 'the Workspace topic list';
+    if(state.view==='formulas') return 'the formula library';
+    if(state.view==='ai-study') return state.aiStudy ? `the study pack "${state.aiStudy.title}"` : 'a generated study pack';
+    return 'the home page';
+  }
+};
+
+/* Sign-in and sign-out both arrive as a custom event from auth.js so
+   the two modules never import each other. Guarded the same way as the
+   dispatch in render() above. */
+if(typeof window.addEventListener==='function'){
+  window.addEventListener('xc:authchange', render);
+}
+
+function resetQuizFlow(){
+  const c=TOPICS[state.topicIdx];
+  const total=(c && c.questions) ? c.questions.length : 0;
+  let step=0;
+  while(step<total && state.answers[`${state.topicIdx}-${step}`]!==undefined) step++;
+  state.qStep=step;
+  state.qDone=total>0 && step>=total;
+}
+
+function setStepInternal(i){
+  state.step = i;
+  if(state.view==='formula'){
+    const f = FORMULAS.find(x=>x.id===state.formulaId) || FORMULAS[0];
+    const vis = window.XC.SVG[f.visual];
+    const el = document.getElementById('formulaVisual');
+    if(el){
+      if(typeof vis === 'function') el.innerHTML = vis(i);
+      else if(window.XC.SVG.miniSvg) el.innerHTML = window.XC.SVG.miniSvg(f.mini);
+    }
+    const cap = document.getElementById('formulaCap');
+    if(cap) cap.innerHTML = `<span class="cap-step">STEP ${i+1}/${f.steps.length}</span><b>${f.steps[i].title}</b> — ${f.steps[i].desc}`;
+    const nar = document.getElementById('formulaNarration');
+    const why = (f.notes && f.notes.why && f.notes.why[i]) || f.steps[i].desc;
+    if(nar){
+      nar.classList.remove('show');
+      nar.textContent = why;
+      requestAnimationFrame(()=>requestAnimationFrame(()=>nar.classList.add('show')));
+    }
+    /* Autoplay swaps the visual without a full re-render, so the rail,
+       the prev/next buttons and the worked-example lines are synced here
+       too. Otherwise the highlighted step would drift out of step with
+       whatever the diagram is actually showing. */
+    document.querySelectorAll('.f-step-card').forEach((d,di)=>{
+      d.classList.toggle('active',di===i);
+      d.classList.toggle('done',di<i);
+      d.setAttribute('aria-current',di===i?'step':'false');
+      const top = d.querySelector('.f-step-top');
+      if(top) top.innerHTML = `<span class="f-step-title">${f.steps[di].title}</span>`
+        + (di===i ? '<span class="f-step-now">SHOWING</span>'
+                  : (di<i ? '<span class="f-step-tick" aria-hidden="true">&#10003;</span>' : ''));
+    });
+    const exMap = exLineStepMap(f);
+    document.querySelectorAll('.f-ex-line').forEach((d,di)=>{
+      const on = exMap[di] === i;
+      d.classList.toggle('active',on);
+      d.setAttribute('aria-current',on?'step':'false');
+      const mark = d.querySelector('.f-ex-mark');
+      if(mark) mark.innerHTML = on ? '&#9654;' : String(di+1).padStart(2,'0');
+    });
+    const count = document.querySelector('.f-nav-count');
+    if(count) count.innerHTML = `Step <b>${i+1}</b> of ${f.steps.length}`;
+    const navBtns = document.querySelectorAll('.f-nav-btn');
+    if(navBtns.length === 2){
+      const last = i === f.steps.length - 1;
+      navBtns[0].setAttribute('data-fstep', String(Math.max(0,i-1)));
+      navBtns[0].disabled = (i === 0);
+      navBtns[1].setAttribute('data-fstep', last ? '0' : String(i+1));
+      navBtns[1].innerHTML = last ? '↺ Run it again' : 'Next step →';
+    }
+    const stageHead = document.querySelector('.f-stage .visual-head span');
+    if(stageHead) stageHead.textContent = `ANIMATED FORMULA VISUAL • STEP ${i+1}/${f.steps.length}`;
+    document.querySelectorAll('.step-dot').forEach((d,di)=>{
+      d.classList.toggle('active',di===i);
+      d.setAttribute('aria-pressed',String(di===i));
+    });
+    return;
+  }
+  const c = TOPICS[state.topicIdx];
+  const vis=document.getElementById('mainVisual');
+  if(vis) vis.innerHTML = c.visual(i);
+  const cap=document.getElementById('visualCap');
+  if(cap) cap.innerHTML = `<span class="cap-step">STEP ${i+1}/${c.steps.length}</span><b>${c.steps[i].title}</b> — ${c.steps[i].desc}`;
+  const nar=document.getElementById('narration');
+  if(nar){
+    nar.classList.remove('show');
+    nar.textContent = c.steps[i].desc;
+    requestAnimationFrame(()=>requestAnimationFrame(()=>nar.classList.add('show')));
+  }
+  document.querySelectorAll('.step-dot').forEach((d,di)=>{
+    d.classList.toggle('active',di===i);
+    d.setAttribute('aria-pressed',String(di===i));
+  });
+  document.querySelectorAll('.step-card').forEach((d,di)=>d.classList.toggle('active',di===i));
+}
+
+/* ============================================================
+   FLASHCARDS
+   ============================================================ */
+const fcEl=document.getElementById('fcOverlay'), fcCard=document.getElementById('fcCard');
+function openFC(){
+  const c=TOPICS[state.topicIdx];
+  state.fcDeck=c.questions.map((q,i)=>({q:q.q,a:q.why,tag:'Q'+(i+1)+' • '+q.cat}));
+  state.fcIdx=0; state.fcOpen=true;
+  fcEl.classList.add('open');
+  renderFC();
+}
+function closeFC(){ state.fcOpen=false; fcEl.classList.remove('open'); }
+function renderFC(){
+  const d=state.fcDeck[state.fcIdx]; if(!d) return;
+  document.getElementById('fcQ').textContent=d.q;
+  document.getElementById('fcA').textContent=d.a;
+  document.getElementById('fcTag').textContent=d.tag;
+  document.getElementById('fcCounter').textContent=(state.fcIdx+1)+' / '+state.fcDeck.length;
+  fcCard.classList.remove('flipped');
+}
+fcCard.addEventListener('click',(e)=>{ if(e.target.id!=='fcClose') fcCard.classList.toggle('flipped'); });
+document.getElementById('fcClose').addEventListener('click',(e)=>{e.stopPropagation();closeFC();});
+document.getElementById('fcNext').addEventListener('click',(e)=>{e.stopPropagation();state.fcIdx=(state.fcIdx+1)%state.fcDeck.length;renderFC();});
+document.getElementById('fcPrev').addEventListener('click',(e)=>{e.stopPropagation();state.fcIdx=(state.fcIdx-1+state.fcDeck.length)%state.fcDeck.length;renderFC();});
+fcEl.addEventListener('click',(e)=>{ if(e.target===fcEl) closeFC(); });
+
+/* ============================================================
+   EVENTS
+   ============================================================ */
+document.addEventListener('click', async (e)=>{
+  const mobileMenu=e.target.closest('[data-mobile-menu]');
+  if(mobileMenu){
+    const menu=document.getElementById('mobileNav');
+    const isOpen=menu?.classList.toggle('open')||false;
+    mobileMenu.setAttribute('aria-expanded',String(isOpen));
+    mobileMenu.setAttribute('aria-label',isOpen?'Close navigation':'Open navigation');
+    return;
+  }
+  const aiPage=e.target.closest('[data-ai-page]');
+  if(aiPage){
+    const type=aiPage.dataset.aiPage;
+    stopAIVisualAutoplay();
+    state.aiPage={
+      type,
+      ...(aiPage.dataset.unitIndex!==undefined?{unitIndex:Number(aiPage.dataset.unitIndex)}:{}),
+      ...(aiPage.dataset.topicIndex!==undefined?{topicIndex:Number(aiPage.dataset.topicIndex)}:{}),
+      ...(aiPage.dataset.conceptIndex!==undefined?{conceptIndex:Number(aiPage.dataset.conceptIndex)}:{})
+    };
+    if(type==='concept'){
+      state.aiLessonMode='crash';
+      state.aiVisualStep=0;
+      state.aiLessonFlashIdx=0;
+      state.aiLessonFlashFlipped=false;
+      state.aiExplanationLevel='simple';
+    }
+    render();
+    window.scrollTo({top:0,behavior:'smooth'});
+    return;
+  }
+  const aiMode=e.target.closest('[data-ai-mode]');
+  if(aiMode){
+    stopAIVisualAutoplay();
+    state.aiLessonMode=aiMode.dataset.aiMode;
+    render();
+    return;
+  }
+  if(e.target.closest('[data-ai-visual-play]')){
+    if(state.aiVisualPlaying){
+      stopAIVisualAutoplay();
+      render();
+      return;
+    }
+    const concept=state.aiStudy?.concepts[state.aiPage.conceptIndex];
+    if(!concept) return;
+    if(state.aiVisualStep>=concept.visualization.steps.length-1) state.aiVisualStep=0;
+    state.aiVisualPlaying=true;
+    state.aiVisualTimer=setInterval(()=>{
+      const lastStep=concept.visualization.steps.length-1;
+      if(state.aiVisualStep>=lastStep){
+        stopAIVisualAutoplay();
+      }else{
+        state.aiVisualStep+=1;
+        if(state.aiVisualStep===lastStep) stopAIVisualAutoplay();
+      }
+      render();
+    },2600);
+    render();
+    return;
+  }
+  const aiVisual=e.target.closest('[data-ai-visual]');
+  if(aiVisual){
+    state.aiVisualStep=Number(aiVisual.dataset.aiVisual);
+    render();
+    return;
+  }
+  const aiTopicImage=e.target.closest('[data-ai-topic-image]');
+  if(aiTopicImage && state.aiStudy){
+    requestTopicImage(Number(aiTopicImage.dataset.aiTopicImage));
+    return;
+  }
+  const aiQuizVisual=e.target.closest('[data-ai-quiz-visual]');
+  if(aiQuizVisual){
+    const [,step]=aiQuizVisual.dataset.aiQuizVisual.split(':');
+    state.aiQuizVisualStep=Number(step);
+    render();
+    return;
+  }
+  if(e.target.closest('[data-ai-concept-flip]')){
+    state.aiLessonFlashFlipped=!state.aiLessonFlashFlipped;
+    render();
+    return;
+  }
+  const conceptFlashNav=e.target.closest('[data-ai-concept-flash]');
+  if(conceptFlashNav && state.aiStudy){
+    const concept=state.aiStudy.concepts[state.aiPage.conceptIndex];
+    const count=state.aiStudy.flashcards.filter(card=>card.conceptIndex===state.aiPage.conceptIndex).length;
+    if(concept && count){
+      state.aiLessonFlashIdx=(state.aiLessonFlashIdx+(conceptFlashNav.dataset.aiConceptFlash==='next'?1:-1)+count)%count;
+      state.aiLessonFlashFlipped=false;
+      render();
+    }
+    return;
+  }
+  const explanationLevel=e.target.closest('[data-ai-explanation-level]');
+  if(explanationLevel){
+    state.aiExplanationLevel=explanationLevel.dataset.aiExplanationLevel;
+    render();
+    return;
+  }
+  const aiAnswer=e.target.closest('[data-ai-answer]');
+  if(aiAnswer){
+    const [questionIndex,answerIndex]=aiAnswer.dataset.aiAnswer.split(':').map(Number);
+    if(state.aiStudy && state.aiQuizAnswers[questionIndex]===undefined){
+      state.aiQuizAnswers[questionIndex]=answerIndex;
+      render();
+    }
+    return;
+  }
+  if(e.target.closest('[data-ai-flip]')){
+    state.aiFlashFlipped=!state.aiFlashFlipped;
+    render();
+    return;
+  }
+  const flashNav=e.target.closest('[data-ai-flash]');
+  if(flashNav && state.aiStudy){
+    const count=state.aiStudy.flashcards.length;
+    state.aiFlashIdx=(state.aiFlashIdx+(flashNav.dataset.aiFlash==='next'?1:-1)+count)%count;
+    state.aiFlashFlipped=false;
+    render();
+    return;
+  }
+  const nav=e.target.closest('[data-nav]');
+  if(nav){
+    stopAIVisualAutoplay();
+    document.getElementById('uploadModal')?.close();
+    state.view=nav.dataset.nav;
+    state.step=0;
+    stopAutoPlay();
+    if(state.view==='library') refreshLibrary();
+    render();
+    if(state.view==='study') startAutoPlay();
+    window.scrollTo({top:0,behavior:'smooth'});
+    return;
+  }
+  /* LIBRARY actions: open restores the saved study JSON; delete drops it;
+     renew restarts the 30-day clock (payment verification plugs in here). */
+  const libOpen=e.target.closest('[data-library-open]');
+  if(libOpen && window.XC?.library){
+    const entry=await window.XC.library.getStudy(libOpen.dataset.libraryOpen);
+    if(entry?.study){
+      state.aiStudy=entry.study;
+      state.aiJobId=entry.id;
+      state.aiPdfMeta=entry.pdfMeta||null;
+      state.aiChunkNote='';
+      state.aiTopicImages=entry.images||{};
+      state.aiTopicImageBusy={};
+      state.aiPage={type:'plan'};
+      state.aiLessonMode='crash'; state.aiVisualStep=0;
+      state.aiQuizAnswers={};
+      state.view='ai-study';
+      render(); window.scrollTo({top:0,behavior:'smooth'});
+      /* A saved study can still have units queued server-side — reattach
+         the watcher so they finish unlocking into this session too. */
+      if(entry.study?.chunked&&Array.isArray(entry.study.pendingUnits)&&entry.study.pendingUnits.length){
+        startChunkWatch(entry.id);
+      }
+    }
+    return;
+  }
+  const libDel=e.target.closest('[data-library-delete]');
+  if(libDel && window.XC?.library){
+    await window.XC.library.deleteStudy(libDel.dataset.libraryDelete);
+    await refreshLibrary(); return;
+  }
+  if(e.target.closest('[data-library-renew]') && window.XC?.library){
+    window.XC.library.renewTrial();
+    await refreshLibrary(); return;
+  }
+  const tabBtn = e.target.closest('[data-tab]');
+  if(tabBtn){
+    state.studyTab = tabBtn.dataset.tab;
+    render();
+    return;
+  }
+  /* Sequential quiz flow --------------------------------------------
+     Next is the ONLY way forward. It is rendered disabled until the
+     current question has an answer, so the flow cannot be skipped.
+     On the last question it flips qDone, which swaps the quiz column
+     for the results screen. */
+  const next=e.target.closest('[data-qnext]');
+  if(next && !next.disabled){
+    const c=TOPICS[state.topicIdx];
+    const last=state.qStep>=c.questions.length-1;
+    if(last) state.qDone=true; else state.qStep++;
+    render();
+    /* The quiz column is replaced wholesale, so park the new card just
+       below the study-bar instead of leaving the scroll where the old
+       card's explanations used to be. */
+    const card=document.querySelector('.study-bar');
+    if(card) window.scrollTo({top:Math.max(0,card.offsetTop),behavior:'smooth'});
+    return;
+  }
+  const retry=e.target.closest('[data-qretry]');
+  if(retry){
+    const t=state.topicIdx;
+    Object.keys(state.answers).forEach(k=>{ if(k.startsWith(t+'-')) delete state.answers[k]; });
+    saveAnswers();
+    state.qStep=0;
+    state.qDone=false;
+    render();
+    return;
+  }
+  const toggle=e.target.closest('[data-toggle-unit]');
+  if(toggle){
+    const u = toggle.dataset.toggleUnit;
+    state.collapsedUnits[u] = !state.collapsedUnits[u];
+    toggle.setAttribute('aria-expanded', String(!state.collapsedUnits[u]));
+    render();
+    return;
+  }
+  if(e.target.closest('[data-open="flashcards"]')){
+    openFC();
+    return;
+  }
+  const fc=e.target.closest('[data-formula]');
+  if(fc){
+    state.formulaId = fc.dataset.formula;
+    state.step = 0;
+    state.view = 'formula';
+    stopAutoPlay();
+    render();
+    startAutoPlay();
+    window.scrollTo({top:0,behavior:'smooth'});
+    return;
+  }
+  const fstep=e.target.closest('[data-fstep]');
+  if(fstep){
+    stopAutoPlay();
+    state.step = +fstep.dataset.fstep;
+    render();
+    return;
+  }
+  const study=e.target.closest('[data-study]');
+  if(study){
+    state.topicIdx=+study.dataset.study;
+    state.step=0;
+    state.view='study';
+    stopAutoPlay();
+    /* Re-seed the quiz cursor for the topic just opened. Runs before
+       render() so the first paint already shows the right question. */
+    resetQuizFlow();
+    render();
+    startAutoPlay();
+    window.scrollTo({top:0,behavior:'smooth'});
+    return;
+  }
+  const open=e.target.closest('[data-open]');
+  if(open){
+    if(open.dataset.open==='upload'){
+      stopAIVisualAutoplay();
+      document.getElementById('uploadModal')?.showModal();
+      /* Read the day's capacity as the dialog opens, so the user sees
+         whether a model is still free before picking a file. */
+      refreshQuota();
+    }
+    return;
+  }
+  if(e.target.closest('[data-upload-close]')){
+    document.getElementById('uploadModal')?.close();
+    return;
+  }
+  const step=e.target.closest('[data-step]');
+  if(step){
+    stopAutoPlay();
+    setStepInternal(+step.dataset.step);
+    clearTimeout(state.resumeTimer);
+    state.resumeTimer = setTimeout(()=>{ if(state.playing) startAutoPlay(); }, 6000);
+    return;
+  }
+  if(e.target.closest('[data-play]')){
+    state.playing = !state.playing;
+    refreshPlayBtn();
+    if(state.playing) startAutoPlay(); else stopAutoPlay();
+    return;
+  }
+  const ans=e.target.closest('[data-ans]');
+  if(ans){
+    const q=+ans.dataset.q, o=+ans.dataset.ans;
+    const key=`${state.topicIdx}-${q}`;
+    if(state.answers[key]===undefined){
+      state.answers[key]=o;
+      saveAnswers();
+      render();
+      try{
+        const ctx=new (window.AudioContext||window.webkitAudioContext)();
+        const osc=ctx.createOscillator(), g=ctx.createGain();
+        const c=TOPICS[state.topicIdx];
+        const isC=o===c.questions[q].a;
+        osc.frequency.value=isC?660:220;
+        osc.type=isC?'sine':'sawtooth';
+        g.gain.setValueAtTime(.06,ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+.15);
+        osc.connect(g); g.connect(ctx.destination);
+        osc.start(); osc.stop(ctx.currentTime+.18);
+      }catch(e2){}
+    }
+    return;
+  }
+  const hint=e.target.closest('[data-hint]');
+  if(hint){ alert('HINT: '+TOPICS[state.topicIdx].questions[+hint.dataset.hint].hint); return; }
+  const eli=e.target.closest('[data-eli]');
+  if(eli){ alert('EXPLAIN LIKE I\'M 5:\n\n'+TOPICS[state.topicIdx].questions[+eli.dataset.eli].eli); return; }
+  if(e.target.closest('#themeBtn')){
+    const cur = document.body.getAttribute('data-mode') || 'dark';
+    const next = cur === 'light' ? 'dark' : 'light';
+    applyTheme(document.body.getAttribute('data-theme') || 'bubblegum', next);
+    return;
+  }
+  if(e.target.closest('#flash')){ openFC(); return; }
+});
+
+function readFileAsBase64(file,onProgress){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onerror=()=>reject(new Error('The selected PDF could not be read.'));
+    reader.onprogress=event=>{
+      if(event.lengthComputable && typeof onProgress==='function'){
+        onProgress(Math.round(event.loaded/event.total*100));
+      }
+    };
+    reader.onload=()=>{
+      if(typeof reader.result!=='string'){
+        reject(new Error('The selected PDF could not be read.'));
+        return;
+      }
+      resolve(reader.result.slice(reader.result.indexOf(',')+1));
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function analyzePdfRequest(pdfBase64,level,onUploadProgress,onUploadComplete){
+  return new Promise((resolve,reject)=>{
+    const request=new XMLHttpRequest();
+    request.open('POST','/api/analyze');
+    request.setRequestHeader('Content-Type','application/json');
+    request.upload.addEventListener('progress',event=>{
+      if(event.lengthComputable) onUploadProgress(Math.round(event.loaded/event.total*100));
+    });
+    request.upload.addEventListener('load',onUploadComplete,{once:true});
+    request.addEventListener('error',()=>reject(new Error('The PDF could not be sent. Check your connection and try again.')),{once:true});
+    request.addEventListener('timeout',()=>reject(new Error('The AI request took too long. Please try again.')),{once:true});
+    request.addEventListener('load',()=>{
+      let result;
+      try{
+        result=JSON.parse(request.responseText);
+      }catch{
+        const requestId=request.getResponseHeader('X-Request-Id');
+        const status=request.status?`HTTP ${request.status}`:'no HTTP response';
+        const responseType=request.getResponseHeader('Content-Type')||'unknown content type';
+        const responsePreview=request.responseText.replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim().slice(0,120);
+        const wrongMethod=request.status===405
+          ? `The server at ${location.origin} rejected the required POST method. This usually means an older or static server is still answering on this port.`
+          : '';
+        const guidance=['127.0.0.1','localhost'].includes(location.hostname)
+          ? 'In PowerShell, inspect port 4173 with Get-NetTCPConnection -LocalPort 4173 -State Listen. Stop that PID only if it is the old XAMCODE server, then run node server.js from C:\\Xamcode and open http://127.0.0.1:4173.'
+          : 'Retry in a moment; contact the site administrator if this continues.';
+        const requestReference=requestId?` Reference: ${requestId}.`:'';
+        const preview=responsePreview?` Server response: ${responsePreview}`:'';
+        reject(new Error(`XAMCODE received an unreadable response (${status}, ${responseType}). ${wrongMethod||'The response was not JSON.'} ${guidance}${requestReference}${preview}`));
+        return;
+      }
+      if(request.status<200||request.status>=300){
+        const requestId=result?.requestId||request.getResponseHeader('X-Request-Id');
+        const requestReference=requestId?` Reference: ${requestId}.`:'';
+        /* The server reports this caller's real remaining count, so the
+           panel shows the new number now instead of at its next poll. */
+        if(result?.code==='DAILY_LIMIT_REACHED'&&result.allowance&&quotaLast){
+          renderQuota({ ...quotaLast, allowance: result.allowance });
+        }
+        reject(new Error(`${result?.error||'The study could not be generated. Please try again.'}${requestReference}`));
+        return;
+      }
+      resolve(result);
+    },{once:true});
+    request.timeout=390000;
+    request.send(JSON.stringify({pdfBase64,level}));
+  });
+}
+
+/* ============================================================
+   ANALYSIS JOB POLLING
+   ------------------------------------------------------------
+   The server now answers the upload with 202 and a jobId, then builds
+   the study in the background. This polls the real stage events, so the
+   panel and the scene are driven by what the server is actually
+   doing rather than by elapsed time. The old single long request is
+   gone, which is also what makes cancellation possible.
+   ============================================================ */
+let activeJobId=null;
+let jobPollTimer=null;
+
+function stopJobPolling(){
+  if(jobPollTimer) clearTimeout(jobPollTimer);
+  jobPollTimer=null;
+}
+
+async function cancelActiveJob(){
+  const id=activeJobId;
+  stopJobPolling();
+  activeJobId=null;
+  if(!id) return;
+  /* Best effort: a build already in flight cannot be recalled, but the
+     server stops at the next stage boundary so no further quota is spent. */
+  try{
+    await fetch(`/api/analyze/${id}`,{method:'DELETE',keepalive:true});
+  }catch{ /* the run is ending anyway */ }
+}
+
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+
+/* Maps a server stage onto the four client stages the panel and the scene
+   already understand, so the existing visuals keep working while the text
+   and the bar follow the real job. The scene additionally reads the
+   UNMAPPED server stage name via journeySetStage, which is what lets each
+   stage pick its own beat. */
+const JOB_STAGE_TO_UI={
+  queued:'reading', extract:'reading',
+  outline:'analyzing', sections:'analyzing',
+  bank:'analyzing', validate:'building', ready:'building'
+};
+
+function applyJobStage(snapshot){
+  if(!snapshot) return;
+  const uiStage=JOB_STAGE_TO_UI[snapshot.stage]||'analyzing';
+  /* The stage label comes from the server, so the panel names the real
+     step ("Writing your questions") rather than a generic "at work". */
+  const label=snapshot.stageLabel||'Working';
+  setUploadStage(uiStage, label==='Building your lessons'?'XAMCODE AI is at work':label,
+    `${label}…`);
+  if(pdfProgressStatus) pdfProgressStatus.textContent=`${label}…`;
+  /* Real percentage, so the bar stops guessing. */
+  if(pdfProgressBar) pdfProgressBar.style.width=`${snapshot.progress}%`;
+  if(pdfProgressTrack){
+    pdfProgressTrack.removeAttribute('data-indeterminate');
+    pdfProgressTrack.setAttribute('aria-valuenow',String(snapshot.progress));
+    pdfProgressTrack.setAttribute('aria-label',`Study generation: ${label}, ${snapshot.progress}%`);
+  }
+  /* The scene takes the REAL stage name, so each beat of the animation is
+     the step the pipeline is actually on rather than a guess. */
+  journeySetStage(snapshot.stage,label);
+  /* The comet advances to the real position instead of an elapsed guess. */
+  journeySetJobProgress(snapshot.progress);
+}
+
+async function pollAnalyzeJob(jobId,onStage){
+  for(;;){
+    let snapshot;
+    try{
+      const response=await fetch(`/api/analyze/${jobId}`);
+      snapshot=await response.json();
+    }catch{
+      /* A dropped poll is not a failed build: the job keeps running
+         server-side, so back off and try again rather than giving up. */
+      await sleep(1500);
+      continue;
+    }
+    if(snapshot.status==='done') return snapshot;
+    if(snapshot.status==='failed') throw new Error(snapshot.error||'The study could not be generated. Please try again.');
+    if(snapshot.status==='cancelled') throw new Error('The study build was cancelled.');
+    onStage?.(snapshot);
+    /* Poll faster while something is moving, slower when it is quiet. */
+    await sleep(snapshot.stage==='outline'||snapshot.stage==='bank'?900:1400);
+  }
+}
+/* ============================================================
+   BACKGROUND UNIT UNLOCKS
+   ------------------------------------------------------------
+   A chunked job delivers Unit 1 as soon as it is ready and keeps
+   building the remaining units server-side. This watcher polls the
+   same job at a calm interval, merges each newly finished unit into
+   the open study (append-only indices, so the page you are on and
+   your quiz answers stay valid), persists the updated study to the
+   library, fires the MiniMax stills for the new lessons and toasts
+   the unlock. It stops when every unit is ready or the server no
+   longer knows the job.
+   ============================================================ */
+let chunkWatchToken = 0;
+function xcToast(msg){
+  let el=document.getElementById('xcToast');
+  if(!el){
+    el=document.createElement('div');
+    el.id='xcToast';
+    el.className='xc-toast';
+    el.setAttribute('role','status');
+    el.setAttribute('aria-live','polite');
+    document.body.appendChild(el);
+  }
+  el.textContent=msg;
+  el.classList.add('show');
+  clearTimeout(el._xcToastTimer);
+  el._xcToastTimer=setTimeout(()=>el.classList.remove('show'),4500);
+}
+async function applyChunkUnlock(study){
+  const err=validateAIStudyForDisplay(study);
+  if(err){ console.warn('Unlock rejected by validator; keeping the study on screen.',err); return; }
+  const prevStates=Array.isArray(state.aiStudy?.unitStates)?state.aiStudy.unitStates:[];
+  const unlocked=(study.unitStates||[]).filter((s,i)=>s.status==='ready'&&prevStates[i]?.status!=='ready');
+  state.aiStudy=study;
+  /* The library entry is keyed by jobId, so re-saving overwrites the
+     partial pack with the newer one — Unit 1 first, then each unlock. */
+  try{
+    if(window.XC?.library&&state.aiJobId){
+      await window.XC.library.saveStudy({jobId:state.aiJobId,study,
+        images:state.aiTopicImages||{},pdfMeta:state.aiPdfMeta||null});
+    }
+  }catch(e){ console.warn('Library save failed on unlock; study still usable.',e); }
+  if(unlocked.length){
+    const last=unlocked[unlocked.length-1];
+    xcToast(`Unit ${last.index+1} is ready — ${last.lessons} new lesson${last.lessons===1?'':'s'} unlocked.`);
+  }
+  if(state.view==='ai-study') render();
+  /* New lessons need their MiniMax stills; this skips anything already
+     generated, so only the fresh concepts are requested. */
+  autoGenerateTopicImages();
+}
+function onChunkWatchEnd(jobId,reason){
+  if(state.aiJobId!==jobId) return;
+  const pending=Array.isArray(state.aiStudy?.pendingUnits)?state.aiStudy.pendingUnits:[];
+  if(pending.length&&reason!=='done'){
+    state.aiChunkNote='The background build stopped. Upload the PDF again to prepare the remaining units.';
+    if(state.view==='ai-study') render();
+  }
+}
+async function startChunkWatch(jobId){
+  const token=++chunkWatchToken;
+  while(token===chunkWatchToken&&state.aiJobId===jobId){
+    let snap=null;
+    try{
+      const response=await fetch(`/api/analyze/${jobId}`);
+      if(response.status===404){ onChunkWatchEnd(jobId,'gone'); return; }
+      snap=await response.json();
+    }catch{ await sleep(4000); continue; }
+    if(token!==chunkWatchToken||state.aiJobId!==jobId) return;
+    if(snap.status==='failed'){ onChunkWatchEnd(jobId,'failed'); return; }
+    if(snap.status==='cancelled'){ onChunkWatchEnd(jobId,'cancelled'); return; }
+    const incoming=snap.study;
+    if(incoming&&Array.isArray(incoming.concepts)&&
+       (!state.aiStudy||incoming.concepts.length>state.aiStudy.concepts.length)){
+      await applyChunkUnlock(incoming);
+    }
+    const pending=Array.isArray(snap.pendingUnits)?snap.pendingUnits:[];
+    if(!pending.length) return;
+    await sleep(4000);
+  }
+}
+/* ============================================================
+   PER-TOPIC 2D IMAGES
+   ------------------------------------------------------------
+   One MiniMax image-01 still per lesson topic, bound to the finished
+   analyze job — generating images consumes no new PDF allowance.
+   The response carries the prompt used, so the result can be verified
+   against the topic's own diagram nodes and workshop formulas.
+   Motion stays in the browser-animated SVG scenes; the still is the
+   lesson header image.
+   ============================================================ */
+async function requestTopicImage(conceptIndex){
+  if(!state.aiJobId||state.aiTopicImageBusy[conceptIndex]) return;
+  state.aiTopicImageBusy[conceptIndex]=true;
+  render();
+  try{
+    const response=await fetch('/api/topic-images',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({jobId:state.aiJobId,topics:[conceptIndex]})
+    });
+    const posted=await response.json();
+    if(!response.ok) throw new Error(posted.error||'The image could not be generated. Please try again.');
+    const first=posted.images?.[0];
+    if(first?.imageUrl) state.aiTopicImages[conceptIndex]=first;
+    else throw new Error(first?.error||'The image provider returned no image. Please try again.');
+  }catch(error){
+    state.aiTopicImages[conceptIndex]={error:error.message||'The image could not be generated.'};
+  }finally{
+    state.aiTopicImageBusy[conceptIndex]=false;
+    render();
+  }
+}
+/* AUTO topic images — after a study lands, fire one MiniMax still per
+   lesson automatically (sequentially, so no quota stampede). A failure
+   for one topic never blocks the rest; the empty slot's button remains
+   for a manual retry. Skips silently when MiniMax is not configured. */
+async function autoGenerateTopicImages(){
+  if(!state.aiJobId||!state.aiStudy||!Array.isArray(state.aiStudy.concepts)) return;
+  for(let i=0;i<state.aiStudy.concepts.length;i++){
+    if(state.aiTopicImages[i]?.imageUrl||state.aiTopicImageBusy[i]) continue;
+    await requestTopicImage(i);
+  }
+}
+function topicImageSlot(conceptIndex){
+  const entry=state.aiTopicImages[conceptIndex];
+  if(entry?.imageUrl) return `<figure class="ai-topic-image"><img src="${escapeHtml(entry.imageUrl)}" alt="2D illustration for ${escapeHtml(state.aiStudy.concepts[conceptIndex].title)}" loading="lazy"><figcaption><span>2D TOPIC IMAGE · MINIMAX</span><button type="button" data-ai-topic-image="${conceptIndex}">↻ Regenerate</button></figcaption></figure>`;
+  if(entry?.error) return `<div class="ai-topic-image ai-topic-image-error" role="status"><p>${escapeHtml(entry.error)}</p><button type="button" data-ai-topic-image="${conceptIndex}">Try again</button></div>`;
+  const busy=!!state.aiTopicImageBusy[conceptIndex];
+  return `<div class="ai-topic-image ai-topic-image-empty"><p>Generate a 2D illustration for this topic from your PDF.</p><button type="button" data-ai-topic-image="${conceptIndex}" ${busy?'disabled':''}>${busy?'Generating…':'🖼 Generate topic image'}</button></div>`;
+}
+
+
+/* ============================================================
+   STATIC-PREVIEW RECOVERY
+   ------------------------------------------------------------
+   A static preview (VS Code Live Server on 5500, python -m
+   http.server, opening the file directly) happily serves this page
+   but has no /api, so the health check 404s and every AI call fails
+   behind a wall of instructions the reader then has to act on.
+
+   The page used to only report that. It now fixes itself: if this
+   document is served from a loopback port that has no API but the
+   real server is alive on 4173, the browser is moved there.
+
+   Two guards keep this safe. It only runs on a loopback host, so a
+   deployed site — Render, or any hostname that serves its own API —
+   is never redirected. And it only fires when 4173 actually answers
+   the health check, so a missing server is never papered over.
+   ============================================================ */
+const XC_API_PORT = '4173';
+let xcApiProbe = null;
+
+function xcIsLoopback(){
+  return /^(localhost|127\.0\.0\.1|\[::1\]|::1)$/i.test(location.hostname);
+}
+
+/* Returns the health payload when origin is the real server, else null. */
+async function xcProbeHealth(origin){
+  try{
+    const res = await fetch(`${origin}/api/health`, { headers:{ Accept:'application/json' }, cache:'no-store' });
+    if(!res.ok) return null;
+    const data = await res.json();
+    return (data && data.service === 'xamcode-ai' && data.apiVersion === 1) ? data : null;
+  }catch{
+    return null;
+  }
+}
+
+/* Resolves true when this page is already served by the real server.
+   Otherwise, on loopback, redirects to it and resolves false. */
+function xcEnsureApiOrigin(){
+  if(xcApiProbe) return xcApiProbe;
+  const probe = xcApiProbe = (async ()=>{
+    if(await xcProbeHealth(location.origin)) return true;
+    if(!xcIsLoopback() || location.port === XC_API_PORT) return false;
+    const target = `http://${location.hostname}:${XC_API_PORT}`;
+    if(!(await xcProbeHealth(target))) return false;
+    /* Bounce immediately so the user never reaches the upload dialog on
+       a port that cannot answer. replace() avoids trapping them in the
+       preview with the back button. */
+    location.replace(`${target}${location.pathname}${location.search}${location.hash}`);
+    return false;
+  })();
+  /* Cache a SUCCESS forever, but never a failure: a probe that ran while
+     the server was restarting used to pin xcApiProbe=false for the whole
+     session, so verifyXamcodeApi kept throwing "not running" long after
+     the server came back — while /api/quota answered fine, leaving the
+     red banner sitting next to a live "5 of 5" count. Dropping the memo
+     on false makes the next submit re-probe the real server. */
+  probe.then(ok=>{ if(!ok && xcApiProbe === probe) xcApiProbe = null; });
+  return probe;
+}
+
+async function verifyXamcodeApi(){
+  if(await xcEnsureApiOrigin()) return;
+  /* Nothing to bounce to, so the server is genuinely down. Kept short
+     and specific on purpose — the long diagnostic version was the wall
+     of text this whole recovery path exists to avoid. */
+  const where = xcIsLoopback() ? `port ${location.port || '80'}` : location.host;
+  throw new Error(
+    `XAMCODE AI is not running. This page is served from ${where}, which has no API, and no server answered on port ${XC_API_PORT}. ` +
+    `Run "npm start" in C:\\Xamcode (or "node server.js"), then open http://127.0.0.1:${XC_API_PORT}/`
+  );
+}
+
+/* Boot-time check, so a preview tab corrects itself on load rather than
+   waiting for the user to pick a PDF and hit an error. */
+xcEnsureApiOrigin();
+
+const pdfUploadForm=document.getElementById('pdfUploadForm');
+const pdfFileInput=document.getElementById('studyPdf');
+const pdfDropzone=document.getElementById('pdfDropzone');
+const selectedPdf=document.getElementById('selectedPdf');
+const pdfUploadProgress=document.getElementById('pdfUploadProgress');
+const pdfProgressTrack=pdfUploadProgress?.querySelector('.pdf-progress-track');
+const pdfProgressBar=document.getElementById('pdfProgressBar');
+const pdfProgressTitle=document.getElementById('pdfProgressTitle');
+const pdfProgressDescription=document.getElementById('pdfProgressDescription');
+const pdfProgressStatus=document.getElementById('pdfProgressStatus');
+const pdfProgressElapsed=document.getElementById('pdfProgressElapsed');
+const analyzePdfButton=document.getElementById('analyzePdfButton');
+let uploadElapsedTimer;
+let uploadStartedAt=0;
+const updateUploadElapsed=()=>{
+  if(!pdfProgressElapsed||!uploadStartedAt) return;
+  const seconds=Math.floor((Date.now()-uploadStartedAt)/1000);
+  const time=`${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,'0')}`;
+  pdfProgressElapsed.textContent=`${time} elapsed`;
+  pdfProgressElapsed.setAttribute('aria-label',`Elapsed time: ${seconds} seconds`);
+};
+const startUploadElapsed=()=>{
+  window.clearInterval(uploadElapsedTimer);
+  uploadStartedAt=Date.now();
+  updateUploadElapsed();
+  uploadElapsedTimer=window.setInterval(updateUploadElapsed,1000);
+};
+const stopUploadElapsed=()=>{
+  window.clearInterval(uploadElapsedTimer);
+  uploadElapsedTimer=undefined;
+  uploadStartedAt=0;
+};
+const setSelectedPdf=file=>{
+  if(!selectedPdf) return;
+  selectedPdf.hidden=!file;
+  if(!file) return;
+  document.getElementById('selectedPdfName').textContent=file.name;
+  const size=file.size<1024*1024
+    ? `${Math.max(1,Math.round(file.size/1024))} KB`
+    : `${(file.size/(1024*1024)).toFixed(1)} MB`;
+  document.getElementById('selectedPdfSize').textContent=`PDF document · ${size}`;
+};
+const validatePdfFile=file=>{
+  if(!file.name.toLowerCase().endsWith('.pdf') && file.type!=='application/pdf'){
+    return 'Please select a PDF file.';
+  }
+  if(file.size>MAX_PDF_MB*1024*1024){
+    return `This PDF is larger than the ${MAX_PDF_MB} MB limit.`;
+  }
+  return '';
+};
+/* ============================================================
+   PDF PROCESSING JOURNEY — the arena scene
+   ------------------------------------------------------------
+   The provider gives no progress signal for the analysis phase, so this
+   is an ELAPSED-TIME estimate, not a true percentage. Reading and
+   uploading report real measured progress; analysing eases toward the
+   crystal as wall-clock time passes and always completes. The caption
+   states the stage honestly rather than inventing a page count.
+   ============================================================ */
+/* Shared by the real submit handler and by the quota-free preview below, so
+   the two cannot drift apart.
+
+   This lives at module scope on purpose. The preview listener is registered
+   here, long before the submit listener, and a `const` declared inside that
+   submit callback is invisible from out here — which is how the preview used
+   to die on a ReferenceError the instant it was clicked, leaving no
+   quota-free way to review the scene at all. */
+const resetProgress=()=>{
+  stopUploadElapsed();
+  /* Cancelling here stops the server build at its next stage boundary,
+     so abandoning a run no longer leaves it spending quota in the
+     background. */
+  if(activeJobId) cancelActiveJob();
+  journeyHide();
+  pdfUploadProgress.hidden=true;
+  pdfUploadProgress.removeAttribute('data-stage');
+  /* Clear the "already scrolled to the panel" latch, or the next run opens
+     with the panel below the fold again. */
+  pdfUploadProgress.removeAttribute('data-scrolled-into-view');
+  pdfUploadProgress.dataset.indeterminate='false';
+  if(pdfProgressBar) pdfProgressBar.style.width='0%';
+  if(pdfProgressTrack){
+    pdfProgressTrack.setAttribute('aria-label','PDF preparation progress');
+    pdfProgressTrack.setAttribute('aria-valuenow','0');
+  }
+};
+/* Runs the real journey through its real stages on a timer, so the
+   scene can be reviewed without spending provider quota. It drives the
+   same journeySetStage/journeyFinish pair the genuine job poll uses, with
+   the real server stage names, so a preview cannot drift from what an
+   actual run looks like beat for beat. */
+let journeyPreviewTimers=[];
+function journeyPreviewStop(){
+  journeyPreviewTimers.forEach(clearTimeout);
+  journeyPreviewTimers=[];
+}
+document.getElementById('journeyPreviewButton')?.addEventListener('click',()=>{
+  journeyPreviewStop();
+  resetProgress();
+  pdfUploadProgress.hidden=false;
+  /* [delay, server stage, panel stage, percent, message, description]
+     The percentages are the ones the real pipeline reports per stage. The
+     timed ease is deliberately slow so a long build never races ahead, and
+     on its own it would leave the preview mostly empty until the finale
+     snapped the trail full - which is not what a real run looks like. */
+  const script=[
+    [0,    'queued',  'reading',  0,  'Getting your PDF ready','Preparing your document on this device.'],
+    [1400, 'extract', 'uploading',18, 'Sending your PDF securely','Transferring your document to XAMCODE AI.'],
+    [3200, 'outline', 'analyzing',38, 'XAMCODE AI is at work','Finding the key ideas and shaping them into a complete learning experience.'],
+    [7000, 'bank',    'analyzing',62, 'Writing your questions','Building practice questions and flashcards from your notes.'],
+    [12000,'validate','building', 88, 'Checking your study space','Making sure every lesson, question and flashcard is sound.']
+  ];
+  script.forEach(([delay,jobStage,stage,percent,message,description])=>{
+    journeyPreviewTimers.push(setTimeout(()=>{
+      setUploadStage(stage,message,description);
+      journeySetStage(jobStage,message);
+      journeySetJobProgress(percent);
+      if(jobStage==='validate'){
+        /* Validation genuinely takes a moment before the study is accepted,
+           so the charge beat is held instead of being overwritten in the
+           same tick - otherwise the comet would blaze and settle inside one
+           frame and the beat would never be seen at all. */
+        journeyPreviewTimers.push(setTimeout(()=>{
+          journeyFinish();
+          journeyPreviewTimers.push(setTimeout(resetProgress,3600));
+        },2600));
+      }
+    },delay));
+  });
+});
+
+/* The shooting-star bar: a comet crosses a strip of night sky and the
+   glowing trail behind it IS the percentage. The strip is 640px at its
+   widest - small enough that a percentage of the width still reads as
+   distance travelled. */
+const journeyEl=document.getElementById('pdfJourney');
+const journeyFill=document.getElementById('journeyFill');
+const journeyCaption=document.getElementById('journeyCaption');
+
+/* The seven server stages collapse onto the four beats of the bar. This is
+   the only place a stage name turns into a beat. */
+const JOURNEY_STAGE_PHASE={
+  queued:'idle', extract:'run',
+  outline:'run', sections:'run',
+  bank:'run', validate:'charge', ready:'finale'
+};
+/* Order matters: a poll that arrives late or out of sequence must never
+   rewind the bar to a beat the pipeline has already left. */
+const JOURNEY_STAGE_ORDER=['queued','extract','outline','sections','bank','validate','ready'];
+
+/* State that outlives a single frame. `journeyStage` is the last real
+   server stage we were told about; `journeySettled` is the furthest the
+   comet has got, kept separately so a late poll reporting a smaller number
+   cannot drag the trail backwards. Both are declared here because the reset
+   below clears them, and a TDZ throw there would blank the panel. */
+let journeyStage=null;
+let journeySettled=0;
+
+function journeyReset(){
+  if(!journeyEl) return;
+  journeyEl.hidden=false;
+  /* Defence in depth: the element ships visible and only gets hidden by
+     explicit teardown, so a JS error can never leave an invisible bar
+     inside a visible panel. */
+  journeyEl.removeAttribute('hidden');
+  journeyEl.dataset.phase='idle';
+  journeyStage=null;
+  journeySettled=0;
+  journeySetPosition(0);
+}
+
+/* The beat the bar is in. A real server stage always wins, because the
+   stage is what the pipeline is actually doing; with no stage to go on -
+   the upload preview, which runs on a timer before any job exists - the
+   beat falls out of the trail so the bar still reads as a sequence. */
+function journeyPhaseFor(fraction){
+  if(journeyStage) return JOURNEY_STAGE_PHASE[journeyStage]||'run';
+  if(fraction<0.05) return 'idle';
+  if(fraction<0.9) return 'run';
+  return 'charge';
+}
+
+/* Real progress. The width of the trail IS the percentage, and the comet
+   rides its leading edge, so the two can never disagree. */
+function journeySetPosition(fraction){
+  if(!journeyEl) return;
+  const reported=Math.max(0,Math.min(1,Number(fraction)||0));
+  /* Progress never rewinds within a run: an out-of-order poll reporting a
+     smaller number must not pull the comet back the way it came. */
+  const settled=Math.max(journeySettled,reported);
+  journeySettled=settled;
+  if(journeyFill) journeyFill.style.width=(settled*100).toFixed(1)+'%';
+  if(!journeyStage) journeyEl.dataset.phase=journeyPhaseFor(settled);
+}
+
+/* The real pipeline reporting its stage. The stage chooses the beat; the
+   percentage only chooses how far along the trail gets. Keeping the two
+   separate is what stops a long `validate` from looking like one stage. */
+function journeySetStage(stage,label){
+  if(!journeyEl||journeyEl.hidden) return;
+  const next=JOURNEY_STAGE_ORDER.indexOf(stage);
+  if(next<0) return;
+  /* Monotonic: a late or reordered poll must not rewind to a beat the
+     pipeline has already left. */
+  if(next>=JOURNEY_STAGE_ORDER.indexOf(journeyStage)){
+    journeyStage=stage;
+    journeyEl.dataset.phase=JOURNEY_STAGE_PHASE[stage]||'run';
+  }
+  if(journeyCaption&&label) journeyCaption.textContent=label;
+}
+
+/* The study validated, so the comet makes the full crossing and blazes at
+   the finish. This is the only path to the finale: the bar cannot arrive
+   there on a timer, which is what keeps the beat honest. */
+function journeyFinish(){
+  if(!journeyEl) return;
+  journeyStop();
+  journeyStage='ready';
+  journeyEl.dataset.phase='finale';
+  journeySetPosition(1);
+}
+
+/* Drives the flight from real progress where we have it, and from elapsed
+   time where we do not. Cancelled on success, failure or cancellation. */
+let journeyRaf=null,journeyStart=null,journeyCeiling=0,journeyForce=false;
+function journeyDrive(){
+  if(!journeyEl||journeyEl.hidden) return;
+  /* journeyStart is null until the first drive. It must be compared
+     against null rather than tested for falsiness: performance.now() can
+     legitimately be 0, and a falsy check would re-baseline the clock on
+     every stage change, resetting the ease instead of continuing it. */
+  const elapsed=journeyStart===null?0:(performance.now()-journeyStart)/1000;
+  /* Ease-out so the comet covers ground briskly and then settles into the
+     rest; it never stalls at an awkward 99%. */
+  const target=journeyCeiling*(1-Math.exp(-elapsed/22));
+  journeySetPosition(Math.min(target,journeyCeiling));
+  journeyRaf=requestAnimationFrame(journeyDrive);
+}
+function journeyStartDrive(ceiling){
+  if(!journeyEl) return;
+  /* Only reset the bar on the very first stage. Re-running the reset on a
+     later stage would snap the trail back to zero and restart the ease
+     every time the pipeline reported its next milestone. */
+  if(!journeyForce) journeyReset();
+  if(journeyStart===null) journeyStart=performance.now();
+  journeyCeiling=Math.max(journeyCeiling,ceiling);
+  journeyForce=true;
+  journeyDrive();
+}
+function journeyStop(){
+  journeyForce=false;
+  if(journeyRaf){ cancelAnimationFrame(journeyRaf); journeyRaf=null; }
+}
+function journeyHide(){
+  journeyStop();
+  journeyStart=null;
+  journeyCeiling=0;
+  /* The next run has to start from an empty trail, and must not inherit
+     the last run's beat - otherwise a second PDF would open mid-burst. */
+  journeyStage=null;
+  journeySettled=0;
+  if(journeyEl){
+    journeyEl.hidden=true;
+    journeyEl.dataset.phase='idle';
+  }
+}
+
+/* Real, measured progress from the network upload drives the same flight. */
+function journeySetReal(fraction){
+  if(!journeyEl||journeyEl.hidden||journeyForce) return;
+  journeySetPosition(fraction);
+}
+
+/* Real server progress takes over from the elapsed-time estimate. Once a
+   job is being polled the server knows the true percentage, so the timed
+   driver is stopped rather than left to fight it. */
+function journeySetJobProgress(percent){
+  if(!journeyEl||journeyEl.hidden) return;
+  const fraction=Math.max(0,Math.min(0.985,(Number(percent)||0)/100));
+  journeyStop();
+  journeyForce=false;
+  journeyCeiling=fraction;
+  journeySetPosition(fraction);
+}
+
+const setUploadStage=(stage,message,description)=>{
+  if(!pdfUploadProgress) return;
+  const activeIndex={reading:0,uploading:1,analyzing:2,building:3}[stage];
+  pdfUploadProgress.hidden=false;
+  /* The dialog is taller than a typical viewport, so the scene - the whole
+     reason this panel exists - opens below the fold and gets clipped by the
+     dialog's own edge. Bring it into view the first time the panel appears,
+     and only then, so later stage changes do not fight the user's scrolling.
+
+     `end`, not `nearest`: the panel is taller than what is left of the
+     dialog once the heading is shown, so `nearest` settles for "a bit is
+     visible" and leaves the scene and its caption cut off. `end` aligns the
+     bottom of the panel, which shows the bar, the scene and the caption
+     together, and scrolls less than the default `start` would. */
+  if(!pdfUploadProgress.hasAttribute('data-scrolled-into-view')){
+    pdfUploadProgress.setAttribute('data-scrolled-into-view','');
+    /* Double rAF, because the dialog may have only just been opened: scrolling
+       against a not-yet-settled layout computes the wrong offset and leaves
+       the scene clipped exactly as if nothing had scrolled at all. */
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      pdfUploadProgress.scrollIntoView({block:'end'});
+    }));
+  }
+  pdfUploadProgress.dataset.stage=stage;
+  pdfUploadProgress.dataset.indeterminate=String(stage==='analyzing');
+  pdfProgressTitle.textContent=message;
+  pdfProgressDescription.textContent=description;
+  pdfProgressStatus.textContent=stage==='reading'
+    ? 'Reading your PDF on this device…'
+    : stage==='uploading'
+      ? 'Sending your PDF securely to XAMCODE AI…'
+    : stage==='analyzing'
+      ? 'XAMCODE AI is analyzing your document and preparing your lessons…'
+      : 'Your study space is ready. Opening it now…';
+  pdfUploadProgress.querySelectorAll('[data-progress-step]').forEach((step,index)=>{
+    const state=index<activeIndex?'complete':index===activeIndex?'current':'upcoming';
+    step.dataset.state=state;
+    if(state==='current') step.setAttribute('aria-current','step');
+    else step.removeAttribute('aria-current');
+  });
+  if(pdfProgressTrack){
+    pdfProgressTrack.setAttribute('aria-label',stage==='analyzing'
+      ? 'XAMCODE AI is analyzing the PDF; progress is indeterminate'
+      : stage==='uploading'
+        ? 'PDF network upload progress'
+        : message);
+    if(stage==='analyzing'){
+      pdfProgressTrack.removeAttribute('aria-valuenow');
+    }else{
+      pdfProgressTrack.setAttribute('aria-valuenow',stage==='building'?'100':'0');
+    }
+  }
+  if(pdfProgressBar) pdfProgressBar.style.width=stage==='building'?'100%':'0%';
+  /* Each stage raises the ceiling the comet may reach, so the flight
+     always advances when the real pipeline advances and never rewinds. */
+  const ceiling={reading:0.24,uploading:0.46,analyzing:0.9,building:0.985}[stage]||0.3;
+  if(ceiling>journeyCeiling){
+    journeyStartDrive(ceiling);
+  }else if(!journeyForce){
+    journeyCeiling=ceiling;
+  }
+  if(journeyCaption) journeyCaption.textContent={
+    reading:'Opening your PDF',
+    uploading:'Sending it to XAMCODE AI',
+    analyzing:'Combing through your document',
+    building:'Building your study space'
+  }[stage]||'';
+};
+pdfFileInput?.addEventListener('change',()=>{
+  const file=pdfFileInput.files?.[0];
+  setSelectedPdf(file);
+  const status=document.getElementById('pdfUploadStatus');
+  status.textContent=file?validatePdfFile(file):'';
+  status.dataset.error=String(Boolean(status.textContent));
+  journeyHide();
+  if(pdfUploadProgress) pdfUploadProgress.hidden=true;
+});
+/* ============================================================
+   DAILY AI CAPACITY PANEL
+   ------------------------------------------------------------
+   Google publishes no quota API for free-tier API keys, so this
+   shows only what the server has actually observed today: which
+   sibling models are still answering, which are spent, and how many
+   calls went through. It deliberately does not invent a "requests
+   left" figure — a fake countdown would be worse than none.
+   ============================================================ */
+const pdfQuotaPanel = document.getElementById('pdfQuotaPanel');
+const pdfQuotaModels = document.getElementById('pdfQuotaModels');
+const pdfQuotaFoot = document.getElementById('pdfQuotaFoot');
+const pdfQuotaReset = document.getElementById('pdfQuotaReset');
+const pdfAllowanceText = document.getElementById('pdfAllowanceText');
+
+const QUOTA_LABEL = {
+  available: 'ready',
+  busy: 'busy right now, will retry',
+  exhausted: 'spent today',
+  unavailable: 'not enabled',
+  untested: 'not used yet',
+  error: 'error'
+};
+
+/* Last snapshot from the server, kept so an error response carrying a
+   fresher allowance can update the panel without another request. */
+let quotaLast = null;
+
+function renderQuota(data){
+  if(!pdfQuotaPanel || !data) return;
+  quotaLast = data;
+  const usable = data.usableModels;
+  const a = data.allowance;
+
+  /* This caller's own daily allowance is the number that decides
+     whether THEY can upload, so it leads the panel. */
+  pdfQuotaPanel.dataset.state = usable > 0
+    ? (usable < data.totalModels ? 'partial' : 'ok')
+    : 'empty';
+
+  if(pdfAllowanceText){
+    pdfAllowanceText.textContent = (a && !a.unlimited)
+      ? `${a.remaining} of ${a.limit} PDF${a.limit === 1 ? '' : 's'} left for you today`
+      : 'Unlimited PDF generations';
+    pdfAllowanceText.dataset.tone = (a && !a.unlimited && a.remaining === 0) ? 'spent'
+      : (a && !a.unlimited && a.remaining <= 1) ? 'low' : 'ok';
+  }
+
+  if(pdfQuotaModels){
+    pdfQuotaModels.innerHTML = data.models.map(m => {
+      const cls = m.status === 'available' ? 'ok'
+        : m.status === 'busy' ? 'busy'
+          : m.status === 'error' ? 'err'
+            : m.status === 'untested' ? 'idle' : 'dead';
+      return `<span class="pdf-quota-chip is-${cls}" title="${m.slug} · ${QUOTA_LABEL[m.status] || m.status}">
+        <span class="pdf-quota-chip-dot" aria-hidden="true"></span>${m.slug}
+      </span>`;
+    }).join('');
+  }
+
+  if(pdfQuotaReset && (data.resetsAt || data.soonestRecoveryMinutes != null)){
+    /* Google reports a real recovery time in its 429 body, which is
+       more trustworthy than a midnight guess, so prefer it. */
+    if(data.soonestRecoveryMinutes != null){
+      pdfQuotaReset.textContent = `next slot in ~${data.soonestRecoveryMinutes} min`;
+    }else{
+      /* resetsAt is often a human phrase like "midnight Pacific", not an
+         ISO timestamp — new Date() on it yields an Invalid Date and the
+         old Math.round produced "resets in ~NaNh". Only count hours when
+         the value really parses; otherwise show the phrase as written. */
+      const at = new Date(data.resetsAt);
+      if(Number.isNaN(at.getTime())){
+        pdfQuotaReset.textContent = `resets ${data.resetsAt}`;
+      }else{
+        const hrs = Math.max(0, Math.round((at - Date.now()) / 36e5));
+        pdfQuotaReset.textContent = hrs < 1 ? 'resets shortly' : `resets in ~${hrs}h`;
+      }
+    }
+  }
+
+  if(pdfQuotaFoot){
+    /* The /api/quota response carries no per-day call counters, so fall
+       back to zeros rather than crashing on data.today.calls. A throw here
+       used to land in refreshQuota's catch and paint the panel "offline"
+       even though the fetch had actually succeeded. */
+    const t = data.today || { calls: 0, rotations: 0 };
+    const parts = [
+      `${usable} of ${data.totalModels} model${data.totalModels === 1 ? '' : 's'} ready`,
+      `${t.calls} request${t.calls === 1 ? '' : 's'} today`
+    ];
+    if(t.rotations) parts.push(`${t.rotations} rotation${t.rotations === 1 ? '' : 's'}`);
+    const cap = data.dailyLimitPerModel
+      ? `Free limits are ${data.dailyLimitPerModel} generations per model per day and refill on a rolling window, not at midnight.`
+      : 'Free limits refill on a rolling window, not at midnight.';
+    pdfQuotaFoot.textContent = usable === 0
+      ? `All models are out of free quota today. ${parts.join(' · ')}. Add another provider key to keep going.`
+      : `${parts.join(' · ')}. ${cap}`;
+  }
+}
+
+async function refreshQuota(){
+  if(!pdfQuotaPanel) return;
+  try{
+    const res = await fetch('/api/quota', { headers:{ Accept:'application/json' }, cache:'no-store' });
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    renderQuota(await res.json());
+    /* A quota answer is proof the server is up, so a leftover
+       "XAMCODE AI is not running" banner from an earlier failed probe is
+       stale — wipe it rather than leave the red warning contradicting the
+       live panel beside it. */
+    const status = document.getElementById('pdfUploadStatus');
+    if(status && status.dataset.error === 'true'
+      && /XAMCODE AI is not running/.test(status.textContent)){
+      status.textContent = '';
+      status.dataset.error = 'false';
+    }
+  }catch{
+    pdfQuotaPanel.dataset.state = 'offline';
+    if(pdfQuotaModels) pdfQuotaModels.innerHTML = '';
+    if(pdfQuotaFoot){
+      pdfQuotaFoot.textContent = 'Could not read AI capacity from the server. Open the app on http://127.0.0.1:4173 so the API is reachable.';
+    }
+  }
+}
+
+pdfDropzone?.addEventListener('dragover',event=>{
+  event.preventDefault();
+  pdfDropzone.classList.add('is-dragging');
+});
+pdfDropzone?.addEventListener('dragleave',event=>{
+  if(!pdfDropzone.contains(event.relatedTarget)) pdfDropzone.classList.remove('is-dragging');
+});
+pdfDropzone?.addEventListener('drop',event=>{
+  event.preventDefault();
+  pdfDropzone.classList.remove('is-dragging');
+  const file=event.dataTransfer?.files?.[0];
+  if(!file || !pdfFileInput) return;
+  const transfer=new DataTransfer();
+  transfer.items.add(file);
+  pdfFileInput.files=transfer.files;
+  pdfFileInput.dispatchEvent(new Event('change',{bubbles:true}));
+});
+pdfUploadForm?.addEventListener('submit',async event=>{
+  event.preventDefault();
+  const fileInput=pdfFileInput;
+  const submit=analyzePdfButton;
+  const status=document.getElementById('pdfUploadStatus');
+  const file=fileInput.files?.[0];
+  const setStatus=(message,isError=false)=>{
+    status.textContent=message;
+    status.dataset.error=String(isError);
+  };
+  /* resetProgress is declared at module scope above, because the preview
+     trigger needs it too. Do not redeclare it here: a `const` inside this
+     callback shadows the shared one for the whole submit path, which is the
+     exact split that made the preview throw. */
+  if(!file){
+    setStatus('Choose a PDF before continuing.',true);
+    return;
+  }
+  const fileError=validatePdfFile(file);
+  if(fileError){
+    setStatus(fileError,true);
+    return;
+  }
+  if(location.protocol==='file:'){
+    setStatus('Start the XAMCODE local server, then open http://127.0.0.1:4173 to use AI features.',true);
+    return;
+  }
+  submit.disabled=true;
+  pdfUploadForm.setAttribute('aria-busy','true');
+  startUploadElapsed();
+  setStatus('');
+  const submitLabel=submit.querySelector('span');
+  submitLabel.textContent='Preparing your PDF…';
+  try{
+    await verifyXamcodeApi();
+    setUploadStage('reading','Getting your PDF ready','Preparing your document on this device.');
+    const pdfBase64=await readFileAsBase64(file,percent=>{
+      if(pdfProgressBar) pdfProgressBar.style.width=`${percent}%`;
+      if(pdfProgressTrack) pdfProgressTrack.setAttribute('aria-valuenow',String(percent));
+      pdfProgressStatus.textContent=`Preparing your document… ${percent}%`;
+    });
+    submitLabel.textContent='Sending your PDF…';
+    setUploadStage('uploading','Sending your PDF securely','Transferring the selected document to XAMCODE AI for analysis.');
+    const posted=await analyzePdfRequest(
+      pdfBase64,
+      document.getElementById('studyLevel').value,
+      percent=>{
+        if(pdfProgressBar) pdfProgressBar.style.width=`${percent}%`;
+        if(pdfProgressTrack) pdfProgressTrack.setAttribute('aria-valuenow',String(percent));
+        pdfProgressStatus.textContent=`Sending your PDF securely… ${percent}%`;
+        /* Measured network progress, so the comet flies the real distance
+           rather than a guess while the bytes are still in flight. */
+        journeySetReal(0.46*Math.min(1,percent/100));
+      },
+      ()=>{
+        submitLabel.textContent='Creating your study…';
+        setUploadStage('analyzing','XAMCODE AI is at work','Finding the key ideas and shaping them into a complete learning experience.');
+      }
+    );
+    /* The upload returns a jobId, not a finished study. Follow the real
+       stage events until the server says it is done. */
+    activeJobId=posted.jobId;
+    const result=await pollAnalyzeJob(posted.jobId,applyJobStage);
+    activeJobId=null;
+    if(!result?.study){
+      throw new Error('The AI response was incomplete. Please try again.');
+    }
+    const studyError=validateAIStudyForDisplay(result.study);
+    if(studyError) throw new Error(studyError);
+    setUploadStage('building','Your study space is ready','Your lessons, practice questions, and flashcards are ready to explore.');
+    /* The door only opens after the study has actually validated, so the
+       walk never ends in a workspace that is not genuinely ready. */
+    journeyFinish();
+    state.aiStudy=result.study;
+    state.aiJobId=posted.jobId;
+    state.aiPdfMeta={name:file.name,size:file.size};
+    state.aiChunkNote='';
+    state.aiTopicImages={};
+    state.aiTopicImageBusy={};
+    state.aiPage={type:'plan'};
+    stopAIVisualAutoplay();
+    state.aiLessonMode='crash';
+    state.aiVisualStep=0;
+    state.aiLessonFlashIdx=0;
+    state.aiLessonFlashFlipped=false;
+    state.aiExplanationLevel='simple';
+    state.aiQuizAnswers={};
+    state.aiFlashIdx=0;
+    state.aiFlashFlipped=false;
+    state.aiMessages=[];
+    state.aiChatBusy=false;
+    state.view='ai-study';
+    pdfUploadForm.reset();
+    setSelectedPdf(null);
+    resetProgress();
+    setStatus('');
+    document.getElementById('uploadModal').close();
+    render();
+    window.scrollTo({top:0,behavior:'smooth'});
+    /* Persist the finished build: PDF metadata + study JSON, so the
+       library survives refresh. Trial clock starts on first save. */
+    try{
+      if(window.XC?.library) await window.XC.library.saveStudy({
+        jobId: posted.jobId, study: result.study,
+        images: {}, pdfMeta: { name: file.name, size: file.size }
+      });
+    }catch(e){ console.warn('Library save failed; study still usable.', e); }
+    /* Crash Lesson images should exist without a click: fire the MiniMax
+       stills in the background once the study is on screen. */
+    autoGenerateTopicImages();
+    /* Chunked builds keep working after the study opens: Units 2..N
+       unlock in the background while Unit 1 is already on screen. */
+    if(result.study?.chunked&&Array.isArray(result.study.pendingUnits)&&result.study.pendingUnits.length){
+      startChunkWatch(posted.jobId);
+    }
+  }catch(error){
+    /* A failed run must not leave the hero mid-fight with the door shut
+       and no way out, so tear the journey down and report the real error. */
+    resetProgress();
+    setStatus(error.message||'The study could not be generated. Please try again.',true);
+  }finally{
+    submit.disabled=false;
+    submitLabel.textContent='Build my study space';
+    pdfUploadForm.removeAttribute('aria-busy');
+  }
+});
+
+document.addEventListener('submit',async event=>{
+  if(event.target.id!=='aiChatForm') return;
+  event.preventDefault();
+  if(state.aiChatBusy || !state.aiStudy) return;
+  const form=event.target;
+  const question=new FormData(form).get('question')?.toString().trim();
+  if(!question) return;
+  state.aiMessages.push({role:'user',text:question});
+  state.aiChatBusy=true;
+  render();
+  try{
+    const context={
+      title:state.aiStudy.title,
+      subject:state.aiStudy.subject,
+      summary:state.aiStudy.summary,
+      concepts:state.aiStudy.concepts,
+      formulas:state.aiStudy.formulas,
+      conversation:state.aiMessages.slice(-8)
+    };
+    const response=await fetch('/api/ask',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({question,context})
+    });
+    const result=await response.json().catch(()=>null);
+    if(!response.ok) throw new Error(result?.error||'XAMCODE AI could not answer. Please try again.');
+    if(typeof result?.answer!=='string'||!result.answer.trim()){
+      throw new Error('XAMCODE AI returned an empty answer. Please try again.');
+    }
+    state.aiMessages.push({role:'assistant',text:result.answer});
+  }catch(error){
+    state.aiMessages.push({role:'assistant',text:error.message||'XAMCODE AI could not answer. Please try again.'});
+  }finally{
+    state.aiChatBusy=false;
+    render();
+    document.getElementById('aiChatForm')?.elements.question.focus();
+  }
+});
+
+/* ============================================================
+   KEYBOARD
+   ============================================================ */
+document.addEventListener('keydown',(e)=>{
+  const intro = document.getElementById('videoIntro');
+  if(intro && !intro.classList.contains('hidden')) return;
+  if(e.key==='Escape'){
+    const menu=document.getElementById('mobileNav');
+    const toggle=document.querySelector('[data-mobile-menu]');
+    if(menu?.classList.contains('open')){
+      menu.classList.remove('open');
+      toggle?.setAttribute('aria-expanded','false');
+      toggle?.setAttribute('aria-label','Open navigation');
+    }
+  }
+  const active = document.activeElement;
+  if(/INPUT|TEXTAREA|SELECT/.test(active?.tagName||'') || active?.isContentEditable) return;
+  if(e.key==='d'||e.key==='D'){
+    const cur = document.body.getAttribute('data-mode') || 'dark';
+    const next = cur === 'light' ? 'dark' : 'light';
+    applyTheme(document.body.getAttribute('data-theme') || 'bubblegum', next);
+  }
+  if((e.key==='f'||e.key==='F') && state.view==='study') state.fcOpen?closeFC():openFC();
+  if(e.key===' ' && state.view==='study'){ e.preventDefault(); state.playing=!state.playing; refreshPlayBtn(); state.playing?startAutoPlay():stopAutoPlay(); }
+  if(state.fcOpen){
+    if(e.key==='Escape') closeFC();
+    if(e.key==='ArrowRight'){e.preventDefault();state.fcIdx=(state.fcIdx+1)%state.fcDeck.length;renderFC();}
+    if(e.key==='ArrowLeft'){state.fcIdx=(state.fcIdx-1+state.fcDeck.length)%state.fcDeck.length;renderFC();}
+    if(e.key==='Enter') fcCard.classList.toggle('flipped');
+  }
+});
+
+/* ============================================================
+   PARALLAX
+   ============================================================ */
+const M = {tx:0, ty:0, x:0, y:0};
+document.querySelectorAll('.wash').forEach((el,i)=>{ el.dataset.parallax = 14*(i+1); });
+const pEls = Array.from(document.querySelectorAll('[data-parallax]'));
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+let parallaxFrame = null;
+function animateParallax(){
+  M.x += (M.tx - M.x) * 0.09;
+  M.y += (M.ty - M.y) * 0.09;
+  for (let i=0; i<pEls.length; i++){
+    const el = pEls[i];
+    const r = +el.dataset.parallax || 10;
+    el.style.transform = `translate3d(${(M.x*r).toFixed(2)}px, ${(M.y*r).toFixed(2)}px, 0)`;
+  }
+  if(Math.abs(M.tx-M.x)>.005 || Math.abs(M.ty-M.y)>.005){
+    parallaxFrame = requestAnimationFrame(animateParallax);
+  }else{
+    parallaxFrame = null;
+  }
+}
+window.addEventListener('mousemove',(e)=>{
+  if(reducedMotion.matches || !window.matchMedia('(pointer: fine)').matches) return;
+  M.tx = (e.clientX / window.innerWidth  - .5) * 2;
+  M.ty = (e.clientY / window.innerHeight - .5) * 2;
+  if(parallaxFrame===null) parallaxFrame = requestAnimationFrame(animateParallax);
+},{passive:true});
+
+/* Pointer tilt for the landing hero sample-course panel. `.preview` is
+   rendered only by landingView, so this tilt is landing-only by
+   construction. Every study/workspace surface is non-tilting; see the
+   TILT list in js/genz.js. */
+let currentPreview = null;
+document.addEventListener('mousemove',(e)=>{
+  if(reducedMotion.matches || !window.matchMedia('(pointer: fine)').matches){
+    if(currentPreview) currentPreview.style.transform='';
+    currentPreview=null;
+    return;
+  }
+  const p = e.target && e.target.closest && e.target.closest('.preview');
+  if (p !== currentPreview){
+    if (currentPreview) currentPreview.style.transform = '';
+    currentPreview = p;
+  }
+  if (p){
+    const r = p.getBoundingClientRect();
+    const dx = (e.clientX - r.left - r.width/2)  / (r.width/2);
+    const dy = (e.clientY - r.top  - r.height/2) / (r.height/2);
+    p.style.transform = `perspective(1200px) rotateY(${(dx*8).toFixed(2)}deg) rotateX(${(-dy*8).toFixed(2)}deg)`;
+  }
+},{passive:true});
+
+/* ============================================================
+   BOOT LOADER (§07) — branded loading experience
+   Finite rotating messages (never a loop), hard time cap, and a
+   hand-off event the intro film waits on.
+   ============================================================ */
+(function(){
+  const loader = document.getElementById('bootLoader');
+  if(!loader) return;
+  const msg = document.getElementById('bootMessage');
+  const MESSAGES = [
+    'Warming up the engine…',
+    'Charging creativity…',
+    'Connecting the dots…',
+    'Polishing pixels…',
+    'Almost there…'
+  ];
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const t0 = performance.now();
+  let i = -1, rot = null;
+
+  if(!reduce){
+    rot = setInterval(()=>{
+      i += 1;
+      if(msg && i < MESSAGES.length) msg.textContent = MESSAGES[i];
+      if(i >= MESSAGES.length - 1){ clearInterval(rot); rot = null; }
+    }, 520);
+  }
+
+  /* Hold the intro film while the loader is up — the video's autoplay
+     attribute would otherwise eat the opening of the cut. Versioned key
+     so a footage swap replays for returning visitors. */
+  if(!sessionStorage.getItem('xc-intro-seen-v1') && !sessionStorage.getItem('xc-intro-seen-v2') && !sessionStorage.getItem('xc-intro-seen-v3') && !sessionStorage.getItem('xc-intro-seen-v4') && !sessionStorage.getItem('xc-intro-seen-v5')){
+    const v = document.getElementById('introVideo');
+    if(v){ try{ v.pause(); }catch(err){} }
+  }
+
+  let finished = false;
+  function finish(){
+    if(finished) return;
+    finished = true;
+    if(rot){ clearInterval(rot); rot = null; }
+    const wait = Math.max(0, 1150 - (performance.now() - t0));
+    setTimeout(()=>{
+      if(msg) msg.textContent = 'Ready.';
+      loader.classList.add('bl-out');
+      document.body.classList.add('booted');
+      document.dispatchEvent(new CustomEvent('xc-boot-done'));
+      setTimeout(()=>{ loader.remove(); }, 650);
+    }, wait);
+  }
+
+  if(document.readyState === 'complete') finish();
+  else window.addEventListener('load', finish, {once:true});
+  setTimeout(finish, 4500); // hard cap — never trap the user
+})();
+
+/* ============================================================
+   VIDEO INTRO CONTROLLER (v4 cinematic brand overlay)
+   ------------------------------------------------------------
+   Generic XamCode AI branding layered over swappable footage:
+   - window.XC_INTRO_* overrides let you re-target the overlay without
+     touching markup (exam title/code/context when you pick one later):
+       XC_INTRO_SRC, XC_INTRO_VERSION, XC_INTRO_EYEBROW,
+       XC_INTRO_TITLE_HTML, XC_INTRO_SUB, XC_INTRO_BEATS (array of 4)
+     (?intro= URL / localStorage xc-intro-* equivalents all work.)
+   - Bump version so returning visitors see the NEW cut.
+   - ?intro=skip disables the film (useful while editing the site).
+   ============================================================ */
+(function(){
+  const intro = document.getElementById('videoIntro');
+  const skip = document.getElementById('skipIntro');
+  const video = document.getElementById('introVideo');
+  const sound = document.getElementById('introSound');
+  const status = document.getElementById('introVideoStatus');
+  const bar = document.getElementById('introProgress');
+  const brand = intro?.querySelector('.vi-brand');
+  if(!intro || !video) return;
+  /* --- overlay text overrides (exam-code seam) --- */
+  try{
+    const params0 = new URLSearchParams(location.search || '');
+    const pick = (winKey, param, store) =>
+      window[winKey] ?? params0.get(param) ?? localStorage.getItem(store);
+    const eyebrow = pick('XC_INTRO_EYEBROW', 'intro-eyebrow', 'xc-intro-eyebrow');
+    const titleHtml = pick('XC_INTRO_TITLE_HTML', 'intro-title', 'xc-intro-title');
+    const sub = pick('XC_INTRO_SUB', 'intro-sub', 'xc-intro-sub');
+    let beats = window.XC_INTRO_BEATS ?? null;
+    if(!beats){
+      const raw = params0.get('intro-beats') || localStorage.getItem('xc-intro-beats');
+      if(raw){ try{ beats = JSON.parse(raw); }catch{ beats = raw.split('|'); } }
+    }
+    if(eyebrow && brand?.querySelector('.vi-eyebrow'))
+      brand.querySelector('.vi-eyebrow').innerHTML =
+        '<span class="vi-eyebrow-dot"></span>' + String(eyebrow);
+    if(titleHtml && brand?.querySelector('.vi-brand-title'))
+      brand.querySelector('.vi-brand-title').innerHTML = String(titleHtml);
+    if(sub && brand?.querySelector('.vi-brand-sub'))
+      brand.querySelector('.vi-brand-sub').textContent = String(sub);
+    if(Array.isArray(beats) && brand){
+      const items = brand.querySelectorAll('.vi-beats li');
+      beats.slice(0, items.length).forEach((b, i)=>{ items[i].textContent = String(b); });
+    }
+  }catch{}
+  const INTRO_VERSION = window.XC_INTRO_VERSION ||
+    localStorage.getItem('xc-intro-version') || 'v5';
+  const params = new URLSearchParams(location.search || '');
+  const customSrc = window.XC_INTRO_SRC || params.get('intro-src') ||
+    localStorage.getItem('xc-intro-src');
+  if(customSrc && !/^javascript:/i.test(customSrc)){
+    let srcEl = video.querySelector('source');
+    if(!srcEl){ srcEl = document.createElement('source'); video.appendChild(srcEl); }
+    srcEl.src = customSrc; video.load();
+  }
+  const seenKey = 'xc-intro-seen-' + INTRO_VERSION;
+
+  const alreadySeen = sessionStorage.getItem(seenKey) || (params.get('intro')==='skip');
+  if(alreadySeen || params.get('intro')==='skip'){
+    intro.classList.add('hidden');
+    setTimeout(()=>intro.remove(), 700);
+    return;
+  }
+  document.body.classList.add('intro-active');
+
+  let dismissed = false;
+  let started = false;
+  let timer = null;
+  const finishIntro = () => {
+    if(dismissed) return;
+    dismissed = true;
+    clearTimeout(timer);
+    video.pause();
+    intro.classList.add('entering-home');
+    sessionStorage.setItem(seenKey, '1');
+    try{ sessionStorage.removeItem('xc-intro-seen'); }catch{}
+    if(intro.contains(document.activeElement)){
+      document.querySelector('.header [data-nav="landing"]')?.focus();
+    }
+    setTimeout(()=>{
+      intro.remove();
+      document.body.classList.remove('intro-active');
+    }, 950);
+  };
+
+  video.addEventListener('ended', finishIntro);
+  video.addEventListener('error', ()=>{
+    status.textContent = 'The intro video could not be loaded. You can still continue to XamCode.';
+    video.controls = true;
+  });
+  video.addEventListener('timeupdate', ()=>{
+    /* End the film shortly before the actual runtime ends so a slow
+       'ended' event can't hold the user on a frozen last frame. Uses the
+       real duration when known (your footage is ~6.4 s), not the old 8 s.
+       Also drives the progress bar + sequential beat highlights. */
+    const dur = Number.isFinite(video.duration) && video.duration > 0 ? video.duration : 6.4;
+    const endAt = Math.max(0, dur - 0.25);
+    if(bar) bar.style.width = Math.min(100, (video.currentTime / dur) * 100) + '%';
+    const beats = brand?.querySelectorAll('.vi-beats li');
+    if(beats?.length){
+      const lit = Math.min(beats.length, Math.floor((video.currentTime / dur) * (beats.length + 1)));
+      beats.forEach((el, i)=>el.classList.toggle('lit', i < lit));
+    }
+    if(video.currentTime >= endAt) finishIntro();
+  });
+
+  /* §07 — hold the film until the boot loader hands over, so the
+     opening beats of the cut are never hidden behind the loader. */
+  const begin = () => {
+    if(started || dismissed) return;
+    started = true;
+    timer = setTimeout(finishIntro, 10000);
+    sound?.focus({preventScroll:true});
+    video.play().catch(()=>{
+      video.controls = true;
+      status.textContent = 'Press play to watch the intro, or skip to continue.';
+    });
+  };
+  if(document.body.classList.contains('booted')) begin();
+  else document.addEventListener('xc-boot-done', begin, {once:true});
+
+  sound?.addEventListener('click', ()=>{
+    video.muted = !video.muted;
+    sound.setAttribute('aria-pressed', String(!video.muted));
+    sound.textContent = video.muted ? 'Enable sound' : 'Mute sound';
+    if(!video.muted){
+      /* If sound gets enabled after the point where the audio was already
+         fading out, replay from the top so the full mix is heard, and drop
+         the auto-dismiss watchdog so the replay is never cut short. */
+      clearTimeout(timer);
+      if(video.currentTime > 1) video.currentTime = 0;
+    }
+    if(!video.paused) return;
+    video.play().catch(()=>{
+      status.textContent = 'Playback did not start. Use the video play control or skip to continue.';
+    });
+  });
+  skip?.addEventListener('click', finishIntro);
+
+  intro.addEventListener('keydown', e=>{
+    if(e.key==='Escape'){
+      finishIntro();
+      return;
+    }
+    if(e.key!=='Tab') return;
+    const first = sound;
+    const last = skip;
+    if(e.shiftKey && document.activeElement===first){
+      e.preventDefault();
+      last?.focus();
+    }else if(!e.shiftKey && document.activeElement===last){
+      e.preventDefault();
+      first?.focus();
+    }
+  });
+
+})();
+
+/* ============================================================
+   THEME CONTROLLER — delegated so it survives every render
+   ============================================================ */
+(function(){
+  /* Bumped to v2 when the four theme worlds were replaced (cyber / y2k /
+     lofi no longer exist). The version check alone only resets the DEFAULT,
+     so the saved id is also validated against the live theme list — a
+     browser that stored "lofi" under the old version would otherwise land
+     on a body[data-theme="lofi"] with no matching CSS and render unstyled. */
+  const THEME_IDS=['bubblegum','digital','cosmic','organic'];
+  const DEFAULT_THEME='bubblegum';
+  const themeVersion='bg3d-default-v2';
+  const savedTheme=localStorage.getItem('xc-theme');
+  const useSavedTheme=localStorage.getItem('xc-theme-version')===themeVersion
+                   && THEME_IDS.indexOf(savedTheme)!==-1;
+  applyTheme(
+    useSavedTheme?savedTheme:DEFAULT_THEME,
+    localStorage.getItem('xc-mode') === 'light' ? 'light' : 'dark'
+  );
+  localStorage.setItem('xc-theme-version',themeVersion);
+
+  document.addEventListener('click', function(e){
+    if(e.target.closest('#themeOpen')){
+      e.preventDefault();
+      e.stopPropagation();
+      var modal = document.getElementById('themeModal');
+      if(modal){
+        modal.classList.add('open');
+        document.getElementById('themeClose')?.focus();
+      }
+      return;
+    }
+    if(e.target.closest('#themeClose')){
+      e.preventDefault();
+      document.getElementById('themeModal')?.classList.remove('open');
+      document.getElementById('themeOpen')?.focus();
+      return;
+    }
+    var modal = document.getElementById('themeModal');
+    if(modal && e.target === modal){
+      modal.classList.remove('open');
+      document.getElementById('themeOpen')?.focus();
+      return;
+    }
+    var card = e.target.closest('[data-set-theme]');
+    if(card){
+      e.preventDefault();
+      applyTheme(card.dataset.setTheme, document.body.getAttribute('data-mode') || 'dark');
+      return;
+    }
+    var modeBtn = e.target.closest('[data-set-mode]');
+    if(modeBtn){
+      e.preventDefault();
+      applyTheme(document.body.getAttribute('data-theme') || 'bubblegum', modeBtn.dataset.setMode);
+    }
+  }, true);
+
+  document.addEventListener('keydown', function(e){
+    if(e.key==='Escape'){
+      var modal = document.getElementById('themeModal');
+      if(modal && modal.classList.contains('open')){
+        modal.classList.remove('open');
+        document.getElementById('themeOpen')?.focus();
+      }
+    }
+  });
+})();
+
+/* ============================================================
+   BOOT
+   ============================================================ */
+render();
+console.log('XamCode AI • merged build with continuous visuals • Created By Achudhan');
+
+})();

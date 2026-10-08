@@ -1,0 +1,75 @@
+# Render Blueprint for XamCode AI.
+#
+#   1. git init && git add -A && git commit -m "XamCode AI"
+#   2. Push to GitHub — the existing .gitignore already keeps .env out of it
+#   3. Render Dashboard > New > Blueprint > select this repo
+#   4. Paste your GEMINI_API_KEY when prompted. It is stored as a secret and
+#      is never committed to the repo.
+#
+# Free plan limits worth knowing before you ship to it:
+#   * 512 MB RAM / 0.1 vCPU. A large PDF can take minutes to analyse on this
+#     spec and can outlast a client-side timeout.
+#   * Spins down after 15 minutes idle; ~1 minute to wake. The first visitor
+#     after a quiet period waits for it.
+#   * Local files are wiped on every redeploy. Harmless here — the server is
+#     stateless and all learner progress lives in each browser's localStorage.
+#   * The real ceiling is your Gemini free-tier quota, not the host. Each AURA
+#     question and each PDF analysis spends from the same daily allowance, and
+#     a free key can be capped around 20 requests/day. Budget accordingly.
+services:
+  - type: web
+    name: xamcode-ai
+    runtime: node
+    region: oregon
+    plan: free
+    # XamCode AI has zero runtime dependencies — server.js uses only Node
+    # builtins — so there is genuinely nothing to install.
+    buildCommand: echo "No build step: XamCode AI has no npm dependencies"
+    startCommand: node server.js
+    # /api/health is a real endpoint that returns JSON; "/" would also pass
+    # but would not tell us the AI layer is alive.
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      # Without this the process binds 127.0.0.1 and the host cannot route
+      # traffic to it, so every request would time out.
+      - key: NODE_ENV
+        value: production
+      - key: HOST
+        value: 0.0.0.0
+      # Exactly one trusted proxy sits in front, so trust X-Forwarded-For
+      # to recover the real client IP. Setting this with nothing proxying
+      # would let clients spoof the header and bypass the rate limit.
+      - key: TRUST_PROXY
+        value: "true"
+      # Kept low deliberately: it protects an already tiny free AI quota
+      # from one visitor looping requests. Raise it only after adding
+      # billing to the Gemini key.
+      - key: MAX_REQUESTS_PER_HOUR
+        value: "12"
+      - key: GEMINI_MODEL
+        value: gemini-3.8-flash
+      # sync: false makes Render prompt for the value and store it as a
+      # secret. Never hardcode a real key into this file.
+      - key: GEMINI_API_KEY
+        sync: false
+      # Optional extra providers. Requests fail over to these in order when
+      # Gemini returns 429/5xx, which is what keeps the site usable on a
+      # free quota. Leave blank to run on Gemini alone.
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GROQ_MODEL
+        value: openai/gpt-oss-120b
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: OPENROUTER_MODEL
+        value: openrouter/free
+      # Experiential Labs: OpenAI-compatible gateway, ~1,000 models.
+      # Credit-based, so it only spends when Gemini and the rest are
+      # exhausted. It is document-capable, so it is also the PDF
+      # fallback when Gemini is out of quota. EXPLABS_MODEL must be a
+      # slug their catalog accepts PDF input on.
+      - key: EXPLABS_API_KEY
+        sync: false
+      - key: EXPLABS_MODEL
+        value: gemini-3.8-flash

@@ -1,0 +1,724 @@
+/* ============================================================
+   ANIMATIONS — aurora, theme effects, keyframes
+   ============================================================ */
+
+/* ---------- Background layers ---------- */
+#bg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;background:var(--bg,#050516)}
+#bg::before{
+  content:'';position:absolute;inset:-60%;
+  background:conic-gradient(
+    from 0deg at 50% 50%,
+    var(--aurora-1,#2dd4bf) 0deg,transparent 40deg,
+    var(--aurora-2,#a78bfa) 90deg,transparent 140deg,
+    var(--aurora-3,#f472b6) 200deg,transparent 260deg,
+    var(--aurora-1,#2dd4bf) 320deg,transparent 350deg,
+    var(--aurora-1,#2dd4bf) 360deg
+  );
+  filter:blur(100px);
+  opacity:.12;
+  animation:auroraSpin var(--motion-speed,40s) linear infinite;
+  will-change:transform;
+}
+#bg::after{
+  content:'';position:absolute;inset:-40%;
+  background:
+    radial-gradient(circle at 25% 25%,var(--aurora-1,#2dd4bf),transparent 45%),
+    radial-gradient(circle at 75% 75%,var(--aurora-2,#a78bfa),transparent 45%),
+    radial-gradient(circle at 50% 50%,var(--aurora-3,#f472b6),transparent 55%);
+  filter:blur(90px);
+  opacity:.08;
+  animation:auroraDrift 20s ease-in-out infinite alternate;
+  will-change:transform;
+}
+
+@keyframes auroraSpin{to{transform:rotate(360deg)}}
+@keyframes auroraDrift{
+  0%{transform:translate(-8%,-8%) scale(1)}
+  100%{transform:translate(8%,8%) scale(1.15)}
+}
+
+/* ---------- Washes (floating blobs) ---------- */
+.wash{position:absolute;border-radius:50%;filter:blur(70px);will-change:transform}
+.w1{width:720px;height:620px;left:-120px;top:-160px;background:radial-gradient(circle,rgba(168,85,247,.3),transparent 75%);opacity:.09}
+.w2{width:560px;height:520px;right:-80px;top:-60px;background:radial-gradient(circle,rgba(254,215,170,.4),transparent 75%);opacity:.07}
+.w3{width:640px;height:560px;left:-60px;bottom:-160px;background:radial-gradient(circle,rgba(251,207,232,.38),transparent 75%);opacity:.06}
+.w4{width:680px;height:600px;right:-120px;bottom:-120px;background:radial-gradient(circle,rgba(196,181,253,.36),transparent 75%);opacity:.08}
+
+/* ---------- Dots grid ---------- */
+.dots{position:absolute;inset:0;background-image:radial-gradient(circle,rgba(255,255,255,.09) 1px,transparent 1.5px);background-size:32px 32px;opacity:.1}
+body[data-mode="light"] .dots{opacity:.06}
+
+/* ---------- Background 3D SVG layer ---------- */
+#bg3d{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;opacity:.05}
+#bg3d [data-parallax]{will-change:transform;pointer-events:none}
+
+/* ---------- Theme-specific motion ----------
+   A thin per-theme motion layer that sits above the shared aurora
+   and dots. Deliberately low-contrast: the 3D scenes in scenes.css
+   carry the depth, this only adds the small moving detail. The
+   per-theme opacity lives in experience.css 10. */
+.theme-fx{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:1;opacity:.12}
+
+/* BUBBLEGUM — two soft washes drifting behind the floating cards */
+body[data-theme="bubblegum"] .theme-fx::before,
+body[data-theme="bubblegum"] .theme-fx::after{
+  content:'';position:absolute;width:260px;height:260px;border-radius:50%;
+  background:radial-gradient(circle,rgba(255,90,138,.5),transparent 70%);
+  filter:blur(48px);animation:orbFloat 15s ease-in-out infinite;
+}
+body[data-theme="bubblegum"] .theme-fx::before{top:16%;left:8%}
+body[data-theme="bubblegum"] .theme-fx::after{bottom:12%;right:12%;
+  background:radial-gradient(circle,rgba(201,168,255,.48),transparent 70%);
+  animation-delay:4s;animation-duration:20s}
+@keyframes orbFloat{
+  0%,100%{transform:translate(0,0) scale(1)}
+  33%{transform:translate(80px,-40px) scale(1.15)}
+  66%{transform:translate(-50px,60px) scale(.9)}
+}
+
+/* DIGITAL — drifting data particles + a slow travelling sweep */
+body[data-theme="digital"] .theme-fx::before{
+  content:'';position:absolute;inset:0;
+  background:
+    radial-gradient(2px 2px at 18% 32%,rgba(91,140,255,.75),transparent 50%),
+    radial-gradient(1px 1px at 62% 68%,rgba(125,211,252,.7),transparent 50%),
+    radial-gradient(2px 2px at 84% 24%,rgba(34,211,238,.7),transparent 50%),
+    radial-gradient(1px 1px at 38% 82%,rgba(91,140,255,.6),transparent 50%),
+    radial-gradient(2px 2px at 92% 58%,rgba(125,211,252,.65),transparent 50%),
+    radial-gradient(1px 1px at 8% 56%,rgba(34,211,238,.55),transparent 50%);
+  animation:starTwinkle 3.4s ease-in-out infinite;
+}
+@keyframes starTwinkle{0%,100%{opacity:.4}50%{opacity:1}}
+
+/* COSMIC — a twinkling starfield scattered across the sky */
+body[data-theme="cosmic"] .theme-fx::before{
+  content:'';position:absolute;inset:0;
+  background:
+    radial-gradient(2px 2px at 22% 28%,rgba(255,255,255,.9),transparent 50%),
+    radial-gradient(1px 1px at 58% 72%,rgba(196,181,253,.85),transparent 50%),
+    radial-gradient(2px 2px at 82% 18%,rgba(236,72,153,.8),transparent 50%),
+    radial-gradient(1px 1px at 34% 84%,rgba(59,130,246,.8),transparent 50%),
+    radial-gradient(2px 2px at 90% 62%,rgba(255,255,255,.8),transparent 50%),
+    radial-gradient(1px 1px at 12% 64%,rgba(167,139,250,.75),transparent 50%);
+  animation:starTwinkle 4.4s ease-in-out infinite;
+}
+
+/* ORGANIC — warm liquid glows that swell and fade */
+body[data-theme="organic"] .theme-fx::before,
+body[data-theme="organic"] .theme-fx::after{
+  content:'';position:absolute;width:380px;height:380px;border-radius:50%;
+  background:radial-gradient(circle,rgba(255,107,74,.34),transparent 68%);
+  filter:blur(90px);animation:sunPulse 13s ease-in-out infinite;
+}
+body[data-theme="organic"] .theme-fx::before{top:12%;right:8%}
+body[data-theme="organic"] .theme-fx::after{bottom:8%;left:6%;
+  background:radial-gradient(circle,rgba(184,230,213,.3),transparent 68%);
+  animation-delay:3s;animation-duration:18s;animation-direction:reverse}
+@keyframes sunPulse{
+  0%,100%{transform:scale(1);opacity:.7}
+  50%{transform:scale(1.2);opacity:1}
+}
+
+body[data-mode="light"] .theme-fx{opacity:.07}
+/* ---------- Welcome intro ---------- */
+#videoIntro{
+  position:fixed;
+  inset:0;
+  z-index:10000;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  padding:clamp(28px,5vw,76px);
+  color:#f8fafc;
+  background:
+    radial-gradient(ellipse at 69% 49%,rgba(0,205,154,.22),transparent 34%),
+    radial-gradient(ellipse at 51% 100%,rgba(0,112,92,.13),transparent 38%),
+    radial-gradient(ellipse at 5% 3%,rgba(19,70,78,.2),transparent 32%),
+    #050b11;
+  perspective:1400px;
+  opacity:1;
+  transition:opacity .8s ease,visibility .8s ease,transform .8s cubic-bezier(.2,.8,.2,1);
+}
+#videoIntro.hidden{opacity:0;visibility:hidden;pointer-events:none;transform:scale(1.035)}
+body.intro-active #bg,body.intro-active #bg3d{display:none}
+/* The creator badge is fixed bottom-right where the intro film's controls
+   (Enable sound / Skip intro) live — hide it whenever #videoIntro is still
+   mounted so the two never overlap. It reappears once the intro is removed. */
+#videoIntro ~ .badge-creator{display:none}
+.vi-cinema{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.vi-cinema::before,.vi-cinema::after{
+  content:"";
+  position:absolute;
+  left:-20%;
+  width:140%;
+  height:1px;
+  background:linear-gradient(90deg,transparent,rgba(42,255,184,.2),rgba(57,206,222,.13),transparent);
+  box-shadow:0 0 28px rgba(0,255,174,.14);
+}
+.vi-cinema::before{top:14%;transform:rotate(-8deg)}
+.vi-cinema::after{bottom:12%;transform:rotate(7deg)}
+.vi-cinema-grain{
+  position:absolute;
+  inset:0;
+  opacity:.12;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.18'/%3E%3C/svg%3E");
+}
+.vi-cinema-grid{
+  position:absolute;
+  inset:40% -15% -55%;
+  opacity:.18;
+  transform:perspective(420px) rotateX(64deg);
+  transform-origin:top;
+  background-image:linear-gradient(rgba(63,221,191,.11) 1px,transparent 1px),linear-gradient(90deg,rgba(63,221,191,.11) 1px,transparent 1px);
+  background-size:78px 78px;
+  mask-image:linear-gradient(to bottom,transparent,black 28%,transparent 86%);
+}
+.vi-light-sweep{
+  position:absolute;
+  top:-50%;
+  bottom:-50%;
+  left:-38%;
+  width:28%;
+  opacity:0;
+  transform:rotate(22deg);
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.035),rgba(94,234,212,.075),transparent);
+  animation:cinemaSweep 8s 1.1s ease-in-out infinite;
+}
+@keyframes cinemaSweep{
+  0%,18%{left:-38%;opacity:0}
+  34%{opacity:1}
+  58%,100%{left:118%;opacity:0}
+}
+.vi-layout{
+  position:relative;
+  z-index:1;
+  display:grid;
+  grid-template-columns:minmax(360px,.88fr) minmax(420px,1.12fr);
+  align-items:center;
+  gap:clamp(20px,4vw,72px);
+  width:min(100%,1320px);
+  margin:auto;
+}
+.vi-copy{position:relative;z-index:2;padding:22px 0}
+.vi-brand-lockup{display:flex;align-items:center;gap:12px;margin-bottom:clamp(38px,7vh,78px)}
+.vi-logo{width:46px;height:46px;border-radius:14px;background:linear-gradient(145deg,#69ffca,#08ba90);color:#07121e;box-shadow:0 10px 34px rgba(0,255,174,.22)}
+.vi-brand-name{font-size:18px;font-weight:720;letter-spacing:-.045em;color:#f8fafc}
+.vi-brand-name span{color:#60f3c1}
+.vi-eyebrow{display:flex;align-items:center;gap:9px;margin-bottom:20px;color:#9ca3af;font-size:10px;font-weight:750;letter-spacing:.2em}
+.vi-eyebrow span{width:6px;height:6px;border-radius:50%;background:#5bf2bd;box-shadow:0 0 14px rgba(40,255,188,.9)}
+.vi-title{font-size:clamp(44px,5.2vw,72px);font-weight:650;letter-spacing:-.065em;line-height:.98;margin-bottom:24px;color:#f8fafc}
+.vi-title span{color:#62e9c0}
+.vi-tagline{max-width:520px;margin:0;color:#a5b0bf;font-size:15px;line-height:1.8}
+.vi-highlights{display:flex;flex-wrap:wrap;gap:8px;margin:26px 0 28px}
+.vi-highlights span{padding:8px 11px;border:1px solid rgba(255,255,255,.09);border-radius:999px;background:rgba(255,255,255,.025);color:#aab5c4;font-size:10px}
+.vi-highlights b{margin-right:4px;color:#f8fafc;font-weight:700}
+.vi-actions{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.vi-primary{display:inline-flex;align-items:center;gap:16px;padding:14px 20px;border:1px solid rgba(121,255,207,.8);border-radius:999px;background:linear-gradient(120deg,#9cffd9,#42e4b0);color:#06251d;font-size:12px;font-weight:750;cursor:pointer;transition:transform .22s ease,background .22s ease,box-shadow .22s ease;box-shadow:0 8px 30px rgba(0,255,174,.19)}
+.vi-primary:hover{transform:translateY(-2px);background:#b4ffe4;box-shadow:0 12px 38px rgba(0,255,174,.3)}
+.vi-primary span{font-size:17px;transition:transform .2s ease}
+.vi-primary:hover span{transform:translate(2px,-2px)}
+.vi-primary:focus-visible,.vi-skip:focus-visible{outline-color:#68f5c3}
+.vi-skip{padding:10px 4px;border:0;background:transparent;color:#a5b0bf;font-size:11px;font-weight:600;cursor:pointer;transition:color .2s ease}
+.vi-skip:hover{color:#fff}
+.vi-note{display:flex;align-items:center;gap:9px;margin-top:34px;color:#667386;font-size:9px;letter-spacing:.045em}
+.vi-note i{width:3px;height:3px;border-radius:50%;background:#667386}
+.vi-stage{
+  position:relative;
+  display:grid;
+  place-items:center;
+  min-width:0;
+  aspect-ratio:1;
+  perspective:1000px;
+  transform-style:preserve-3d;
+  animation:stageArrive 1.2s .15s cubic-bezier(.2,.75,.25,1) both;
+}
+@keyframes stageArrive{from{opacity:0;transform:translate3d(24px,0,-80px) rotateY(-12deg)}to{opacity:1;transform:translate3d(0,0,0) rotateY(0)}}
+.vi-stage-halo{
+  position:absolute;
+  width:72%;
+  aspect-ratio:1;
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(0,255,174,.27),rgba(0,190,146,.1) 38%,transparent 70%);
+  animation:coreBreath 5s ease-in-out infinite;
+}
+@keyframes coreBreath{0%,100%{transform:scale(.92);opacity:.65}50%{transform:scale(1.08);opacity:1}}
+.vi-copy>*{animation:introTextReveal .7s both}
+.vi-brand-lockup{animation-delay:.08s}
+.vi-eyebrow{animation-delay:.22s}
+.vi-title{animation-delay:.34s}
+.vi-tagline{animation-delay:.48s}
+.vi-highlights{animation-delay:.6s}
+.vi-actions{animation-delay:.72s}
+.vi-note{animation-delay:.82s}
+@keyframes introTextReveal{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+/* ---------- General keyframes ---------- */
+@keyframes pulse{
+  0%,100%{transform:scale(1)}
+  50%{transform:scale(1.12)}
+}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes dotPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.6);opacity:.6}}
+
+@media(max-width:700px){
+  #videoIntro{padding:24px 20px;overflow-y:auto}
+  .vi-layout{grid-template-columns:1fr;gap:0;width:min(100%,520px);padding:22px 0}
+  .vi-copy{padding:0}
+  .vi-brand-lockup{margin-bottom:clamp(20px,4vh,34px)}
+  .vi-eyebrow{margin-bottom:14px;font-size:9px}
+  .vi-title{font-size:clamp(42px,10vw,58px);margin-bottom:17px}
+  .vi-tagline{font-size:14px;line-height:1.65}
+  .vi-highlights{margin:18px 0 20px}
+  .vi-stage{grid-row:1;max-height:36vh;aspect-ratio:1.2;margin-bottom:-8px}
+  .vi-stage-halo{width:56%}
+  .vi-brand-lockup{order:-1}
+  .vi-note{margin-top:20px;font-size:8px}
+}
+@media(max-height:650px){
+  #videoIntro{align-items:flex-start;overflow-y:auto}
+  .vi-layout{min-height:100%;gap:10px}
+  .vi-brand-lockup{margin-bottom:20px}
+  .vi-title{font-size:clamp(38px,7vh,58px);margin-bottom:14px}
+  .vi-stage{max-height:75vh}
+  .vi-note{margin-top:20px}
+}
+@media(max-width:700px) and (max-height:700px){
+  .vi-layout{grid-template-columns:minmax(0,1.05fr) minmax(150px,.95fr);gap:8px;width:100%}
+  .vi-copy{grid-column:1;grid-row:1}
+  .vi-stage{grid-column:2;grid-row:1;max-height:70vh;margin:0;aspect-ratio:1}
+  .vi-brand-lockup{margin-bottom:20px}
+  .vi-title{font-size:clamp(34px,7vw,48px)}
+  .vi-tagline{font-size:12px}
+  .vi-highlights{gap:5px}
+  .vi-highlights span{padding:6px 8px;font-size:9px}
+  .vi-note{font-size:7px}
+}
+
+@media(prefers-reduced-motion:reduce){
+  #videoIntro:not(.hidden) .vi-copy>*{animation:none}
+  .vi-stage,.vi-stage-halo,.vi-light-sweep{animation:none !important}
+  *,*::before,*::after{
+    scroll-behavior:auto !important;
+    animation-duration:.01ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.01ms !important;
+  }
+}
+
+/* XamCode's AI-study scene */
+.vi-product-scene{
+  position:relative;
+  z-index:1;
+  width:min(100%,700px);
+  aspect-ratio:1.12;
+  transform:perspective(1200px) rotateY(-7deg) rotateX(3deg);
+  transform-style:preserve-3d;
+}
+.vi-search-bar{
+  position:absolute;
+  z-index:3;
+  top:11%;
+  left:10%;
+  display:flex;
+  align-items:center;
+  gap:14px;
+  width:80%;
+  height:62px;
+  padding:0 12px 0 21px;
+  border:1px solid rgba(100,255,206,.43);
+  border-radius:999px;
+  background:linear-gradient(110deg,rgba(2,23,25,.94),rgba(4,19,26,.96));
+  box-shadow:0 0 0 1px rgba(67,255,196,.06),0 0 36px rgba(0,255,174,.19),inset 0 1px rgba(255,255,255,.08);
+  color:#a6b9b9;
+  font-size:12px;
+}
+.vi-search-icon{
+  position:relative;
+  width:15px;
+  height:15px;
+  flex:0 0 15px;
+  border:1.5px solid #50eabc;
+  border-radius:50%;
+  opacity:.85;
+}
+.vi-search-icon::after{content:"";position:absolute;right:-5px;bottom:-3px;width:6px;height:1.5px;border-radius:2px;background:#50eabc;transform:rotate(48deg)}
+.vi-search-bar>span:nth-child(2){overflow:hidden;flex:1;white-space:nowrap;text-overflow:ellipsis}
+.vi-ask-button{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  padding:8px 11px;
+  border:1px solid rgba(71,255,188,.48);
+  border-radius:999px;
+  background:rgba(23,206,143,.14);
+  color:#d8fff1;
+  font-size:10px;
+  white-space:nowrap;
+  box-shadow:0 0 14px rgba(0,255,174,.11);
+}
+.vi-ask-button b{color:#66f6c7;font-size:14px}
+.vi-suggestions{position:absolute;z-index:2;top:26%;left:14%;width:72%;perspective:700px}
+.vi-suggestion{
+  position:relative;
+  display:flex;
+  align-items:center;
+  gap:11px;
+  height:53px;
+  padding:0 16px;
+  border:1px solid rgba(88,244,194,.3);
+  border-radius:12px;
+  background:linear-gradient(105deg,rgba(8,37,38,.98),rgba(10,28,31,.96));
+  color:#c6d4d1;
+  font-size:11px;
+  box-shadow:0 10px 35px rgba(0,0,0,.25);
+  opacity:0;
+}
+.vi-suggestion+.vi-suggestion{margin-top:-7px}
+.suggestion-one{z-index:1;transform:translateX(20px)}
+.suggestion-two{
+  z-index:2;
+  margin-left:-14px;
+  border-color:rgba(107,255,195,.72);
+  background:linear-gradient(105deg,rgba(24,222,151,.98),rgba(25,183,135,.97));
+  color:#05281d;
+  box-shadow:0 0 34px rgba(0,255,174,.35),0 14px 32px rgba(0,0,0,.3);
+}
+.suggestion-three{z-index:1;margin-left:12px}
+.vi-mini-mark{
+  display:grid;
+  place-items:center;
+  width:24px;
+  height:24px;
+  flex:0 0 24px;
+  border:1px solid rgba(104,255,207,.28);
+  border-radius:8px;
+  background:rgba(33,231,163,.1);
+  color:#67f6c8;
+  font-size:12px;
+}
+.suggestion-two .vi-mini-mark{border-color:rgba(1,68,46,.18);background:rgba(0,75,47,.13);color:#06482f}
+.vi-suggestion>span:nth-child(2){overflow:hidden;flex:1;white-space:nowrap;text-overflow:ellipsis}
+.vi-suggestion>i{width:6px;height:6px;flex:0 0 6px;border:1px solid currentColor;border-radius:50%;opacity:.62}
+.vi-answer-card{
+  position:absolute;
+  z-index:4;
+  top:51%;
+  left:19%;
+  width:70%;
+  min-height:214px;
+  padding:17px 19px 15px;
+  overflow:hidden;
+  border:1px solid rgba(100,255,206,.42);
+  border-radius:15px;
+  background:linear-gradient(145deg,rgba(16,29,31,.98),rgba(8,17,22,.98));
+  box-shadow:0 20px 65px rgba(0,0,0,.48),0 0 32px rgba(0,255,174,.11),inset 0 1px rgba(255,255,255,.07);
+  opacity:0;
+}
+.vi-answer-card::before{content:"";position:absolute;inset:0 0 auto;height:1px;background:linear-gradient(90deg,transparent,#6affc9,transparent);opacity:.85}
+.vi-answer-heading{display:flex;align-items:center;gap:9px}
+.vi-answer-avatar{
+  display:grid;
+  place-items:center;
+  width:27px;
+  height:27px;
+  border:1px solid rgba(92,255,195,.44);
+  border-radius:9px;
+  background:linear-gradient(145deg,rgba(39,224,157,.3),rgba(8,85,68,.32));
+  color:#80ffd1;
+  font-size:13px;
+  box-shadow:0 0 16px rgba(0,255,174,.15);
+}
+.vi-answer-heading>span:nth-child(2){display:grid;gap:2px}
+.vi-answer-heading b{color:#effaf6;font-size:10px;font-weight:650}
+.vi-answer-heading small{color:#75a99a;font-size:7px;letter-spacing:.12em}
+.vi-answer-status{display:flex;align-items:center;gap:5px;margin-left:auto;color:#6bdcaa;font-size:7px;letter-spacing:.09em}
+.vi-answer-status i{width:5px;height:5px;border-radius:50%;background:#47efa7;box-shadow:0 0 9px #47efa7}
+.vi-question{margin:15px 0 7px;color:#f2f7f5;font-size:14px;font-weight:620;letter-spacing:-.025em}
+.vi-answer-copy{max-width:470px;color:#a6b4b2;font-size:9px;line-height:1.7}
+.vi-answer-steps{display:flex;align-items:center;gap:8px;margin-top:14px;padding-top:11px;border-top:1px solid rgba(153,209,192,.12);color:#c8d9d3;font-size:7px;white-space:nowrap}
+.vi-answer-steps span{display:flex;align-items:center;gap:5px}
+.vi-answer-steps i{color:#6af2bd;font:600 7px var(--font-mono);font-style:normal}
+.vi-answer-steps>b{width:13px;height:1px;background:linear-gradient(90deg,#37e6ad,rgba(55,230,173,.16))}
+@keyframes searchArrive{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+
+@media(max-width:700px){
+  .vi-product-scene{width:min(100%,520px);aspect-ratio:1.12}
+  .vi-search-bar{height:clamp(42px,11vw,54px);gap:9px;padding:0 8px 0 14px;font-size:10px}
+  .vi-ask-button{gap:4px;padding:6px 8px;font-size:8px}
+  .vi-search-icon{width:12px;height:12px;flex-basis:12px}
+  .vi-suggestions{top:26%}
+  .vi-suggestion{height:clamp(38px,10vw,48px);gap:7px;padding:0 10px;font-size:9px}
+  .vi-mini-mark{width:20px;height:20px;flex-basis:20px;border-radius:7px;font-size:10px}
+  .vi-answer-card{top:51%;min-height:0;padding:11px 12px 10px;border-radius:11px}
+  .vi-answer-avatar{width:22px;height:22px;border-radius:7px;font-size:11px}
+  .vi-answer-heading{gap:7px}
+  .vi-answer-heading b{font-size:8px}
+  .vi-answer-heading small,.vi-answer-status{font-size:6px}
+  .vi-question{margin:10px 0 5px;font-size:10px}
+  .vi-answer-copy{font-size:7px;line-height:1.55}
+  .vi-answer-steps{gap:4px;margin-top:9px;padding-top:8px;font-size:6px}
+  .vi-answer-steps span{gap:3px}
+  .vi-answer-steps i{font-size:6px}
+  .vi-answer-steps>b{width:7px}
+}
+@media(prefers-reduced-motion:reduce){
+  .vi-product-scene,.vi-search-bar,.vi-suggestion,.vi-answer-card{animation:none!important}
+  .vi-answer-card{opacity:1;filter:none}
+}
+
+/* Timed product-reveal camera path and handoff to the live landing page. */
+.vi-layout{
+  transform-style:preserve-3d;
+  animation:introCameraPath 8.5s cubic-bezier(.42,0,.2,1) both;
+}
+@keyframes introCameraPath{
+  0%{opacity:0;transform:translate3d(0,18px,-55px) scale(.97) rotateY(1deg)}
+  12%{opacity:1;transform:translate3d(0,0,0) scale(1) rotateY(0)}
+  38%{transform:translate3d(-4px,-2px,10px) scale(1.012) rotateY(-.3deg)}
+  64%{transform:translate3d(5px,0,18px) scale(1.016) rotateY(.35deg)}
+  84%{transform:translate3d(0,-2px,8px) scale(1.008) rotateY(0)}
+  100%{opacity:1;transform:translate3d(0,0,0) scale(1) rotateY(0)}
+}
+.vi-stage{
+  animation:none;
+  transform-style:preserve-3d;
+}
+.vi-product-scene{
+  transform-origin:58% 47%;
+  animation:productRevealPath 8.5s cubic-bezier(.42,0,.2,1) both;
+}
+@keyframes productRevealPath{
+  0%{opacity:0;transform:perspective(1200px) translate3d(22px,10px,-55px) rotateY(-8deg) rotateX(2deg) scale(.91)}
+  13%{opacity:1;transform:perspective(1200px) translate3d(0,0,0) rotateY(-5deg) rotateX(2deg) scale(1)}
+  38%{transform:perspective(1200px) translate3d(-5px,-2px,15px) rotateY(-2deg) rotateX(1deg) scale(1.025)}
+  64%{transform:perspective(1200px) translate3d(4px,-1px,25px) rotateY(1deg) rotateX(0) scale(1.035)}
+  84%{transform:perspective(1200px) translate3d(-2px,0,12px) rotateY(-.5deg) rotateX(.5deg) scale(1.015)}
+  100%{opacity:1;transform:perspective(1200px) translate3d(0,0,0) rotateY(-2deg) rotateX(1deg) scale(1)}
+}
+.vi-search-bar{
+  opacity:0;
+  animation:searchArrive .7s .65s cubic-bezier(.2,.75,.25,1) both;
+}
+.vi-suggestion{
+  opacity:0;
+  animation:suggestionArrive .55s cubic-bezier(.2,.75,.25,1) both;
+}
+.suggestion-one{animation-delay:1.6s}
+.suggestion-two{animation-delay:2s}
+.suggestion-three{animation-delay:2.4s}
+.suggestion-two{
+  animation:suggestionArrive .55s 2s cubic-bezier(.2,.75,.25,1) both,suggestionResolve .55s 4.1s cubic-bezier(.3,0,.7,1) both;
+}
+.suggestion-one{
+  animation:suggestionArrive .55s 1.6s cubic-bezier(.2,.75,.25,1) both,suggestionResolve .55s 4s cubic-bezier(.3,0,.7,1) both;
+}
+.suggestion-three{
+  animation:suggestionArrive .55s 2.4s cubic-bezier(.2,.75,.25,1) both,suggestionResolve .55s 4.2s cubic-bezier(.3,0,.7,1) both;
+}
+@keyframes suggestionArrive{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes suggestionResolve{
+  0%{opacity:1;transform:translateY(0)}
+  100%{opacity:0;transform:translateY(12px)}
+}
+.vi-answer-card{
+  opacity:0;
+  transform-origin:50% 0;
+  animation:answerMorph .9s 4.05s cubic-bezier(.2,.75,.25,1) both;
+}
+@keyframes answerMorph{
+  0%{opacity:0;transform:translate3d(0,-12px,0) scale(.98)}
+  100%{opacity:1;transform:translate3d(0,0,0) scale(1)}
+}
+.vi-answer-heading,.vi-question,.vi-answer-copy,.vi-answer-steps{
+  animation:answerContentResolve .4s 4.8s ease-out both;
+}
+.vi-question{animation-delay:5s}
+.vi-answer-copy{animation-delay:5.2s}
+.vi-answer-steps{animation-delay:5.4s}
+@keyframes answerContentResolve{
+  from{opacity:0;transform:translateY(5px)}
+  to{opacity:1;transform:translateY(0)}
+}
+.vi-copy>*{animation-name:introTextReveal}
+.vi-brand-lockup{animation-delay:.12s}
+.vi-eyebrow{animation-delay:.3s}
+.vi-title{animation-delay:.45s}
+.vi-tagline{animation-delay:.6s}
+.vi-highlights{animation-delay:.75s}
+.vi-actions{animation-delay:.9s}
+.vi-note{animation-delay:1.05s}
+#videoIntro.entering-home{
+  z-index:9999;
+  pointer-events:none;
+  transform-origin:69% 49%;
+  transition:none;
+  animation:introPortalOut .9s cubic-bezier(.55,.02,.85,.3) forwards;
+}
+@keyframes introPortalOut{
+  0%{opacity:1;transform:scale(1)}
+  45%{opacity:1;transform:scale(1.06)}
+  100%{opacity:0;transform:scale(1.16)}
+}
+@media(max-width:700px){
+  .vi-layout{animation-name:introCameraPathMobile}
+  @keyframes introCameraPathMobile{
+    0%{opacity:0;transform:translate3d(0,12px,-30px) scale(.98)}
+    12%,100%{opacity:1;transform:translate3d(0,0,0) scale(1)}
+    48%{transform:translate3d(0,-2px,8px) scale(1.006)}
+    78%{transform:translate3d(0,0,4px) scale(1.003)}
+  }
+  .vi-stage{animation:none}
+  .vi-product-scene{animation-name:productRevealPathMobile}
+  @keyframes productRevealPathMobile{
+    0%{opacity:0;transform:scale(.9) translateY(8px)}
+    12%{opacity:1;transform:scale(.94) translateY(0)}
+    35%{transform:scale(.97) translateY(-2px)}
+    58%{transform:scale(.98) translateY(-3px)}
+    80%{transform:scale(.96) translateY(0)}
+    100%{opacity:1;transform:scale(.94) translateY(0)}
+  }
+  #videoIntro.entering-home{transform-origin:52% 24%}
+}
+@media(prefers-reduced-motion:reduce){
+  .vi-layout,.vi-stage,.vi-product-scene,.vi-search-bar,.vi-suggestion,.vi-answer-card,
+  .vi-answer-heading,.vi-question,.vi-answer-copy,.vi-answer-steps{animation:none!important}
+  .vi-layout,.vi-stage,.vi-product-scene{opacity:1;transform:none}
+  .vi-search-bar,.vi-suggestion,.vi-answer-card{opacity:1;transform:none}
+  .vi-answer-heading,.vi-question,.vi-answer-copy,.vi-answer-steps{opacity:1;transform:none}
+}
+
+/* ---------- XamCode AI 8-second intro film ---------- */
+#videoIntro{
+  padding:0;
+  background:#030711;
+  perspective:none;
+  transition:opacity .42s ease,visibility .42s ease;
+}
+#videoIntro.hidden{transform:none}
+#videoIntro.entering-home{animation:introFilmExit .42s ease-in forwards}
+.vi-intro-video{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:center;
+  background:#030711;
+}
+.vi-video-shade{
+  position:absolute;
+  inset:auto 0 0;
+  height:clamp(90px,18vh,150px);
+  pointer-events:none;
+  background:linear-gradient(transparent,rgba(2,7,17,.76));
+}
+/* ---------- XamCode AI cinematic brand overlay (v4 redesign) ----------
+   Letterbox bars + legibility wash keep any footage premium; brand title
+   uses the site's Instrument Serif display face so the intro reads as the
+   same product as the landing hero. Beats light up via .lit from the
+   intro controller; the progress bar mirrors video.currentTime. */
+.vi-cine-top,.vi-cine-bottom{
+  position:absolute;left:0;right:0;height:clamp(44px,8vh,84px);
+  background:#01040b;z-index:2;pointer-events:none;
+}
+.vi-cine-top{top:0}
+.vi-cine-bottom{bottom:0}
+.vi-video-shade{z-index:2}
+.vi-brand{
+  position:absolute;inset:0;z-index:3;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:12px;text-align:center;padding:0 clamp(20px,6vw,72px);
+  pointer-events:none;color:#f2f8ff;
+  background:radial-gradient(60% 55% at 50% 46%,rgba(2,7,17,.42),transparent 70%);
+  animation:viBrandIn .9s ease both .15s;
+}
+.vi-eyebrow{
+  margin:0;display:flex;align-items:center;gap:9px;
+  font-size:11px;font-weight:700;letter-spacing:.32em;text-transform:uppercase;
+  color:#8ff5e1;
+}
+.vi-eyebrow-dot{width:7px;height:7px;border-radius:50%;background:#2dd4bf;box-shadow:0 0 12px #2dd4bf}
+.vi-brand-title{
+  margin:0;font-family:"Instrument Serif",Georgia,serif;font-size:clamp(46px,9vw,108px);
+  line-height:.95;letter-spacing:-.01em;color:#fff;
+  text-shadow:0 4px 42px rgba(45,212,191,.35),0 2px 10px rgba(0,0,0,.6);
+}
+.vi-brand-title em{font-style:italic;background:linear-gradient(92deg,#5eead4,#a78bfa 60%,#f472b6);-webkit-background-clip:text;background-clip:text;color:transparent}
+.vi-brand-sub{margin:0;max-width:56ch;font-size:clamp(13px,1.7vw,16px);line-height:1.55;color:#c8d9ec}
+.vi-beats{
+  margin:8px 0 0;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:10px;justify-content:center;
+}
+.vi-beats li{
+  padding:8px 14px;border-radius:999px;font-size:12px;font-weight:600;
+  border:1px solid rgba(160,208,242,.28);background:rgba(8,20,37,.55);color:#9fb4cb;
+  backdrop-filter:blur(8px);opacity:.55;transform:translateY(6px);
+  transition:opacity .35s ease,transform .35s ease,border-color .35s ease,color .35s ease,box-shadow .35s ease;
+}
+.vi-beats li.lit{opacity:1;transform:none;color:#f2f8ff;border-color:rgba(94,234,212,.7);box-shadow:0 0 18px rgba(45,212,191,.35)}
+.vi-progress{
+  position:absolute;left:0;right:0;bottom:0;height:3px;z-index:4;background:rgba(148,163,184,.22);
+}
+.vi-progress i{display:block;height:100%;width:0;background:linear-gradient(90deg,#2dd4bf,#a78bfa,#f472b6)}
+@keyframes viBrandIn{from{opacity:0;transform:translateY(14px) scale(.985)}to{opacity:1;transform:none}}
+.vi-video-controls{z-index:5}
+@media(max-width:600px){
+  .vi-cine-top,.vi-cine-bottom{height:34px}
+  .vi-brand-sub{display:none}
+  .vi-beats li{padding:6px 10px;font-size:11px}
+}
+@media(prefers-reduced-motion:reduce){
+  .vi-brand{animation:none}
+  .vi-beats li{opacity:1;transform:none;transition:none}
+}
+.vi-video-controls{
+  position:absolute;
+  inset:auto 0 0;
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:18px;
+  padding:22px clamp(20px,5vw,72px);
+  color:#eef7ff;
+}
+.vi-video-status{margin:0;color:#b8cce0;font-size:12px}
+.vi-video-actions{display:flex;align-items:center;gap:12px}
+.vi-sound-toggle,.vi-skip{
+  min-height:40px;
+  padding:9px 15px;
+  border:1px solid rgba(160,208,242,.35);
+  border-radius:999px;
+  background:rgba(8,20,37,.76);
+  color:#e9f4ff;
+  font-family:inherit;
+  font-size:12px;
+  font-weight:600;
+  line-height:1.2;
+  cursor:pointer;
+  backdrop-filter:blur(8px);
+}
+.vi-sound-toggle:hover,.vi-skip:hover{border-color:rgba(128,221,255,.8);background:rgba(13,36,59,.92)}
+.vi-sound-toggle:focus-visible,.vi-skip:focus-visible{outline:2px solid #70ddff;outline-offset:3px}
+.vi-visually-hidden{
+  position:absolute;
+  width:1px;
+  height:1px;
+  padding:0;
+  margin:-1px;
+  overflow:hidden;
+  clip:rect(0,0,0,0);
+  white-space:nowrap;
+  border:0;
+}
+@keyframes introFilmExit{
+  to{opacity:0;visibility:hidden}
+}
+@media(max-width:600px){
+  .vi-video-controls{align-items:flex-end;padding:16px}
+  .vi-video-status{max-width:45%;font-size:10px}
+  .vi-video-actions{gap:8px}
+  .vi-sound-toggle,.vi-skip{min-height:36px;padding:8px 11px;font-size:11px}
+}
+@media(prefers-reduced-motion:reduce){
+  #videoIntro.entering-home{animation-duration:.01ms}
+}

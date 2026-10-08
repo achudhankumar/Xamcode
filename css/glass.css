@@ -1,0 +1,145 @@
+/* ============================================================
+   GLASS — glassmorphism applied to all card-like surfaces
+   ============================================================ */
+
+.glass,
+.panel,
+.card,
+.tree,
+.q-card,
+.formula-card,
+.concept-card,
+.kp,
+.mini-visual,
+.step-card,
+.pdf-q,
+.score-bar,
+.explain.good,
+.explain.bad,
+.cc-card,
+.v-row,
+.v-stage,
+.v-board,
+.v-flash,
+.v-eli5-body,
+.v-cmp-table,
+.v-content,
+.study-tabs,
+.theme-modal-card,
+.theme-card,
+.fc-card{
+  background:var(--surface,rgba(15,23,42,.42)) !important;
+  backdrop-filter:blur(12px) saturate(110%) !important;
+  -webkit-backdrop-filter:blur(12px) saturate(110%) !important;
+  border:1px solid var(--line,rgba(255,255,255,.09)) !important;
+  box-shadow:0 8px 24px var(--shadow,rgba(0,0,0,.16)) !important;
+  transition:all .3s ease !important;
+}
+
+/* .concept-card is excluded from the hover lift: it lives in the
+   Workspace unit/topic grid, which must stay aligned on hover. */
+.panel:hover,
+.card:hover,
+.formula-card:hover,
+.cc-card:hover,
+.v-row:hover,
+.theme-card:hover{
+  border-color:var(--muted,rgba(148,163,184,.4)) !important;
+  transform:translateY(-1px);
+}
+.concept-card:hover{
+  border-color:var(--muted,rgba(148,163,184,.4)) !important;
+}
+
+/* Header glass */
+.header{
+  background:color-mix(in srgb,var(--bg,#070b1e) 88%,transparent) !important;
+  backdrop-filter:blur(18px) saturate(120%) !important;
+  -webkit-backdrop-filter:blur(18px) saturate(120%) !important;
+  border-bottom:1px solid var(--line,rgba(255,255,255,.08)) !important;
+}
+body[data-mode="light"] .header{
+  background:rgba(250,250,252,.88) !important;
+}
+
+/* Study bar glass */
+.study-bar{
+  background:color-mix(in srgb,var(--bg,#070b1e) 90%,transparent) !important;
+  backdrop-filter:blur(14px) saturate(115%) !important;
+  -webkit-backdrop-filter:blur(14px) saturate(115%) !important;
+}
+body[data-mode="light"] .study-bar{
+  background:rgba(250,250,252,.9) !important;
+}
+
+/* Inputs */
+.opt,
+input,
+select,
+textarea{
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+}
+
+/* Fallback for old browsers */
+@supports not (backdrop-filter: blur(20px)){
+  .panel,
+  .card,
+  .tree,
+  .q-card,
+  .concept-card{
+    background:var(--surface,#111a2e) !important;
+  }
+  body[data-mode="light"] .panel,
+  body[data-mode="light"] .card,
+  body[data-mode="light"] .tree,
+  body[data-mode="light"] .q-card,
+  body[data-mode="light"] .concept-card{
+    background:#ffffff !important;
+  }
+}
+
+/* Text safety on glass */
+.panel h2,
+.panel h3,
+.q-text,
+.cc-title,
+.step-card span,
+.opt,
+.tree-btn,
+.pill.cat{
+  color:var(--text,#fff);
+}
+.panel p.desc,
+.mini-cap,
+.kp li,
+.cc-text,
+.step-desc,
+.v-row .t{
+  color:var(--text,#cbd5e1);
+}
+.panel-tag,
+.kp-tag.accent,
+.cc-head,
+.v-row .h{
+  color:var(--accent,#2dd4bf);
+}
+
+/* Light mode text */
+body[data-mode="light"] .panel h2,
+body[data-mode="light"] .panel h3,
+body[data-mode="light"] .q-text,
+body[data-mode="light"] .cc-title,
+body[data-mode="light"] .opt{
+  color:#1a1a2e;
+}
+body[data-mode="light"] .panel p.desc,
+body[data-mode="light"] .mini-cap,
+body[data-mode="light"] .v-row .t{
+  color:#4a4a5e;
+}
+
+/* Smooth theme transition without animating every SVG and layout property. */
+body{
+  transition:background-color .25s ease,color .25s ease;
+}

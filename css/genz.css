@@ -1,0 +1,255 @@
+/* ============================================================
+   GENZ LAYER — 3D UI · extra motion · candy gradients · pointer FX
+   Loaded LAST so it layers over base/themes/layout/components/
+   animations/glass/premium. Token-driven => every theme adapts.
+   ============================================================ */
+
+/* ---------- 0 · derived tokens (auto-adapt to any theme) ---------- */
+:root{
+  --glow:color-mix(in srgb,var(--accent) 62%,transparent);
+  --glow-2:color-mix(in srgb,var(--accent-2) 62%,transparent);
+  --grad-vibe:linear-gradient(118deg,var(--aurora-1) 0%,var(--aurora-2) 46%,var(--aurora-3) 100%);
+  --grad-shine:linear-gradient(118deg,var(--aurora-1),var(--aurora-2),var(--aurora-3),var(--aurora-2),var(--aurora-1));
+  --depth-1:inset 0 1px 0 color-mix(in srgb,var(--text) 8%,transparent),0 10px 26px -12px var(--shadow),0 2px 6px -2px var(--shadow);
+  --depth-2:inset 0 1px 0 color-mix(in srgb,var(--text) 10%,transparent),0 26px 62px -20px var(--shadow),0 8px 20px -10px var(--shadow),0 0 0 1px color-mix(in srgb,var(--accent) 14%,transparent);
+  --spring:cubic-bezier(.34,1.56,.64,1);
+  --gz-speed:7s;
+}
+
+/* ---------- 1 · ambient layers (grain + cursor glow) ---------- */
+#grain{
+  position:fixed;inset:0;z-index:3;pointer-events:none;opacity:.05;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation:gzGrain 6s steps(6) infinite;
+}
+body[data-mode="light"] #grain{mix-blend-mode:multiply;opacity:.03}
+@keyframes gzGrain{
+  0%{transform:translate(0,0)}20%{transform:translate(-3%,2%)}40%{transform:translate(2%,-3%)}
+  60%{transform:translate(-2%,-2%)}80%{transform:translate(3%,1%)}100%{transform:translate(0,0)}
+}
+
+#cursorGlow{
+  position:fixed;z-index:1;left:0;top:0;width:520px;height:520px;margin:-260px 0 0 -260px;
+  pointer-events:none;opacity:0;filter:blur(30px);transition:opacity .5s ease;will-change:transform;
+  background:radial-gradient(circle,
+    color-mix(in srgb,var(--accent) 26%,transparent) 0%,
+    color-mix(in srgb,var(--accent-2) 14%,transparent) 38%,
+    transparent 68%);
+}
+body[data-mode="light"] #cursorGlow{opacity:0}
+body.gz-pointer #cursorGlow{opacity:.5}
+body[data-mode="light"].gz-pointer #cursorGlow{opacity:.4}
+
+/* Cosmic runs a wider halo with a hotter core — the reference
+   calls for a 600px #8B5CF6 field plus a 200px #3B82F6 centre,
+   screen-blended so it lifts the starfield instead of muddying it.
+   Width/height and the negative margins move together, or the
+   glow's centre drifts off the pointer. */
+body[data-theme="cosmic"] #cursorGlow{
+  width:600px;height:600px;margin:-300px 0 0 -300px;
+  mix-blend-mode:screen;
+  filter:blur(42px);
+  background:
+    radial-gradient(circle,
+      color-mix(in srgb,var(--accent-2) 34%,transparent) 0%,
+      transparent 34%),
+    radial-gradient(circle,
+      color-mix(in srgb,var(--accent) 30%,transparent) 0%,
+      transparent 68%);
+}
+
+/* ---------- 2 · 3D tilt, layered depth & lift ----------
+   Pointer tilt is LANDING-ONLY (see genz.js: TILT = '.card'). Only the
+   landing feature grid gets 3D machinery at all.
+
+   Every other surface is deliberately excluded from this whole block:
+   .concept-card, .formula-card, .cc-card, .q-card, .step-card, .panel,
+   .mini-visual, the .v-* Vaathiyar rows and stages, every .ai-* PDF-study
+   card, and .ws-pill. They keep their plain :hover colour and shadow
+   feedback from components.css / premium.css / glass.css, but no
+   transform-style, no will-change and no 3D transform. Study content must
+   not shift under the pointer. */
+  @media (hover:hover) and (pointer:fine){
+  /* landing-only: the 3D scaffolding that pointer tilt needs */
+  .card{
+    transform-style:preserve-3d;
+    backface-visibility:hidden;
+    will-change:transform;
+    transition:transform .5s var(--spring),box-shadow .4s ease,border-color .3s ease !important;
+    box-shadow:var(--depth-1) !important;
+  }
+
+  /* pointer-driven tilt. JS sets --rx/--ry and toggles .gz-tilt.
+     Scoped to .card so it cannot reappear on a study surface if the
+     selector list in genz.js is ever widened again by accident. */
+  .card.gz-tilt{
+    transform:perspective(1100px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg))
+              translate3d(0,-7px,18px) scale(1.012) !important;
+    box-shadow:var(--depth-2),0 0 44px -10px var(--glow),0 0 22px -14px var(--glow-2) !important;
+  }
+  .card.gz-tilt .panel-tag,
+  .card.gz-tilt .badge{transform:translateZ(26px)}
+  .card.gz-tilt h2,.card.gz-tilt h3{transform:translateZ(16px)}
+}
+
+/* ---------- 3 · 3D press buttons & lively chips ---------- */
+.btn-primary,.btn-hero{
+  position:relative;color:#fff !important;
+  background:var(--grad-shine) !important;background-size:220% 220% !important;
+  border:1px solid color-mix(in srgb,var(--text) 22%,transparent) !important;
+  text-shadow:0 1px 2px rgba(0,0,0,.3);
+  box-shadow:0 4px 0 color-mix(in srgb,var(--accent) 52%,#000),0 14px 30px -10px var(--glow) !important;
+  transition:transform .14s var(--spring),box-shadow .16s ease,filter .2s ease !important;
+  animation:gzPan var(--gz-speed) linear infinite;
+  overflow:hidden;isolation:isolate;
+}
+.btn-primary:hover,.btn-hero:hover{
+  transform:translateY(-2px);filter:saturate(1.16) brightness(1.05);
+  box-shadow:0 7px 0 color-mix(in srgb,var(--accent) 52%,#000),0 22px 42px -12px var(--glow) !important;
+}
+.btn-primary:active,.btn-hero:active{
+  transform:translateY(3px);
+  box-shadow:0 1px 0 color-mix(in srgb,var(--accent) 52%,#000),0 6px 14px -6px var(--glow) !important;
+}
+.btn-primary span[aria-hidden],.btn-hero span[aria-hidden]{transition:transform .25s var(--spring)}
+.btn-primary:hover span[aria-hidden],.btn-hero:hover span[aria-hidden]{transform:translate(3px,-3px)}
+
+.btn-ghost,.btn-hero-outline{transition:transform .18s var(--spring),box-shadow .25s ease,border-color .25s ease !important}
+.btn-ghost:hover,.btn-hero-outline:hover{transform:translateY(-2px);box-shadow:0 14px 28px -16px var(--glow) !important}
+
+.tree-btn,.opt{transition:transform .16s var(--spring),box-shadow .2s ease,border-color .2s ease !important}
+.tree-btn:hover,.opt:hover{transform:translateX(3px)}
+.tree-btn:active,.opt:active{transform:scale(.97)}
+
+.pill{animation:gzPop .5s var(--spring) both}
+.pill.correct{animation:gzPopRight .55s var(--spring) both;box-shadow:0 0 0 1px color-mix(in srgb,#22c55e 50%,transparent),0 0 20px -4px rgba(34,197,94,.6)!important}
+.pill.wrong{animation:gzShake .45s ease both}
+.score-badge,.score-bar{animation:gzPop .5s var(--spring) both}
+
+/* ---------- 4 · motion engine (keyframes) ---------- */
+@keyframes gzPan{to{background-position:220% 50%}}
+@keyframes gzFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes gzPop{0%{opacity:0;transform:scale(.72)}60%{transform:scale(1.06)}100%{opacity:1;transform:scale(1)}}
+@keyframes gzPopRight{0%{opacity:0;transform:scale(.8)}55%{transform:scale(1.12) rotate(-2deg)}100%{opacity:1;transform:scale(1) rotate(0)}}
+@keyframes gzShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-5px)}40%{transform:translateX(5px)}60%{transform:translateX(-3px)}80%{transform:translateX(2px)}}
+@keyframes gzIn{from{opacity:0;transform:translateY(16px) scale(.985)}to{opacity:1;transform:none}}
+@keyframes gzJelly{0%,100%{transform:scale(1,1)}30%{transform:scale(1.08,.92)}50%{transform:scale(.94,1.06)}70%{transform:scale(1.03,.98)}}
+@keyframes gzOrbit{to{transform:rotate(360deg)}}
+
+/* ---------- 4a · entrance choreography (replays on every render) ---------- */
+#app .panel,#app .card,#app .concept-card,#app .formula-card,#app .cc-card,#app .step-card,
+#app .q-card,#app .ai-unit-card,#app .ai-topic-page-card,#app .ai-detail-card,#app .ai-visual-stage-card,
+#app .ai-question-card,#app .ai-mode-panel,#app .v-row,#app .v-stage{
+  animation:gzIn .42s var(--spring) both;
+}
+#app .ws-cards>*,#app .opts>*,#app .ai-mode-panels>*,#app .theme-grid>*{animation:gzIn .44s var(--spring) both}
+#app .ws-cards>*:nth-child(1),#app .opts>*:nth-child(1),#app .theme-grid>*:nth-child(1){animation-delay:.02s}
+#app .ws-cards>*:nth-child(2),#app .opts>*:nth-child(2),#app .theme-grid>*:nth-child(2){animation-delay:.06s}
+#app .ws-cards>*:nth-child(3),#app .opts>*:nth-child(3),#app .theme-grid>*:nth-child(3){animation-delay:.1s}
+#app .ws-cards>*:nth-child(4),#app .opts>*:nth-child(4),#app .theme-grid>*:nth-child(4){animation-delay:.14s}
+#app .ws-cards>*:nth-child(5),#app .opts>*:nth-child(5),#app .theme-grid>*:nth-child(5){animation-delay:.18s}
+#app .ws-cards>*:nth-child(n+6),#app .opts>*:nth-child(n+6),#app .theme-grid>*:nth-child(n+6){animation-delay:.22s}
+
+/* ---------- 4b · scroll reveal (JS adds .gz-reveal then .gz-in) ---------- */
+.gz-reveal{opacity:0;transform:translateY(26px) scale(.99);transition:opacity .6s ease,transform .6s var(--spring)}
+.gz-reveal.gz-in{opacity:1;transform:none}
+
+/* ---------- 4c · ambient floaters & hover jelly ---------- */
+.logo-wrap .brand-mark,.badge,.hero-proof .proof-avatars i{animation:gzFloat 5s ease-in-out infinite}
+.logo-wrap:hover .brand-mark{animation:gzJelly .6s var(--spring)}
+.badge{animation-delay:.6s}
+.hero-proof .proof-avatars i:nth-child(2){animation-delay:.4s}
+.hero-proof .proof-avatars i:nth-child(3){animation-delay:.8s}
+.pv-head .tag,.panel-tag{letter-spacing:.14em}
+
+/* ---------- 5 · brand, headers & theme flair ---------- */
+.header::after{
+  content:'';position:absolute;left:0;right:0;bottom:-1px;height:2px;pointer-events:none;
+  background:var(--grad-shine);background-size:220% 100%;opacity:.75;
+  animation:gzPan var(--gz-speed) linear infinite;
+}
+
+.brand{
+  background:var(--grad-shine);background-size:220% auto;-webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;color:transparent;animation:gzPan var(--gz-speed) linear infinite;
+}
+.brand .brand-ai{-webkit-text-fill-color:var(--accent);color:var(--accent)}
+
+.hero-copy h1 .accent{
+  background:var(--grad-shine);background-size:220% auto;-webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;color:transparent;animation:gzPan var(--gz-speed) linear infinite;
+}
+
+/* hover glow on every card-like surface */
+.panel:hover,.card:hover,.concept-card:hover,.formula-card:hover,.cc-card:hover,.v-row:hover,
+.v-stage:hover,.mini-visual:hover,.step-card:hover,.q-card:hover,.ai-unit-card:hover,
+.ai-topic-page-card:hover,.ai-visual-stage-card:hover,.ai-detail-card:hover,.feature-card-top:hover{
+  border-color:color-mix(in srgb,var(--accent) 46%,var(--line)) !important;
+  box-shadow:var(--depth-2),0 0 34px -12px var(--glow) !important;
+}
+
+/* active tabs & nav get a soft neon lift (no contrast changes) */
+.study-tabs button.active,.nav button.active{box-shadow:0 6px 18px -10px var(--glow) !important}
+
+/* brand tile gets a travelling 3D sheen */
+.logo{position:relative;overflow:hidden}
+.logo::after{
+  content:'';position:absolute;inset:0;border-radius:inherit;
+  background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.55) 50%,transparent 65%);
+  transform:translateX(-120%);animation:gzSheen 4.5s ease-in-out infinite;
+}
+@keyframes gzSheen{0%,58%{transform:translateX(-120%)}78%,100%{transform:translateX(120%)}}
+
+/* focus ring packs a glow */
+:focus-visible{box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 30%,transparent) !important}
+
+/* ---------- 7 · 3D hero stage (applies to every theme) ---------- */
+/* premium.css sets .hero{perspective:none}; re-arm the depth for all themes. */
+.hero{perspective:1500px;perspective-origin:50% 46%}
+.hero-copy{transform:translateZ(24px)}
+.preview{transform:rotateY(-4deg) rotateX(2deg) translateZ(8px)}
+.preview .pv-scene{transform:translateZ(20px);transform-style:preserve-3d}
+
+/* ---------- 6 · responsive & motion-safety ---------- */
+@media (max-width:760px){
+  #cursorGlow{display:none}
+  .gz-reveal{opacity:1;transform:none}
+  .hero{perspective:none}
+  .hero-copy,.preview,.preview .pv-scene{transform:none}
+  #app .panel,#app .card,#app .concept-card,#app .formula-card,#app .cc-card,#app .step-card,
+  #app .q-card,#app .ai-unit-card,#app .ai-topic-page-card,#app .ai-detail-card,#app .ai-visual-stage-card,
+  #app .ws-cards>*,#app .opts>*{animation-duration:.3s}
+}
+
+@media (prefers-reduced-motion:reduce){
+  #grain,#cursorGlow{display:none}
+  #app .panel,#app .card,#app .concept-card,#app .formula-card,#app .cc-card,#app .step-card,
+  #app .q-card,#app .ai-unit-card,#app .ai-topic-page-card,#app .ai-detail-card,#app .ai-visual-stage-card,
+  #app .ai-question-card,#app .ai-mode-panel,#app .v-row,#app .v-stage,
+  #app .ws-cards>*,#app .opts>*,#app .ai-mode-panels>*,#app .theme-grid>*,
+  .pill,.pill.correct,.pill.wrong,.score-badge,.score-bar,.logo-wrap .brand-mark,.badge,
+  .hero-proof .proof-avatars i,.btn-primary,.btn-hero,.header::after,.brand,
+  .hero-copy h1 .accent,.logo::after{
+    animation:none !important;
+  }
+  .gz-reveal{opacity:1 !important;transform:none !important;transition:none}
+  .hero-copy,.preview,.preview .pv-scene{transform:none}
+  .btn-primary:hover,.btn-hero:hover,.btn-ghost:hover,.btn-hero-outline:hover,
+  .tree-btn:hover,.opt:hover{transform:none}
+  .panel:hover,.card:hover,.concept-card:hover,.formula-card:hover,.cc-card:hover{box-shadow:var(--depth-1) !important}
+}
+
+/* graceful fallback when color-mix() is unsupported (older engines) */
+@supports not (color:color-mix(in srgb,red,blue)){
+  :root{--glow:rgba(45,212,191,.5);--glow-2:rgba(167,139,250,.5)}
+  .card.gz-tilt{border-color:var(--accent) !important}
+}
+
+/*==GENZ-END==*/
+
+/* ============================================================
+   END GENZ LAYER
+   Removable in one step: delete this file + its <link> in
+   XamCode.html + <script src="js/genz.js"> and the #grain /
+   #cursorGlow divs. Nothing here is required for the app to work.
+   ============================================================ */

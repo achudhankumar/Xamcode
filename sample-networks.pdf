@@ -1,0 +1,115 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R 5 0 R 7 0 R] /Count 3 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 11 0 R >> >> /Contents 4 0 R >>
+endobj
+4 0 obj
+<< /Length 914 >>
+stream
+BT
+/F1 16 Tf
+72 720 Td
+(Page 1 - Computer Networks) Tj
+/F1 11 Tf
+0 -28 Td
+(A computer network is two or more computing devices joined together) Tj
+(to exchange data and share resources. The devices may be wired with) Tj
+(copper or fibre, or joined wirelessly over radio. A protocol is an) Tj
+(agreed set of rules that lets two devices understand each other.) Tj
+(The TCP/IP model has four layers. Each layer adds a service for the) Tj
+(layer above it and hides how the lower layers work. A packet created) Tj
+(at the application layer travels down the stack, crosses the network,) Tj
+(and is rebuilt on the far side.) Tj
+(The TCP handshake is a three-step exchange. The client sends SYN, the) Tj
+(server replies SYN-ACK, and the client answers with ACK. Only after) Tj
+(this sequence is the connection established. If any step is lost the) Tj
+(handshake restarts, which is why a failed handshake costs time.) Tj
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 11 0 R >> >> /Contents 6 0 R >>
+endobj
+6 0 obj
+<< /Length 799 >>
+stream
+BT
+/F1 16 Tf
+72 720 Td
+(Page 2 - Switching and Addressing) Tj
+/F1 11 Tf
+0 -28 Td
+(An Ethernet switch forwards frames using a MAC address table. Each) Tj
+(port learns which MAC address sits behind it by watching the source) Tj
+(address of arriving frames. A frame for an unknown address is flooded) Tj
+(to every port except the one it arrived on.) Tj
+(IP addressing is hierarchical. A router strips the network portion of) Tj
+(the destination address and forwards the packet to the next hop. The) Tj
+(Time to Live field decreases by one at every router, preventing loops.) Tj
+(Subnet masks decide where the network number ends and the host number) Tj
+(begins. A /24 mask reserves the final octet for hosts, giving 254) Tj
+(usable addresses once the network and broadcast addresses are removed.) Tj
+ET
+endstream
+endobj
+7 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 11 0 R >> >> /Contents 8 0 R >>
+endobj
+8 0 obj
+<< /Length 934 >>
+stream
+BT
+/F1 16 Tf
+72 720 Td
+(Page 3 - Congestion and Reliability) Tj
+/F1 11 Tf
+0 -28 Td
+(Congestion control has two main goals: keep the network efficient and) Tj
+(keep any one sender from flooding the links it shares. The four phases) Tj
+(of TCP congestion control are slow start, congestion avoidance, fast) Tj
+(retransmit and fast recovery.) Tj
+(Slow start doubles the sending window on every round trip until a) Tj
+(packet is lost. Congestion avoidance then grows the window by one) Tj
+(segment per round trip, which is far gentler. Fast retransmit sends) Tj
+(the missing segment immediately after three duplicate ACKs, without) Tj
+(waiting for a timeout.) Tj
+(Retransmission timers must balance two failure modes. A timer set too) Tj
+(low triggers needless resends and wastes bandwidth. A timer set too) Tj
+(high leaves a gap in the connection. A dynamic estimate from measured) Tj
+(round-trip times keeps the timer in between.) Tj
+ET
+endstream
+endobj
+9 0 obj
+undefined
+endobj
+10 0 obj
+undefined
+endobj
+11 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+xref
+0 12
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000127 00000 n 
+0000000254 00000 n 
+0000001219 00000 n 
+0000001346 00000 n 
+0000002196 00000 n 
+0000002323 00000 n 
+0000003308 00000 n 
+0000003333 00000 n 
+0000003359 00000 n 
+trailer
+<< /Size 12 /Root 1 0 R >>
+startxref
+3430
+%%EOF

@@ -1,0 +1,409 @@
+/* ============================================================
+   EDITORIAL — artifact design language ported onto XamCode
+   ------------------------------------------------------------
+   Serif display type · mono eyebrows · shine sweep · cursor
+   spotlight · editorial section rhythm.
+
+   Ported, not replaced. The four themes (bubblegum / digital /
+   cosmic / organic), all real data, the backend, the intro
+   film and every existing class are untouched. Everything below
+   is driven by the theme variables already defined in
+   themes.css, so it re-skins per theme with no extra rules.
+
+   Loaded last, so it wins over premium.css / genz.css at equal
+   specificity without needing !important on typography.
+   ============================================================ */
+
+:root{
+  /* Instrument Serif carries the display voice, Geist Mono the
+     data voice. Both are progressive: if the font request is
+     slow or blocked, the stacks below fall back to Georgia /
+     ui-monospace and nothing breaks. */
+  --font-display:'Instrument Serif',Georgia,'Times New Roman',serif;
+  --font-ui:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --font-mono:'Geist Mono',ui-monospace,'SF Mono',Menlo,monospace;
+
+  /* Two curves, used consistently: --ease-premium for anything
+     the pointer drives, --ease-expo for choreographed reveals. */
+  --ease-premium:cubic-bezier(.16,1,.3,1);
+  --ease-expo:cubic-bezier(.76,0,.24,1);
+
+  --radius-xl:20px;
+  --radius-lg:16px;
+  --hairline:color-mix(in srgb,var(--text,#fff) 11%,transparent);
+
+  --shadow-lift:
+    inset 0 1px 0 color-mix(in srgb,var(--text,#fff) 7%,transparent),
+    0 24px 60px -30px var(--shadow),
+    0 0 0 1px color-mix(in srgb,var(--accent) 11%,transparent);
+}
+
+/* ------------------------------------------------------------
+   DISPLAY TYPE — the hero headline is the loudest element on
+   the page, so it takes the serif at the largest scale and the
+   tightest leading. Sans stays for everything functional.
+   ------------------------------------------------------------ */
+.hero h1{
+  font-family:var(--font-display);
+  font-weight:400;
+  font-size:clamp(46px,7.1vw,92px);
+  line-height:.94;
+  letter-spacing:-.032em;
+  max-width:15ch;
+  margin-bottom:26px;
+}
+
+/* The emphasised tail keeps its accent voice but becomes an italic
+   serif — and rides a two-stop gradient of the theme's own accents,
+   the signature "vibe-coded" headline move. Premium.css gradients it
+   too; this layer simply keeps the final word. */
+.hero h1 .accent{
+  font-family:var(--font-display);
+  font-style:italic;
+  font-weight:400;
+  letter-spacing:-.026em;
+  background:linear-gradient(105deg,var(--accent),var(--accent-2));
+  -webkit-background-clip:text;background-clip:text;
+  color:transparent;-webkit-text-fill-color:transparent;
+}
+
+/* Supporting copy relaxes: larger, airier, wider measure. */
+.hero p{
+  font-size:17px;
+  line-height:1.68;
+  max-width:52ch;
+  letter-spacing:-.008em;
+}
+
+/* ------------------------------------------------------------
+   EYEBROWS — the leading dot becomes a drawn hairline, which
+   reads more editorial and needs no new markup.
+   .hero-kicker ships a real <span>; it is hidden so the
+   ::before rule does the drawing for both kicker kinds.
+   ------------------------------------------------------------ */
+.hero-kicker,
+.section-kicker{
+  font-family:var(--font-mono);
+  font-size:10px;
+  font-weight:500;
+  letter-spacing:.19em;
+  text-transform:uppercase;
+  color:var(--muted);
+  gap:12px;
+  margin-bottom:24px;
+}
+.hero-kicker>span{display:none}
+.hero-kicker::before,
+.section-kicker::before{
+  content:'';
+  display:block;
+  width:30px;
+  height:1px;
+  flex:0 0 30px;
+  border-radius:0;
+  background:linear-gradient(90deg,var(--accent),transparent);
+  box-shadow:none;
+}
+.section-kicker::before{margin-bottom:9px}
+
+/* ------------------------------------------------------------
+   SECTION RHYTHM — serif heading over a hairline rule.
+   Serif needs far less negative tracking than the grotesque it
+   replaces, so the heading loosens rather than tightens.
+   ------------------------------------------------------------ */
+.sec h2,
+.section-heading h2{
+  font-family:var(--font-display);
+  font-weight:400;
+  font-size:clamp(34px,4.4vw,58px);
+  line-height:1.02;
+  letter-spacing:-.024em;
+  color:var(--text);
+}
+.section-heading{
+  align-items:flex-end;
+  gap:36px;
+  margin-bottom:34px;
+  padding-bottom:22px;
+  border-bottom:1px solid var(--hairline);
+}
+
+/* Card headings take the serif at a smaller step, so hierarchy
+   stays obvious against the hero. */
+.panel h2,
+.concept-card h3,
+.formula-card h3,
+.card h3{
+  font-family:var(--font-display);
+  font-weight:400;
+  letter-spacing:-.018em;
+  line-height:1.12;
+}
+
+/* ------------------------------------------------------------
+   STATS — the artifact set these as tiles rather than a bare
+   inline list. Ours is a <span> grid, so the same treatment is
+   applied here without touching any app.js markup.
+   ------------------------------------------------------------ */
+.stats span{
+  border-left:1px solid var(--hairline);
+  padding:0 18px;
+}
+.stats span:first-child{padding-left:0;border-left:0}
+.stats b{
+  font-family:var(--font-display);
+  font-weight:400;
+  font-size:30px;
+  letter-spacing:-.02em;
+  line-height:1;
+  display:block;
+  margin-bottom:5px;
+}
+.stats small{
+  font-family:var(--font-mono);
+  font-size:9.5px;
+  letter-spacing:.15em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+/* ------------------------------------------------------------
+   BRAND — serif wordmark, to match the headline voice.
+   ------------------------------------------------------------ */
+.brand{
+  font-family:var(--font-display);
+  font-weight:400;
+  font-size:21px;
+  letter-spacing:-.012em;
+}
+.brand-ai{
+  font-family:var(--font-mono);
+  font-weight:500;
+  font-size:13px;
+  letter-spacing:.02em;
+}
+
+/* ------------------------------------------------------------
+   MONO LABELS — the data voice for small uppercase metadata.
+   ------------------------------------------------------------ */
+.panel-tag,
+.ai-field-label,
+.pdf-progress-eyebrow,
+.vi-eyebrow,
+.pv-head>span:first-child{
+  font-family:var(--font-mono);
+  letter-spacing:.14em;
+  text-transform:uppercase;
+}
+
+/* ------------------------------------------------------------
+   BUTTONS — a sheen that travels across on hover. Uses ::after
+   on the button itself, which no other layer claims; labels are
+   lifted so the sheen passes behind them.
+   ------------------------------------------------------------ */
+.btn-hero,
+.btn-hero-outline,
+.btn-primary,
+.btn-ghost{
+  position:relative;
+  overflow:hidden;
+  isolation:isolate;
+  transition:transform .22s var(--ease-premium),
+             box-shadow .22s var(--ease-premium),
+             filter .22s var(--ease-premium),
+             border-color .22s var(--ease-premium);
+}
+.btn-hero>span,
+.btn-hero-outline>span,
+.btn-primary>span,
+.btn-ghost>span{position:relative;z-index:2}
+
+.btn-hero::after,
+.btn-hero-outline::after,
+.btn-primary::after,
+.btn-ghost::after{
+  content:'';
+  position:absolute;
+  inset:0;
+  z-index:1;
+  pointer-events:none;
+  background:linear-gradient(100deg,
+    transparent 18%,
+    color-mix(in srgb,var(--text,#fff) 16%,transparent) 48%,
+    transparent 78%);
+  transform:translateX(-115%);
+  transition:transform .68s var(--ease-premium);
+}
+.btn-hero:hover::after,
+.btn-hero-outline:hover::after,
+.btn-primary:hover::after,
+.btn-ghost:hover::after{transform:translateX(115%)}
+
+/* ------------------------------------------------------------
+   CURSOR SPOTLIGHT — a soft accent bloom tracking the pointer
+   across a card. Driven by --mouse-x/--mouse-y, separate from the
+   tilt custom properties (--rx/--ry), so the two effects never
+   collide. Only the landing `.card` still receives tilt; every other
+   selector below keeps a parked spotlight, which is intentional —
+   a pointer-tracking gradient would still read as motion on study
+   content. Uses ::after because premium.css already owns ::before.
+   ------------------------------------------------------------ */
+.card,
+.concept-card,
+.formula-card,
+.q-card,
+.theme-card,
+.ai-unit-card,
+.ai-question-card{
+  /* Positioned explicitly: components.css already does this for the
+     first three, but not for the rest. Without it the absolute ::after
+     would resolve against a distant ancestor and bloom the wrong box. */
+  position:relative;
+  --mouse-x:50%;
+  --mouse-y:0%;
+}
+/* .concept-card no longer receives --mouse-x/--mouse-y: it was dropped
+   from genz.js's tilt list so the Workspace grid stops moving. Its
+   spotlight therefore never tracks the pointer — it stays parked at
+   the default above, which fades in as a plain centred bloom on hover.
+   That is intentional: a pointer-tracking gradient would still read as
+   motion. Remove this pair if .concept-card is ever re-added to TILT. */
+.concept-card{
+  --mouse-x:50%;
+  --mouse-y:50%;
+}
+.card::after,
+.concept-card::after,
+.formula-card::after,
+.q-card::after,
+.theme-card::after,
+.ai-unit-card::after,
+.ai-question-card::after{
+  content:'';
+  position:absolute;
+  inset:0;
+  z-index:0;
+  pointer-events:none;
+  opacity:0;
+  border-radius:inherit;
+  background:radial-gradient(460px 320px at var(--mouse-x) var(--mouse-y),
+    color-mix(in srgb,var(--accent) 13%,transparent),
+    transparent 68%);
+  transition:opacity .34s var(--ease-premium);
+}
+.card:hover::after,
+.concept-card:hover::after,
+.formula-card:hover::after,
+.q-card:hover::after,
+.theme-card:hover::after,
+.ai-unit-card:hover::after,
+.ai-question-card:hover::after{opacity:1}
+
+/* Card content sits above the spotlight to stay legible. */
+.card>*,.concept-card>*,.formula-card>*,.q-card>*,
+.theme-card>*,.ai-unit-card>*,.ai-question-card>*{position:relative;z-index:1}
+
+/* ------------------------------------------------------------
+   RESPONSIVE
+   ------------------------------------------------------------ */
+@media (max-width:900px){
+  .hero h1{font-size:clamp(40px,8.4vw,60px);max-width:18ch}
+  .section-heading{flex-direction:column;align-items:flex-start;gap:18px}
+  .section-heading h2{font-size:clamp(32px,7vw,44px)}
+}
+@media (max-width:600px){
+  .hero h1{font-size:clamp(36px,10.5vw,48px);letter-spacing:-.026em}
+  .hero p{font-size:15.5px}
+  .sec h2,.section-heading h2{font-size:clamp(28px,8vw,38px)}
+  .stats{gap:18px 0}
+  .stats span{padding:0 12px}
+  .stats b{font-size:25px}
+  .stats small{font-size:9px;letter-spacing:.11em}
+  .stats span:nth-child(3){padding-left:0;border-left:0}
+}
+
+/* ------------------------------------------------------------
+   REDUCED MOTION — the sheen and spotlight are decoration, not
+   information, so both are removed outright rather than slowed.
+   ------------------------------------------------------------ */
+@media (prefers-reduced-motion:reduce){
+  .btn-hero::after,
+  .btn-hero-outline::after,
+  .btn-primary::after,
+  .btn-ghost::after,
+  .card::after,
+  .concept-card::after,
+  .formula-card::after,
+  .q-card::after,
+  .theme-card::after,
+  .ai-unit-card::after,
+  .ai-question-card::after{display:none}
+  .btn-hero,.btn-hero-outline,.btn-primary,.btn-ghost{transition:none}
+}
+
+/* ============================================================
+   VIBE RETUNE — a modern vibe-coded finish on top of the
+   editorial language: gradient headline tails, gradient CTAs,
+   chunkier card radii. Everything below is driven purely by the
+   theme tokens, so bubblegum / digital / cosmic / organic in
+   both modes still re-skin themselves with no extra rules.
+
+   (Card hover glow, focus glow and the brand shine already come
+   from genz.css; the card spotlight comes from above — none of
+   that is repeated here.)
+   ============================================================ */
+
+/* The tail of a section heading echoes the hero's gradient voice. */
+.section-heading h2 span{
+  background:linear-gradient(100deg,var(--accent),var(--accent-2));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+
+/* --- CTAs ------------------------------------------------------
+   Dark mode takes a real gradient fill: every dark accent pair is
+   saturated enough that the dark page colour reads as ink on it,
+   which is the contrast-safe way round for all four themes. Light
+   mode keeps its inverted fill — two of the light accents are too
+   pale to carry white text — and gains the themed glow instead. */
+body[data-mode="dark"] .btn-primary,
+body[data-mode="dark"] .btn-hero{
+  background:linear-gradient(115deg,var(--accent),var(--accent-2));
+  color:var(--bg);
+  box-shadow:0 14px 30px -16px color-mix(in srgb,var(--accent) 90%,transparent);
+}
+body[data-mode="dark"] .btn-primary:hover,
+body[data-mode="dark"] .btn-hero:hover{
+  filter:saturate(1.06) brightness(1.05);
+  transform:translateY(-2px);
+  box-shadow:0 20px 40px -16px color-mix(in srgb,var(--accent) 95%,transparent);
+}
+body[data-mode="light"] .btn-primary,
+body[data-mode="light"] .btn-hero{
+  box-shadow:0 12px 28px -18px color-mix(in srgb,var(--accent) 70%,transparent);
+}
+body[data-mode="light"] .btn-primary:hover,
+body[data-mode="light"] .btn-hero:hover{
+  transform:translateY(-2px);
+  box-shadow:0 18px 36px -18px color-mix(in srgb,var(--accent) 85%,transparent);
+}
+
+/* Outline controls pick up the accent on hover instead of going grey. */
+.btn-ghost:hover,
+.btn-hero-outline:hover{
+  border-color:color-mix(in srgb,var(--accent) 65%,transparent);
+}
+
+/* --- chunkier cards: the vibe-coded radius step, one size up
+       from the 16/14px the components shipped with. --- */
+.card,
+.panel{border-radius:18px}
+.concept-card{border-radius:16px}
+
+/* The lift is decoration, so reduced motion keeps the colour and
+   glow changes and drops the movement. */
+@media (prefers-reduced-motion:reduce){
+  body[data-mode="dark"] .btn-primary:hover,
+  body[data-mode="dark"] .btn-hero:hover,
+  body[data-mode="light"] .btn-primary:hover,
+  body[data-mode="light"] .btn-hero:hover{transform:none}
+}

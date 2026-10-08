@@ -1,0 +1,210 @@
+/* ============================================================
+   LAYOUT — header, hero, containers, grids, tree, bars
+   ============================================================ */
+
+/* ---------- App shell ---------- */
+#app{position:relative;z-index:2;min-height:100vh}
+main{max-width:1440px;margin:0 auto;padding:0 24px}
+
+/* ---------- Header ---------- */
+.header{
+  position:sticky;top:0;z-index:50;
+  backdrop-filter:blur(18px) saturate(120%);
+  -webkit-backdrop-filter:blur(18px) saturate(120%);
+  background:color-mix(in srgb,var(--bg,#070b1e) 88%,transparent);
+  border-bottom:1px solid var(--line,rgba(255,255,255,.06));
+  box-shadow:0 1px 0 rgba(255,255,255,.025);
+}
+body[data-mode="light"] .header{
+  background:rgba(250,250,252,.88);
+  border-bottom:1px solid rgba(15,23,42,.06);
+  box-shadow:0 1px 0 rgba(15,23,42,.025);
+}
+.h-inner{max-width:1280px;margin:0 auto;padding:0 28px;height:68px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.h-left{display:flex;align-items:center;gap:32px}
+.logo-wrap{display:flex;align-items:center;gap:10px;cursor:pointer;padding:6px 0;border-radius:12px;transition:opacity .2s ease;background:none;border:0}
+.logo-wrap:hover{opacity:.78}
+.logo{width:34px;height:34px;border-radius:11px;background:linear-gradient(145deg,var(--accent,#2dd4bf),var(--accent-2,#a78bfa));display:flex;align-items:center;justify-content:center;color:#07121e;box-shadow:0 5px 16px rgba(45,212,191,.16)}
+.brand-mark svg{width:100%;height:100%;overflow:visible}
+.brand-mark .mark-page{fill:rgba(7,18,30,.12);stroke:currentColor;stroke-width:1.8;stroke-linejoin:round}
+.brand-mark .mark-code{fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.brand-mark .mark-spine{fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;opacity:.72}
+.brand{font-weight:700;font-size:15px;letter-spacing:-.02em;color:var(--text,#fff)}
+.brand-ai{color:var(--accent,#2dd4bf);font-weight:750}
+.nav{display:flex;gap:22px;font-size:13px;color:var(--muted,#9ca3af)}
+.nav button{padding:8px 2px;border-radius:0;transition:color .2s ease;color:inherit;font-size:13px}
+.nav button:hover{color:var(--text,#fff);background:transparent}
+.nav button.active{color:var(--text,#fff);background:transparent;box-shadow:inset 0 -1px 0 var(--text,#f8fafc)}
+.mobile-menu-toggle,.mobile-nav{display:none}
+.h-right{display:flex;align-items:center;gap:10px}
+.badge{
+  font-size:10px;letter-spacing:.11em;font-weight:700;
+  color:var(--muted,#9ca3af);
+  background:transparent;
+  border:1px solid var(--line,rgba(255,255,255,.08));
+  padding:6px 10px;border-radius:999px;
+  box-shadow:none;
+}
+
+/* ---------- Hero ---------- */
+.hero{padding:92px 0 78px;display:grid;grid-template-columns:1.02fr .98fr;gap:64px;align-items:center;perspective:1500px;transform-style:preserve-3d}
+.hero h1{font-size:clamp(44px,5.3vw,68px);font-weight:650;line-height:.99;letter-spacing:-.055em;margin-bottom:24px;color:var(--text,#fff);max-width:650px;text-shadow:none}
+.hero h1 .accent{color:var(--text,#fff);text-shadow:none}
+.hero p{font-size:16px;line-height:1.75;color:var(--muted,#9ca3af);max-width:550px;margin-bottom:30px}
+.hero-btns{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:42px}
+.stats{display:flex;flex-wrap:wrap;gap:0;font-size:10px;letter-spacing:.09em;color:var(--muted,#6b7280);font-weight:600}
+.stats span{padding:0 17px;border-left:1px solid var(--line,rgba(255,255,255,.08))}
+.stats span:first-child{padding-left:0;border-left:0}
+.stats b{color:var(--text,#fff);font-size:15px;font-weight:650;margin-right:5px}
+.stats .teal b{color:var(--text,#fff)}
+
+/* ---------- Preview panel ---------- */
+.preview{
+  position:relative;
+  background:var(--surface,#111a2e);
+  border:1px solid var(--line,rgba(255,255,255,.08));
+  border-radius:22px;padding:18px;
+  box-shadow:0 24px 60px rgba(0,0,0,.16);
+  transform-style:preserve-3d;
+  transition:transform .25s ease-out;
+  will-change:transform;
+}
+.preview>svg{position:relative;z-index:1;transform:translateZ(18px);transform-style:preserve-3d}
+.preview:hover{box-shadow:0 36px 80px rgba(0,0,0,.24)}
+.preview::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius:22px;
+  background:linear-gradient(145deg,rgba(255,255,255,.035),transparent 45%);
+  pointer-events:none;
+}
+.pv-head{display:flex;justify-content:space-between;font-size:10px;letter-spacing:.11em;color:var(--muted,#6b7280);font-weight:650;margin-bottom:14px;position:relative;z-index:1}
+.pv-head .tag{background:transparent;color:var(--muted,#9ca3af);border:1px solid var(--line,rgba(255,255,255,.12));padding:4px 10px;border-radius:999px;box-shadow:none}
+
+/* ---------- Sections ---------- */
+section.sec{padding:64px 0;border-top:1px solid var(--line,rgba(255,255,255,.08))}
+.sec h2{font-size:22px;font-weight:700;letter-spacing:-.02em;color:var(--text,#fff)}
+.sec .sub{font-size:13px;color:var(--muted,#9ca3af);max-width:720px;margin-top:8px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:32px}
+
+/* ---------- Workspace header ---------- */
+.ws-head{padding:24px 0 8px}
+.ws-eyebrow{font-size:10px;letter-spacing:.2em;color:var(--accent,#2dd4bf);font-weight:700}
+.ws-title{font-size:26px;font-weight:700;margin-top:6px;color:var(--text,#fff)}
+.ws-pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.ws-pill{
+  font-size:10px;font-weight:700;letter-spacing:.1em;
+  background:var(--surface,#111a2e);
+  border:1px solid var(--line,rgba(255,255,255,.08));
+  border-radius:999px;padding:6px 12px;color:var(--muted,#9ca3af);
+}
+.ws-pill b{color:var(--text,#fff);margin-right:4px}
+
+/* ---------- Workspace layout ---------- */
+.ws-body{display:grid;grid-template-columns:300px 1fr;gap:22px;align-items:start;padding:24px 0 60px}
+
+/* ---------- Tree ---------- */
+.tree{
+  position:sticky;top:88px;
+  background:var(--surface,#111a2e);
+  border:1px solid var(--line,rgba(255,255,255,.08));
+  border-radius:16px;padding:18px;
+}
+.tree-title{font-size:10px;letter-spacing:.15em;font-weight:800;color:var(--muted,#6b7280);margin-bottom:14px}
+.tree-item{margin-bottom:6px}
+.tree-btn{width:100%;display:flex;align-items:center;gap:8px;text-align:left;padding:8px 10px;border-radius:9px;font-size:12px;font-weight:600;color:var(--muted,#cbd5e1);transition:all .15s;font-family:inherit}
+.tree-btn:hover{background:var(--surface-strong,#0f1a33);color:var(--text,#fff)}
+.tree-btn.active{background:rgba(45,212,191,.12);color:var(--accent,#2dd4bf)}
+.caret{width:12px;font-size:10px;display:inline-flex;justify-content:center;color:var(--muted,#6b7280)}
+.tree-sub{margin-left:22px;padding-left:12px;border-left:1px solid var(--line,rgba(255,255,255,.08));margin-top:4px}
+.tree-sub-btn{width:100%;text-align:left;padding:6px 8px;font-size:11px;color:var(--muted,#9ca3af);border-radius:6px;transition:all .15s;font-family:inherit}
+.tree-sub-btn:hover{color:var(--text,#fff);background:var(--surface-strong,#0a1020)}
+
+/* ---------- Study bar ---------- */
+.study-bar{
+  height:44px;display:flex;align-items:center;gap:12px;padding:0 24px;
+  background:rgba(8,14,30,.5);
+  backdrop-filter:blur(20px) saturate(180%);
+  -webkit-backdrop-filter:blur(20px) saturate(180%);
+  border-bottom:1px solid var(--line,rgba(255,255,255,.06));
+  font-size:12px;
+}
+body[data-mode="light"] .study-bar{background:rgba(255,255,255,.5)}
+.back-btn{display:flex;align-items:center;gap:6px;color:var(--muted,#9ca3af);font-size:12px;font-family:inherit;background:none;border:none;cursor:pointer}
+.back-btn:hover{color:var(--text,#fff)}
+.study-title{font-weight:600;font-size:12px;color:var(--text,#fff)}
+
+/* ---------- Study grid ----------
+   minmax(0,…) on the right column is load-bearing: without it a grid
+   item's default min-width:auto lets wide question content push the
+   column past the viewport and overflow the page horizontally.
+   align-items:start keeps each column at its natural height so the
+   two sides scroll together as one page. */
+.study-grid{display:grid;grid-template-columns:7fr minmax(0,5fr);gap:14px;padding:14px 16px 60px;align-items:start}
+
+/* ---------- Footer / misc ---------- */
+.footer-note{text-align:center;padding:36px 0 60px;font-size:11px;color:var(--muted,#6b7280)}
+
+/* ---------- Responsive ---------- */
+@media(max-width:900px){
+  .hero{grid-template-columns:1fr;padding:54px 0 42px;gap:32px}
+  .hero h1{font-size:clamp(40px,8vw,58px);max-width:700px}
+  .grid-3,.step-grid,.kp-grid{grid-template-columns:1fr}
+  .ws-body{grid-template-columns:1fr}
+  .tree{position:static}
+  .study-grid{grid-template-columns:1fr}
+  .h-inner{padding:0 16px;gap:8px}
+  .h-left{gap:14px}
+  .nav{display:none}
+  .mobile-menu-toggle{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:38px;
+    height:38px;
+    border:1px solid var(--line,rgba(255,255,255,.12));
+    border-radius:50%;
+    color:var(--text,#fff);
+    font-size:16px;
+  }
+  .mobile-menu-toggle[aria-expanded="true"]{background:var(--surface-strong,#1a2438)}
+  .mobile-nav{
+    position:absolute;
+    top:calc(100% + 8px);
+    right:16px;
+    width:min(260px,calc(100vw - 32px));
+    padding:8px;
+    border:1px solid var(--line,rgba(255,255,255,.1));
+    border-radius:16px;
+    background:var(--surface,#111a2e);
+    box-shadow:0 18px 42px rgba(0,0,0,.2);
+  }
+  .mobile-nav.open{display:grid;gap:4px}
+  .mobile-nav button{
+    width:100%;
+    padding:12px 14px;
+    border-radius:10px;
+    color:var(--muted,#9ca3af);
+    text-align:left;
+    font-size:14px;
+  }
+  .mobile-nav button:hover,.mobile-nav button.active{
+    color:var(--text,#fff);
+    background:var(--surface-strong,#1a2438);
+  }
+}
+@media(max-width:600px){
+  main{padding:0 18px}
+  .hero{padding:42px 0 34px;gap:26px}
+  .hero h1{font-size:clamp(38px,11vw,52px)}
+  .hero p{font-size:15px}
+  .stats{row-gap:12px}
+  .stats span{padding:0 10px}
+  .stats span:nth-child(3){padding-left:0;border-left:0}
+  .h-inner{height:62px}
+  .h-right{gap:6px}
+  .h-right .badge,.h-right [data-nav="workspace"]{display:none}
+  .study-grid{padding:12px 14px 44px}
+  .study-bar{padding:0 14px;overflow-x:auto}
+}
