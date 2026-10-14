@@ -1,0 +1,24 @@
+{
+  "name": "aura-visuals",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Aura AI — parametric React SVG visual explanations (framer-motion). No Lottie.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "diagram": "node render-diagram.mjs",
+    "build:browser": "vite build --config vite.browser.config.mjs",
+    "test": "node ssr-smoke.mjs"
+  },
+  "dependencies": {
+    "framer-motion": "^11.3.19",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.1",
+    "vite": "^5.4.0"
+  }
+}

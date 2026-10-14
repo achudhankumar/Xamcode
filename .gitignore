@@ -29,3 +29,5 @@ bip-js-check.tmp.js
 tmp-check.js
 server_backup.txt
 xamcode.diff
+[.venv]
+.venv/

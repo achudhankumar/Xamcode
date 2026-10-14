@@ -1,0 +1,21 @@
+/* Dark, studio-friendly base for the Aura visuals demo. */
+:root {
+  color-scheme: dark;
+  --bg: #15151f;
+  --panel: #15151f;
+  --border: #262636;
+  --text: #e5e7eb;
+  --muted: #9aa3b2;
+  --accent: #2dd4bf;
+}
+
+* { box-sizing: border-box; }
+
+html, body, #root { height: 100%; }
+
+body {
+  margin: 0;
+  background: #0f0f16;
+  color: var(--text);
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+}
