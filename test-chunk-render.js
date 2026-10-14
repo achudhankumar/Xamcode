@@ -74,7 +74,10 @@ for(const f of dataFiles){
   vm.runInContext(fs.readFileSync(path.join(ROOT,'js',f),'utf8'),sandbox,{filename:f});
 }
 let src=fs.readFileSync(path.join(ROOT,'js','app.js'),'utf8');
-const marker='\r\n})();\r\n';
+/* Detect the file's own newline so the marker matches whether the checkout
+   is CRLF (Windows, core.autocrlf=true) or LF (Linux/CI). */
+const nl=src.includes('\r\n')?'\r\n':'\n';
+const marker=nl+'})();'+nl;
 const at=src.lastIndexOf(marker);
 if(at<0){ console.error('FAIL: IIFE tail marker not found'); process.exit(1); }
 src=src.slice(0,at)+'\nwindow.__T={workspaceViewInner,aiStudyView,state,xcToast,setLibraryCache:v=>{libraryCache=v}};\n'+src.slice(at);
