@@ -24,7 +24,7 @@ services:
     plan: free
     # XamCode AI has zero runtime dependencies — server.js uses only Node
     # builtins — so there is genuinely nothing to install.
-    buildCommand: echo "No build step: XamCode AI has no npm dependencies"
+    buildCommand: 'echo "No build step: XamCode AI has no npm dependencies"'
     startCommand: node server.js
     # /api/health is a real endpoint that returns JSON; "/" would also pass
     # but would not tell us the AI layer is alive.
@@ -73,3 +73,30 @@ services:
         sync: false
       - key: EXPLABS_MODEL
         value: gemini-3.8-flash
+      # ---------- Build-in-Public site (/build) — server-only secrets ----------
+      # All four are SERVER-ONLY: never echoed to the browser and never
+      # committed to the repo. sync:false makes Render prompt for each value at
+      # deploy time and store it as an encrypted secret. Local dev runs fine
+      # without them — each integration then honestly reports "not configured"
+      # (admin routes 503, webhook/ingest 503) instead of pretending to be live.
+      # 1. Bearer token for admin endpoints (milestone verify/reopen, roadmap +
+      #    launch edits, moderation, waitlist CSV). Generate with:
+      #      node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+      #    Must be >= 8 chars.
+      - key: BIP_ADMIN_TOKEN
+        sync: false
+      # 2. HMAC secret for POST /api/bip/webhooks/github. Must match the secret
+      #    configured in this repo's GitHub webhook settings exactly.
+      - key: GITHUB_WEBHOOK_SECRET
+        sync: false
+      # 3. Bearer token GitHub Actions sends to POST /api/bip/events/ingest for
+      #    build/test/deploy events. Store it as a GitHub Actions secret and
+      #    reference it from the workflow that calls the ingest endpoint.
+      - key: BIP_INGEST_TOKEN
+        sync: false
+      # 4. Signs anonymous visitor cookies (one vote per idea). Must be >= 16
+      #    chars. Set this explicitly: the filesystem is ephemeral on this plan,
+      #    so the auto-generated bip-data/session.secret would be lost on every
+      #    redeploy and all votes would reset.
+      - key: BIP_SESSION_SECRET
+        sync: false
