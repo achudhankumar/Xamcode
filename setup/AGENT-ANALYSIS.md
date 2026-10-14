@@ -102,15 +102,17 @@ Problem: Server up, PDFs uploaded, but no AI response
 | Metric | Expected |
 |---|---|
 | **Response time** | 2-5 sec (text), 10-30 sec (PDF) |
-| **PDF throughput** | 1,500-10,000/day (Gemini free) |
+| **PDF throughput** | ~20 PDFs/day/model per key; multiply by # of keys (see docs/AI-RESILIENCE.md) |
 | **Cost** | $0/month |
 | **Accuracy** | 95%+ for study packs |
-| **Availability** | 99.9% (Google Gemini SLA) |
+| **Availability** | Multi-key rotation auto-recovers from a per-key 429 |
 
 ### Scenario: 100 users/day
 - 5 PDFs each = 500 PDFs/day
-- Well within free tier (1,500-10K)
-- Cost: $0
+- Needs ~25+ free Gemini keys at 20/day each, OR enable the paid OpenAI
+  failover documented in docs/AI-RESILIENCE.md. A single free key will NOT
+  carry 500 PDFs/day — the daily cap is per key.
+- Cost: $0 on free keys; a paid fallback only bills on actual failover.
 
 ---
 

@@ -8,6 +8,8 @@
 | `deployment.md` | Deployment and release process |
 | `security.md` | Security controls and incident response |
 | `compliance.md` | Compliance evidence pack |
+| `AI-RESILIENCE.md` | AI provider pool + free multi-key failover strategy |
+| `ROADMAP.md` | Project roadmap & live status tracker (phases 1–4) |
 
 ---
 
@@ -21,7 +23,9 @@ XamCode/
 │   ├── architecture.md      # Architecture
 │   ├── deployment.md        # Deployment guide
 │   ├── security.md          # Security controls
-│   └── compliance.md        # Evidence pack
+│   ├── compliance.md        # Evidence pack
+│   ├── AI-RESILIENCE.md     # Provider pool + free failover strategy
+│   └── ROADMAP.md           # Roadmap + status tracker
 ├── css/                     # Stylesheets
 ├── js/                      # Client-side JavaScript
 ├── server.js                # Node.js backend

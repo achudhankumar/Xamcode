@@ -37,6 +37,8 @@
    only — no translateY. Any vertical movement here shifts the
    grid the Workspace view is built around. */
 .concept-card:hover{border-color:var(--muted,#9ca3af);background:var(--surface-strong,#131e36);box-shadow:0 12px 24px rgba(0,0,0,.1)}
+.concept-card.done{border-color:rgba(45,212,191,.45)}
+.concept-card.done .cc-title{color:var(--accent,#2dd4bf)}
 .cc-head{display:flex;justify-content:space-between;align-items:center;font-size:10px;color:var(--muted,#9ca3af);letter-spacing:.1em;font-weight:700;position:relative;z-index:1}
 .cc-head span:last-child{background:rgba(255,255,255,.04);border:1px solid var(--line,rgba(255,255,255,.08));border-radius:999px;padding:2px 8px;font-size:9px;color:var(--muted,#6b7280)}
 .cc-title{font-size:13px;font-weight:700;margin-top:10px;line-height:1.4;color:var(--text,#fff);position:relative;z-index:1}
@@ -519,7 +521,7 @@ body[data-mode="light"] .v-cmp-bar-right>span{color:#04140d}
 .ai-study-tab.active{border-color:rgba(45,212,191,.55);background:rgba(45,212,191,.13);color:var(--accent,#2dd4bf)}
 .ai-concept-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr));gap:14px}
 .ai-concept-card,.ai-detail-card,.ai-question-card,.ai-formula-card,.ai-chat-panel{padding:20px;border:1px solid var(--line,rgba(255,255,255,.09));border-radius:16px;background:var(--surface,#111a2e)}
-/* Per-topic 2D image (MiniMax still) inside the crash-lesson stage card. */
+/* Per-topic 2D image (free-lane still) inside the crash-lesson stage card. */
 .ai-topic-image{margin:14px 0 0;border:1px solid var(--line,rgba(255,255,255,.09));border-radius:12px;overflow:hidden;background:var(--surface-strong,#080e1e)}
 .ai-topic-image img{display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:cover}
 .ai-topic-image figcaption{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px}
@@ -539,6 +541,44 @@ body[data-mode="light"] .v-cmp-bar-right>span{color:#04140d}
 .ai-lesson-section>p,.ai-lesson-section article p{margin:8px 0 0;color:var(--muted,#cbd5e1);font-size:12px;line-height:1.75}
 .ai-lesson-section .ai-source-page{color:var(--accent,#2dd4bf);font-size:10px}
 .ai-misconception{border-color:rgba(167,139,250,.2)}
+
+/* Quiz wrong-reasons box (Part A feedback line) */
+.ai-wrong-reasons{
+  margin-top:10px;
+  padding:10px 12px;
+  border:1px solid var(--line,rgba(255,255,255,.08));
+  border-left:3px solid var(--accent,#ef4457);
+  border-radius:8px;
+  background:rgba(239,68,84,.05);
+  font-size:12px;
+  line-height:1.6;
+}
+.ai-wrong-reasons .panel-tag{color:var(--accent,#ef4457)}
+.ai-wrong-reasons ul{list-style:none;margin:6px 0 0;padding:0}
+.ai-wrong-reasons li{margin:4px 0;color:var(--muted,#cbd5e1)}
+.ai-wrong-reasons li b{color:var(--text,#f8fafc);font-size:12px}
+
+/* PDF proof strip (Part A feedback line) */
+.ai-pdf-proof{
+  margin-top:10px;
+  padding:8px 10px;
+  border:1px dashed var(--line,rgba(255,255,255,.18));
+  border-radius:8px;
+  background:rgba(255,255,255,.02);
+  font-size:11px;
+  line-height:1.5;
+}
+.ai-pdf-proof .q{margin:0 0 4px;color:var(--muted,#94a3b8);font-style:italic;font-size:11px}
+.ai-pdf-proof .p{margin:0;color:var(--accent,#2dd4bf);font-size:10px;font-family:var(--font-mono,monospace)}
+
+/* UNDERSTAND DEEPER subhead (Part B footer) */
+.ai-explain-sub{
+  margin:6px 0 8px;
+  color:var(--muted,#94a3b8);
+  font-size:11px;
+  font-style:italic;
+}
+
 .ai-misconception .panel-tag{color:#c4b5fd}
 .ai-worked-steps{display:grid;gap:10px;margin:12px 0;padding-left:22px;color:var(--accent,#2dd4bf)}
 .ai-worked-steps li{padding-left:4px}
@@ -643,22 +683,28 @@ body[data-mode="light"] .v-cmp-bar-right>span{color:#04140d}
 .ai-unit-goals{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:14px 0;padding:10px 0;border-top:1px solid var(--line,rgba(255,255,255,.07));border-bottom:1px solid var(--line,rgba(255,255,255,.07))}
 .ai-unit-goals>span:first-child{margin-right:4px;color:var(--muted,#9ca3af);font-size:8px;font-weight:800;letter-spacing:.11em}
 .ai-goal-chip{padding:5px 8px;border:1px solid var(--line,rgba(255,255,255,.08));border-radius:999px;color:var(--muted,#cbd5e1);font-size:9px}
-.ai-topic-list{display:grid;gap:8px}
-.ai-topic-row{display:grid;gap:4px;padding:10px;border-radius:10px;background:rgba(255,255,255,.025)}
-.ai-topic-link{display:flex;align-items:center;gap:10px;width:100%;padding:2px 1px;border:0;background:transparent;color:var(--text,#f8fafc);text-align:left;text-decoration:none}
-.ai-topic-link:hover .ai-topic-arrow,.ai-plan-lesson-link:hover .ai-open-mark{color:var(--accent,#2dd4bf);transform:translate(2px,-2px)}
-.ai-topic-arrow{display:grid;place-items:center;flex:0 0 28px;width:28px;height:28px;border:1px solid var(--line,rgba(255,255,255,.1));border-radius:8px;color:var(--muted,#cbd5e1);font-size:12px;transition:transform .16s,color .16s}
-.ai-topic-copy{display:grid;gap:3px;min-width:0}
-.ai-topic-copy>b{font-size:11px}
-.ai-topic-copy>span{color:var(--muted,#9ca3af);font-size:10px;line-height:1.45}
-.ai-topic-count{margin-left:auto;color:var(--muted,#9ca3af);font-size:9px;white-space:nowrap}
-.ai-plan-lesson-link{display:flex;align-items:center;gap:8px;width:100%;padding:6px 8px 6px 38px;border:0;border-radius:7px;background:transparent;color:var(--muted,#aab5c7);font-size:10px;text-align:left}
-.ai-plan-lesson-link:hover{background:rgba(45,212,191,.06);color:var(--text,#fff)}
-.ai-lesson-dot{width:5px;height:5px;border-radius:50%;background:var(--accent,#2dd4bf)}
-.ai-open-mark{margin-left:auto;transition:transform .16s,color .16s}
+/* Plan page: mirrors the sample workspace layout (collapsible unit
+   heading + lesson grid). Topic headers span the grid; lesson cards
+   reuse the .concept-card styles from the Workspace view. */
+.ai-unit-list>.unit-block{margin-bottom:14px!important}
+.ai-plan-unit-overview{margin:0 0 12px;max-width:74ch;color:var(--muted,#aab5c7);font-size:11px;line-height:1.7}
+.ai-plan-topic-head{grid-column:1/-1;display:flex;align-items:center;gap:10px;padding:12px 2px 8px;border-bottom:1px solid var(--line,rgba(255,255,255,.08))}
+.ai-plan-topic-head .ai-page-link{padding:0;border:0;background:transparent;color:var(--text,#f8fafc);font-size:12px;font-weight:700}
+.ai-plan-topic-head .ai-page-link:hover{color:var(--accent,#2dd4bf)}
+.ai-plan-topic-head .ai-page-link small{margin-right:6px;color:var(--accent,#2dd4bf);font-size:9px;font-weight:800;letter-spacing:.1em}
+.ai-plan-topic-head>span{margin-left:auto;color:var(--muted,#9ca3af);font-size:10px;white-space:nowrap}
 .ai-plan-tools{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-top:16px;padding:17px;border:1px solid var(--line,rgba(255,255,255,.08));border-radius:13px;background:var(--surface,#111a2e)}
 .ai-plan-tools h2{margin:5px 0 0;color:var(--text,#f8fafc);font-size:14px}
 .ai-plan-tools>div:last-child{display:flex;flex-wrap:wrap;gap:7px}
+/* Plan page now carries the sample-workspace shell (ws-head + ws-body with
+   the sticky topic tree). ws-* and tree-* styles are shared with the
+   Workspace; only the AI-study adaptations live here. */
+.ai-plan-summary{max-width:760px;margin:11px 0 0;color:var(--muted,#cbd5e1);font-size:13px;line-height:1.75}
+.ws-head .ai-primary-link{margin-top:15px}
+.tree-btn.tree-locked{cursor:default;opacity:.62;pointer-events:none}
+.tree-locked .caret{width:auto;font-size:11px}
+@media(min-width:761px){.ai-study-shell .tree{max-height:calc(100vh - 130px);overflow:auto;scrollbar-width:thin}}
+.ai-study-page .ws-body{padding-bottom:30px}
 .ai-breadcrumbs{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:2px 0 14px;color:var(--muted,#79869b);font-size:10px}
 .ai-breadcrumbs .ai-page-link{padding:0;border:0;background:transparent;color:var(--muted,#9ca3af);font-size:10px}
 .ai-breadcrumbs .ai-page-link:hover{color:var(--accent,#2dd4bf)}
@@ -999,7 +1045,11 @@ body[data-mode="light"] .v-cmp-bar-right>span{color:#04140d}
   .ai-visual-stage-orbit{animation:none}
 }
 
-/* ---------- Animated AI lesson diagrams ---------- */
+/* ---------- Animated AI lesson diagrams (cinematic SVG-first) ---------- */
+/* The motion language: edges draw in, flow packets travel them, cards
+   arrive with a settle (scale+fade) instead of a pop. All motion lives in
+   these keyframes + SMIL packets, so lessons feel like scenes, not
+   cut-and-paste hierarchies. Free lane is the default still provider. */
 .ai-diagram-spine{stroke:currentColor;stroke-width:1.5;opacity:.5;fill:none}
 .ai-chrome-hierarchy .ai-chrome-spine{stroke:currentColor;stroke-width:1.6;opacity:.55;fill:none}
 .ai-diagram-figure{margin:13px 0 0;overflow:hidden;border:1px solid rgba(103,232,249,.14);border-radius:12px;background:radial-gradient(ellipse at 50% 38%,rgba(45,212,191,.075),transparent 52%),linear-gradient(145deg,rgba(167,139,250,.055),transparent 56%),var(--surface-strong,#080e1e);color:var(--accent,#2dd4bf)}
@@ -1007,6 +1057,11 @@ body[data-mode="light"] .v-cmp-bar-right>span{color:#04140d}
 .ai-diagram-grid{color:#75d9e8;opacity:.12}
 .ai-diagram-edge{fill:none;stroke:currentColor;stroke-width:1.5;stroke-dasharray:1;stroke-dashoffset:1;opacity:.78;animation:ai-diagram-draw .72s cubic-bezier(.22,.7,.25,1) var(--diagram-delay) forwards}
 .ai-diagram-node{opacity:0;transform-box:fill-box;transform-origin:center;animation:ai-diagram-arrive .48s cubic-bezier(.2,.75,.25,1) var(--diagram-delay) forwards}
+.ai-diagram-packet{fill:#facc15;opacity:.9;filter:drop-shadow(0 0 4px rgba(250,204,21,.8))}
+.ai-svg-motion{pointer-events:none}
+.ai-visual-stage-card{animation:ai-scene-in .45s ease}
+.ai-visual-progress{height:3px;border-radius:999px;background:rgba(148,163,184,.15);overflow:hidden;margin:10px 0 0}
+.ai-visual-progress i{display:block;height:100%;width:0;border-radius:inherit;background:linear-gradient(90deg,var(--accent,#2dd4bf),var(--accent-2,#a78bfa));transition:width .5s ease}
 .ai-diagram-node-card{fill:rgba(14,25,43,.94);stroke:rgba(125,211,252,.24);stroke-width:1}
 .ai-diagram-node.is-origin .ai-diagram-node-card{fill:rgba(19,49,61,.94);stroke:rgba(45,212,191,.53)}
 .ai-diagram-node-dot{fill:var(--accent,#2dd4bf)}
@@ -1021,6 +1076,7 @@ body[data-mode="light"] .v-cmp-bar-right>span{color:#04140d}
 .ai-unit-card:hover,.ai-topic-page-card:hover,.ai-concept-card:hover,.ai-detail-card:hover,.ai-practice-sticky:hover{border-color:rgba(45,212,191,.22);box-shadow:0 12px 30px rgba(0,0,0,.12)}
 @keyframes ai-diagram-draw{to{stroke-dashoffset:0}}
 @keyframes ai-diagram-arrive{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:scale(1)}}
+@keyframes ai-scene-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 @media(max-width:480px){
   .ai-diagram-svg{min-height:165px}
   .ai-diagram-figure figcaption{flex-direction:column;gap:5px}
@@ -1029,6 +1085,9 @@ body[data-mode="light"] .v-cmp-bar-right>span{color:#04140d}
 @media(prefers-reduced-motion:reduce){
   .ai-diagram-edge{animation:none;stroke-dashoffset:0}
   .ai-diagram-node{animation:none;opacity:1}
+  .ai-visual-stage-card{animation:none}
+  .ai-svg-motion{display:none}
+  .ai-visual-progress i{transition:none}
   .ai-unit-card,.ai-topic-page-card,.ai-concept-card,.ai-detail-card,.ai-practice-sticky{transition:none}
 }
 
@@ -1747,6 +1806,21 @@ body[data-mode="light"] .v-cmp-bar-right>span{color:#04140d}
 .ai-unit-card-locked{opacity:.8;border-style:dashed;background:linear-gradient(160deg,rgba(255,255,255,.02),var(--surface,#111a2e))}
 .ai-unit-card-locked h3{color:var(--muted,#cbd5e1)}
 .ai-unit-lock{margin-top:12px;padding-top:12px;border-top:1px dashed var(--line,rgba(255,255,255,.09));font-size:12.5px;color:var(--muted,#9ca3af)}
+
+/* VAATHIYAR LESSON PRESENTATION */
+.ai-lesson-mode-head{margin:13px 0 0;padding-bottom:9px;border-bottom:1px solid var(--line,rgba(255,255,255,.09));display:flex;align-items:center;gap:10px}
+.ai-vaathiyar-guide{margin:9px 0 0;padding:12px 14px 13px;background:linear-gradient(145deg,rgba(45,212,191,.05),transparent);border:1px solid var(--line,rgba(255,255,255,.09));border-radius:12px}
+.ai-vaathiyar-head{margin:0 0 8px;color:var(--accent,#2dd4bf);font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
+.ai-vaathiyar-list{margin:0;padding-left:18px;line-height:1.95;color:var(--muted,#cbd5e1)}
+.ai-vaathiyar-list li{margin-bottom:4px}
+.ai-vaathiyar-list b{color:var(--text,#f1f5f9);font-weight:700}
+/* CODE BELOW VISUALS */
+.ai-code-panel{margin:13px 0 0;padding:12px 14px;border:1px solid var(--line,rgba(255,255,255,.09));border-radius:12px;background:linear-gradient(145deg,rgba(167,139,250,.06),transparent);overflow:hidden}
+.ai-code-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px}
+.ai-code-head .panel-tag{font-size:10px}
+.ai-code-scene{color:var(--muted,#8490a3);font-size:11px;font-weight:700;letter-spacing:.05em}
+.ai-code-lines{display:block;white-space:pre-wrap;word-break:break-word;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12.5px;line-height:1.75;color:var(--code,#e2e8f0);margin:0}
+.ai-unlock-row{margin:14px 0 0;display:flex;justify-content:flex-end}
 .xc-toast{position:fixed;left:50%;bottom:30px;transform:translate(-50%,18px);z-index:100000;pointer-events:none;background:var(--surface-strong,#131e36);border:1px solid rgba(45,212,191,.45);color:var(--text,#fff);padding:12px 20px;border-radius:12px;font-size:13px;font-weight:600;box-shadow:0 14px 34px rgba(0,0,0,.4);opacity:0;transition:opacity .25s ease,transform .3s ease}
 .xc-toast.show{opacity:1;transform:translate(-50%,0)}
 @media (prefers-reduced-motion:reduce){.xc-toast{transition:none;transform:translate(-50%,0)}}

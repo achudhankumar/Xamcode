@@ -43,7 +43,8 @@ function loadPool(keys){
   vm.runInContext(
     source.slice(0, cut) +
     '\nglobalThis.__pool={callAI,configuredProviders,providerStatus,isFailoverWorthy,PROVIDERS,' +
-    'OPENAI_COMPATIBLE,geminiModelList,quotaSnapshot,callGemini,callGeminiOnce,' +
+    'OPENAI_COMPATIBLE,geminiModelList,geminiKeys,quotaSnapshot,callGemini,callGeminiOnce,' +
+    'openaiEnabled,callOpenAI,openaiTextOf,' +
     'readGoogleQuota,pdfAllowanceFor,consumePdfAllowance,quotaForToday};',
     sandbox, { filename: 'server.js' }
   );
@@ -411,7 +412,7 @@ test('exhausting the whole rotation explains itself', () => withFetch([
     .callGemini([{ text: 'hi' }], {}).then(() => null, e => e);
   assert.ok(error, 'expected a throw');
   assert.strictEqual(error.status, 429);
-  assert.match(error.message, /out of quota for today/);
+  assert.match(error.message, /out of (free )?quota for today/);
   assert.match(error.message, /midnight Pacific/);
   assert.strictEqual(calls.length, 2);
 }));
@@ -588,6 +589,155 @@ test('text request with zero keys -> AI_NOT_CONFIGURED', async () => {
   assert.ok(error, 'expected a throw');
   assert.strictEqual(error.code, 'AI_NOT_CONFIGURED');
   assert.strictEqual(error.status, 503);
+});
+
+/* ---------- 11. Multiple Gemini keys multiply free quota ----------
+   One key = one daily bucket. When Google 429s that key, every model on
+   it dies at once (the "0 of N ready" wall). A second key is a second
+   bucket, so rotation must walk keys first, then models. */
+test('geminiKeys collects the primary, comma-list and numbered keys, deduped', () => {
+  const pool = loadPool(env({
+    GEMINI_API_KEY: 'k1',
+    GEMINI_API_KEYS: 'k2, k1 ,k3',   /* k1 duplicate must collapse */
+    GEMINI_API_KEY_2: 'k4',
+    GEMINI_API_KEY_3: '   '           /* blank dropped */
+  }));
+  assert.deepStrictEqual(Array.from(pool.geminiKeys()), ['k1', 'k2', 'k3', 'k4']);
+});
+
+test('no gemini key -> geminiKeys is empty', () => {
+  assert.deepStrictEqual(Array.from(loadPool(env({})).geminiKeys()), []);
+});
+
+test('a 429 on every model of key1 rotates to key2 and succeeds', () => withFetch([
+  { status: 429, body: { error: { message: 'quota' } } },   // k1 m-one
+  { status: 429, body: { error: { message: 'quota' } } },   // k1 m-two
+  { status: 200, body: { output_text: 'key2 answered' } }   // k2 m-one
+], async calls => {
+  const pool = loadPool(env({
+    GEMINI_API_KEY: 'key-one', GEMINI_API_KEY_2: 'key-two',
+    GEMINI_MODELS: 'm-one,m-two'
+  }));
+  assert.strictEqual(await pool.callGemini([{ text: 'hi' }], {}), 'key2 answered');
+  assert.strictEqual(calls.length, 3, 'both models on key1, then the first on key2');
+  assert.ok(calls[0].url.includes('key=key-one') && calls[1].url.includes('key=key-one'),
+    'the first two calls must carry key-one');
+  assert.ok(calls[2].url.includes('key=key-two'), 'the recovery call must carry key-two');
+}));
+
+test('a second key makes gemini configured even with no primary key', () => {
+  const pool = loadPool(env({ GEMINI_API_KEY_2: 'only-two' }));
+  assert.deepStrictEqual(ids(pool.configuredProviders()), ['gemini']);
+  assert.deepStrictEqual(ids(pool.configuredProviders({ requireDocuments: true })), ['gemini']);
+});
+
+test('the quota snapshot reports how many independent keys are active', () => {
+  const snap = loadPool(quotaEnv({
+    GEMINI_MODELS: 'm-one',
+    GEMINI_API_KEY: 'k1', GEMINI_API_KEYS: 'k2,k3'
+  })).quotaSnapshot();
+  assert.strictEqual(snap.keys, 3);
+  assert.ok(!JSON.stringify(snap).includes('k1'), 'a key leaked into the snapshot');
+});
+
+test('providerStatus never leaks any of several gemini keys', () => {
+  const json = JSON.stringify(loadPool(env({
+    GEMINI_API_KEY: 'secret-one', GEMINI_API_KEY_2: 'secret-two'
+  })).providerStatus());
+  assert.ok(!json.includes('secret-one') && !json.includes('secret-two'), 'a gemini key leaked');
+});
+
+/* ---------- 12. OpenAI paid failover (disabled by default) ---------- */
+test('openai is absent from the pool by default', () => {
+  const pool = loadPool(FULL_POOL);
+  assert.strictEqual(pool.openaiEnabled(), false);
+  assert.ok(!ids(pool.configuredProviders()).includes('openai'));
+  assert.ok(!ids(pool.configuredProviders({ requireDocuments: true })).includes('openai'));
+  assert.strictEqual(pool.providerStatus().length, 5, 'default pool stays at five providers');
+});
+
+test('a key alone does not enable openai — the switch must be on', () => {
+  const pool = loadPool(env({ OPENAI_API_KEY: 'sk-x' }));
+  assert.strictEqual(pool.openaiEnabled(), false);
+  assert.ok(!ids(pool.configuredProviders()).includes('openai'));
+});
+
+test('the switch alone (no key) does not enable openai', () => {
+  const pool = loadPool(env({ ENABLE_OPENAI_FAILOVER: '1' }));
+  assert.strictEqual(pool.openaiEnabled(), false);
+});
+
+test('switch + key enables openai, appended last, document-capable', () => {
+  const pool = loadPool(env({
+    GEMINI_API_KEY: 'g-test', GROQ_API_KEY: 'q-test', XAI_API_KEY: 'a-test',
+    OPENROUTER_API_KEY: 'o-test', EXPLABS_API_KEY: 'x-test',
+    ENABLE_OPENAI_FAILOVER: '1', OPENAI_API_KEY: 'sk-x'
+  }));
+  assert.strictEqual(pool.openaiEnabled(), true);
+  assert.deepStrictEqual(ids(pool.configuredProviders()),
+    ['gemini', 'groq', 'xai', 'openrouter', 'explabs', 'openai']);
+  assert.ok(ids(pool.configuredProviders({ requireDocuments: true })).includes('openai'));
+  assert.strictEqual(pool.providerStatus().length, 6);
+});
+
+test('openai is document-capable even when it is the only provider', () => {
+  const pool = loadPool(env({ ENABLE_OPENAI_FAILOVER: '1', OPENAI_API_KEY: 'sk-x' }));
+  assert.deepStrictEqual(ids(pool.configuredProviders({ requireDocuments: true })), ['openai']);
+});
+
+test('openai answers a PDF via the Responses API input_file shape', () => withFetch([
+  { status: 200, body: { output_text: '{"study":"by openai"}' } }
+], async calls => {
+  const pool = loadPool(env({ ENABLE_OPENAI_FAILOVER: '1', OPENAI_API_KEY: 'sk-x' }));
+  const answer = await pool.callOpenAI(
+    [{ text: 'analyze' }, { inlineData: { mimeType: 'application/pdf', data: 'QUJD' } }],
+    { requiresDocument: true, schema: { type: 'object' } }
+  );
+  assert.strictEqual(answer, '{"study":"by openai"}');
+  assert.match(calls[0].url, /api\.openai\.com\/v1\/responses/);
+  const sent = JSON.parse(calls[0].init.body);
+  const filePart = sent.input[sent.input.length - 1].content.find(c => c.type === 'input_file');
+  assert.ok(filePart, 'the PDF must ride as an input_file part');
+  assert.strictEqual(filePart.file_data, 'data:application/pdf;base64,QUJD');
+  assert.match(sent.input[sent.input.length - 1].content[0].text, /valid JSON object/,
+    'a JSON answer must be requested on document stages');
+}));
+
+test('openai is reached only after gemini and the gateway are out (full pool)', () => withFetch([
+  { status: 429, body: { error: { message: 'quota' } } },                 // gemini
+  { status: 429, body: { error: { message: 'quota' } } },                 // explabs gateway
+  { status: 200, body: { output_text: 'openai rescued it' } }             // openai
+], async calls => {
+  const pool = loadPool(env({
+    GEMINI_API_KEY: 'g-test', EXPLABS_API_KEY: 'x-test',
+    ENABLE_OPENAI_FAILOVER: '1', OPENAI_API_KEY: 'sk-x'
+  }));
+  const answer = await pool.callAI([{ text: 'hi' }], {});
+  assert.strictEqual(answer, 'openai rescued it');
+  assert.match(calls[2].url, /api\.openai\.com/, 'openai is the last document fallback');
+}));
+
+test('openai 429 rotates instead of aborting', () => withFetch([
+  { status: 429, body: { error: { message: 'rate' } } }
+], async calls => {
+  const pool = loadPool(env({ ENABLE_OPENAI_FAILOVER: '1', OPENAI_API_KEY: 'sk-x' }));
+  const err = await pool.callOpenAI([{ text: 'hi' }], {}).then(() => null, e => e);
+  assert.ok(err && err.rotate, 'a 429 must carry the rotate flag so the pool moves on');
+}));
+
+test('a rejected openai key does not rotate', () => withFetch([
+  { status: 401, body: { error: { message: 'bad key' } } }
+], async calls => {
+  const pool = loadPool(env({ ENABLE_OPENAI_FAILOVER: '1', OPENAI_API_KEY: 'sk-x' }));
+  const err = await pool.callOpenAI([{ text: 'hi' }], {}).then(() => null, e => e);
+  assert.strictEqual(err.status, 401);
+  assert.match(err.message, /OPENAI_API_KEY/);
+  assert.strictEqual(calls.length, 1);
+}));
+
+test('providerStatus never leaks the openai key', () => {
+  const json = JSON.stringify(loadPool(env({ ENABLE_OPENAI_FAILOVER: '1', OPENAI_API_KEY: 'sk-secret' })).providerStatus());
+  assert.ok(!json.includes('sk-secret'), 'openai key leaked into status');
 });
 
 /* ---------- runner ---------- */

@@ -1,0 +1,348 @@
+/* ============================================================
+   BUNQ-LABS — studio chrome layer
+   Ports the signature *feel* of a bold creative-studio site
+   onto XamCode without touching any study/quiz logic:
+     · #bq-loader    numbered 000→100 entry loader (once/session)
+     · #bq-cursor    blend-mode trailing ring (native cursor kept)
+     · #bq-menu-btn  injected "Menu" pill + #bq-menu fullscreen overlay
+     · display type  hero h1 + .ws-title in Instrument Serif
+     · .bq-scroll-cue  hero scroll affordance
+     · magnetic nudge on .btn-hero
+   Composes, never collides: genz.css owns #cursorGlow, .gz-reveal
+   and 3D tilt — this layer namespaces everything bq-/#bq-*.
+   No-ops under prefers-reduced-motion and on touch. Loaded last.
+   ============================================================ */
+
+:root{
+  --bq-ease: cubic-bezier(.19,1,.22,1);
+  --bq-ease-io: cubic-bezier(.65,0,.35,1);
+  --bq-display: 'Instrument Serif', 'Iowan Old Style', Georgia, serif;
+}
+
+/* 1 · DISPLAY TYPE — oversized editorial serif.
+      genz.css only gradients .accent; it never sets font-family
+      on the h1 itself, so this composes cleanly. */
+.hero-copy h1{
+  font-family: var(--bq-display);
+  font-weight: 400;
+  letter-spacing: -.015em;
+  line-height: .98;
+}
+.hero-copy h1 .accent{font-style: italic; font-weight: 400}
+.ws-title{font-family: var(--bq-display); font-weight: 400; letter-spacing: -.01em}
+
+/* 2 · NUMBERED LOADER — 000 → 100 */
+#bq-loader{
+  position: fixed; inset: 0; z-index: 100000;
+  display: flex; align-items: flex-end; justify-content: space-between;
+  padding: clamp(18px, 4vw, 40px);
+  background: var(--bg, #060a16);
+  color: var(--text, #fff);
+  transition: opacity .6s var(--bq-ease), visibility .6s;
+}
+#bq-loader.bq-hidden{opacity:0; visibility:hidden; pointer-events:none}
+#bq-loader .bq-load-brand{
+  font-family: var(--bq-display);
+  font-size: clamp(22px, 3vw, 34px); letter-spacing: -.01em;
+}
+#bq-loader .bq-load-num{
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  font-size: clamp(40px, 9vw, 110px);
+  font-weight: 500; line-height: 1; font-variant-numeric: tabular-nums;
+}
+#bq-loader .bq-load-bar{position: absolute; left: 0; right: 0; bottom: 0; height: 2px;
+  background: color-mix(in srgb, var(--text) 12%, transparent)}
+#bq-loader .bq-load-bar i{display:block; height:100%; width:0%;
+  background: var(--accent, #2dd4bf); transition: width .2s linear}
+
+/* 3 · TRAILING CURSOR RING — blend-mode, native cursor kept (the tiny
+      quiz answer targets need a real pointer). Hidden on touch. */
+#bq-cursor{
+  position: fixed; top: 0; left: 0; z-index: 99998;
+  width: 30px; height: 30px; margin: -15px 0 0 -15px;
+  border: 1px solid color-mix(in srgb, var(--text) 55%, transparent);
+  border-radius: 50%; pointer-events: none;
+  transform: translate3d(-100px,-100px,0) scale(1);
+  transition: width .25s var(--bq-ease), height .25s var(--bq-ease),
+              margin .25s var(--bq-ease), background .25s var(--bq-ease),
+              opacity .25s;
+  mix-blend-mode: difference; will-change: transform;
+  opacity: 0;
+}
+body.bq-ready #bq-cursor{opacity:.9}
+#bq-cursor.bq-hover{
+  width: 54px; height: 54px; margin: -27px 0 0 -27px;
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+  border-color: transparent;
+}
+#bq-cursor.bq-press{transform: translate3d(var(--bq-x,0),var(--bq-y,0),0) scale(.7)}
+
+/* 4 · OVERLAY MENU — injected "Menu" pill + fullscreen nav. */
+#bq-menu-btn{
+  position: fixed; z-index: 99997; bottom: clamp(16px,3vw,28px);
+  left: 50%; transform: translateX(-50%);
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 20px; border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 80%, transparent);
+  border: 1px solid var(--line); color: var(--text);
+  font-size: 11px; font-weight: 700; letter-spacing: .12em;
+  text-transform: uppercase; cursor: pointer;
+  backdrop-filter: blur(14px);
+  transition: opacity .4s var(--bq-ease), transform .4s var(--bq-ease);
+  font-family: inherit;
+}
+#bq-menu-btn .bq-dot{width:6px;height:6px;border-radius:50%;background:var(--accent)}
+#bq-menu-btn.bq-hidden{opacity:0; transform: translateX(-50%) translateY(20px); pointer-events:none}
+#bq-menu{
+  position: fixed; inset: 0; z-index: 99999;
+  background: var(--bg); color: var(--text);
+  display: flex; flex-direction: column; justify-content: center;
+  padding: clamp(40px, 8vw, 120px);
+  clip-path: inset(0 0 100% 0);
+  transition: clip-path .7s var(--bq-ease);
+}
+#bq-menu.bq-open{clip-path: inset(0 0 0 0)}
+#bq-menu .bq-menu-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+#bq-menu .bq-menu-item{
+  font-family: var(--bq-display); font-weight: 400;
+  font-size: clamp(30px, 6vw, 64px); line-height: 1.08; letter-spacing: -.02em;
+  color: var(--text); background: none; border: none; text-align: left;
+  cursor: pointer; opacity: 0; transform: translateY(24px);
+  transition: opacity .5s var(--bq-ease), transform .5s var(--bq-ease), color .2s;
+}
+#bq-menu.bq-open .bq-menu-item{opacity:1; transform:none}
+#bq-menu .bq-menu-item:hover{color:var(--accent)}
+#bq-menu .bq-menu-item .bq-num{font-size:.3em;font-family:'Geist Mono',monospace;color:var(--muted);vertical-align:super;margin-right:14px}
+#bq-menu-close{
+  position: absolute; top: clamp(18px,4vw,40px); right: clamp(18px,4vw,40px);
+  width: 48px; height: 48px; border-radius: 50%;
+  border: 1px solid var(--line); background: none; color: var(--text);
+  font-size: 20px; cursor: pointer; font-family: inherit;
+}
+
+/* 5 · SCROLL CUE — hero affordance, landing only. */
+.bq-scroll-cue{
+  display: inline-flex; align-items: center; gap: 10px; margin-top: 28px;
+  font-size: 10px; letter-spacing: .24em; text-transform: uppercase; color: var(--muted);
+}
+.bq-scroll-cue .bq-line{position:relative;width:34px;height:1px;background:color-mix(in srgb,var(--text) 22%,transparent);overflow:hidden}
+.bq-scroll-cue .bq-line::after{content:"";position:absolute;left:0;top:0;height:100%;width:40%;background:var(--accent);animation:bqSweep 1.8s var(--bq-ease-io) infinite}
+@keyframes bqSweep{0%{transform:translateX(-100%)}100%{transform:translateX(250%)}}
+
+/* 6 · MAGNETIC NUDGE — .btn-hero follows the pointer a hair. */
+.btn-hero.bq-mag{transition: transform .3s var(--bq-ease), box-shadow .3s var(--bq-ease)}
+
+/* ============================================================
+   1b · BOLD OVERRIDES — the unmistakable studio look.
+   editorial.css already puts Instrument Serif on .hero h1, so
+   these go dramatically bigger / bolder and use !important to
+   guarantee they win the cascade. Inserted above the guards.
+   ============================================================ */
+.hero-copy h1{
+  font-family: var(--bq-display) !important;
+  font-weight: 400 !important;
+  font-size: clamp(52px, 8.6vw, 124px) !important;
+  line-height: .9 !important;
+  letter-spacing: -.035em !important;
+  max-width: 12ch !important;
+  margin-bottom: 30px !important;
+}
+.hero-copy h1 .accent{
+  font-style: italic !important;
+  font-weight: 400 !important;
+  background: linear-gradient(105deg, var(--accent), var(--accent-2)) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+}
+.hero-kicker{
+  font-family: var(--bq-mono, 'Geist Mono', ui-monospace, monospace) !important;
+  font-size: 11px !important;
+  letter-spacing: .3em !important;
+  text-transform: uppercase !important;
+  color: var(--accent) !important;
+}
+.hero p{
+  font-size: 19px !important;
+  line-height: 1.6 !important;
+  max-width: 46ch !important;
+  letter-spacing: -.01em !important;
+}
+.ws-title{
+  font-family: var(--bq-display) !important;
+  font-weight: 400 !important;
+  letter-spacing: -.02em !important;
+  font-size: clamp(34px, 5vw, 62px) !important;
+}
+
+/* Bold pill buttons — accent fill, chunky, unmistakable. */
+.btn-hero{
+  font-family: var(--bq-ui, 'Inter', system-ui, sans-serif) !important;
+  font-size: 13px !important; font-weight: 600 !important;
+  padding: 16px 26px !important; border-radius: 999px !important;
+  background: var(--accent) !important; color: var(--bg) !important;
+  border: 1px solid var(--accent) !important;
+  box-shadow: 0 14px 34px -14px color-mix(in srgb, var(--accent) 70%, transparent) !important;
+  transition: transform .3s var(--bq-ease), box-shadow .3s var(--bq-ease),
+              background .3s var(--bq-ease), color .3s var(--bq-ease) !important;
+}
+.btn-hero:hover{
+  transform: translateY(-2px) !important;
+  background: color-mix(in srgb, var(--accent) 82%, var(--text)) !important;
+  box-shadow: 0 20px 44px -16px color-mix(in srgb, var(--accent) 80%, transparent) !important;
+}
+.btn-hero-outline{
+  font-family: var(--bq-ui, 'Inter', system-ui, sans-serif) !important;
+  font-size: 13px !important; font-weight: 600 !important;
+  padding: 16px 26px !important; border-radius: 999px !important;
+  border: 1px solid var(--line) !important; color: var(--text) !important;
+  transition: border-color .3s var(--bq-ease), transform .3s var(--bq-ease), background .3s var(--bq-ease) !important;
+}
+.btn-hero-outline:hover{ border-color: var(--accent) !important; transform: translateY(-2px) !important; }
+
+/* Editorial section headings — oversized serif. */
+.section-heading h2{
+  font-family: var(--bq-display) !important; font-weight: 400 !important;
+  font-size: clamp(34px, 5.4vw, 72px) !important; line-height: .96 !important;
+  letter-spacing: -.03em !important;
+}
+.section-heading h2 span, .course-cta h2 span{
+  font-style: italic !important;
+  background: linear-gradient(105deg, var(--accent), var(--accent-2)) !important;
+  -webkit-background-clip: text !important; background-clip: text !important;
+  color: transparent !important; -webkit-text-fill-color: transparent !important;
+}
+.section-kicker{
+  font-family: var(--bq-mono, 'Geist Mono', ui-monospace, monospace) !important;
+  font-size: 10px !important; letter-spacing: .3em !important; color: var(--accent) !important;
+}
+.course-cta h2{
+  font-family: var(--bq-display) !important; font-weight: 400 !important;
+  font-size: clamp(30px, 4.4vw, 60px) !important; line-height: .98 !important;
+  letter-spacing: -.028em !important;
+}
+.feature-card-top .feature-index{
+  font-family: var(--bq-mono, 'Geist Mono', ui-monospace, monospace) !important;
+  font-size: 13px !important; color: var(--accent) !important;
+}
+.card h3{
+  font-family: var(--bq-display) !important; font-weight: 400 !important;
+  font-size: 22px !important; letter-spacing: -.015em !important;
+}
+
+/* Marquee ticker band — the signature BunqLabs scroll strip. */
+.bq-marquee{
+  display: flex; align-items: center; overflow: hidden;
+  border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+  padding: 16px 0; user-select: none; -webkit-user-select: none;
+}
+.bq-marquee-track{
+  display: flex; flex: 0 0 auto; align-items: center; gap: 42px;
+  padding-right: 42px; white-space: nowrap; animation: bqMarquee 26s linear infinite;
+}
+.bq-marquee-item{
+  font-family: var(--bq-display); font-size: clamp(20px, 3vw, 40px);
+  font-weight: 400; letter-spacing: -.02em; color: var(--text);
+  display: inline-flex; align-items: center; gap: 42px;
+}
+.bq-marquee-item i{ font-style: normal; color: var(--accent); }
+.bq-marquee-item em{ font-style: italic; color: var(--muted); }
+@keyframes bqMarquee{ from{transform:translateX(0)} to{transform:translateX(-100%)} }
+
+
+/* ---- GUARDS ---- */
+/* The studio chrome is pure decoration: honour reduced-motion and skip
+   the pointer toys entirely on touch, where they only get in the way. */
+@media (prefers-reduced-motion: reduce){
+  #bq-cursor, #bq-menu-btn, .bq-scroll-cue .bq-line::after{display:none !important}
+  #bq-loader{transition:none}
+  .btn-hero.bq-mag{transition:none}
+  #bq-menu{transition:none}
+  #bq-menu .bq-menu-item{transition:none; opacity:1; transform:none}
+}
+@media (hover: none){
+  #bq-cursor{display:none !important}
+  .btn-hero.bq-mag{transform:none !important}
+}
+
+#bq-loader .bq-load-tag{
+  position: absolute; left: 50%; bottom: clamp(18px,4vw,40px); transform: translateX(-50%);
+  font-size: 10px; letter-spacing: .28em; text-transform: uppercase; color: var(--muted, #9ca3af);
+}
+
+/* ============================================================
+   1c · AUTH SCREEN — the first thing every visitor sees.
+   render() gates the whole app on isSignedIn(), so this screen
+   is effectively the landing experience until sign-in. Give it
+   the BunqLabs studio treatment: oversized Instrument Serif
+   display headline, solid accent submit pill, editorial inputs.
+   All !important so it wins over auth.css at equal specificity.
+   ============================================================ */
+#authScreen .auth-headline{
+  font-family: var(--bq-display) !important;
+  font-weight: 400 !important;
+  font-size: clamp(34px, 4.6vw, 60px) !important;
+  line-height: 1.02 !important;
+  letter-spacing: -.02em !important;
+}
+#authScreen .auth-headline::first-line{ color: var(--accent) }
+#authScreen .auth-title{
+  font-family: var(--bq-display) !important;
+  font-weight: 400 !important;
+  font-size: clamp(30px, 3.4vw, 42px) !important;
+  letter-spacing: -.02em !important;
+}
+#authScreen .auth-sub{ font-size: 14px !important; line-height: 1.7 !important }
+#authScreen .auth-logo-text{
+  font-family: var(--bq-display) !important; font-weight: 400 !important;
+  font-size: 26px !important; letter-spacing: -.01em !important;
+}
+#authScreen .auth-points b{ font-family: 'Geist Mono', ui-monospace, monospace !important }
+/* Oversized tabular stat numbers read as studio data. */
+#authScreen .auth-points li{
+  border-radius: 16px !important; padding: 16px 18px !important;
+  background: color-mix(in srgb, var(--accent) 5%, transparent) !important;
+  border-color: color-mix(in srgb, var(--accent) 18%, var(--line)) !important;
+}
+/* Solid accent submit pill — the signature BunqLabs CTA. */
+#authScreen .auth-submit{
+  background: var(--accent, #2dd4bf) !important;
+  color: #06201c !important;
+  font-weight: 800 !important;
+  font-size: 14px !important;
+  letter-spacing: .01em !important;
+  border-radius: 999px !important;
+  padding: 14px 20px !important;
+  border: 0 !important;
+  box-shadow: 0 14px 30px color-mix(in srgb, var(--accent) 32%, transparent) !important;
+  transition: transform .18s var(--bq-ease), box-shadow .18s var(--bq-ease) !important;
+}
+#authScreen .auth-submit:hover{
+  transform: translateY(-2px) !important;
+  box-shadow: 0 20px 40px color-mix(in srgb, var(--accent) 42%, transparent) !important;
+}
+/* Active tab becomes an accent pill, matching the CTA. */
+#authScreen .auth-tab.active{
+  background: var(--accent, #2dd4bf) !important; color: #06201c !important;
+  border-radius: 999px !important; box-shadow: none !important;
+}
+/* Editorial inputs: softer fill, accent focus ring. */
+#authScreen .auth-input-wrap input{
+  border-radius: 12px !important;
+  background: color-mix(in srgb, var(--surface) 70%, transparent) !important;
+  border: 1px solid color-mix(in srgb, var(--line) 90%, var(--accent)) !important;
+}
+#authScreen .auth-input-wrap input:focus{
+  border-color: var(--accent, #2dd4bf) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent) !important;
+}
+#authScreen .auth-field label{
+  text-transform: uppercase; letter-spacing: .12em; font-size: 10px !important;
+}
+#authScreen .auth-social-btn{ border-radius: 999px !important }
+#authScreen .auth-guest{ border-radius: 999px !important }
+/* Mobile: let the display headline breathe. */
+@media (max-width: 900px){
+  #authScreen .auth-headline{ font-size: clamp(30px, 8vw, 44px) !important }
+}

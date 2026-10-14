@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>XamCode AI — Building in Public</title>
+<meta name="description" content="Verified development progress, roadmap, changelog, ideas, chat, countdown and waitlist for XamCode AI.">
+<style>
+:root{
+--bg:#070b16;--bg2:#0b1224;--card:#0e162e;--card2:#111c38;
+--line:rgba(148,178,255,.14);--txt:#e8eefc;--mut:#9aa8c7;--dim:#6b7a99;
+--acc:#6ea8ff;--acc2:#9d7bff;--ok:#3ddc97;--warn:#ffc857;--bad:#ff7a7a;
+--r:16px;--max:1120px;
+--font:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Inter,Arial,sans-serif;
+--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font-family:var(--font);color:var(--txt);line-height:1.6;
+background:radial-gradient(1100px 500px at 85% -5%,rgba(157,123,255,.14),transparent 60%),radial-gradient(900px 480px at 8% 0%,rgba(110,168,255,.16),transparent 60%),linear-gradient(var(--bg),var(--bg2));min-height:100vh}
+a{color:var(--acc)}
+.wrap{max-width:var(--max);margin:0 auto;padding:0 20px}
+.skip{position:absolute;left:-9999px;top:0;background:var(--acc);color:#06101f;padding:8px 14px;border-radius:8px;z-index:99}
+.skip:focus{left:12px;top:12px}
+.nav{position:sticky;top:0;z-index:20;backdrop-filter:blur(12px);background:rgba(7,11,22,.78);border-bottom:1px solid var(--line)}
+.nav .wrap{display:flex;align-items:center;gap:14px;padding-top:12px;padding-bottom:12px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;text-decoration:none;color:var(--txt)}
+.logo{width:32px;height:32px;border-radius:10px;background:conic-gradient(from 210deg,var(--acc),var(--acc2),var(--acc));display:grid;place-items:center;color:#06101f;font-weight:900}
+.live{font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px;border:1px solid var(--warn);color:var(--warn)}
+.live.on{color:#06281c;background:var(--ok);border-color:var(--ok)}
+.links{margin-left:auto;display:flex;gap:4px;flex-wrap:wrap}
+.links a{color:var(--mut);text-decoration:none;font-size:14px;padding:8px 10px;border-radius:10px}
+.links a:hover,.links a:focus-visible{color:var(--txt);background:rgba(148,178,255,.1);outline:none}
+.hero{padding:56px 0 20px}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--mut);border:1px solid var(--line);border-radius:999px;padding:5px 14px;background:rgba(148,178,255,.06)}
+.hero h1{font-size:clamp(32px,5vw,58px);line-height:1.08;margin:18px 0 12px;letter-spacing:-1px}
+.grad{background:linear-gradient(92deg,var(--acc),var(--acc2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.lede{color:var(--mut);font-size:clamp(15px,2vw,18px);max-width:64ch}
+.cta-row{display:flex;gap:12px;flex-wrap:wrap;margin-top:22px}
+.btn{border:1px solid var(--line);background:linear-gradient(180deg,var(--card2),var(--card));color:var(--txt);border-radius:12px;padding:12px 20px;font-size:15px;font-weight:700;cursor:pointer;text-decoration:none;display:inline-block}
+.btn.primary{background:linear-gradient(92deg,var(--acc),var(--acc2));color:#06101f;border:none}
+.btn:hover{transform:translateY(-1px)}
+.btn:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.btn[disabled]{opacity:.55;cursor:wait;transform:none}
+.grid{display:grid;gap:14px}
+.stats{grid-template-columns:repeat(4,1fr);margin:26px 0}
+.card{background:linear-gradient(180deg,rgba(20,30,60,.85),rgba(12,20,40,.9));border:1px solid var(--line);border-radius:var(--r);padding:18px}
+.card h3{margin:0 0 4px;font-size:13px;text-transform:uppercase;letter-spacing:.8px;color:var(--dim)}
+.big{font-size:30px;font-weight:800}
+.sub{color:var(--mut);font-size:13px}
+.sec{margin:34px 0}
+.sec-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.sec-head h2{margin:0;font-size:24px;letter-spacing:-.3px}
+.sec-head p{margin:0;color:var(--dim);font-size:14px}
+.meter{height:14px;border-radius:999px;background:rgba(148,178,255,.12);overflow:hidden;border:1px solid var(--line)}
+.meter>i{display:block;height:100%;width:0;border-radius:999px;background:linear-gradient(90deg,var(--acc),var(--acc2));transition:width .8s ease}
+.mrow{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.pill{display:inline-block;font-size:12px;font-weight:700;border-radius:999px;padding:2px 10px;border:1px solid var(--line);color:var(--mut)}
+.pill.verified{color:#06281c;background:var(--ok);border-color:var(--ok)}
+.pill.in_progress{color:#0a1a33;background:var(--acc);border-color:var(--acc)}
+.pill.needs_review{color:#3a2a06;background:var(--warn);border-color:var(--warn)}
+.pill.planned{color:var(--mut)}
+.mile{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:8px 0;background:rgba(10,17,35,.6)}
+.mile .t{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.mono{font-family:var(--mono);font-size:12px;color:var(--dim)}
+.mile .c{color:var(--mut);font-size:13px;margin:6px 0 0}
+</style>
+<style>
+.feed{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;max-height:380px;overflow:auto}
+.feed li{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:rgba(10,17,35,.6);font-size:14px}
+.meta{color:var(--dim);font-size:12px;font-family:var(--mono)}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:8px}
+.dot.passed{background:var(--ok)}.dot.failed{background:var(--bad)}.dot.running{background:var(--warn)}.dot.info{background:var(--acc)}.dot.unknown{background:var(--dim)}
+.s3{grid-template-columns:repeat(3,1fr)}
+form.panel{border:1px solid var(--line);border-radius:var(--r);padding:18px;background:rgba(10,17,35,.6)}
+label{display:block;font-size:13px;color:var(--mut);margin:12px 0 6px}
+input,textarea,select{width:100%;background:#0a1328;border:1px solid var(--line);border-radius:10px;color:var(--txt);padding:11px 12px;font-size:15px;font-family:inherit}
+input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+textarea{min-height:90px;resize:vertical}
+.hint{font-size:12px;color:var(--dim)}
+.fmsg{font-size:14px;margin:10px 0 0;min-height:1.2em}
+.fmsg.ok{color:var(--ok)}.fmsg.err{color:var(--bad)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+#chatList{max-height:340px}
+.chat-item .who{font-weight:700;font-size:13px}
+.chat-item .when{color:var(--dim);font-size:12px;margin-left:8px;font-family:var(--mono)}
+.idea{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:8px 0;background:rgba(10,17,35,.6)}
+.idea .vrow{display:flex;gap:10px;align-items:center;margin-top:8px;flex-wrap:wrap}
+.vote-btn{border:1px solid var(--line);background:transparent;color:var(--txt);border-radius:999px;padding:6px 14px;cursor:pointer;font-weight:700}
+.vote-btn[aria-pressed="true"]{background:var(--acc);color:#0a1a33;border-color:var(--acc)}
+.vote-btn:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.count{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px}
+.count .cell{background:rgba(10,17,35,.7);border:1px solid var(--line);border-radius:12px;padding:12px 18px;text-align:center;min-width:96px}
+.count .n{font-size:30px;font-weight:800;font-variant-numeric:tabular-nums}
+.count .l{font-size:12px;color:var(--dim);text-transform:uppercase;letter-spacing:.8px}
+footer{border-top:1px solid var(--line);margin-top:44px;padding:26px 0 60px;color:var(--dim);font-size:13px}
+@media (max-width:860px){.stats{grid-template-columns:repeat(2,1fr)}.mrow,.two,.s3{grid-template-columns:1fr}.links{display:none}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<nav class="nav" aria-label="Sections"><div class="wrap">
+<a class="brand" href="/build"><span class="logo" aria-hidden="true">X</span>XamCode AI&nbsp;<span style="color:var(--dim);font-weight:400">/ building in public</span></a>
+<span class="live" id="liveBadge" role="status">checking feed…</span>
+<div class="links"><a href="#progress">Progress</a><a href="#roadmap">Roadmap</a><a href="#activity">Activity</a><a href="#ideas">Ideas</a><a href="#chat">Chat</a><a href="#launch">Launch</a><a href="#waitlist">Waitlist</a><a href="#guidelines">Guidelines</a></div>
+</div></nav>
+<main id="main"><div class="wrap">
+<header class="hero">
+<span class="eyebrow"><span class="dot info" aria-hidden="true"></span><span id="phaseLabel">Loading build status…</span></span>
+<h1>We are building <span class="grad">XamCode AI</span> in the open.</h1>
+<p class="lede">XamCode AI turns lecture PDFs into animated, unit-by-unit study lessons with the AURA tutor, quizzes and formula cards. This page shows <strong>verified</strong> progress — a milestone counts only when its checks pass or a maintainer confirms it. Commits alone never move the bar.</p>
+<div class="cta-row"><a class="btn primary" href="#waitlist">Get launch access</a><a class="btn" href="#ideas">Suggest a feature</a><a class="btn" href="/">Open the study app →</a></div>
+<div class="grid stats" role="list">
+<section class="sec" id="progress" aria-labelledby="h-progress">
+<div class="sec-head"><h2 id="h-progress">Live development progress</h2><p>weighted verified milestones — never commits or lines of code</p></div>
+<div class="card"><h3>Overall readiness</h3>
+<div class="big"><span id="pctNum">–</span></div>
+<div class="meter" role="progressbar" aria-label="Overall readiness" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="pctBar"><i id="pctFill"></i></div>
+<p class="sub" id="pctSub">loading…</p></div>
+<div class="mrow" style="margin-top:14px">
+<div class="card"><h3>Completed milestones</h3><div id="mDone"></div></div>
+<div class="card"><h3>In progress</h3><div id="mProg"></div></div>
+</div>
+<div class="mrow" style="margin-top:14px">
+<div class="card"><h3>Upcoming</h3><div id="mUp"></div></div>
+<div class="card"><h3>Needs review</h3><div id="mRev"></div><p class="hint">A verified milestone that later fails its checks returns here instead of silently staying green.</p></div>
+</div>
+</section>
+<section class="sec" id="roadmap" aria-labelledby="h-roadmap">
+<div class="sec-head"><h2 id="h-roadmap">Public roadmap</h2><p>official plan — only maintainers change these statuses</p></div>
+<div class="card"><div id="roadmapList"><p class="sub">loading…</p></div></div>
+</section>
+<section class="sec" id="activity" aria-labelledby="h-activity">
+<div class="sec-head"><h2 id="h-activity">Development activity</h2><p id="feedNote">latest verified development events</p></div>
+<div class="grid s3">
+<div class="card"><h3>Build</h3><div class="big" id="stBuild">–</div><div class="sub mono" id="stBuildAt"></div></div>
+<div class="card"><h3>Tests</h3><div class="big" id="stTests">–</div><div class="sub mono" id="stTestsAt"></div></div>
+<div class="card"><h3>Deploy</h3><div class="big" id="stDeploy">–</div><div class="sub mono" id="stDeployAt"></div></div>
+</div>
+<div class="card" style="margin-top:14px"><ul class="feed" id="actList" aria-live="off"><li class="sub">loading…</li></ul></div>
+</section>
+<section class="sec" id="ideas" aria-labelledby="h-ideas">
+<div class="sec-head"><h2 id="h-ideas">Community ideas</h2><p>suggestions welcome — they never auto-commit to the roadmap</p></div>
+<div class="two">
+<div><div id="ideaList"><p class="sub">loading…</p></div></div>
+<div><form class="panel" id="ideaForm">
+<h3 style="margin:0">Suggest a feature</h3>
+<label for="ideaTitle">Title (min 4 characters)</label>
+<input id="ideaTitle" name="title" maxlength="120" required autocomplete="off">
+<label for="ideaDesc">Description (min 10 characters)</label>
+<textarea id="ideaDesc" name="description" maxlength="2000" required></textarea>
+<p class="hint">Be specific. Ideas start as <span class="kbd">submitted</span>; maintainers triage them.</p>
+<button class="btn primary" type="submit" id="ideaBtn">Submit idea</button>
+<p class="fmsg" id="ideaMsg" role="status" aria-live="polite"></p>
+</form></div>
+</div>
+</section>
+<section class="sec" id="chat" aria-labelledby="h-chat">
+<div class="sec-head"><h2 id="h-chat">Community chat</h2><p>realtime discussion — be kind, no spam</p></div>
+<div class="two">
+<div class="card"><ul class="feed" id="chatList" aria-live="off"><li class="sub">loading…</li></ul></div>
+<div><form class="panel" id="chatForm">
+<h3 style="margin:0">Join the discussion</h3>
+<label for="chatNick">Display name</label>
+<input id="chatNick" name="nickname" maxlength="40" autocomplete="nickname" placeholder="Visitor">
+<label for="chatText">Message (max 1000 characters)</label>
+<textarea id="chatText" name="text" maxlength="1000" required></textarea>
+<p class="hint">Messages are public. Never post passwords, keys or personal data. Chat can never change development status.</p>
+<button class="btn primary" type="submit" id="chatBtn">Send message</button>
+<p class="fmsg" id="chatMsg" role="status" aria-live="polite"></p>
+</form></div>
+</div>
+</section>
+
+
+<div class="card" role="listitem"><h3>Readiness</h3><div class="big" id="statProgress">–</div><div class="sub">weighted verified milestones</div></div>
+<div class="card" role="listitem"><h3>Phase</h3><div class="big" id="statPhase" style="font-size:22px">–</div><div class="sub" id="statMilestone">current milestone</div></div>
+<section class="sec" id="launch" aria-labelledby="h-launch">
+<div class="sec-head"><h2 id="h-launch">Launch countdown</h2><p>readiness first — a date only when it is real</p></div>
+<div class="card">
+<div class="big" id="launchState">–</div>
+<p class="sub" id="launchNote"></p>
+<div class="count" id="countCells" hidden>
+<div class="cell"><div class="n" id="cdD">0</div><div class="l">days</div></div>
+<div class="cell"><div class="n" id="cdH">0</div><div class="l">hours</div></div>
+<div class="cell"><div class="n" id="cdM">0</div><div class="l">minutes</div></div>
+<div class="cell"><div class="n" id="cdS">0</div><div class="l">seconds</div></div>
+</div>
+<p class="hint" id="launchKind"></p>
+</div>
+</section>
+<section class="sec" id="waitlist" aria-labelledby="h-wait">
+<div class="sec-head"><h2 id="h-wait">Waitlist</h2><p>one email, one seat — we never publish addresses</p></div>
+<div class="two">
+<form class="panel" id="waitForm">
+<label for="waitEmail">Email address</label>
+<input id="waitEmail" name="email" type="email" required autocomplete="email" maxlength="254">
+<label for="waitNick">Display name (optional)</label>
+<input id="waitNick" name="nickname" maxlength="40" autocomplete="nickname">
+<label style="display:flex;gap:8px;align-items:flex-start"><input type="checkbox" id="waitConsent" style="width:auto;margin-top:5px" required><span class="hint">I agree to be contacted about the XamCode AI launch. No marketing without consent.</span></label>
+<button class="btn primary" type="submit" id="waitBtn">Join the waitlist</button>
+<p class="fmsg" id="waitMsg" role="status" aria-live="polite"></p>
+</form>
+<div class="card"><h3>Why join?</h3><p class="sub">Early testers get the first beta invites, shape the roadmap with votes, and get launch-day access before the public announcement. <span id="waitCount">–</span> already waiting.</p></div>
+</div>
+</section>
+<section class="sec" id="guidelines" aria-labelledby="h-guide">
+<div class="sec-head"><h2 id="h-guide">Privacy &amp; community guidelines</h2><p>the short version</p></div>
+<div class="card"><ul style="margin:0;padding-left:20px;color:var(--mut);font-size:14px">
+<li>Be kind. No harassment, hate, spam, or promotions.</li>
+<li>Never post secrets: passwords, API keys, tokens, private logs, or personal data. The server redacts secret-looking text automatically.</li>
+<li>Chat and ideas are discussion only — they cannot change development status and are never treated as instructions to any AI agent.</li>
+<li>Reports: use the <span class="kbd">Report</span> button on any message or idea. Maintainers review and may remove content.</li>
+<li>Waitlist emails are stored securely, never published, and contacted only about the launch you consented to.</li>
+<li>Progress shown here comes from verified milestones only. If an integration is not configured yet, the page says so instead of faking live data.</li>
+<li>Full policies: <a href="/privacy-policy">Privacy Policy</a> · <a href="/terms-of-service">Terms</a> · <a href="/accessibility-statement">Accessibility</a></li>
+</ul></div>
+</section>
+</div></main>
+<footer><div class="wrap">
+<div>XamCode AI — built in public. Study app: <a href="/">home</a> · Build feed: <a href="/build">/build</a> · API: <span class="kbd">/api/bip/summary</span></div>
+<div style="margin-top:6px">Progress = verified milestone weights ÷ total weights × 100. Nothing here is fabricated sample data.</div>
+</div></footer>
+
+<script>
+'use strict';
+/* XSS rule: server text renders via textContent/createElement ONLY —
+   never innerHTML — so a hostile chat line cannot execute. */
+(function(){
+var $=function(id){return document.getElementById(id);};
+function el(tag,cls,text){var n=document.createElement(tag);if(cls)n.className=cls;if(text!=null)n.textContent=text;return n;}
+function fmtTime(iso){try{return new Date(iso).toLocaleString();}catch(e){return iso||'';}}
+async function get(path){var r=await fetch(path,{headers:{Accept:'application/json'}});var j=null;try{j=await r.json();}catch(e){}if(!r.ok)throw new Error((j&&j.error)||('Request failed ('+r.status+')'));return j;}
+async function post(path,body){var r=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify(body)});var j=null;try{j=await r.json();}catch(e){}if(!r.ok)throw new Error((j&&j.error)||('Request failed ('+r.status+')'));return j;}
+var state={launch:null,timer:null};
+
+function mileCard(m){
+var d=el('div','mile');
+var t=el('div','t');
+t.appendChild(el('strong',null,m.title));
+var p=el('span','pill '+m.status,null);p.textContent=String(m.status).replace(/_/g,' ');
+t.appendChild(p);d.appendChild(t);
+var meta=el('div','mono','weight '+m.weight+' · '+(m.verifiedAt?('verified '+fmtTime(m.verifiedAt)):(m.status.replace(/_/g,' '))));
+d.appendChild(meta);
+if(m.criteria)d.appendChild(el('p','c','Check: '+m.criteria));
+return d;
+}
+function renderProgress(data){
+var p=data.progress;$('pctNum').textContent=p.percent+'%';
+$('pctFill').style.width=p.percent+'%';
+$('pctBar').setAttribute('aria-valuenow',String(p.percent));
+$('statProgress').textContent=p.percent+'%';
+$('statPhase').textContent=p.phase||'—';
+$('statMilestone').textContent=(p.currentMilestone&&p.currentMilestone.title)||'all milestones mapped';
+$('phaseLabel').textContent=(p.phase||'Building')+' · '+(p.currentMilestone?('now: '+p.currentMilestone.title):'roadmap complete');
+$('pctSub').textContent=p.verifiedWeight+' of '+p.totalWeight+' weight verified across '+p.counts.total+' milestones · '+p.counts.verified+' verified, '+p.counts.inProgress+' in progress, '+p.counts.needsReview+' in review, '+p.counts.planned+' planned';
+var done=$('mDone'),prog=$('mProg'),up=$('mUp'),rev=$('mRev');
+done.textContent='';prog.textContent='';up.textContent='';rev.textContent='';
+data.milestones.forEach(function(m){
+if(m.status==='verified')done.appendChild(mileCard(m));
+else if(m.status==='in_progress')prog.appendChild(mileCard(m));
+else if(m.status==='needs_review')rev.appendChild(mileCard(m));
+else up.appendChild(mileCard(m));
+});
+if(!done.children.length)done.appendChild(el('p','sub','No verified milestones yet.'));
+if(!prog.children.length)prog.appendChild(el('p','sub','Nothing in progress right now.'));
+if(!up.children.length)up.appendChild(el('p','sub','Nothing queued.'));
+if(!rev.children.length)rev.appendChild(el('p','sub','Nothing under review.'));
+}
+function renderRoadmap(items){
+var box=$('roadmapList');box.textContent='';
+if(!items.length){box.appendChild(el('p','sub','Roadmap coming soon.'));return;}
+items.forEach(function(r){
+var d=el('div','mile');var t=el('div','t');
+t.appendChild(el('strong',null,r.title));
+var s=el('span','pill '+String(r.status).replace(/-/g,'_'),null);s.textContent=String(r.status).replace(/_/g,' ');
+t.appendChild(s);d.appendChild(t);
+if(r.summary)d.appendChild(el('p','c',r.summary));
+box.appendChild(d);
+});
+}
+
+function renderStatus(st){
+function cell(name,when,val){
+var b=$(name);b.textContent=(val&&val.state)||'unknown';
+var w=$(when);w.textContent=(val&&val.at)?(fmtTime(val.at)+(val.ref?(' · '+String(val.ref).slice(0,7)):'')):'no data yet';
+}
+cell('stBuild','stBuildAt',st.build);cell('stTests','stTestsAt',st.tests);cell('stDeploy','stDeployAt',st.deploy);
+}
+function renderActivity(list,integration){
+var box=$('actList');box.textContent='';
+if(!list.length){box.appendChild(el('li','sub','No development events yet.'));return;}
+list.forEach(function(e){
+var li=el('li');
+var dot=el('span','dot '+(e.status||'info'));dot.setAttribute('aria-hidden','true');li.appendChild(dot);
+li.appendChild(el('span',null,e.summary||e.type));
+li.appendChild(el('div','meta',(e.at?fmtTime(e.at):'')+(e.ref?(' · '+String(e.ref).slice(0,7)):'')+' · '+e.type));
+box.appendChild(li);
+});
+var note=$('feedNote');
+if(integration&&integration.live)note.textContent='live from GitHub webhooks / CI';
+else note.textContent='maintainer-updated feed — GitHub webhooks not connected yet (see deployment docs)';
+var badge=$('liveBadge');
+if(integration&&integration.live){badge.textContent='● live feed';badge.classList.add('on');}
+else{badge.textContent='○ setup mode';badge.classList.remove('on');}
+}
+function renderIdeas(items){
+var box=$('ideaList');box.textContent='';
+if(!items.length){box.appendChild(el('p','sub','No ideas yet — be the first.'));return;}
+items.forEach(function(idea){
+var d=el('div','idea');
+var t=el('div','t');t.appendChild(el('strong',null,idea.title));
+var s=el('span','pill',null);s.textContent=String(idea.status).replace(/_/g,' ');t.appendChild(s);
+d.appendChild(t);
+d.appendChild(el('p','c',idea.description));
+var row=el('div','vrow');
+var btn=el('button','vote-btn',null);
+btn.type='button';btn.textContent='▲ '+idea.votes+(idea.votedByMe?' · voted':'');
+btn.setAttribute('aria-pressed',idea.votedByMe?'true':'false');
+btn.setAttribute('aria-label','Vote for '+idea.title);
+btn.addEventListener('click',function(){vote(idea.id,btn);});
+row.appendChild(btn);
+row.appendChild(el('span','mono',idea.commentCount+' comments'));
+var rep=el('button','vote-btn',null);rep.type='button';rep.textContent='Report';
+rep.setAttribute('aria-label','Report '+idea.title);
+rep.addEventListener('click',function(){report('idea',idea.id);});
+row.appendChild(rep);
+d.appendChild(row);
+box.appendChild(d);
+});
+}
+async function vote(id,btn){
+btn.disabled=true;
+try{var r=await post('/api/bip/ideas/'+encodeURIComponent(id)+'/vote',{});await refreshIdeas();}
+catch(e){announce('ideaMsg',e.message,false);}
+btn.disabled=false;
+}
+async function report(kind,targetId){
+var reason=window.prompt('Report this '+kind+' — what is wrong with it?','');
+if(reason==null)return;
+try{await post('/api/bip/reports',{kind:kind,targetId:targetId,reason:reason});window.alert('Thanks — a maintainer will review it.');}
+catch(e){window.alert(e.message);}
+}
+function renderChat(list){
+var box=$('chatList');box.textContent='';
+if(!list.length){box.appendChild(el('li','sub','No messages yet — say hello.'));return;}
+list.forEach(function(m){
+var li=el('li','chat-item');
+var head=el('div',null,null);
+head.appendChild(el('span','who',m.nickname||'Visitor'));
+head.appendChild(el('span','when',fmtTime(m.at)));
+li.appendChild(head);
+li.appendChild(el('div',null,m.text));
+var row=el('div','vrow');
+var rep=el('button','vote-btn',null);rep.type='button';rep.textContent='Report';
+rep.setAttribute('aria-label','Report message from '+(m.nickname||'Visitor'));
+rep.addEventListener('click',function(){report('chat',m.id);});
+row.appendChild(rep);li.appendChild(row);
+box.appendChild(li);
+});
+box.scrollTop=box.scrollHeight;
+}
+
+function renderLaunch(L){
+state.launch=L;
+if(L.hasConfirmedDate){
+$('launchState').textContent='Confirmed launch — counting down';
+$('launchKind').textContent='Confirmed date'+(L.note?(' · '+L.note):'')+' · readiness '+L.readinessPercent+'% ('+L.readiness+')';
+$('countCells').hidden=false;startCountdown(new Date(L.confirmed).getTime());
+}else if(L.estimated){
+$('launchState').textContent='Estimated launch — not a promise';
+$('launchKind').textContent='Estimate'+(L.note?(' · '+L.note):'')+' · readiness '+L.readinessPercent+'% ('+L.readiness+') · ordinary commits never move this date';
+$('countCells').hidden=false;startCountdown(new Date(L.estimated).getTime());
+}else{
+$('launchState').textContent='Launch date not set — readiness '+L.readinessPercent+'% ('+L.readiness+')';
+$('launchNote').textContent=L.note||'The date appears here only when maintainers confirm it.';
+$('launchKind').textContent='Track readiness above; the countdown starts when a real date lands.';
+$('countCells').hidden=true;stopCountdown();
+}
+}
+function startCountdown(target){
+stopCountdown();
+function tick(){
+var ms=target-Date.now();if(ms<0)ms=0;
+var s=Math.floor(ms/1000);
+$('cdD').textContent=String(Math.floor(s/86400));
+$('cdH').textContent=String(Math.floor(s%86400/3600)).padStart(2,'0');
+$('cdM').textContent=String(Math.floor(s%3600/60)).padStart(2,'0');
+$('cdS').textContent=String(s%60).padStart(2,'0');
+}
+tick();state.timer=setInterval(tick,1000);
+}
+function stopCountdown(){if(state.timer){clearInterval(state.timer);state.timer=null;}}
+function announce(id,msg,ok){var n=$(id);n.textContent=msg;n.className='fmsg '+(ok?'ok':'err');}
+
+async function refreshAll(){
+try{
+var s=await get('/api/bip/summary');
+renderProgress({progress:s.progress,milestones:s.milestones});
+renderRoadmap(s.roadmap||[]);
+renderStatus(s.status||{});
+renderActivity(s.recentActivity||[],s.integration);
+renderIdeas(s.ideas||[]);
+renderLaunch(s.launch);
+$('statIdeas').textContent=String((s.counts&&s.counts.ideas)||0);
+$('statWait').textContent=String((s.counts&&s.counts.waitlist)||0);
+$('waitCount').textContent=String((s.counts&&s.counts.waitlist)||0);
+}catch(e){
+$('phaseLabel').textContent='Could not load build status — is the server running?';
+}
+try{var c=await get('/api/bip/chat?limit=30');renderChat(c.messages||[]);}catch(e){}
+}
+async function refreshIdeas(){try{var r=await get('/api/bip/ideas?sort=top');renderIdeas(r.ideas||[]);}catch(e){}}
+function connectStream(){
+try{
+var es=new EventSource('/api/bip/stream');
+es.onmessage=function(ev){
+try{
+var p=JSON.parse(ev.data);
+if(p.kind==='chat')refreshChatOnly();
+else if(p.kind==='idea'||p.kind==='vote')refreshIdeas();
+else if(p.kind==='dev-event'||p.kind==='launch')refreshAll();
+}catch(e){}
+};
+es.onerror=function(){try{es.close();}catch(e){}setTimeout(connectStream,15000);};
+}catch(e){}
+}
+async function refreshChatOnly(){try{var c=await get('/api/bip/chat?limit=30');renderChat(c.messages||[]);}catch(e){}}
+function wireForms(){
+$('ideaForm').addEventListener('submit',async function(e){
+e.preventDefault();var b=$('ideaBtn');b.disabled=true;announce('ideaMsg','',true);
+try{
+await post('/api/bip/ideas',{title:$('ideaTitle').value,description:$('ideaDesc').value});
+$('ideaTitle').value='';$('ideaDesc').value='';
+announce('ideaMsg','Idea submitted — thank you!',true);await refreshIdeas();
+}catch(err){announce('ideaMsg',err.message,false);}
+b.disabled=false;
+});
+$('chatForm').addEventListener('submit',async function(e){
+e.preventDefault();var b=$('chatBtn');b.disabled=true;announce('chatMsg','',true);
+try{
+await post('/api/bip/chat',{nickname:$('chatNick').value,text:$('chatText').value});
+$('chatText').value='';await refreshChatOnly();
+}catch(err){announce('chatMsg',err.message,false);}
+b.disabled=false;
+});
+$('waitForm').addEventListener('submit',async function(e){
+e.preventDefault();var b=$('waitBtn');b.disabled=true;announce('waitMsg','',true);
+try{
+var r=await post('/api/bip/waitlist',{email:$('waitEmail').value,nickname:$('waitNick').value,consent:$('waitConsent').checked});
+announce('waitMsg',r.duplicate?('You are already on the list — position #'+r.position+'.'):('You are in! Position #'+r.position+'.'),true);
+$('waitEmail').value='';
+await refreshAll();
+}catch(err){announce('waitMsg',err.message,false);}
+b.disabled=false;
+});
+}
+refreshAll();wireForms();connectStream();
+})();
+</script>
+</body>
+</html>

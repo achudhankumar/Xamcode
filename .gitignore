@@ -9,3 +9,23 @@ __pycache__/
 dbg-outline-raw.txt 
 dbg-outline.json 
 dbg-c.txt 
+# ---------- generated at runtime: never commit ----------
+.env
+.billing.json
+.xamcode-quota*.json
+bip-data/
+bip-data-smoke*/
+.image-cache/
+.training/
+*.log
+*.err
+*.out
+server*.log
+srv*.log
+run*.log
+bip-*.tmp.js
+bip-js-check.tmp.js
+.bip-js-check.js
+tmp-check.js
+server_backup.txt
+xamcode.diff

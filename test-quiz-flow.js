@@ -71,7 +71,7 @@ for(const f of dataFiles){
 
 /* Expose internals: append an export just inside the closing IIFE. */
 let src=fs.readFileSync(path.join(ROOT,'js','app.js'),'utf8');
-const marker='\n})();\n';
+const marker='\r\n})();\r\n';
 const at=src.lastIndexOf(marker);
 if(at<0){ console.error('FAIL: IIFE tail marker not found'); process.exit(1); }
 src=src.slice(0,at)+'\nwindow.__T={quizFlow,quizResults,qCard,studyView,resetQuizFlow,render,state,TOPICS};\n'+src.slice(at);

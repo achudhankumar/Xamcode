@@ -74,7 +74,7 @@ for(const f of dataFiles){
   vm.runInContext(fs.readFileSync(path.join(ROOT,'js',f),'utf8'),sandbox,{filename:f});
 }
 let src=fs.readFileSync(path.join(ROOT,'js','app.js'),'utf8');
-const marker='\n})();\n';
+const marker='\r\n})();\r\n';
 const at=src.lastIndexOf(marker);
 if(at<0){ console.error('FAIL: IIFE tail marker not found'); process.exit(1); }
 src=src.slice(0,at)+'\nwindow.__T={workspaceViewInner,aiStudyView,state,xcToast,setLibraryCache:v=>{libraryCache=v}};\n'+src.slice(at);

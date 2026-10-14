@@ -2,7 +2,7 @@
    LIBRARY — hybrid PDF + output storage (IndexedDB now, server later)
    Auth today is browser-localStorage only (js/auth.js), so there is
    no server account to bill against. IndexedDB holds payloads
-   (study JSON + MiniMax image URLs + PDF metadata). localStorage
+   (study JSON + SVG image data-URIs + PDF metadata). localStorage
    holds only the trial clock (xc-trial-start) and the outbound sync
    queue (xc-library-sync). TRIAL: 30 days from first study save.
    purgeExpired() deletes studies when expired AND not renewed.

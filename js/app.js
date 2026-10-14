@@ -76,7 +76,7 @@ aiQuizVisualStep: 0,
   aiFlashFlipped: false,
   aiMessages: [],
   aiChatBusy: false,
-  /* Per-topic 2D images (MiniMax image-01, one per concept). The job id that
+  /* Per-topic 2D images (local SVG engine, one per concept). The job id that
      produced the finished study is kept so POST /api/topic-images can bind
      image requests to it — no new PDF is consumed, so the 5-PDF daily
      allowance stays the single gate. Motion stays in the animated SVG layer;
@@ -331,6 +331,10 @@ function landingView(){
         </div>
       </div>
     </section>
+    <div class="bq-marquee" aria-hidden="true">
+      <div class="bq-marquee-track"><span class="bq-marquee-item"><i>✳</i> Visual learning steps</span><span class="bq-marquee-item"><i>✳</i> Active recall</span><span class="bq-marquee-item"><i>✳</i> Grounded AI tutor</span><span class="bq-marquee-item"><i>✳</i> Practice questions</span><span class="bq-marquee-item"><i>✳</i> Flashcards</span><span class="bq-marquee-item"><i>✳</i> <em>Any subject, your PDF</em></span></div>
+      <div class="bq-marquee-track"><span class="bq-marquee-item"><i>✳</i> Visual learning steps</span><span class="bq-marquee-item"><i>✳</i> Active recall</span><span class="bq-marquee-item"><i>✳</i> Grounded AI tutor</span><span class="bq-marquee-item"><i>✳</i> Practice questions</span><span class="bq-marquee-item"><i>✳</i> Flashcards</span><span class="bq-marquee-item"><i>✳</i> <em>Any subject, your PDF</em></span></div>
+    </div>
     <section class="sec feature-section">
       <div class="section-heading"><div><span class="section-kicker">MADE TO MAKE IT CLICK</span><h2>From your document<br><span>to real understanding.</span></h2></div><p class="sub">Your material becomes clear concepts, visual learning steps, practice, and revision—whatever the subject.</p></div>
       <div class="grid-3">
@@ -385,6 +389,16 @@ async function refreshLibrary(){
   if(state.view==='library') render();
 }
 
+function wsConceptDone(idx){
+  const c = TOPICS[idx];
+  if(!c || !c.questions.length) return false;
+  return c.questions.every((q,qi)=>state.answers[`${idx}-${qi}`]===q.a);
+}
+function wsUnitProgress(list){
+  const done = list.filter(t=>wsConceptDone(t._idx)).length;
+  const unitQ = list.reduce((s,t)=>s+t.questions.length,0);
+  return { done, unitQ };
+}
 function workspaceViewInner(){
   const units = {};
   TOPICS.forEach((t, i) => {
@@ -426,10 +440,10 @@ function workspaceViewInner(){
           <div class="tree-item">
             <button type="button" class="tree-btn ${collapsed?'':'active'}" data-toggle-unit="${u}" aria-expanded="${!collapsed}" aria-controls="tree-unit-${u}">
               <span class="caret">${collapsed?'▸':'▾'}</span>
-              <span>${unitLabels[u]}</span>
+              <span>${unitLabels[u]||('UNIT '+u)}</span>
             </button>
             <div class="tree-sub" id="tree-unit-${u}" ${collapsed?'style="display:none"':''}>
-              ${units[u].map(t => `<button class="tree-sub-btn" data-study="${t._idx}">${t.title}</button>`).join('')}
+              ${units[u].map(t => { const done = wsConceptDone(t._idx); return `<button class="tree-sub-btn${done?' done':''}" data-study="${t._idx}">${done?'✓ ':''}${t.title}</button>`; }).join('')}
             </div>
           </div>`;
         }).join('')}
@@ -438,17 +452,18 @@ function workspaceViewInner(){
       <div class="ws-cards">
         ${Object.keys(units).map(u => {
           const collapsed = isCollapsed(u);
+          const prog = wsUnitProgress(units[u]);
           return `
           <div class="unit-block" style="margin-bottom:28px">
             <h2 class="unit-heading">
               <button type="button" class="unit-heading-toggle" data-toggle-unit="${u}" aria-expanded="${!collapsed}" aria-controls="cards-unit-${u}">
                 <span class="unit-chev" aria-hidden="true">${collapsed?'▸':'▾'}</span>
-                <span>${unitLabels[u]}</span>
-                <span class="unit-count">${units[u].length} topics · ${units[u].length} concepts</span>
+                <span>${unitLabels[u]||('UNIT '+u)}</span>
+                <span class="unit-count">${units[u].length} topics · ${units[u].length} concepts · ${prog.unitQ} Q · ${prog.done}/${units[u].length} done</span>
               </button>
             </h2>
             <div class="unit-grid" id="cards-unit-${u}" ${collapsed?'style="display:none"':''}>
-              ${units[u].map(t => `<button class="concept-card" data-study="${t._idx}"><div class="cc-head"><span>${t.topic.toUpperCase()}</span><span>${t.visId}</span></div><div class="cc-title">${t.title}</div><div class="cc-foot"><span>🎬 Visual</span><span>❓ ${t.questions.length} Q</span></div></button>`).join('')}
+              ${units[u].map(t => { const done = wsConceptDone(t._idx); return `<button class="concept-card${done?' done':''}" data-study="${t._idx}" aria-label="${t.title}${done?' — completed':''}"><div class="cc-head"><span>${t.topic.toUpperCase()}</span><span>${t.visId}</span></div><div class="cc-title">${done?'✓ ':''}${t.title}</div><div class="cc-foot"><span>🎬 Visual</span><span>❓ ${t.questions.length} Q</span></div></button>`; }).join('')}
             </div>
           </div>`;
         }).join('')}
@@ -915,7 +930,7 @@ function aiDiagramSvg(step,conceptIndex,stepIndex,conceptTitle){
 }
 
 /* VISUAL RECOMMENDATION — tells the learner which visual explains this
-   question best (diagram scene vs MiniMax still), so the quiz never feels
+   question best (diagram scene vs generated still), so the quiz never feels
    imageless even before an answer is picked. */
 function aiVisualRecommendation(question){
   const v = question && question.visual;
@@ -1223,7 +1238,15 @@ function aiStudyView(){
     content=`<div class="ai-breadcrumbs">${aiStudyPageButton('plan',escapeHtml(study.title))}<span>/</span><span>Flashcards</span></div><section class="ai-page-hero"><div class="panel-tag">ACTIVE RECALL · ${cards.length} CARDS</div><h1>Review the key ideas.</h1><p>Try to recall the answer before revealing the back of each card.</p></section><section class="ai-flashcard-page" aria-label="AI-generated flashcards"><button type="button" class="ai-flashcard" data-ai-flip aria-label="${state.aiFlashFlipped?'Show question':'Reveal answer'}"><small>${state.aiFlashFlipped?'ANSWER':'QUESTION'} · ${index+1} / ${cards.length}</small><p>${escapeHtml(state.aiFlashFlipped?card.back:card.front)}</p></button><div class="ai-flashcard-actions"><button type="button" data-ai-flash="prev" aria-label="Previous flashcard">← Previous</button><button type="button" data-ai-flip>${state.aiFlashFlipped?'Show question':'Reveal answer'}</button><button type="button" data-ai-flash="next" aria-label="Next flashcard">Next →</button></div></section>`;
   }else if(page.type==='ask'){
     pageTitle='Ask XAMCODE AI';
-    content=`<div class="ai-breadcrumbs">${aiStudyPageButton('plan',escapeHtml(study.title))}<span>/</span><span>Ask XAMCODE AI</span></div><section class="ai-page-hero"><div class="panel-tag">YOUR DOCUMENT, YOUR TUTOR</div><h1>What would you like to understand?</h1><p>Ask a follow-up question about ${escapeHtml(study.title)}. Answers use your generated study pack as context.</p></section><section class="ai-chat-panel" aria-label="Ask questions about your PDF"><div class="ai-chat-messages" id="aiChatMessages" aria-live="polite">${state.aiMessages.length?state.aiMessages.map(message=>`<article class="ai-chat-message" data-role="${message.role}"><small>${message.role==='user'?'YOU':'XAMCODE AI'}</small>${escapeHtml(message.text)}</article>`).join(''):'<div class="ai-empty-state">Ask about a concept, request another explanation, or check your understanding.</div>'}${state.aiChatBusy?'<div class="ai-chat-message" role="status"><small>XAMCODE AI</small>Thinking about your study…</div>':''}</div><form class="ai-chat-form" id="aiChatForm"><input name="question" type="text" maxlength="1200" placeholder="Ask a question about this PDF…" aria-label="Ask a question about this PDF" required ${state.aiChatBusy?'disabled':''}><button type="submit" ${state.aiChatBusy?'disabled':''}>Ask</button></form><div class="ai-study-notice">If the PDF does not provide enough detail, XAMCODE AI will say so.</div></section>`;
+    content=`<div class="ai-breadcrumbs">${aiStudyPageButton('plan',escapeHtml(study.title))}<span>/</span><span>Ask XAMCODE AI</span></div><section class="ai-page-hero"><div class="panel-tag">YOUR DOCUMENT, YOUR TUTOR</div><h1>What would you like to understand?</h1><p>Ask a follow-up question about ${escapeHtml(study.title)}. Answers use your generated study pack as context.</p></section><section class="ai-chat-panel" aria-label="Ask questions about your PDF">        <div class="ai-chat-messages" id="aiChatMessages" aria-live="polite">${state.aiMessages.length?state.aiMessages.map(message=>{
+          const diagram=
+            (message.diagram &&
+              `<div class="ai-chat-visual" data-diagram-text="${escapeHtml(String(message.diagram).slice(0,400))}"></div>`)
+            || (message.visual_type && window.XC && (window.XC.auraVisuals||window.XC).VISUALS && message.visual_type in (window.XC&&(window.XC.auraVisuals||window.XC).VISUALS)
+              ? `<div class="ai-chat-visual" data-visual-type="${escapeHtml(String(message.visual_type))}" data-visual-params="${escapeHtml(JSON.stringify(message.params||{}))}" data-visual-caption="${escapeHtml(String(message.svg_instruction||''))}"></div>`
+              : '');
+          return `<article class="ai-chat-message" data-role="${message.role}"><small>${message.role==='user'?'YOU':'XAMCODE AI'}</small><div class="ai-chat-text">${escapeHtml(message.text)}</div>${diagram}</article>`;
+        }).join(''):'<div class="ai-empty-state">Ask about a concept, request another explanation, or check your understanding.</div>'}${state.aiChatBusy?'<div class="ai-chat-message" role="status"><small>XAMCODE AI</small>Thinking about your study…</div>':''}</div><form class="ai-chat-form" id="aiChatForm"><input name="question" type="text" maxlength="1200" placeholder="Ask a question about this PDF…" aria-label="Ask a question about this PDF" required ${state.aiChatBusy?'disabled':''}><button type="submit" ${state.aiChatBusy?'disabled':''}>Ask</button></form><div class="ai-study-notice">If the PDF does not provide enough detail, XAMCODE AI will say so.</div></section>`;
   }else{
     pageTitle='Formulas';
     content=`<div class="ai-breadcrumbs">${aiStudyPageButton('plan',escapeHtml(study.title))}<span>/</span><span>Formulas</span></div><section class="ai-page-hero"><div class="panel-tag">REFERENCE · ${study.formulas.length} ITEMS</div><h1>Formulas from your PDF.</h1><p>Key expressions identified in your document, with a plain-language explanation.</p></section>${study.formulas.length?`<div class="ai-formula-grid">${study.formulas.map(formula=>`<article class="ai-formula-card ai-detail-card"><h3>${escapeHtml(formula.name)}</h3><code>${escapeHtml(formula.expression)}</code><p>${escapeHtml(formula.meaning)}</p></article>`).join('')}</div>`:'<section class="ai-detail-card"><p>No formulas were identified in this document.</p></section>'}`;
@@ -2733,7 +2756,7 @@ async function pollAnalyzeJob(jobId,onStage){
    same job at a calm interval, merges each newly finished unit into
    the open study (append-only indices, so the page you are on and
    your quiz answers stay valid), persists the updated study to the
-   library, fires the MiniMax stills for the new lessons and toasts
+   library, fires the topic stills for the new lessons and toasts
    the unlock. It stops when every unit is ready or the server no
    longer knows the job.
    ============================================================ */
@@ -2772,7 +2795,7 @@ async function applyChunkUnlock(study){
     xcToast(`Unit ${last.index+1} is ready — ${last.lessons} new lesson${last.lessons===1?'':'s'} unlocked.`);
   }
   if(state.view==='ai-study') render();
-  /* New lessons need their MiniMax stills; this skips anything already
+  /* New lessons need their stills; this skips anything already
      generated, so only the fresh concepts are requested. */
   autoGenerateTopicImages();
 }
@@ -2809,7 +2832,7 @@ async function startChunkWatch(jobId){
 /* ============================================================
    PER-TOPIC 2D IMAGES
    ------------------------------------------------------------
-   One MiniMax image-01 still per lesson topic, bound to the finished
+   One SVG still per lesson topic, bound to the finished
    analyze job — generating images consumes no new PDF allowance.
    The response carries the prompt used, so the result can be verified
    against the topic's own diagram nodes and workshop formulas.
@@ -2837,10 +2860,10 @@ async function requestTopicImage(conceptIndex){
     render();
   }
 }
-/* AUTO topic images — after a study lands, fire one MiniMax still per
-   lesson automatically (sequentially, so no quota stampede). A failure
+/* AUTO topic images — after a study lands, fire one SVG still per
+   lesson automatically (sequentially, so no resource stampede). A failure
    for one topic never blocks the rest; the empty slot's button remains
-   for a manual retry. Skips silently when MiniMax is not configured. */
+   for a manual retry. */
 async function autoGenerateTopicImages(){
   if(!state.aiJobId||!state.aiStudy||!Array.isArray(state.aiStudy.concepts)) return;
   for(let i=0;i<state.aiStudy.concepts.length;i++){
@@ -2848,9 +2871,32 @@ async function autoGenerateTopicImages(){
     await requestTopicImage(i);
   }
 }
+function promptLooksDegenerate(prompt){
+  if(!prompt) return true;
+  const s=String(prompt).trim();
+  /* Empty or tiny prompts are the clearest sign the provider refused / the
+     topic fell through; the still is worth regenerating with a sharper
+     lesson-grounded prompt rather than showing the broken image forever. */
+  if(s.length<25) return true;
+  /* A long run of generic connector/fallback words with no real topic nouns is
+     a weak prompt even when it is technically nonempty. */
+  const weak=/(?:image|illustration|topic|concept|visual|picture|drawing|generated)/i.test(s);
+  const nouns=s.match(/[A-Za-z][A-Za-z\-']*(?:[\s]+[A-Za-z][A-Za-z\-']*){0,2}/g);
+  const realNouns=(nouns||[]).filter(t=>!/^(with|for|about|showing|incorporating|and|the|of|set|in|to|or|by|an|a)$/i.test(t.trim())).length;
+  if(weak && realNouns<2) return true;
+  return false;
+}
+
 function topicImageSlot(conceptIndex){
   const entry=state.aiTopicImages[conceptIndex];
-  if(entry?.imageUrl) return `<figure class="ai-topic-image"><img src="${escapeHtml(entry.imageUrl)}" alt="2D illustration for ${escapeHtml(state.aiStudy.concepts[conceptIndex].title)}" loading="lazy"><figcaption><span>2D TOPIC IMAGE · MINIMAX</span><button type="button" data-ai-topic-image="${conceptIndex}">↻ Regenerate</button></figcaption></figure>`;
+  if(entry?.imageUrl) {
+    /* Quality gate: the SVG lane is deterministic, but a degenerate stored
+       prompt (from an older build or a truncated entry) still means a vague
+       still. Flag it so the user can regenerate a lesson-grounded header
+       image instead of staring at a broken one. */
+    const flagged=promptLooksDegenerate(entry.prompt);
+    return `<figure class="ai-topic-image${flagged?' ai-topic-image-questionable':''}"><img src="${escapeHtml(entry.imageUrl)}" alt="2D illustration for ${escapeHtml(state.aiStudy.concepts[conceptIndex].title)}" loading="lazy"><figcaption><span>${flagged?'2D TOPIC IMAGE · NEEDS REGENERATION':'2D TOPIC IMAGE · SVG'}</span><button type="button" data-ai-topic-image="${conceptIndex}">↻ Regenerate</button></figcaption></figure>`;
+  }
   if(entry?.error) return `<div class="ai-topic-image ai-topic-image-error" role="status"><p>${escapeHtml(entry.error)}</p><button type="button" data-ai-topic-image="${conceptIndex}">Try again</button></div>`;
   const busy=!!state.aiTopicImageBusy[conceptIndex];
   return `<div class="ai-topic-image ai-topic-image-empty"><p>Generate a 2D illustration for this topic from your PDF.</p><button type="button" data-ai-topic-image="${conceptIndex}" ${busy?'disabled':''}>${busy?'Generating…':'🖼 Generate topic image'}</button></div>`;
@@ -3546,7 +3592,7 @@ pdfUploadForm?.addEventListener('submit',async event=>{
         images: {}, pdfMeta: { name: file.name, size: file.size }
       });
     }catch(e){ console.warn('Library save failed; study still usable.', e); }
-    /* Crash Lesson images should exist without a click: fire the MiniMax
+    /* Crash Lesson images should exist without a click: fire the SVG
        stills in the background once the study is on screen. */
     autoGenerateTopicImages();
     /* Chunked builds keep working after the study opens: Units 2..N
@@ -3585,17 +3631,29 @@ document.addEventListener('submit',async event=>{
       formulas:state.aiStudy.formulas,
       conversation:state.aiMessages.slice(-8)
     };
+    /* Ask for a structured answer that carries a diagram recipe, so the
+       ai-study chat panel can render a real chart beside the explanation when
+       the topic fits. Falls back to the same plain text path either way. */
     const response=await fetch('/api/ask',{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({question,context})
+      headers:{'Content-Type':'application/json'},      body:JSON.stringify({question,context,structured:true, // accept the chart-bearing answer shape from server.js handleAsk
+      contextTitle: state.aiStudy && state.aiStudy.title ? state.aiStudy.title : '',
+      contextSummary: state.aiStudy && state.aiStudy.summary ? state.aiStudy.summary.slice(0,120) : '',
+      contextConcepts: state.aiStudy && state.aiStudy.concepts ? state.aiStudy.concepts.map(c=>({title:c.title, summary:c.summary})).slice(0,6) : []})
     });
     const result=await response.json().catch(()=>null);
     if(!response.ok) throw new Error(result?.error||'XAMCODE AI could not answer. Please try again.');
     if(typeof result?.answer!=='string'||!result.answer.trim()){
       throw new Error('XAMCODE AI returned an empty answer. Please try again.');
     }
-    state.aiMessages.push({role:'assistant',text:result.answer});
+    state.aiMessages.push({
+      role:'assistant',
+      text:result.answer,
+      diagram:result.diagram||null,
+      visual_type:result.visual_type||null,
+      params:result.params&&typeof result.params==='object'?result.params:{},
+      svg_instruction:result.svg_instruction||''
+    });
   }catch(error){
     state.aiMessages.push({role:'assistant',text:error.message||'XAMCODE AI could not answer. Please try again.'});
   }finally{

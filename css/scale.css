@@ -1,0 +1,44 @@
+/* ============================================================
+   SCALE — global size bump (loaded LAST, wins the cascade)
+   ------------------------------------------------------------
+   The whole design is px-based (no rem), so the reliable way to
+   make the UI read bigger without touching 200+ component rules
+   is to nudge the primary readable text + controls up a notch.
+   Fixed overlays (intro, modals, aura, auth) are intentionally
+   left at their own sizes so they never overflow the viewport.
+   ============================================================ */
+
+/* 1 · Bump the root so any em/%-based copy inherits a larger base. */
+html{font-size:17px}
+
+/* 2 · Primary body copy + shared text — the main "too small" offenders. */
+body{font-size:16px}
+p,.sub,.hero-copy p,.ws-body,.ai-step-note,.ai-worked-answer,
+.lesson-body,.concept-explanation,.q-explanation,.explain-body{font-size:15px}
+
+/* 3 · Secondary / meta text 12-13px -> 14px (readable, not loud). */
+.panel-tag,.section-kicker,.hero-kicker,.badge,.study-title,
+.stats small,.feature-index,.unit-label,.breadcrumb,
+.cheatcode-label,.ai-section-head .panel-tag,.formula-meta{font-size:12px}
+
+/* 4 · Card + option + button text. */
+#app .card h3,.card h3,.opt,.ai-answer-option,.btn-hero,.btn-hero-outline,
+.btn-primary,.btn-ghost,.nav-item,.back-btn,.q-option,.pill{font-size:15px}
+
+/* 5 · Headings step up so hierarchy still reads after the body bump. */
+h1{font-size:40px}
+h2{font-size:30px}
+h3{font-size:19px}
+.brand{font-size:18px}
+
+/* 6 · Code blocks + monospace — a touch larger for legibility. */
+pre,code,.code-block,.ai-code,.mono,.formula-math,.ai-step-math{font-size:14px}
+
+/* 7 · Quiz question text. */
+.q-question,.ai-question-card h3,.question-text{font-size:17px}
+
+/* 8 · Tiny 10-11px labels -> 12px so nothing is unreadably small. */
+.small,.micro,.hint,.fc-hint,.caption,.source-ref,.pdf-ref{font-size:12px}
+
+/* Keep the light-mode text crisp now that sizes grew. */
+body[data-mode="light"]{color:var(--text)}

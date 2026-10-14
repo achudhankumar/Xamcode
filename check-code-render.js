@@ -52,5 +52,16 @@ const long = {
 };
 ok(!aiDiagramSvg(long, 3, 0, 'Long').includes('y'.repeat(81)), 'long code truncated at 80');
 
+/* Cinematic SVG-first: every diagram carries travelling flow packets on
+   its edges (pure motion, aria-hidden), so lessons read as scenes. */
+ok(svg.includes('ai-svg-motion'), 'flow packet layer is emitted');
+ok(svg.includes('animateMotion'), 'packets ride the edge paths via SMIL');
+ok(svg.includes('aria-hidden="true"'), 'motion layer carries no information');
+const empty = {
+  title: 'T', description: 'd', layout: 'flow',
+  nodes: [{ label: 'A', detail: 'd' }]
+};
+ok(!aiDiagramSvg(empty, 4, 0, 'Solo').includes('animateMotion'), 'a single node has no edges to animate');
+
 console.log(fail === 0 ? '*** CODE RENDER PASS ***' : '*** CODE RENDER FAIL ***');
 process.exit(fail === 0 ? 0 : 1);

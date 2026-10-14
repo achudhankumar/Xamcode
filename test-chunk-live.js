@@ -5,9 +5,9 @@
    the user's large PDF through the Unit-1-first path: first delivery
    must be chunked (Unit 1 ready, rest locked), the background queue
    must unlock everything, the browser validator must accept the pack
-   at delivery and at the end, and one MiniMax topic image must come
-   back. Uses a scratch quota file so the real daily allowance and
-   MiniMax credits are spent only on the image call.
+   at delivery and at the end, and one local-SVG topic image must come
+   back as an inline data URI. Uses a scratch quota file so the real
+   daily allowance is untouched and no API credits are spent at all.
    Run: node test-chunk-live.js
    ============================================================ */
 'use strict';
@@ -120,16 +120,16 @@ function clientValidate(study){
       last.study.questions.length+' questions, '+last.study.flashcards.length+' flashcards');
   }
 
-  /* Phase 3: one real MiniMax still against the finished job. */
+  /* Phase 3: one real still through the local SVG engine (no credits). */
   if(last&&last.status==='done'){
-    console.log('\ngenerating one topic image through MiniMax…');
+    console.log('\ngenerating one topic image through the local SVG engine…');
     try{
       const img=await(await fetch(BASE+'/api/topic-images',{method:'POST',
         headers:{'Content-Type':'application/json'},
         body:JSON.stringify({jobId:body.jobId,topics:[0]})})).json();
       const first0=(img.images||[])[0];
-      ok(!!(first0&&first0.imageUrl),'MiniMax returned a real image URL');
-      if(first0&&first0.imageUrl) console.log('  image: '+first0.imageUrl.slice(0,90)+'…');
+      ok(!!(first0&&first0.imageUrl&&String(first0.imageUrl).startsWith('data:image/svg+xml')),'the SVG engine returned an inline image data URI');
+      if(first0&&first0.imageUrl) console.log('  image: '+String(first0.imageUrl).slice(0,60)+'… ('+(first0.imageBytes?Math.round(first0.imageBytes.length/1024)+' KB':'inline')+' SVG, zero cost)');
       if(first0&&first0.error) console.log('  image error: '+first0.error);
     }catch(e){ ok(false,'image request failed: '+e.message); }
   }

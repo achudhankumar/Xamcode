@@ -4,6 +4,11 @@ const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
+const zlib = require('node:zlib');
+/* Build-in-Public platform (Phase 2+): isolated module, mounted below.
+   Lazy-loaded so the study app boots identically even if bip/ is absent. */
+let bipRoutes = null;
+try{ bipRoutes = require('./bip/routes'); }catch{ bipRoutes = null; }
 (function loadDotEnv(){
   try{
     const raw = fs.readFileSync(path.join(__dirname, '.env'), 'utf8');
@@ -102,18 +107,45 @@ function geminiModelList(){
   if (hasKey(process.env.GEMINI_MODEL)) return [process.env.GEMINI_MODEL.trim()];
   return ['gemini-3.8-flash'];
 }
+/* Every configured Gemini key, in walk order. One key = one daily
+   free-tier bucket, so rotation walks keys first, then models.
+   Sources: the primary GEMINI_API_KEY, the comma-separated
+   GEMINI_API_KEYS list, and the numbered GEMINI_API_KEY_2..9 slots.
+   Blanks are dropped and duplicates collapse (first occurrence wins). */
+function geminiKeys(){
+  const out = [];
+  const add = v => { const t = String(v || '').trim(); if (t) out.push(t); };
+  add(process.env.GEMINI_API_KEY);
+  for (const part of String(process.env.GEMINI_API_KEYS || '').split(',')) add(part);
+  for (let i = 2; i <= 9; i++) add(process.env['GEMINI_API_KEY_' + i]);
+  return Array.from(new Set(out));
+}
+/* OpenAI is billed real money, so it is a paid last resort: enabled only
+   when BOTH the ENABLE_OPENAI_FAILOVER switch and OPENAI_API_KEY are set.
+   It is never the default path — Gemini and the free gateway lead. */
+function openaiEnabled(){
+  const sw = String(process.env.ENABLE_OPENAI_FAILOVER || '').trim().toLowerCase();
+  const on = sw && sw !== '0' && sw !== 'false' && sw !== 'off' && sw !== 'no';
+  return !!on && hasKey(process.env.OPENAI_API_KEY);
+}
 function configuredProviders(opts){
   const needDocs = !!(opts && opts.requireDocuments);
-  return PROVIDERS.filter(p => {
+  const list = PROVIDERS.slice();
+  if (openaiEnabled()) list.push({ id: 'openai', documents: true });
+  return list.filter(p => {
     if (needDocs && !p.documents) return false;
-    if (p.id === 'gemini') return hasKey(process.env.GEMINI_API_KEY);
+    if (p.id === 'gemini') return geminiKeys().length > 0;
+    if (p.id === 'openai') return true; /* already gated by openaiEnabled() */
     const compat = OPENAI_COMPATIBLE[p.id];
     return compat && hasKey(compat.key());
   });
 }
 function providerStatus(){
-  return PROVIDERS.map(p => {
-    const configured = p.id === 'gemini' ? hasKey(process.env.GEMINI_API_KEY)
+  const list = PROVIDERS.slice();
+  if (openaiEnabled()) list.push({ id: 'openai', documents: true });
+  return list.map(p => {
+    const configured = p.id === 'gemini' ? geminiKeys().length > 0
+      : p.id === 'openai' ? true
       : hasKey(OPENAI_COMPATIBLE[p.id].key());
     return { id: p.id, documents: p.documents, configured };
   });
@@ -155,7 +187,7 @@ function quotaSnapshot(){
   });
   const usableModels = models.filter(m => m.status !== 'exhausted').length;
   return {
-    totalModels: models.length, usableModels, models,
+    keys: geminiKeys().length, totalModels: models.length, usableModels, models,
     resetsAt: 'midnight Pacific',
     note: 'Google does not publish a remaining-request count for API keys; this reports only observed per-model state.'
   };
@@ -190,8 +222,8 @@ function geminiError(status, body){
 }
 /* One Gemini slug: 3 in-place retries on 503/network.
    429/404 abandon the slug immediately (rotate, do not retry). */
-async function callGeminiOnce(parts, opts, slug){
-  const key = process.env.GEMINI_API_KEY;
+async function callGeminiOnce(parts, opts, slug, key){
+  if (key === undefined) key = geminiKeys()[0] || '';
   const sys = opts && opts.systemInstruction;
   /* opts.fileUri: the PDF was uploaded through the Gemini Files API (too
      large for inlineData), so the document part references the stored file
@@ -244,12 +276,18 @@ async function callGeminiOnce(parts, opts, slug){
   }
 }
 async function callGemini(parts, opts){
-  if (!hasKey(process.env.GEMINI_API_KEY)) throw mkErr(503, 'AI is not configured.', { code: 'AI_NOT_CONFIGURED' });
+  const keys = geminiKeys();
+  if (!keys.length) throw mkErr(503, 'AI is not configured.', { code: 'AI_NOT_CONFIGURED' });
   const slugs = geminiModelList();
   let last = null;
-  for (const slug of slugs){
-    try{ return await callGeminiOnce(parts, opts, slug); }
-    catch(e){ if (e && e.rotate){ last = e; continue; } throw e; }
+  /* One key = one daily bucket. Walk every model on key 1, then every
+     model on key 2, ... so a 429 wall on one key rotates to the next
+     independent key instead of ending the pool. */
+  for (const key of keys){
+    for (const slug of slugs){
+      try{ return await callGeminiOnce(parts, opts, slug, key); }
+      catch(e){ if (e && e.rotate){ last = e; continue; } throw e; }
+    }
   }
   if (last && last.status === 429) throw mkErr(429, 'The free-tier models are out of quota for today. Quota resets at midnight Pacific. Add billing or try again after the reset.');
   throw last || mkErr(503, 'The AI providers are too busy right now.');
@@ -295,6 +333,69 @@ async function callOpenAICompatible(id, parts, opts){
   if (res.status === 400) throw mkErr(422, String(msg));
   throw mkErr(res.status, String(msg));
 }
+/* Extracts the answer text from an OpenAI Responses API body. Prefers the
+   top-level output_text shortcut, then walks output[].content[].text, then
+   falls back to the chat-completions shape. Returns null when nothing
+   usable is found so the caller can surface "empty response" clearly. */
+function openaiTextOf(body){
+  if (!body) return null;
+  if (typeof body.output_text === 'string' && body.output_text) return body.output_text;
+  try{
+    const items = Array.isArray(body.output) ? body.output : [];
+    const parts = [];
+    for (const it of items){
+      if (it && Array.isArray(it.content)){
+        for (const c of it.content){
+          if (c && typeof c.text === 'string' && c.text) parts.push(c.text);
+        }
+      }
+    }
+    if (parts.length) return parts.join('');
+    const ch = body.choices && body.choices[0] && body.choices[0].message && body.choices[0].message.content;
+    if (typeof ch === 'string' && ch) return ch;
+  }catch{}
+  return null;
+}
+/* The billed last resort: OpenAI's Responses API. PDFs ride as an
+   input_file part carrying a data: URI. A 429 carries rotate:true so the
+   dispatcher knows the pool may move on; a 401 is a misconfiguration and
+   never rotates. */
+async function callOpenAI(parts, opts){
+  opts = opts || {};
+  const key = process.env.OPENAI_API_KEY;
+  if (!hasKey(key)) throw mkErr(503, 'AI is not configured.', { code: 'AI_NOT_CONFIGURED' });
+  const model = process.env.OPENAI_MODEL || 'gpt-4o';
+  const sys = opts.systemInstruction;
+  const text = parts.filter(p => p.text !== undefined).map(p => p.text).join('\n\n');
+  const needsDoc = !!opts.requiresDocument;
+  let promptText = text;
+  if (opts.schema && !/valid JSON object/i.test(promptText)){
+    promptText += '\nRespond with a single valid JSON object.';
+  }
+  const content = [{ type: 'input_text', text: promptText }];
+  if (needsDoc){
+    const pdf = parts.find(p => p.inlineData);
+    if (pdf) content.push({ type: 'input_file', file_data: 'data:application/pdf;base64,' + pdf.inlineData.data });
+  }
+  const input = [];
+  if (sys) input.push({ role: 'system', content: [{ type: 'input_text', text: sys }] });
+  input.push({ role: 'user', content });
+  let res;
+  try{ res = await fetchJson('https://api.openai.com/v1/responses', { method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + key },
+    body: JSON.stringify({ model, input }) }, 180000); }
+  catch(e){ throw mkErr(503, 'The AI provider did not respond. Try again shortly.'); }
+  if (res.ok){
+    const out = openaiTextOf(res.body);
+    if (out) return out;
+    throw mkErr(502, 'The AI provider returned an empty response. Please try again.');
+  }
+  const msg = (res.body && res.body.error && (res.body.error.message || res.body.error)) || ('Request failed with HTTP ' + res.status);
+  if (res.status === 401) throw mkErr(401, 'The OPENAI_API_KEY was rejected. (' + msg + ')');
+  if (res.status === 400) throw mkErr(422, String(msg));
+  if (res.status === 429) throw Object.assign(mkErr(429, String(msg)), { rotate: true });
+  throw mkErr(res.status, String(msg));
+}
 /* Dispatcher: text walks every provider, PDFs only document-capable. */
 async function callAI(parts, opts){
   opts = opts || {};
@@ -308,6 +409,7 @@ async function callAI(parts, opts){
   for (const p of candidates){
     try{
       if (p.id === 'gemini') return await callGemini(parts, opts);
+      if (p.id === 'openai') return await callOpenAI(parts, opts);
       return await callOpenAICompatible(p.id, parts, opts);
     }catch(e){
       last = e;
@@ -337,7 +439,7 @@ async function callAI(parts, opts){
    completed — callers fall back to inlineData and surface the provider's
    own error if that also fails. */
 async function uploadPdfToGemini(buf){
-  const key = process.env.GEMINI_API_KEY;
+  const key = geminiKeys()[0] || '';
   if (!hasKey(key)) return null;
   const boundary = 'xamcode-' + crypto.randomBytes(8).toString('hex');
   const meta = JSON.stringify({ file: { display_name: 'xamcode-study.pdf' } });
@@ -872,39 +974,77 @@ function imageCreditExhausted(msg){
 function imageCreditError(msg){
   return mkErr(402, 'The MiniMax image account has no credit left. Top up the MiniMax balance (or set a new MINIMAX_API_KEY in .env), then tap Try again. (' + msg + ')', { code: 'IMAGE_NO_CREDIT' });
 }
+/* ---------- local SVG image lane (the only lane) ----------
+   The paid MiniMax/Pollinations lanes were removed: every still now comes
+   from this deterministic local renderer — instant inline data URI, no key,
+   no network, no cost. IMAGE_PROVIDER is kept in .env for compatibility and
+   ignored (docs/REMAINING-ROADMAP.md); IMAGE_ANIMATE=0 emits inert stills
+   without the <style> block. */
+function imageProvider(){
+  return 'svg';
+}
+function svgEscape(s){
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+/* Deterministic per-prompt preset: the same topic always renders the same
+   art, so the client cache and the tests can rely on it. */
+function svgPresetFor(text){
+  const presets = ['pulse', 'drift', 'rise', 'orbit'];
+  let h = 0;
+  for (let i = 0; i < text.length; i++) h = (h * 31 + text.charCodeAt(i)) >>> 0;
+  return presets[h % presets.length];
+}
+const SVG_STOP = new Set(['flat','educational','illustration','clean','vector','style','about','showing','with','single','clear','focal','composition','high','contrast','suitable','lesson','image','for','the','and','no','text','overlays','people','faces','incorporating','concept','set','scene','spirit','using']);
+function renderTopicSvg(prompt, opts){
+  const words = String(prompt).split(/[^A-Za-z0-9/+-]+/)
+    .filter(w => w.length > 2 && !SVG_STOP.has(w.toLowerCase()))
+    .slice(0, 8);
+  const title = words.slice(0, 3).join(' ') || 'Topic';
+  const preset = svgPresetFor(prompt);
+  const animate = !/^(0|false|off|no)$/i.test(String(process.env.IMAGE_ANIMATE || '').trim());
+  const ratio = (opts && VALID_RATIOS.includes(opts.aspect_ratio)) ? opts.aspect_ratio : '16:9';
+  const dims = { '1:1': [640, 640], '16:9': [800, 450], '4:3': [720, 540], '3:2': [750, 500],
+    '2:3': [500, 750], '3:4': [540, 720], '9:16': [450, 800], '21:9': [900, 386] };
+  const size = dims[ratio] || dims['16:9'];
+  const W = size[0], H = size[1];
+  const nodes = [];
+  const cols = Math.min(4, Math.max(2, words.length));
+  for (let i = 0; i < Math.min(words.length, 8); i++){
+    const cx = Math.round(W * (i + 0.5) / cols);
+    const cy = Math.round(H * (i % 2 === 0 ? 0.38 : 0.66));
+    const r = Math.round(Math.min(W, H) * (i % 2 === 0 ? 0.085 : 0.065));
+    const cls = animate ? ' class="xc-anim xc-a' + (i % 4) + '"' : '';
+    nodes.push('<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="' + (i % 2 ? '#38c7c1' : '#4f8cff') + '" opacity="0.9"' + cls + '/>');
+    nodes.push('<text x="' + cx + '" y="' + (cy + r + 22) + '" text-anchor="middle" font-size="15" fill="#e8ecf8" font-family="system-ui,sans-serif">' + svgEscape(words[i]) + '</text>');
+    if (i > 0){
+      const px = Math.round(W * (i - 0.5) / cols);
+      const py = Math.round(H * ((i - 1) % 2 === 0 ? 0.38 : 0.66));
+      nodes.push('<line x1="' + px + '" y1="' + py + '" x2="' + cx + '" y2="' + cy + '" stroke="#5a6a92" stroke-width="2" stroke-dasharray="6 5"/>');
+    }
+  }
+  const style = animate ? [
+    '<style>',
+    '@keyframes xcPulse{from{opacity:.55;transform:translateY(0)}to{opacity:1;transform:translateY(-8px)}}',
+    '@keyframes xcDrift{from{transform:translateX(-6px)}to{transform:translateX(6px)}}',
+    '.xc-anim{animation:xcPulse 3.2s ease-in-out infinite alternate}',
+    '.xc-a1,.xc-a3{animation:xcDrift 4.1s ease-in-out infinite alternate}',
+    '@media (prefers-reduced-motion: reduce){.xc-anim{animation:none}}',
+    '</style>'
+  ].join('') : '';
+  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + W + ' ' + H + '" data-preset="' + preset + '" role="img" aria-label="' + svgEscape(title) + '">' +
+    style +
+    '<rect width="' + W + '" height="' + H + '" rx="18" fill="#0d1220"/>' +
+    '<text x="' + Math.round(W / 2) + '" y="40" text-anchor="middle" font-size="22" font-weight="600" fill="#e8ecf8" font-family="system-ui,sans-serif">' + svgEscape(title) + '</text>' +
+    nodes.join('') + '</svg>';
+}
 async function generateImage(prompt, opts){
-  /* MiniMax image-01 (T2I) — verified against platform.minimax.io docs.
-     Bearer token auth; body {model:'image-01', prompt<=1500 chars,
-     aspect_ratio, response_format:'url', n:1}. Success returns
-     data.image_urls[] + base_resp.status_code 0. NOTE: url expires in
-     24 hours, so per-topic stills are display-only — the animated SVG
-     diagram is the permanent visual. */
   opts = opts || {};
-  if (!hasKey(minimaxKey())) throw mkErr(503, 'Image generation is not configured. Set MINIMAX_API_KEY in .env.', { code: 'IMAGE_NOT_CONFIGURED' });
   const clean = String(prompt || '').trim().slice(0, 1500);
   if (!clean) throw mkErr(400, 'A prompt is required.');
-  const body = { model: process.env.MINIMAX_IMAGE_MODEL || 'image-01', prompt: clean,
-    aspect_ratio: VALID_RATIOS.includes(opts.aspect_ratio) ? opts.aspect_ratio : '16:9',
-    response_format: 'url', n: 1, prompt_optimizer: true };
-  let res;
-  try{ res = await fetchJson('https://api.minimax.io/v1/image_generation', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + minimaxKey() }, body: JSON.stringify(body) }, 120000); }
-  catch(e){ throw mkErr(503, 'The image provider did not respond. Try again shortly.'); }
-  if (!res.ok){
-    const msg = (res.body && res.body.base_resp && res.body.base_resp.status_msg) || ('Image generation failed with HTTP ' + res.status);
-    if (res.status === 401) throw mkErr(401, 'The MINIMAX_API_KEY was rejected. (' + msg + ')');
-    if (res.status === 401 || res.status === 1004) throw mkErr(401, 'The MINIMAX_API_KEY was rejected or lacks image credit. (' + msg + ')');
-    if (imageCreditExhausted(msg)) throw imageCreditError(msg);
-    throw mkErr(res.status === 400 ? 422 : res.status, String(msg));
-  }
-  const baseCode = res.body && res.body.base_resp && res.body.base_resp.status_code;
-  if (baseCode !== undefined && baseCode !== 0){
-    const msg = (res.body.base_resp && res.body.base_resp.status_msg) || 'Image generation failed.';
-    if (imageCreditExhausted(msg)) throw imageCreditError(msg);
-    throw mkErr(422, String(msg));
-  }
-  const urls = res.body && res.body.data && res.body.data.image_urls;
-  if (!Array.isArray(urls) || !urls.length) throw mkErr(502, 'The image provider returned no image. Please try again.');
-  return { imageUrl: urls[0], imageUrls: urls, model: body.model, prompt: clean };
+  const svg = renderTopicSvg(clean, opts);
+  const bytes = Buffer.from(svg, 'utf8');
+  return { imageUrl: 'data:image/svg+xml;base64,' + bytes.toString('base64'),
+    imageBytes: bytes, provider: 'svg', prompt: clean };
 }
 async function startVideoTask(prompt){
   if (!hasKey(minimaxKey())) throw mkErr(503, 'Video generation is not configured. Set MINIMAX_API_KEY in .env.', { code: 'VIDEO_NOT_CONFIGURED' });
@@ -1094,6 +1234,41 @@ function balanceBraces(s){
   while (opens.length) cut += opens.pop();
   return cut;
 }
+/* Cheap, dependency-free PDF text pass for the subject-fidelity guard.
+   Real PDFs store page text in content streams that may be Flate- or
+   raw-DEFLATE-compressed; this inflates every stream (falling back to the
+   raw bytes when a stream is uncompressed) and pulls the strings out of
+   the Tj / TJ show-text operators. It is NOT a general PDF parser — the
+   guard only needs the document's own vocabulary, and the fingerprint
+   builder ignores anything unparseable. Returns '' when nothing can be
+   extracted; the guard degrades gracefully on an empty fingerprint. */
+function extractPdfTextLite(buf){
+  try{
+    const s = Buffer.isBuffer(buf) ? buf : Buffer.from(buf);
+    const latin = s.toString('latin1');
+    const chunks = [];
+    const re = /stream\r?\n/g;
+    let m;
+    while ((m = re.exec(latin))){
+      const start = m.index + m[0].length;
+      const end = latin.indexOf('endstream', start);
+      if (end < 0) break;
+      const raw = s.subarray(start, end);
+      let data = null;
+      try{ data = zlib.inflateSync(raw); }
+      catch{ try{ data = zlib.inflateRawSync(raw); }catch{ data = raw; } }
+      chunks.push(data.toString('latin1'));
+      re.lastIndex = end;
+    }
+    const all = chunks.length ? chunks.join('\n') : latin;
+    const strings = [];
+    const strRe = /\(((?:\\[\s\S]|[^\\()])*)\)/g;
+    let t;
+    while ((t = strRe.exec(all))) strings.push(t[1]);
+    const text = strings.join(' ');
+    return (text || all).slice(0, 400000);
+  }catch{ return ''; }
+}
 function createAnalyzeJob(pdfBuffer, level, requestId){
   const id = crypto.randomUUID();
   const job = { id, requestId, status: 'running', stage: 'queued', stageStartedAt: Date.now(),
@@ -1109,20 +1284,29 @@ async function runAnalyzeJob(job){
     if (job.cancelled){ finishJob(job, { status: 'cancelled', error: 'The study build was cancelled.' }); return; }
     setJobStage(job, 'extract');
     const pdfB64 = job.pdf.toString('base64');
+    /* SUBJECT FIDELITY GUARD — capture the document's own vocabulary once,
+       before any model output exists, so every later check compares against
+       the PDF's literal words rather than the model's self-assessment. */
+    job.literalFingerprint = buildLiteralSubjectFingerprint(extractPdfTextLite(job.pdf), []);
     setJobStage(job, 'outline');
     if (job.cancelled){ finishJob(job, { status: 'cancelled', error: 'The study build was cancelled.' }); return; }
-    const outlinePrompt = ['Analyze the attached educational PDF and respond with a single valid JSON object containing title, subject, summary, units (at least 3, each with title, overview, learningGoals, topics with title, overview, conceptIndices) and concepts (4 to 6 items, each with title, summary, explanation, sourceExcerpt, sourcePage, keyPoints, whyItMatters, analogy, explanationLevels {simple, everyday, advanced}, commonTrap, correctiveTruth, comparison {firstLabel, secondLabel, takeaway, rows[3] {aspect, first, second}}, originStory, realWorldExamples[{title, description}], workedExample {scenario, answer, steps[2] {label, action, reasoning}}, quickRecall, cheatCode {why, like, wrong, right, oneLine, mnemonic, see[3]}, visualization {caption, steps[2] {title, description, layout, nodes[3] {label, detail, code}}}}). Level: ' + job.level + '. STRUCTURAL INTEGRITY (do not restructure): mirror the PDF\'s own topic order and headings — one concept per PDF topic/section, in the same sequence; never merge topics into a generic stack or invent new groupings. Each visualization layout MUST be one of exactly these 15: flow (steps/process), arch (system/parts), seq (timeline/order), compare (vs/difference), hierarchy (types/classification), state (states/status), erd (entities/data), fbd (force/pressure), wave (graph/signal), isometric (3D/layers), mindmap (brainstorm/causes), matrix (table/grid), equation (formula/calc), cycle (loop/repeats), layer (layers/levels). Every diagram must be topic-specific: node labels come from that topic\'s own terms, never reused across topics. When the PDF shows code/syntax/commands for a node, copy the exact one-line statement into node.code (max 80 chars); otherwise omit code. Keep every diagram topic-specific.'].join(' ');
+    const outlinePrompt = outlinePromptWithFingerprint(job);
     let outline = null;
     try{
       outline = extractJson(await callAI([{ text: outlinePrompt }, { inlineData: { mimeType: 'application/pdf', data: pdfB64 } }], { requiresDocument: true, schema: { type: 'object' } }));
       normalizeOutline(outline);
+      enforceOutlineSubjectFidelity(outline, job);
       if (!validateStudyOutline(outline)) throw mkErr(502, 'Outline failed validation.');
     }catch(e){
       if (job.cancelled){ finishJob(job, { status: 'cancelled', error: 'The study build was cancelled.' }); return; }
       if (e && (e.status === 401 || e.status === 422 || e.code === 'AI_NOT_CONFIGURED')) throw e;
-      const retryPrompt = [outlinePrompt + ' The previous answer was incomplete or malformed. Respond with a single valid JSON object only, matching the schema exactly.'].join(' ');
+      const subjectFailure = !!(e && e.code === 'SUBJECT_MISMATCH');
+      const retryPrompt = subjectFailure
+        ? outlinePrompt + ' The previous answer was about a DIFFERENT subject than this document. Answer ONLY from the attached PDF: every concept, term, analogy and example must come from the subject of this document, using its own key terms: ' + (job.literalFingerprint || 'see the PDF') + '.'
+        : outlinePrompt + ' The previous answer was incomplete or malformed. Respond with a single valid JSON object only, matching the schema exactly.';
       outline = extractJson(await callAI([{ text: retryPrompt }, { inlineData: { mimeType: 'application/pdf', data: pdfB64 } }], { requiresDocument: true, schema: { type: 'object' } }));
       normalizeOutline(outline);
+      enforceOutlineSubjectFidelity(outline, job);
       if (!validateStudyOutline(outline)) throw mkErr(502, 'The AI returned an incomplete study plan. Please try the PDF again.');
     }
     if (job.cancelled){ finishJob(job, { status: 'cancelled', error: 'The study build was cancelled.' }); return; }
@@ -1262,17 +1446,23 @@ async function buildUnit(job, k){
   const opts = chunkCallOpts(job);
   const unit = c.plan.units[k];
   setJobStage(job, 'sections');
-  const outlinePrompt = unitOutlinePrompt(job, k);
+  const outlinePrompt = compactOutlinePromptWithFingerprint(job, k);
   let pack = null;
   try{
     pack = wrapUnitPack(extractJson(await callAI(chunkDocParts(outlinePrompt, pdfB64), opts)), unit);
     normalizeOutline(pack);
+    enforceOutlineSubjectFidelity(pack, job);
     if (!validateUnitOutline(pack)) throw mkErr(502, 'Unit outline failed validation.');
   }catch(e){
     if (job.cancelled) throw mkErr(499, 'The study build was cancelled.');
     if (e && (e.status === 401 || e.status === 422 || e.code === 'AI_NOT_CONFIGURED')) throw e;
-    pack = wrapUnitPack(extractJson(await callAI(chunkDocParts(outlinePrompt + ' The previous answer was incomplete or malformed. Respond with a single valid JSON object only, matching the schema exactly.', pdfB64), opts)), unit);
+    const subjectFailure = !!(e && e.code === 'SUBJECT_MISMATCH');
+    const retryPrompt = subjectFailure
+      ? outlinePrompt + ' The previous answer was about a DIFFERENT subject than this document. Answer ONLY from the attached PDF for THIS unit, using the document key terms: ' + (job.literalFingerprint || 'see the PDF') + '.'
+      : outlinePrompt + ' The previous answer was incomplete or malformed. Respond with a single valid JSON object only, matching the schema exactly.';
+    pack = wrapUnitPack(extractJson(await callAI(chunkDocParts(retryPrompt, pdfB64), opts)), unit);
     normalizeOutline(pack);
+    enforceOutlineSubjectFidelity(pack, job);
     if (!validateUnitOutline(pack)) throw mkErr(502, 'The AI returned an incomplete study plan. Please try the PDF again.');
   }
   if (job.cancelled) throw mkErr(499, 'The study build was cancelled.');
@@ -1344,6 +1534,10 @@ async function runChunkedJob(job){
     if (job.cancelled){ finishJob(job, { status: 'cancelled', error: 'The study build was cancelled.' }); return; }
     setJobStage(job, 'extract');
     const pdfB64 = job.pdf.toString('base64');
+    /* SUBJECT FIDELITY GUARD — one literal fingerprint per job, reused by
+       every unit so all units are checked against the SAME document subject,
+       not a per-unit model opinion. */
+    job.literalFingerprint = buildLiteralSubjectFingerprint(extractPdfTextLite(job.pdf), []);
     setJobStage(job, 'outline');
     /* Above the inline cap the document rides the Files API once; below it,
        inlineData as usual. A failed upload falls back to inline and the
@@ -1395,6 +1589,8 @@ function sendJson(res, status, obj, requestId){
   res.setHeader('X-XSS-Protection', '1; mode=block');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+  // API responses carry no subresources: lock down CSP as defense-in-depth.
+  res.setHeader('Content-Security-Policy', "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'");
   if (process.env.NODE_ENV === 'production'){
     res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
   }
@@ -1464,6 +1660,39 @@ function errPayload(e, fallback){
   const status = (e && e.status) || 500;
   return { status, body: { error: (e && e.message) || fallback, code: e && e.code } };
 }
+/* AURA must answer in the JSON shape js/aura.js renders: a SHORT plain-text
+   explanation plus a one-line ASCII diagram recipe the browser turns into an
+   image (arrow chain "A -> B -> C", "flow: A, B, C" or "seq: step, step"). */
+const AURA_JSON_PROMPT = [
+  'Respond with a single valid JSON object: {"explanation": "...", "diagram": "...", "visual_type": null}.',
+  '"explanation" must be ONE short paragraph (2-4 sentences) in plain text, no markdown.',
+  '"diagram" is REQUIRED: one short ASCII recipe for a picture that illustrates this answer, in exactly one of these formats:',
+  '  arrow chain: A -> B -> C',
+  '  flowchart: flow: Step A, Step B, Outcome',
+  '  sequence: seq: first step, second step, third step',
+  'If no picture would help, use "diagram": "".',
+  '"visual_type" may be one of projectile, photosynthesis, pythagoras, motor, dna, wave, or null; "params" may be a small object of numbers for those scenes.',
+  'No markdown, no code fences — one valid JSON object only.'
+].join(' ');
+/* Sanitizes the model's AURA answer: the explanation must be a non-empty
+   string, the diagram recipe must be plain text (HTML dropped), at most 600
+   chars, and missing fields normalize to '' / null rather than undefined so
+   the client can branch on falsy values safely. Accepts a parsed object or
+   a raw string (which is run through extractJson). */
+function normalizeAura(raw){
+  let obj = raw;
+  if (typeof raw === 'string') obj = extractJson(raw);
+  if (!obj || typeof obj !== 'object') obj = {};
+  const explanation = typeof obj.explanation === 'string' && obj.explanation.trim()
+    ? obj.explanation.trim()
+    : (typeof obj.answer === 'string' ? obj.answer.trim() : '');
+  let diagram = typeof obj.diagram === 'string' ? obj.diagram.trim() : '';
+  if (/<[^>]*>/.test(diagram)) diagram = ''; /* HTML dropped */
+  if (diagram.length > 600) diagram = diagram.slice(0, 600);
+  const visual_type = typeof obj.visual_type === 'string' && obj.visual_type.trim() ? obj.visual_type.trim() : null;
+  const params = (obj.params && typeof obj.params === 'object' && !Array.isArray(obj.params)) ? obj.params : null;
+  return { explanation, diagram, visual_type, params };
+}
 async function handleAsk(req, res, requestId, systemText){
   let parsed;
   try{ parsed = JSON.parse(await readBody(req, 2 * 1024 * 1024)); }
@@ -1473,7 +1702,18 @@ async function handleAsk(req, res, requestId, systemText){
   const parts = [{ text: q }];
   const history = parsed.history || parsed.conversation;
   const extra = Array.isArray(history) ? '\n\nConversation so far:\n' + history.slice(-8).map(m => (m.role || 'user') + ': ' + m.text).join('\n') : '';
+  const isAura = /You are AURA/.test(systemText);
   try{
+    if (isAura){
+      /* AURA renders the diagram client-side, so the model must return the
+         JSON recipe shape, not prose. JSON mode is requested via schema. */
+      const raw = await callAI([{ text: systemText + '\n' + AURA_JSON_PROMPT + extra + '\nQuestion: ' + q }], { systemInstruction: systemText, schema: { type: 'object' } });
+      let norm;
+      try{ norm = normalizeAura(raw); }
+      catch{ norm = normalizeAura({ explanation: String(raw || '') }); }
+      if (!norm.explanation) norm.explanation = String(raw || '').trim().slice(0, 4000);
+      return sendJson(res, 200, { answer: norm.explanation, explanation: norm.explanation, diagram: norm.diagram, visual_type: norm.visual_type, params: norm.params, requestId }, requestId);
+    }
     const answer = await callAI([{ text: systemText + extra }, ...parts], { systemInstruction: systemText });
     return sendJson(res, 200, { answer, requestId }, requestId);
   }catch(e){
@@ -1567,7 +1807,7 @@ async function handleTopicImages(req, res, requestId){
     try{
       const prompt = craftTopicImagePrompt(job.study, concept, i);
       const out = await generateImage(prompt, { aspect_ratio: aspect });
-      images.push({ conceptIndex: i, topic: concept.title, imageUrl: out.imageUrl, prompt });
+      images.push({ conceptIndex: i, topic: concept.title, imageUrl: out.imageUrl, provider: out.provider || 'svg', prompt });
     }catch(e){
       /* One topic failing must not lose the rest; the error rides along. */
       const p = errPayload(e, 'Image generation failed.');
@@ -1600,7 +1840,7 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'GET' && p === '/api/providers') return sendJson(res, 200, { providers: providerStatus(), image: imageStatus(), video: { id: 'hailuo-video', provider: 'minimax', model: process.env.MINIMAX_VIDEO_MODEL || 'MiniMax-Hailuo-02', configured: false, disabled: true }, requestId }, requestId);
     if (req.method === 'GET' && p === '/api/quota'){
       const snap = quotaSnapshot();
-      return sendJson(res, 200, { allowance: pdfAllowanceFor(req), usableModels: snap.usableModels, totalModels: snap.totalModels, models: snap.models, note: snap.note, resetsAt: snap.resetsAt, requestId }, requestId);
+      return sendJson(res, 200, { allowance: pdfAllowanceFor(req), keys: snap.keys, usableModels: snap.usableModels, totalModels: snap.totalModels, models: snap.models, note: snap.note, resetsAt: snap.resetsAt, requestId }, requestId);
     }
     if (p === '/api/analyze' && req.method === 'POST'){
       if (rateLimited(req)) return sendJson(res, 429, { error: 'Too many requests. Try again later.', requestId }, requestId);
@@ -1648,6 +1888,12 @@ const server = http.createServer(async (req, res) => {
     if (p.startsWith('/api/video/') && req.method === 'GET'){
       return sendJson(res, 410, { error: 'Video generation is disabled. This build generates 2D images only.', code: 'VIDEO_DISABLED', requestId }, requestId);
     }
+    /* Build-in-Public platform: /build page + /api/bip/* routes.
+       Mounted before the /api/ 404 so BIP APIs resolve; study-app
+       routes above are untouched and keep priority. */
+    if (bipRoutes && (p === '/build' || p === '/build/' || p.startsWith('/api/bip/'))){
+      if (await bipRoutes.handleBip(req, res, url, p, requestId)) return;
+    }
     if (p.startsWith('/api/')) return sendJson(res, 404, { error: 'Unknown API route.', requestId }, requestId);
     return serveStatic(req, res);
   }catch(e){
@@ -1670,3 +1916,318 @@ if (require.main === module){
 
 
 
+
+
+/*
+ * SUBJECT FIDELITY GUARD
+   PIPELINE INTEGRATION POINTS (to wire in the NEXT pass, not this one)
+   ------------------------------------------------------------
+   1. BEFORE the outline call in runAnalyzeJob (single-shot path):
+        - extract the PDF text + quotes (the existing extractPdfText/quote
+          helper, if present; otherwise a cheap pass over the PDF buffer is
+          enough for a subject fingerprint)
+        - job.literalFingerprint = buildLiteralSubjectFingerprint(pdfText, quotes)
+        - use: callAI(chunkDocParts(outlinePromptWithFingerprint(job), pdfB64), opts)
+   2. AFTER the outline parses, BEFORE validateStudyOutline:
+        - normalizeOutlineFingerprint(outline, job.literalFingerprint)
+        - for each concept in outline.concepts: require
+          conceptMatchesLiteralFingerprint(concept, job.literalFingerprint)
+          — if any fails, retry with a subject-failure-aware prompt; if both
+            attempts fail, surface a clearer "study content does not match the
+            PDF's subject" message instead of shipping.
+   3. runChunkedJob / buildUnit (chunked path):
+        - same literal fingerprint is captured once per job and reused for
+          each unit so every unit is checked against the SAME document subject,
+          not a per-unit model opinion.
+        - per-unit: normalizeOutlineFingerprint(unitPack, job.literalFingerprint)
+          then require conceptMatchesLiteralFingerprint per concept; fail the
+          unit (and retry) rather than assembling a shifted unit.
+   4. validateConcepts chain:
+        - add a conceptMatchesLiteralFingerprint(concept, job.literalFingerprint)
+          gate as one more AND condition in validateConcepts / validateUnitOutline,
+          in addition to the existing structural + uniqueness checks. Keep the
+          existing rules untouched; this is an added gate, not a replacement.
+   5. AURA grounding:
+        - No change. AURA is already document-grounded; this guard only concerns
+          the study-build path, not /api/ask.
+   ============================================================ */
+function buildLiteralSubjectFingerprint(text, quotes){
+  const stop = new Set([
+    'the','a','an','and','or','of','in','to','for','on','with','at','by',
+    'is','are','was','were','be','been','being','it','its','this','that',
+    'these','those','from','as','so','if','when','which','who','what','how',
+    'can','could','would','should','may','might','will','been','have','has',
+    'had','do','does','did','not','no','than','then','there','here',
+    'each','every','any','more','most','also','about','into','out',
+    'over','up','down','such','just','other','some','many','much',
+    'all','both','one','two','three','even','well','like','used','use',
+    'using','based','example','shown','see','figure','page','pages',
+    'very','only','also','still','must','may','make','made','take','taken',
+    'same','new','first','last','next','many','much','several','each','every',
+    'will','can','should','would','could','may','might','shall',
+    'has','have','had','were','was','been','being','am','are','is',
+    'not','no','nor','none','nothing','never','everywhere','anywhere',
+    'somewhere','nowhere','hereby','herein','hereafter','hereto',
+    'does','did','done','doing','drawn','drawn',
+    'two','three','four','five','six','seven','eight','nine','ten',
+    'one','ones','single','double','first','second','third','last',
+    'all','both','either','neither','any','some','many','most','much',
+    'several','few'
+  ]);
+
+  const byToken = new Map();   // stemmed token -> { raw, weight, fromQuote }
+  function addRaw(s, fromQuote){
+    if(!s) return;
+    const m = String(s).toLowerCase().match(/\b[a-z][a-z-]{2,}\b/g);
+    if(!m) return;
+    for(const w of m){
+      if(stop.has(w)) continue;
+      const st = stem(w);
+      const cur = byToken.get(st) || { raw: w, weight: 0, fromQuote: false };
+      cur.weight += 1;
+      if(fromQuote) cur.fromQuote = true;
+      if(!cur.fromQuote && fromQuote) cur.fromQuote = true;
+      // prefer longer raw form as the canonical surface spelling
+      if(w.length > cur.raw.length && /^[a-z]/.test(w)) cur.raw = w;
+      byToken.set(st, cur);
+    }
+  }
+
+  // Verbatim PDF quotes: strongest subject evidence.
+  if(quotes && Array.isArray(quotes)){
+    for(const q of quotes){
+      const s = (q && (q.value != null || q.quote != null)) ? (q.value != null ? q.value : q.quote) : (q && typeof q === 'string' ? q : null);
+      if(s != null) addRaw(s, true);
+    }
+  }
+  // Full extracted text: broader backbone.
+  if(text) addRaw(text, false);
+
+  if(!byToken.size) return '';
+
+  // Prefer verbatim-quoted tokens first (they are the document's own topic
+  // words), then fill remaining budget from the top-frequency non-quote tokens.
+  const out = [];
+  const seen = new Set();
+  const quoteTokens = [];
+  const otherTokens = [];
+  for(const [st, cur] of byToken){
+    if(cur.fromQuote) quoteTokens.push([st, cur.weight, cur.raw]);
+    else otherTokens.push([st, cur.weight, cur.raw]);
+  }
+  quoteTokens.sort((a,b)=>b[1]-a[1] || a[2].localeCompare(b[2]));
+  otherTokens.sort((a,b)=>b[1]-a[1] || a[2].localeCompare(b[2]));
+
+  for(const [st, w, raw] of quoteTokens){
+    if(out.length >= 18) break;
+    if(seen.has(st)) continue;
+    seen.add(st);
+    out.push(raw);
+  }
+  for(const [st, w, raw] of otherTokens){
+    if(out.length >= 18) break;
+    if(seen.has(st)) continue;
+    seen.add(st);
+    out.push(raw);
+  }
+  return out.join(' ');
+}
+
+/* Light suffix stripper shared by the fingerprint builder above and the
+   per-concept check below. It MUST live at module scope: when it was
+   nested inside buildLiteralSubjectFingerprint, the stem() call inside
+   conceptMatchesLiteralFingerprint threw ReferenceError, the guard's
+   catch swallowed it and the whole subject-fidelity check silently
+   passed every concept. */
+function stem(w){
+  if(!w) return '';
+  w = w.toLowerCase();
+  if(w.endsWith('ing') && w.length > 7) return w.slice(0, -3);
+  if(w.endsWith('tion') && w.length > 7) return w.slice(0, -3);
+  if(w.endsWith('sion') && w.length > 7) return w.slice(0, -4);
+  if(w.endsWith('ment') && w.length > 7) return w.slice(0, -4);
+  if(w.endsWith('ly') && w.length > 5) return w.slice(0, -2);
+  if(w.endsWith('es') && w.length > 4) return w.slice(0, -2);
+  if(w.endsWith('s') && w.length > 4 && !/[^a-z]$/.test(w)) {
+    // do not strip 's' from tokens whose stem is already intact: tcp/udp/dns/
+    // arq/crash/mesh/star/bus/ring/crc/arp/nat/dhcp/http/https/url/uri/ip/mac.
+    // Also keep plural tech acronyms like frames/segments/handshakes in literal
+    // fingerprint form so the short-fingerprint check treats 'handshakes' as a
+    // genuine >=5 strong overlap with 'handshake' from the short unit fp.
+    if(w.length <= 4) return w;
+  }
+  if(w.endsWith('s') && w.length > 4) return w.slice(0, -1);
+  return w;
+}
+
+/* ---------- per-concept required-term presence check ----------
+   Returns FALSE when the concept has too little overlap with the DOCUMENT's
+   literal fingerprint tokens. This is what catches a fluent off-subject
+   lesson: a biology trophic-level lesson, or a Java exception-hierarchy
+   lesson, shares almost none of a network document's subject tokens.
+   Thresholds:
+     - Concept must share >= 1 stemmed token with the literal fingerprint.
+     - If the literal fingerprint has <= 6 stemmed tokens, require >= 2 shared
+       so a single accidental noun match cannot pass a wrong-subject concept.
+     - At least one shared token should be "strong" (topic-specific,
+       length >= 5 after stemming) OR the shared count should be >= 2. This
+       keeps generic-short surnames like "systems", "links", "data", "page",
+       "node", "layer", "unit" from passing a wrong-subject concept on their
+       own.
+   Degraded path: if the literal fingerprint is unparseable/absent, return true
+   (no evidence either way) rather than hard-failing on parse noise. */
+function conceptMatchesLiteralFingerprint(concept, literalFp){
+  try{
+    if(!literalFp || !literalFp.trim()) return true; // no literal fp; degrade gracefully
+    if(!concept || typeof concept !== 'object') return false;
+    const fpSet = new Set();
+    const litTokens = String(literalFp).toLowerCase().match(/\b[a-z][a-z-]{2,}\b/g);
+    if(!litTokens) return true; // unparseable
+    for(const w of litTokens) fpSet.add(stem(w));
+
+    const bag = conceptTextTokens(concept);
+    const bagTokens = bag.toLowerCase().match(/\b[a-z][a-z-]{2,}\b/g) || [];
+    const realBagTokens = bagTokens.filter(t => fpSet.has(stem(t)));
+    if(!bagTokens.length) return false; // concept has no recoverable tokens at all -> no evidence -> fail
+    let shared = 0, strongShared = 0;
+    for(const t of realBagTokens){
+      const s = stem(t);
+      if(fpSet.has(s)){
+        shared++;
+        if(s.length >= 5) strongShared++;
+      }
+    }
+
+    if(!shared) return false;                // zero overlap -> fail
+    if(fpSet.size <= 6) return shared >= 2;  // short fp: require >= 2 shared
+    return strongShared >= 1 || shared >= 2; // at least one strong OR >= 2 shared
+  }catch{ return true; }                      // degraded path; do not hard-fail on parse noise
+}
+
+/* ---------- concept text tokenizer (for the per-concept check) ----------
+   Gathers the recoverable teaching text for one concept. Visual node labels
+   and details are included because they are topic-specific subject evidence
+   (e.g. "Dijkstra", "distance vector", "routing table", "checksum"). Very
+   short extrameta fields (sourcePage, mnemonic-only, cap-only) contribute
+   little and are already in the bag; we do not special-case them out. */
+function conceptTextTokens(concept){
+  const out = [];
+  const add = s => { if(s) out.push(String(s)); };
+  add(concept.title);
+  add(concept.summary);
+  add(concept.explanation);
+  add(concept.sourceExcerpt);
+  const kp = concept.keyPoints;
+  if(Array.isArray(kp)) for(const k of kp) add(k);
+  const rwe = concept.realWorldExamples;
+  if(Array.isArray(rwe)){
+    for(const ex of rwe){
+      add(ex && ex.title);
+      add(ex && ex.description);
+    }
+  }
+  const vis = concept.visualization;
+  if(vis && Array.isArray(vis.steps)){
+    for(const s of vis.steps){
+      add(s && s.title);
+      add(s && s.description);
+      const nodes = s.nodes;
+      if(Array.isArray(nodes)){
+        for(const n of nodes){
+          add(n && n.label);
+          add(n && n.detail);
+        }
+      }
+    }
+  }
+  return out.join(' ');
+}
+
+/* ---------- fingerprint normalization + backfill ----------
+   Normalizes pack.subjectFingerprint / fingerprint.
+   Priority:
+     1. LITERAL document fingerprint (when the job captured one) — primary.
+     2. Model's asserted fingerprint (subjectFingerprint / fingerprint) — secondary.
+     3. Backfill from the lessons' own words — last resort.
+   Leaves pack.subjectFingerprint set to the chosen normalized fingerprint.
+   */
+function normalizeOutlineFingerprint(pack, literalFp){
+  try{
+    if(!pack || !Array.isArray(pack.concepts) || !pack.concepts.length) return;
+    let fp = '';
+    let usedLiteral = false;
+    if(typeof literalFp === 'string' && literalFp.trim()){
+      fp = literalFp.trim().toLowerCase();
+      usedLiteral = true;
+    }
+    // Secondary: model fingerprint only fills the gap when no literal fp was captured.
+    // A fluent wrong model also asserts the wrong subject, so it never replaces the
+    // document-grounded fingerprint when one exists.
+    if(!usedLiteral && typeof pack.subjectFingerprint === 'string' && pack.subjectFingerprint.trim())
+      fp = pack.subjectFingerprint.trim().toLowerCase();
+    else if(!usedLiteral && typeof pack.fingerprint === 'string' && pack.fingerprint.trim())
+      fp = pack.fingerprint.trim().toLowerCase();
+    else if(!fp){
+      const words = new Set();
+      for(const c of pack.concepts){
+        if(!c || typeof c !== 'object') continue;
+        const add = s => { const m = String(s || '').toLowerCase().match(/\b[a-z][a-z-]{2,}\b/g); if(m) for(const w of m) words.add(w); };
+        for(const kp of (Array.isArray(c.keyPoints) ? c.keyPoints : [])) add(kp);
+        add(c.title); add(c.summary); add(c.explanation); add(c.sourceExcerpt);
+        const rwe = c.realWorldExamples;
+        if(Array.isArray(rwe)) for(const ex of rwe){ add(ex && ex.title); add(ex && ex.description); }
+        const vis = c.visualization;
+        if(vis && Array.isArray(vis.steps)) for(const s of vis.steps){
+          add(s && s.title); add(s && s.description);
+          if(Array.isArray(s.nodes)) for(const n of s.nodes){ add(n && n.label); add(n && n.detail); }
+        }
+      }
+      fp = words.size ? Array.from(words).slice(0, 14).join(' ') : '';
+    }
+    pack.subjectFingerprint = fp;
+  }catch{ /* callers decide pass/fail */ }
+}
+
+/* SUBJECT FIDELITY ENFORCEMENT — called from the pipeline right after an
+   outline/unit pack parses and before structural validation. Normalizes the
+   pack fingerprint from the job's literal PDF fingerprint, then requires
+   every concept to share real subject vocabulary with the document. Throws
+   SUBJECT_MISMATCH (502, retryable) on the first off-subject concept so the
+   caller's retry can reground the model; a second failure surfaces the
+   clear "does not match" message to the user. When no literal fingerprint
+   could be captured the check degrades to a no-op — never a blanket
+   rejection of everything. */
+function enforceOutlineSubjectFidelity(pack, job){
+  const fp = job && typeof job.literalFingerprint === 'string' ? job.literalFingerprint : '';
+  normalizeOutlineFingerprint(pack, fp);
+  if (!fp.trim()) return;
+  const concepts = pack && Array.isArray(pack.concepts) ? pack.concepts : [];
+  for (const c of concepts){
+    if (!conceptMatchesLiteralFingerprint(c, fp))
+      throw mkErr(502, 'The study content does not match the subject of this PDF.', { code: 'SUBJECT_MISMATCH' });
+  }
+}
+
+/* ============================================================
+   PROMPT HELPERS (unchanged)
+   ------------------------------------------------------------ */
+function outlinePromptWithFingerprint(job){
+  const base = [
+    'Analyze the attached educational PDF and respond with a single valid JSON object containing title, subject, summary, units (at least 3, each with title, overview, learningGoals, topics with title, overview, conceptIndices) and concepts (4 to 6 items, each with title, summary, explanation, sourceExcerpt, sourcePage, keyPoints, whyItMatters, analogy, explanationLevels {simple, everyday, advanced}, commonTrap, correctiveTruth, comparison {firstLabel, secondLabel, takeaway, rows[3] {aspect, first, second}}, originStory, realWorldExamples[{title, description}], workedExample {scenario, answer, steps[2] {label, action, reasoning}}, quickRecall, cheatCode {why, like, wrong, right, oneLine, mnemonic, see[3]}, visualization {caption, steps[2] {title, description, layout, nodes[3] {label, detail, code}}}}). Level: ' + job.level + '. STRUCTURAL INTEGRITY (do not restructure): mirror the PDF\'s own topic order and headings — one concept per PDF topic/section, in the same sequence; never merge topics into a generic stack or invent new groupings. Each visualization layout MUST be one of exactly these 15: flow (steps/process), arch (system/parts), seq (timeline/order), compare (vs/difference), hierarchy (types/classification), state (states/status), erd (entities/data), fbd (force/pressure), wave (graph/signal), isometric (3D/layers), mindmap (brainstorm/causes), matrix (table/grid), equation (formula/calc), cycle (loop/repeats), layer (layers/levels). Every diagram must be topic-specific: node labels come from that topic\'s own terms, never reused across topics. When the PDF shows code/syntax/commands for a node, copy the exact one-line statement into node.code (max 80 chars); otherwise omit code. Keep every diagram topic-specific.',
+    'SUBJECT FINGERPRINT (required): include a field "subjectFingerprint": a 3–6 word lowercase summary of the PDF\'s actual subject and the key technical terms it covers (for example "networks, tcp, routing, subnet" or "bacteria, cell, microscope"). It must come from the PDF, not from your general knowledge. This is used to reject a fluent answer that belongs to another subject.'
+  ].join(' ');
+  return base;
+}
+
+function compactOutlinePromptWithFingerprint(job, k){
+  const unit = job.chunk.plan.units[k];
+  const label = 'Unit ' + (k + 1) + ' of ' + job.chunk.plan.units.length + ' titled "' + unit.title + '"';
+  const base = [
+    'Analyze the attached educational PDF and respond with a single valid JSON object containing ONLY the learning content for ' + label + ' — never any other unit. Keep the whole answer SMALL so it fits in one response: exactly 3 lessons. It must contain topics (this unit\'s own topics in PDF order, each {title, overview, conceptIndices}) and concepts (exactly 3 lessons for THIS UNIT ONLY, each with title, summary (1-2 sentences), explanation (2-3 sentences), sourceExcerpt (one short verbatim sentence from the PDF), sourcePage (page number), keyPoints (3 short bullets), whyItMatters (one sentence), analogy (one sentence), explanationLevels {simple, everyday, advanced} (each 1-2 sentences), commonTrap (one sentence), correctiveTruth (one sentence), comparison {firstLabel, secondLabel, takeaway, rows[3] {aspect, first, second}}, originStory (1-2 sentences), realWorldExamples[1] {title, description}, workedExample {scenario, answer, steps[2] {label, action, reasoning}}, quickRecall (one sentence), cheatCode {why, like, wrong, right, oneLine, mnemonic, see[3]} (each one short sentence), visualization {caption, steps[1] {title, description, layout, nodes[3] {label, detail}}}). conceptIndices must assign every concept of this unit exactly once, consecutively from 0, across this unit\'s topics in order. Level: ' + job.level + '. Pick the 3 most important PDF topics/sections of this unit, in their PDF order. Each visualization layout MUST be one of exactly these 15: flow, arch, seq, compare, hierarchy, state, erd, fbd, wave, isometric, mindmap, matrix, equation, cycle, layer. Node labels come from that topic\'s own terms, never generic labels like Input/Process/Output. No markdown, no code fences — one valid JSON object only.',
+    'SUBJECT FINGERPRINT (required): include a field "subjectFingerprint": a 3–6 word lowercase summary of this unit\'s actual subject and the key technical terms it covers, from the PDF — for example "routing, distance vector, link state, dijkstra" or "star, bus, mesh, topology". It must come from the PDF, not from general knowledge. This is checked against the lesson words to reject a fluent answer from another subject.'
+  ].join(' ');
+  return base;
+}
+
+/* ============================================================
+*/

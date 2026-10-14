@@ -1,0 +1,34 @@
+# XamCode AI — continuous integration.
+#
+# Runs on pushes and pull requests to main: syntax checks + the full
+# offline unit suite (npm test). No production API keys are needed —
+# every test in the chain uses stubbed providers, scratch quota files,
+# or scratch data dirs.
+#
+# DELIBERATELY NOT RUN HERE (quota / credentials / network cost):
+#   test-pdf-subject-e2e.js .... spends a real Gemini generation
+#   test-chunk-live.js ......... live pipeline against sample PDFs
+#   test-pdf-allowance.js ...... burns the caller's whole daily allowance
+#   test-journey-smoke.js ...... boots the server on a fixed local port
+# Those stay manual: `npm run test:e2e`, `npm run test:smoke`.
+# No deploy, DNS, or secret-echo steps live in this file by design.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npm test

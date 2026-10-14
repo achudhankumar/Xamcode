@@ -1,105 +1,93 @@
 # XamCode AI — System Architecture
 
-**Version:** 1.0  
-**Date:** 08 October 2026  
-**Status:** Baseline documentation
+**Date:** 13 October 2026
+**Status:** Matches the current codebase (verified against `server.js` and `bip/`)
 
 ---
 
 ## 1. Overview
 
-XamCode AI is a web application that converts uploaded PDFs into interactive study materials (flashcards, quizzes, Q&A) using AI.
+XamCode AI turns an uploaded lecture PDF into interactive study material (animated unit-by-unit lessons, AURA tutor with diagram recipes, quiz + Vaathiyar modes, flashcards, formula bank, personal library). It runs on a **zero-dependency Node.js server** — no Express, no framework, no external database. A public **Build-in-Public dashboard** at `/build` shares the same server and store.
 
-## 2. Architecture Diagram (Textual)
+## 2. Runtime topology
 
 ```
-                         ┌──────────────┐
-                         │  User Browser │
-                         └──────┬───────┘
-                                │ HTTPS
-                                ▼
-                      ┌──────────────────┐
-                      │   Load Balancer   │
-                      └────────┬─────────┘
-                               │
-              ┌────────────────┼────────────────┐
-              │                │                │
-              ▼                ▼                ▼
-      ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
-      │   Frontend   │  │  Backend API │  │  Static Files│
-      │  (React/Vanil│  │ (Node.js/Exp│  │  (CSS/JS/HTML)│
-      │   Ique)      │  │   res)       │  │              │
-      └──────────────┘  └──────────────┘  └──────────────┘
-                               │
-                               ▼
-                      ┌──────────────────┐
-                      │  AI Service      │
-                      │ (Google Gemini)  │
-                      └──────────────────┘
-                               │
-                               ▼
-                      ┌──────────────────┐
-                      │  Database        │
-                      │ (User/progress)  │
-                      └──────────────────┘
+                       ┌────────────────────┐
+   Browser (vanilla    │  Node.js http      │   External AI providers
+   HTML/CSS/JS)  ─────▶│  server.js         │──────────────┐
+                       │  (no framework)    │              │
+                       └─────────┬──────────┘              │
+                                 │                         ▼
+                    ┌────────────┼─────────────┐   Gemini (primary) + failover:
+                    │            │             │   Groq, OpenRouter, Explabs, OpenAI
+                    ▼            ▼             ▼   MiniMax (images)
+              JSON files    bip-data/      (study app is client-rendered;
+              (quota, etc.)  store.json     localStorage per user)
 ```
+
+- **One process** serves both the study app (`/`, `/api/*`) and the dashboard (`/build`, `/api/bip/*`).
+- **No database.** Persistence is JSON files: quota, the BIP store (`bip-data/store.json`), and browser `localStorage` for the study workspace.
 
 ## 3. Components
 
-| Component | Technology | Purpose |
+| Layer | Technology | Notes |
 |---|---|---|
-| Frontend | HTML/CSS/JS (vanilla) | Presentation layer |
-| Styling | CSS (theme system) | UI theming |
-| Backend | Node.js | HTTP server, API routes |
-| Router | Native `http` module | Request routing |
-| AI Service | Google Gemini | Study content generation |
-| Storage | Local / cloud | PDF uploads, transcripts |
-| Analytics | Google Analytics | Usage tracking |
+| Frontend | Vanilla HTML/CSS/JS (`XamCode.html`, `js/`, `css/`) | No build step, no framework |
+| Server | Node.js built-in `http` | Single request handler in `server.js` |
+| Static serving | `serveStatic()` in `server.js` | Path-traversal guarded (`file.startsWith(__dirname)`) |
+| AI (text) | Gemini primary; **failover** to Groq, OpenRouter, Experiential Labs, OpenAI | Keys via `GEMINI_API_KEY[_2.._9]`, `GROQ_*`, `OPENROUTER_*`, `EXPLABS_*`, `OPENAI_*` |
+| AI (images) | MiniMax | `Hailuo` video is **disabled** (2D images only) |
+| BIP backend | `bip/` modules (util, store, progress, events, community, admin, routes) | Mounted into `server.js` via `handleBip` |
+| BIP store | `bip-data/store.json` (JSON, atomic temp+rename writes) | Collections documented in `bip/store.js` |
+| Analytics | Google Analytics (browser) | Client-side only |
 
-## 4. Data Flow
+## 4. Request / data flow
 
-1. User uploads PDF via browser
-2. Browser POSTs to `/api/analyze`
-3. Backend validates and queues job
-4. AI service processes PDFs
-5. Results returned to frontend
-6. User interacts with generated content
+**Study build (`/api/analyze`):**
+1. Browser base64-encodes the PDF and POSTs it.
+2. Server validates size (`MAX_PDF_MB`), checks/consumes the daily allowance, creates a job.
+3. The job runs async (extract → outline → sections → bank → validate → ready); the browser polls `/api/analyze/:id`.
+4. AI providers generate content with failover; results render client-side.
 
-## 5. Key Routes
+**Build-in-Public (`/build`, `/api/bip/*`):**
+1. `handleBip` dispatches public reads, rate-limited community writes, the webhook, CI ingest, and admin routes.
+2. Public events arrive via GitHub webhook (HMAC-verified) or CI ingest (Bearer token); both are **idempotent** and **field-allowlisted**.
+3. Milestones flip to `verified` **only** via the admin token — a commit never auto-completes a feature.
+4. Progress = verified milestone weights / total weights (never commit/LOC/time based).
+5. The dashboard reads one `/api/bip/summary` payload and keeps chat/ideas live over SSE (`/api/bip/stream`).
+
+## 5. Security boundaries
+
+| Boundary | Implementation |
+|---|---|
+| Response headers | `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `X-XSS-Protection`, `Referrer-Policy`, `Permissions-Policy`, `Strict-Transport-Security` (production only) |
+| Content-Security-Policy | **Not set** in this codebase (documented honestly; add before hardening) |
+| Rate limiting | Per-IP sliding window (`MAX_REQUESTS_PER_HOUR`); per-route limits in `bip/routes.js` for chat/ideas/votes/reports/waitlist |
+| Input sanitization | `sanitizePublicText` / `sanitizeMultiline` strip control chars, HTML, and secret-looking tokens before storage; client renders with `textContent` |
+| Secrets | Server-only via env; never in frontend. `bip-data/`, `.env`, quota/cache/log files are git-ignored |
+| Private repo data | Webhook mapping publishes only allowlisted fields (message, short SHA, branch, run status) — never source, logs, or tokens |
+| Admin actions | `Authorization: Bearer <BIP_ADMIN_TOKEN>`; endpoints return `503` when the token is unconfigured |
+
+## 6. Key routes
 
 | Route | Method | Purpose |
 |---|---|---|
-| `/` | GET | Home page |
-| `/privacy-policy` | GET | Privacy Policy |
-| `/terms-of-service` | GET | Terms of Service |
-| `/accessibility-statement` | GET | Accessibility Statement |
-| `/robots.txt` | GET | Crawler instructions |
-| `/sitemap.xml` | GET | XML sitemap |
-| `/api/health` | GET | Liveness probe |
-| `/api/analyze` | POST | PDF analysis |
-| `/api/ask` | POST | AI chat |
-| `/api/quota` | GET | Usage quota |
-
-## 6. Security Controls
-
-| Control | Implementation |
-|---|---|
-| CSP | Header via `X-Content-Type-Options` |
-| Frame protection | X-Frame-Options: DENY |
-| MIME sniffing | X-Content-Type-Options: nosniff |
-| XSS protection | X-XSS-Protection |
-| Rate limiting | Per-IP rate limiter |
-| HTTPS | HSTS (production) |
-| Sensitive headers | Permissions-Policy |
+| `/` , `/build` | GET | Study app / public dashboard |
+| `/api/health` | GET | Liveness probe (`service: xamcode-ai`) |
+| `/api/analyze`, `/api/analyze/:id` | POST/GET/DELETE | PDF study build + job lifecycle |
+| `/api/ask`, `/api/aura`, `/api/image`, `/api/topic-images` | POST | Tutor / diagram / image endpoints |
+| `/api/quota` | GET | Usage allowance |
+| `/api/bip/summary` | GET | Dashboard one-call payload |
+| `/api/bip/stream` | GET | SSE realtime (chat/ideas/events) |
+| `/api/bip/chat`, `/api/bip/ideas` | GET/POST | Community read/write (rate limited) |
+| `/api/bip/webhooks/github` | POST | HMAC-verified GitHub delivery |
+| `/api/bip/events/ingest` | POST | CI Bearer-token ingest |
+| `/api/bip/admin/*` | * | Admin-only (token required) |
 
 ## 7. Deployment
 
-| Environment | Branch | Validation |
-|---|---|---|
-| Development | main | Test suite |
-| Staging | main | Full test matrix |
-| Production | main | CI/CD pipeline |
+Hosted on **Render** (see `render.yaml`, `docs/deployment.md`). `NODE_ENV=production` binds `0.0.0.0` and enables HSTS; otherwise it binds `127.0.0.1`. CI runs `npm ci` → `npm run check` → `npm test` (offline; no paid keys, no quota spent).
 
 ---
 
-*End of architecture document.*
+*See `docs/BUILD-IN-PUBLIC.md` for the dashboard design and `docs/ROADMAP.md` for delivery status.*

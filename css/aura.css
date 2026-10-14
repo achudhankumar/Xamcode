@@ -125,6 +125,138 @@
 .aura-send:disabled{opacity:.5;cursor:not-allowed}
 .aura-note{margin:0;padding:0 14px 12px;font-size:9.5px;line-height:1.5;color:var(--muted,#6b7280);text-align:center}
 
+/* ============================================================
+   AURA VISUALS — parametric SVG animation panel
+   Rendered under any AURA answer whose topic matches a known
+   visual (projectile / photosynthesis / pythagoras / motor / dna).
+   ============================================================ */
+.aura-visual{margin-top:12px}
+/* Generated text→diagram image (js/aura-diagram.js → aura-visuals bundle).
+   The SVG carries its own background and scales to the bubble width. */
+.aura-visual>svg{display:block;width:100%;height:auto;border-radius:12px;border:1px solid var(--line,rgba(255,255,255,.08))}
+.aura-visual.aura-diagram-busy{
+  min-height:104px;border-radius:12px;border:1px dashed rgba(45,212,191,.35);
+  background:linear-gradient(100deg,rgba(45,212,191,.05) 42%,rgba(167,139,250,.14) 50%,rgba(45,212,191,.05) 58%);
+  background-size:200% 100%;animation:aura-diagram-shimmer 1.3s linear infinite;
+}
+@keyframes aura-diagram-shimmer{from{background-position:200% 0}to{background-position:-200% 0}}
+@media(prefers-reduced-motion:reduce){.aura-visual.aura-diagram-busy{animation:none}}
+/* glow shell (demo-style gradient blur behind the card) */
+.av-wrap{position:relative;isolation:isolate}
+.av-wrap::before{
+  content:'';position:absolute;inset:-8px;z-index:-1;pointer-events:none;
+  border-radius:22px;
+  background:linear-gradient(135deg,rgba(139,92,246,.3),rgba(59,130,246,.22));
+  filter:blur(18px);
+}
+/* the card surface: title bar + svg + sliders + footer */
+.av-card{
+  background:#15151f;border:1px solid #262636;border-radius:16px;overflow:hidden;
+  box-shadow:0 8px 40px rgba(0,0,0,.3);
+}
+.av-bar{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:11px 14px;border-bottom:1px solid #262636;background:#1c1c29;
+}
+.av-title{display:flex;align-items:center;gap:10px;min-width:0}
+.av-icon{
+  width:26px;height:26px;flex:0 0 auto;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-size:12px;
+  background:linear-gradient(135deg,var(--accent,#2dd4bf),var(--accent-2,#a78bfa));color:#06201c;
+}
+.av-title-text{display:flex;flex-direction:column;line-height:1.25;min-width:0}
+.av-title-h{font-size:12px;font-weight:600;color:#e2e8f0}
+.av-title-sub{
+  font-size:10px;color:#71717a;margin-top:1px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.av-controls{display:flex;gap:6px;flex:0 0 auto}
+.av-btn{
+  width:30px;height:30px;border-radius:50%;cursor:pointer;line-height:1;font-size:12px;
+  display:flex;align-items:center;justify-content:center;
+  background:#1d1d2b;border:1px solid #2c2c3d;color:#cbd5e1;transition:all .16s ease;
+}
+.av-btn:hover{border-color:var(--accent,#2dd4bf);color:var(--accent,#2dd4bf)}
+.av-btn-primary{background:#0a0a0f;border-color:#3a3a50;color:#fff}
+.av-btn-primary:hover{background:#000}
+.av-foot{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:9px 14px;border-top:1px solid #262636;background:#12121c;
+}
+.av-status{font-size:10px;color:#71717a}
+.av-badge{
+  font-size:10px;padding:2px 8px;border-radius:999px;font-weight:500;flex:0 0 auto;
+  background:rgba(45,212,191,.12);color:#5eead4;border:1px solid rgba(45,212,191,.3);
+}
+.av-svg{
+  display:block;width:auto;margin:10px;height:auto;border-radius:10px;background:#101019;
+}
+/* physics / math visuals */
+.av-ground{stroke:#334155;stroke-width:2}
+.av-path{stroke:rgba(148,163,184,.35);stroke-width:1.6;stroke-dasharray:4 4}
+.av-trail{stroke:var(--accent,#2dd4bf);stroke-width:2.4}
+.av-ball{fill:#f472b6}
+.av-vx{stroke:var(--av-vx,#f472b6);stroke-width:2}
+.av-vy{stroke:var(--av-vy,#60a5fa);stroke-width:2}
+/* wave */
+.av-wave-axis{stroke:#334155;stroke-width:1.4}
+.av-wave{stroke:var(--accent,#2dd4bf);stroke-width:2.4;stroke-linejoin:round}
+.av-wave-env{stroke:rgba(148,163,184,.35);stroke-width:1;stroke-dasharray:5 5}
+.av-wave-dot{fill:#f472b6}
+.av-eq{font-size:10px;fill:#94a3b8;font-weight:600}
+/* generic (LLM-drawn) */
+.av-generic{stroke:var(--accent,#2dd4bf);stroke-width:2.4;filter:drop-shadow(0 0 6px rgba(45,212,191,.35))}
+/* shared backdrop + small inline tags (used by projectile, photosynthesis, wave) */
+.av-bg{fill:#0d0d16}
+.av-tag{font-size:9px;fill:#64748b;font-weight:700;letter-spacing:.04em}
+.av-label{font-size:9px;fill:#94a3b8;font-weight:700}
+.av-sun-core{fill:#fbbf24}
+.av-leaf{fill:rgba(45,212,191,.16);stroke:var(--accent,#2dd4bf);stroke-width:1.6}
+.av-leaf-vein{stroke:rgba(45,212,191,.5);stroke-width:1;fill:none}
+.av-tri{fill:rgba(96,165,250,.14);stroke:#60a5fa;stroke-width:2}
+.av-square{stroke-width:1.6;fill-opacity:.16}
+.av-sq-a{fill:#f472b6;stroke:#f472b6}
+.av-sq-b{fill:#60a5fa;stroke:#60a5fa}
+.av-sq-c{fill:#2dd4bf;stroke:#2dd4bf}
+.av-magnet-n{fill:#f87171}
+.av-magnet-s{fill:#60a5fa}
+.av-coil{fill:none;stroke:var(--accent,#2dd4bf);stroke-width:2.4;stroke-linecap:round}
+.av-wire{fill:none;stroke:#f472b6;stroke-width:2}
+.av-strand{fill:none;stroke:var(--accent,#2dd4bf);stroke-width:2.4;stroke-linecap:round}
+.av-base{font-size:9px;font-weight:800;fill:#e2e8f0}
+.av-bond{stroke:rgba(148,163,184,.5);stroke-width:1.4;stroke-dasharray:3 3}
+.av-sliders{display:grid;gap:8px;padding:2px 10px 10px}
+.av-slider{display:grid;grid-template-columns:104px 1fr 42px;align-items:center;gap:10px;font-size:10px;color:#94a3b8}
+.av-slider b{color:var(--accent,#2dd4bf);font-size:10px;text-align:right}
+.av-slider input[type=range]{width:100%;accent-color:var(--accent,#2dd4bf);cursor:pointer}
+
+/* ---- photosynthesis: sun rays, pipes, travelling particles ---- */
+.av-sun-ray{stroke:#fbbf24;stroke-width:2.4;stroke-linecap:round}
+.av-pipe{stroke-width:2.2}
+.av-co2{stroke:#34d399}
+.av-h2o{stroke:#60a5fa}
+.av-o2{stroke:#f472b6}
+.av-photon{fill:#fbbf24}
+.av-p-co2{fill:#34d399}
+.av-p-h2o{fill:#60a5fa}
+.av-p-o2{fill:#f472b6}
+/* ---- pythagoras: translucent squares + matching labels ---- */
+.av-sq{stroke-width:1.6;fill-opacity:.16}
+.av-sq-a-l{fill:#f472b6}
+.av-sq-b-l{fill:#60a5fa}
+.av-sq-c-l{fill:#2dd4bf}
+/* ---- electric motor: field lines, coil divider, current, hub, brushes ---- */
+.av-field{stroke:rgba(148,163,184,.28);stroke-width:1.2;stroke-dasharray:3 5}
+.av-coil-div{stroke:rgba(45,212,191,.5);stroke-width:1.4}
+.av-curr{stroke:#fbbf24;stroke-width:2}
+.av-hub{fill:#94a3b8}
+.av-brush{stroke:#f59e0b;stroke-width:4;stroke-linecap:round}
+/* ---- DNA replication: base nodes (original strands + newly built) + rungs ---- */
+.av-base-l{fill:#60a5fa}
+.av-base-r{fill:#f472b6}
+.av-base-new{fill:#34d399}
+.av-rung{stroke:rgba(148,163,184,.55);stroke-width:2}
+
 @media(max-width:640px){
   .aura{right:14px;bottom:14px}
   .aura-launcher-label{display:none}

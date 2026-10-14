@@ -35,7 +35,19 @@
       if(!raw) return [];
       const parsed = JSON.parse(raw);
       if(!Array.isArray(parsed)) return [];
-      return parsed.filter(m=>m && (m.role==='user'||m.role==='aura') && typeof m.text==='string').slice(-MAX_MESSAGES);
+      const list = parsed.filter(m=>m && (m.role==='user'||m.role==='aura') && typeof m.text==='string').slice(-MAX_MESSAGES);
+      /* Past answers have no stored visual (older format), so re-detect
+         them on load — saved history animates just like fresh replies. */
+      const av = window.XC.auraVisuals;
+      if(av && typeof av.detect === 'function'){
+        list.forEach(m => {
+          if(m.role === 'aura' && !m.visual && !m.diagramText){
+            const type = av.detect(m.text);
+            if(type) m.visual = { type, params: av.extractParams(type, m.text) };
+          }
+        });
+      }
+      return list;
     }catch(error){
       console.warn('AURA history was unreadable and has been cleared.', error);
       return [];
@@ -43,7 +55,16 @@
   }
   function save(){
     try{
-      localStorage.setItem(HISTORY_KEY, JSON.stringify(messages.slice(-MAX_MESSAGES)));
+      /* m.svg is only a session cache of the rendered diagram — it is
+         regenerated from the tiny diagramText recipe instantly, so it
+         never goes into localStorage. */
+      const lean = messages.slice(-MAX_MESSAGES).map(m=>{
+        const c = { role:m.role, text:m.text };
+        if(m.diagramText) c.diagramText = m.diagramText;
+        if(m.visual) c.visual = m.visual;
+        return c;
+      });
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(lean));
     }catch(error){
       console.warn('AURA history could not be saved.', error);
     }
@@ -62,11 +83,75 @@
     return esc(text).replace(/\n/g, '<br>');
   }
 
+  /* A visual (if the model returned one) gets its own mount point under
+     the text; paint() fills it with a live SVG player via mountVisuals(). */
+
+  /* Every repaint rebuilds the thread from scratch, so the old SVG
+     players are detached here. We stop their RAF loops and mount a
+     fresh player into each message's visual slot. */
+  let players = [];
+  function mountVisuals(){
+    players.forEach(p => { try{ p.destroy(); }catch(error){ /* already gone */ } });
+    players = [];
+    if(!root) return;
+    const av = window.XC.auraVisuals;
+    const slots = root.querySelectorAll('.aura-visual');
+    let i = 0;
+    for(const m of messages){
+      if(!m.diagramText && !m.visual) continue;
+      const slot = slots[i++];
+      if(!slot) break;
+      if(m.diagramText){ mountDiagram(slot, m); continue; }
+      if(av && typeof av.createPlayer === 'function'){
+        const player = av.createPlayer(slot, m.visual.type, m.visual.params, { svg_instruction: m.visual.svg_instruction || '' });
+        if(player) players.push(player);
+      }
+    }
+  }
+
+  /* Draw the text→diagram image into a message's visual slot. The SVG is
+     cached on the message for this session only (save() strips it), so
+     repaints inject instantly after the first draw. */
+  function mountDiagram(slot, m){
+    if(typeof m.svg === 'string' && m.svg){
+      slot.innerHTML = m.svg;
+      return;
+    }
+    const ad = window.XC.auraDiagram;
+    if(!ad || typeof ad.render !== 'function'){ mountDiagramFallback(slot, m); return; }
+    slot.classList.add('aura-diagram-busy');
+    ad.render(m.diagramText, {}).then(res=>{
+      m.svg = res.svg;
+      if(!slot.isConnected) return; /* repainted already — next paint uses m.svg */
+      slot.classList.remove('aura-diagram-busy');
+      slot.innerHTML = res.svg;
+    }).catch(error=>{
+      console.warn('AURA diagram render failed:', error);
+      if(!slot.isConnected) return;
+      slot.classList.remove('aura-diagram-busy');
+      mountDiagramFallback(slot, m);
+    });
+  }
+
+  /* Diagram engine unavailable → the old parametric player if this message
+     has one; otherwise drop the slot rather than show an empty box. */
+  function mountDiagramFallback(slot, m){
+    const av = window.XC.auraVisuals;
+    if(m.visual && av && typeof av.createPlayer === 'function'){
+      const player = av.createPlayer(slot, m.visual.type, m.visual.params, { svg_instruction: m.visual.svg_instruction || '' });
+      if(player) players.push(player);
+    }else if(typeof slot.remove === 'function'){
+      slot.remove();
+    }
+  }
+
   /* ---------------- view ---------------- */
   function bubble(m){
+    const vis = (m.diagramText || m.visual) ? `<div class="aura-visual"></div>` : '';
     return `<div class="aura-msg" data-role="${m.role}">
         <span class="aura-msg-who">${m.role==='user'?'YOU':'AURA'}</span>
         <div class="aura-msg-body">${format(m.text)}</div>
+        ${vis}
       </div>`;
   }
 
@@ -85,6 +170,8 @@
     thread.innerHTML = history + (busy
       ? `<div class="aura-msg" data-role="aura"><span class="aura-msg-who">AURA</span><div class="aura-msg-body aura-typing"><i></i><i></i><i></i></div></div>`
       : '');
+
+    mountVisuals();
 
     const input = root.querySelector('.aura-input');
     if(input) input.disabled = busy;
@@ -223,8 +310,31 @@
         failure.status = response.status;
         throw failure;
       }
-      if(!data.answer) throw new Error('AURA sent back an empty answer. Please try again.');
-      messages.push({role:'aura', text:data.answer});
+      if(!data.answer && !data.explanation) throw new Error('AURA sent back an empty answer. Please try again.');
+      const answerText = data.explanation || data.answer || '';
+      const auraMsg = { role:'aura', text:answerText };
+      /* The server hands back a "diagram" recipe (arrow chain, flow: or seq:
+         DSL) that the text→diagram engine (js/aura-diagram.js) turns into
+         the picture shown next to the answer. The parametric visual from
+         visual_type/params stays behind it as the fallback when that engine
+         cannot render, and keyword detection still covers older servers —
+         so every answer ends up with an image. */
+      const KNOWN = { projectile:1, photosynthesis:1, pythagoras:1, motor:1, dna:1, wave:1, generic:1 };
+      const knownVisual = data.visual_type && KNOWN[data.visual_type]
+        ? { type:data.visual_type, params:(data.params && typeof data.params==='object')?data.params:{}, svg_instruction:data.svg_instruction||'' }
+        : null;
+      if(typeof data.diagram === 'string' && data.diagram.trim()){
+        auraMsg.diagramText = data.diagram.trim();
+        if(knownVisual) auraMsg.visual = knownVisual;
+      }else if(knownVisual){
+        auraMsg.visual = knownVisual;
+      }else{
+        const av = window.XC.auraVisuals;
+        const type = av && typeof av.detect==='function' ? av.detect(question + '\n' + answerText) : null;
+        if(type) auraMsg.visual = { type, params:av.extractParams(type, answerText), svg_instruction:'' };
+        else auraMsg.diagramText = answerText;
+      }
+      messages.push(auraMsg);
     }catch(error){
       console.warn('AURA request failed:', error);
       messages.push({role:'aura', text:explain(error)});
