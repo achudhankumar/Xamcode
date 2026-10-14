@@ -1582,7 +1582,14 @@ async function runChunkedJob(job){
 function sendJson(res, status, obj, requestId){
   const body = JSON.stringify(obj);
   res.setHeader('Content-Type', 'application/json');
-  res.setHeader('X-Request-Id', requestId);
+  /* requestId is optional: serveStatic's 403/404 paths are inside the async
+     fs.readFile callback, where requestId is not in scope. Setting a header to
+     undefined throws ERR_HTTP_INVALID_HEADER_VALUE; because that throw happens
+     in an async callback the request try/catch cannot see it, so it became an
+     uncaughtException that killed the process (Render then 502'd and restarted
+     on every /favicon.ico 404). Only set the header when we actually have a
+     value — same guard bip/util.js already uses. */
+  if (requestId) res.setHeader('X-Request-Id', requestId);
   // Security headers per Website Professional Build & Compliance Master Guide
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('X-Content-Type-Options', 'nosniff');

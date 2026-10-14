@@ -39,6 +39,38 @@ function wait(ms) { return new Promise((r) => setTimeout(r, ms)); }
   ok(r.status === 200 && j && j.service === 'xamcode-ai' && j.apiVersion === 1, 'study /api/health contract intact');
   r = await req('GET', '/build', undefined, { Accept: 'text/html' });
   ok(r.status === 200 && /built in public/i.test(r.body), 'GET /build serves the public page');
+
+  /* ---- Route-separation regression ----
+     / must serve the MAIN study app; /build and /build/ must serve the BIP
+     dashboard. Never each other. Guards against the mount falling through to
+     serveStatic (which would 404) or a stray redirect to the main site. */
+  ok(/text\/html/.test(r.headers['content-type'] || ''), '/build content-type is text/html (got ' + r.headers['content-type'] + ')');
+  ok(!/Drop your PDF here/i.test(r.body), '/build does NOT serve the main study site');
+  const buildBody = r.body;
+
+  r = await req('GET', '/build/', undefined, { Accept: 'text/html' });
+  ok(r.status === 200 && /built in public/i.test(r.body), 'GET /build/ serves the BIP dashboard (consistent with /build)');
+  ok(/text\/html/.test(r.headers['content-type'] || ''), '/build/ content-type is text/html (got ' + r.headers['content-type'] + ')');
+
+  r = await req('GET', '/', undefined, { Accept: 'text/html' });
+  ok(r.status === 200 && /Drop your PDF here/i.test(r.body), 'GET / serves the MAIN XamCode study site');
+  ok(!/built in public/i.test(r.body), '/ does NOT serve the BIP dashboard');
+  ok(/text\/html/.test(r.headers['content-type'] || ''), '/ content-type is text/html (got ' + r.headers['content-type'] + ')');
+  ok(r.body !== buildBody, '/ and /build return different documents');
+
+  /* ---- Crash regression ----
+     A missing STATIC file (favicon is requested by every browser) used to hit
+     serveStatic's 404 -> sendJson(res,404,{}) with no requestId -> setHeader
+     'X-Request-Id: undefined' threw inside the async fs.readFile callback ->
+     uncaughtException -> process death -> Render 502 + restart loop. It must
+     return a clean 404 and leave the process serving. */
+  r = await req('GET', '/favicon.ico', undefined, { Accept: 'image/x-icon' });
+  ok(r.status === 404, 'missing static file returns 404 (got ' + r.status + ')');
+  r = await req('GET', '/definitely-not-a-real-path', undefined, { Accept: 'text/html' });
+  ok(r.status === 404, 'unknown path returns 404 (got ' + r.status + ')');
+  r = await req('GET', '/api/health');
+  j = parse(r.body);
+  ok(r.status === 200 && j && j.service === 'xamcode-ai', 'server still alive after 404s (no crash loop)');
   r = await req('GET', '/api/bip/summary');
   j = parse(r.body);
   ok(r.status === 200 && j && typeof j.progress.percent === 'number', 'summary carries progress.percent');
