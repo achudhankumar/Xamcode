@@ -4,13 +4,14 @@
    2. js/aura-diagram.js lazy-loads it and exposes XC.auraDiagram.render
    3. server.js requires a "diagram" recipe in the AURA prompt + sanitizes it
    4. XamCode.html / js/aura.js / css/aura.css wire the pieces together   */
-const fs = require('fs'), vm = require('vm');
+const fs = require('fs'), vm = require('vm'), path = require('path');
 
 let pass = 0, fail = 0;
 const ok = (c, m) => { if(c){ pass++; console.log('  ok   ' + m); } else { fail++; console.log('  FAIL ' + m); } };
 
 /* ---------- 1. the browser bundle ---------- */
-const BUNDLE = 'c:/Xamcode/aura-visuals/browser/aura-diagram.js';
+const ROOT = __dirname;
+const BUNDLE = path.join(ROOT, 'aura-visuals', 'browser', 'aura-diagram.js');
 ok(fs.existsSync(BUNDLE), 'browser bundle is built (aura-visuals/browser/aura-diagram.js)');
 
 let bodyMode = 'dark';
@@ -30,7 +31,7 @@ ok(typeof (sandbox.AuraDiagram && sandbox.AuraDiagram.renderDiagram) === 'functi
   'bundle exposes window.AuraDiagram.renderDiagram');
 
 /* ---------- 2. the lazy loader the chat calls ---------- */
-vm.runInContext(fs.readFileSync('c:/Xamcode/js/aura-diagram.js', 'utf8'), sandbox, { filename: 'aura-diagram.js' });
+vm.runInContext(fs.readFileSync(path.join(ROOT, 'js', 'aura-diagram.js'), 'utf8'), sandbox, { filename: 'aura-diagram.js' });
 const AD = sandbox.window.XC && sandbox.window.XC.auraDiagram;
 ok(AD && typeof AD.render === 'function', 'js/aura-diagram.js exposes XC.auraDiagram.render');
 ok(AD && typeof AD.ensureLoaded === 'function', 'XC.auraDiagram.ensureLoaded exists for preloading');
@@ -70,7 +71,7 @@ async function main(){
 
   /* ---------- 3. the server contract ---------- */
   console.log('\nserver.js requires + sanitizes the diagram recipe');
-  const src = fs.readFileSync('c:/Xamcode/server.js', 'utf8');
+  const src = fs.readFileSync(path.join(ROOT, 'server.js'), 'utf8');
   const p0 = src.indexOf('const AURA_JSON_PROMPT');
   const p1 = src.indexOf('async function handleAsk');
   ok(p0 >= 0 && p1 > p0, 'AURA_JSON_PROMPT + normalizeAura region located');
@@ -96,15 +97,15 @@ async function main(){
 
   /* ---------- 4. app wiring ---------- */
   console.log('\napp wiring');
-  const html = fs.readFileSync('c:/Xamcode/XamCode.html', 'utf8');
+  const html = fs.readFileSync(path.join(ROOT, 'XamCode.html'), 'utf8');
   const iLoader = html.indexOf('js/aura-diagram.js');
   const iAura = html.indexOf('js/aura.js');
   ok(iLoader > 0 && iAura > iLoader, 'XamCode.html loads js/aura-diagram.js before js/aura.js');
-  const chat = fs.readFileSync('c:/Xamcode/js/aura.js', 'utf8');
+  const chat = fs.readFileSync(path.join(ROOT, 'js', 'aura.js'), 'utf8');
   ok(/data\.diagram/.test(chat), 'aura.js reads data.diagram from the response');
   ok(/diagramText/.test(chat) && /mountDiagram/.test(chat), 'aura.js stores the recipe and mounts the SVG');
   ok(/else auraMsg\.diagramText = answerText/.test(chat), 'answer text itself is the last-resort recipe');
-  const css = fs.readFileSync('c:/Xamcode/css/aura.css', 'utf8');
+  const css = fs.readFileSync(path.join(ROOT, 'css', 'aura.css'), 'utf8');
   ok(/aura-diagram-busy/.test(css) && /\.aura-visual>svg/.test(css), 'aura.css styles the generated diagram slot');
 
   console.log('\n*** ' + (fail === 0 ? 'PASS' : 'FAIL') + ' ***  ' + pass + ' passed, ' + fail + ' failed');

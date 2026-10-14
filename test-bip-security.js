@@ -30,7 +30,7 @@ const env = Object.assign({}, process.env, {
 delete env.GITHUB_WEBHOOK_SECRET;
 delete env.BIP_INGEST_TOKEN;
 
-const child = spawn(process.execPath, ['server.js'], { cwd: 'c:/Xamcode', env, stdio: ['ignore', 'pipe', 'pipe'] });
+const child = spawn(process.execPath, ['server.js'], { cwd: __dirname, env, stdio: ['ignore', 'pipe', 'pipe'] });
 let stderrBuf = '';
 child.stderr.on('data', (c) => { stderrBuf += c; });
 

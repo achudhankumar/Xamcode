@@ -11,7 +11,7 @@ const { spawn } = require('child_process');
 const PORT = 4197;
 const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'bip-smoke-'));
 const env = Object.assign({}, process.env, { PORT: String(PORT), BIP_DATA_DIR: DATA });
-const child = spawn(process.execPath, ['server.js'], { cwd: 'c:/Xamcode', env, stdio: ['ignore', 'pipe', 'pipe'] });
+const child = spawn(process.execPath, ['server.js'], { cwd: __dirname, env, stdio: ['ignore', 'pipe', 'pipe'] });
 let pass = 0, fail = 0;
 function ok(c, m) { if (c) { pass++; console.log('  ok   ' + m); } else { fail++; console.log('  FAIL ' + m); } }
 

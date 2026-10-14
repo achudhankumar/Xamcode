@@ -11,7 +11,7 @@
    ============================================================ */
 'use strict';
 const fs=require('fs'), vm=require('vm'), path=require('path');
-const ROOT=process.argv[2]||'c:/Xamcode';
+const ROOT=process.argv[2]||__dirname;
 
 const handlers={};
 function el(id){

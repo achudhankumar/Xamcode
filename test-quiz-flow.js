@@ -1,7 +1,7 @@
 /* Quiz-flow harness: loads the real data + app.js into a vm sandbox with a
    minimal DOM stub, then drives the sequential quiz flow end to end. */
 const fs=require('fs'), vm=require('vm'), path=require('path');
-const ROOT=process.argv[2]||'c:/Xamcode';
+const ROOT=process.argv[2]||__dirname;
 
 const handlers={};
 function el(id){
