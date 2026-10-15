@@ -31,4 +31,58 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run check
-      - run: npm test
+      - id: tests
+        run: npm test
+      # P0-2: Report real CI test results to the Xamcode BIP telemetry.
+      # Runs even when tests fail; never masks the test outcome; never prints secrets.
+      - name: Report test result to Build-in-Public ingest
+        if: always()
+        env:
+          BIP_INGEST_TOKEN: ${{ secrets.BIP_INGEST_TOKEN }}
+          PUBLIC_URL: ${{ vars.PUBLIC_URL }}
+          PUBLIC_URL_SECRET: ${{ secrets.PUBLIC_URL }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+          COMMIT_SHA: ${{ github.sha }}
+          TESTS_OUTCOME: ${{ steps.tests.outcome }}
+        run: |
+          if [ -z "$BIP_INGEST_TOKEN" ]; then
+            echo "BIP ingest skipped: BIP_INGEST_TOKEN secret is not configured."
+            exit 0
+          fi
+          TARGET_URL="${PUBLIC_URL:-$PUBLIC_URL_SECRET}"
+          if [ -z "$TARGET_URL" ]; then
+            # Documented fallback: main XamCode API backend (service xamcode-ai).
+            # Set the PUBLIC_URL variable / PUBLIC_URL secret in GitHub Actions
+            # instead of relying on this fallback in production.
+            TARGET_URL="https://xamcode-ai.onrender.com"
+          fi
+          # Strip any trailing slash so the path join is stable.
+          TARGET_URL="${TARGET_URL%/}"
+          if [ "$TESTS_OUTCOME" = "success" ]; then
+            EVENT_TYPE="tests_passed"
+            SUMMARY="CI tests passed"
+          else
+            EVENT_TYPE="tests_failed"
+            SUMMARY="CI tests failed"
+          fi
+          SHORT_SHA="$(printf '%s' "$COMMIT_SHA" | cut -c1-7)"
+          DEDUPE_KEY="ci-tests-${RUN_ID}-${RUN_ATTEMPT}"
+          # Timeout + one retry only; failure to report must not fail the CI job.
+          # The Bearer token is passed via header only and never echoed.
+          set +x
+          set +e
+          HTTP_CODE=$(curl --fail --silent --show-error \
+            --max-time 15 --connect-timeout 10 --retry 1 \
+            -X POST "$TARGET_URL/api/bip/events/ingest" \
+            -H "Authorization: Bearer $BIP_INGEST_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"type\":\"$EVENT_TYPE\",\"summary\":\"$SUMMARY on main @ $SHORT_SHA (run $RUN_ID)\",\"ref\":\"$COMMIT_SHA\",\"dedupeKey\":\"$DEDUPE_KEY\",\"source\":\"ci\"}" \
+            -o /dev/null -w "%{http_code}")
+          CURL_EXIT=$?
+          set -e
+          if [ "$CURL_EXIT" -ne 0 ]; then
+            echo "BIP ingest report FAILED - HTTP ${HTTP_CODE:-000}, curl exit $CURL_EXIT. CI test result is unaffected."
+            exit 0
+          fi
+          echo "BIP ingest report OK - HTTP $HTTP_CODE."
