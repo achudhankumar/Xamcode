@@ -42,10 +42,10 @@ function cspForPage(nonce){
   return [
     "default-src 'self'",
     "script-src 'self' 'nonce-" + nonce + "'",
-    "style-src 'self' 'unsafe-inline'",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "img-src 'self' data:",
     "connect-src 'self'",
-    "font-src 'self'",
+    "font-src 'self' https://fonts.gstatic.com",
     "object-src 'none'",
     "base-uri 'none'",
     "frame-ancestors 'none'",
