@@ -1,212 +1,178 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>XamCode AI — Building in Public</title>
-<meta name="description" content="Verified development progress, roadmap, changelog, ideas, chat, countdown and waitlist for XamCode AI.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Orbitron:wght@600;900&family=Space+Grotesk:wght@400;600;800&display=swap" rel="stylesheet">
-<style>
-:root{
-  --bg:#030406;--bg2:#0a0c14;--card:#0f121e;--card2:#141828;
-  --line:rgba(139,92,246,.12);--line-bright:rgba(139,92,246,.35);
-  --txt:#e2e8f0;--mut:#94a3b8;--dim:#64748b;
-  --acc:#8b5cf6;--acc2:#d946ef;--ok:#a3e635;--warn:#fbbf24;--bad:#f87171;
-  --r:10px;--max:1200px;
-  --font-display:'Orbitron',var(--font);--font-ed:'Space Grotesk',var(--font);
-  --font-mono:'JetBrains Mono',var(--mono);
-  --font:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Inter,Arial,sans-serif;
-  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-}
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>XamCode AI — Building in Public</title><meta name="description" content="Verified development progress, roadmap, changelog, ideas, chat, countdown and waitlist for XamCode AI."><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Orbitron:wght@600;900&family=Space+Grotesk:wght@400;600;800&display=swap" rel="stylesheet"><style id="bip-css">
+:root{--bg:#020205;--bg2:#0a0a12;--fg:#e8e8f0;--mut:#94a3b8;--dim:#5b6478;--acc:#8b5cf6;--acc2:#d946ef;--ok:#a3e635;--warn:#fbbf24;--bad:#f87171;--line:rgba(139,92,246,.06);--line-bright:rgba(139,92,246,.25);--r:12px;--max:1100px;--font-display:'Orbitron',var(--font);--font-ed:'Space Grotesk',var(--font);--font-mono:'JetBrains Mono',var(--mono);--font:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Inter,Arial,sans-serif;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
 *{box-sizing:border-box}html{scroll-behavior:smooth}
-@media (prefers-reduced-motion:reduce){
-  *{transition:none!important;animation:none!important}html{scroll-behavior:auto}
-}
-body{margin:0;font-family:var(--font-ed);color:var(--txt);line-height:1.6;
-  min-height:100vh;position:relative;
-  background:radial-gradient(1200px 600px at 90% -10%,rgba(139,92,246,.10),transparent 55%),
-    radial-gradient(800px 500px at 10% 0%,rgba(217,70,239,.08),transparent 55%),
-    linear-gradient(180deg,var(--bg),var(--bg2));}
-body::before{content:"";position:fixed;inset:0;
-  background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
-  background-size:40px 40px;mask-image:linear-gradient(180deg,transparent 0%,#000 15%,#000 85%,transparent 100%);
-  pointer-events:none;z-index:0;}
-body::after{content:"";position:fixed;inset:0;
-  background:linear-gradient(180deg,transparent 0%,rgba(3,4,6,.6) 60%,rgba(3,4,6,.9) 100%);
-  pointer-events:none;z-index:0;}
-.wrap,.nav,.hero,footer{position:relative;z-index:1}
-.skip{position:absolute;left:-9999px;top:0;background:var(--acc);color:#030406;padding:8px 14px;border-radius:8px;z-index:99}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}html{scroll-behavior:auto}}
+body{margin:0;font-family:var(--font-ed);color:var(--fg);line-height:1.55;min-height:100vh;position:relative;background:var(--bg);overflow-x:hidden}
+.plane{position:fixed;inset:0;pointer-events:none;z-index:0}
+.plane.grid{background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:48px 48px;mask-image:radial-gradient(circle at 50% 40%,#000 20%,transparent 70%);opacity:.5}
+.plane.uv{background:radial-gradient(900px 500px at 80% -10%,rgba(139,92,246,.07),transparent 45%),radial-gradient(700px 400px at -10% 0%,rgba(217,70,239,.05),transparent 50%)}
+.plane.scan{background:linear-gradient(180deg,transparent 0%,#020205 55%,#020205 100%)}
+.skip{position:absolute;left:-9999px;top:0;background:var(--acc);color:#020205;padding:8px 14px;border-radius:8px;z-index:100;font-family:var(--font-mono);font-size:12px;font-weight:700;text-decoration:none}
 .skip:focus{left:12px;top:12px}
-a{color:var(--acc);text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:2px;text-underline-position:under}
-a:focus-visible{outline:2px solid var(--acc);outline-offset:3px}
-.wrap{max-width:var(--max);margin:0 auto;padding:0 24px}
-.nav{position:sticky;top:0;z-index:50;backdrop-filter:blur(16px);background:rgba(3,4,6,.85);border-bottom:1px solid var(--line)}
-.nav .wrap{display:flex;align-items:center;gap:16px;padding:14px 0}
-.brand{display:flex;align-items:center;gap:10px;font-family:var(--font-display);font-weight:900;text-decoration:none;color:var(--txt);font-size:20px;letter-spacing:-0.5px}
-.logo{width:34px;height:34px;border-radius:10px;background:conic-gradient(from 210deg,var(--acc),var(--acc2),var(--acc));display:grid;place-items:center;color:#030406;font-weight:900;font-size:14px}
-.live{font-family:var(--font-mono);font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px;border:1px solid var(--warn);color:var(--warn);letter-spacing:0.05em}
+a{color:var(--acc);border-bottom:1px solid var(--line-bright);text-decoration:none}
+a:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.nav{position:sticky;top:0;z-index:60;background:rgba(2,2,5,.82);backdrop-filter:blur(20px);border-bottom:1px solid var(--line)}
+.nav .wrap{display:flex;align-items:center;gap:14px;padding:12px 0}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--font-display);font-weight:900;text-decoration:none;color:var(--fg);font-size:18px;letter-spacing:-0.25px}
+.logo{width:32px;height:32px;border-radius:8px;background:conic-gradient(from 210deg,var(--acc),var(--acc2),var(--acc));display:grid;place-items:center;color:#020205;font-weight:900;font-size:13px}
+.live{font-family:var(--font-mono);font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;border:1px solid var(--warn);color:var(--warn);letter-spacing:0.08em;text-transform:uppercase}
 .live.on{color:#06281c;background:var(--ok);border-color:var(--ok)}
-.links{margin-left:auto;display:flex;gap:4px;flex-wrap:wrap}
-.links a{color:var(--mut);text-decoration:none;font-size:13px;padding:8px 11px;border-radius:10px;border:1px solid transparent}
-.links a:hover,.links a:focus-visible{color:var(--txt);background:rgba(139,92,246,.1);border-color:var(--line-bright);outline:none}
-.hero{padding:60px 0 30px}
-.eyebrow{display:inline-flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:12px;font-weight:700;color:var(--mut);border:1px solid var(--line);border-radius:999px;padding:6px 14px;background:rgba(139,92,246,.06);letter-spacing:0.05em}
-.hero h1{font-family:var(--font-display);font-size:clamp(34px,6vw,64px);line-height:1.05;margin:16px 0 14px;letter-spacing:-1px}
-.grad{background:linear-gradient(92deg,var(--acc),var(--acc2));-webkit-background-clip:text;background-clip:text;color:transparent}
-.lede{color:var(--mut);font-size:clamp(15px,2vw,18px);max-width:62ch}
+.links{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+.links a{color:var(--mut);font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid transparent;font-family:var(--font-mono);font-weight:700}
+.links a:hover,.links a:focus-visible{color:var(--fg);background:rgba(139,92,246,.08);border-color:var(--line-bright);outline:none}
+.wrap{max-width:var(--max);margin:0 auto;padding:0 24px}.opening{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;padding:40px 0 0}
+.field{position:relative;width:100%;height:calc(100vh - 120px);display:flex;flex-direction:column;justify-content:center;overflow:hidden}
+.field::before{content:"";position:absolute;inset:-20%;background:conic-gradient(from 90deg,transparent,rgba(139,92,246,.04),transparent 50%,rgba(217,70,239,.03),transparent);animation:rotate 20s linear infinite;pointer-events:none;z-index:-1}
+@keyframes rotate{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+.tech-label{font-family:var(--font-mono);font-size:11px;font-weight:700;color:var(--mut);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:8px;display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);padding:6px 12px;border-radius:8px;background:rgba(10,14,24,.4)}
+.frag{font-family:var(--font-display);font-weight:900;font-size:clamp(44px,9vw,118px);line-height:0.92;margin:14px 0 10px;color:var(--fg);letter-spacing:-0.03em;text-align:left}
+.frag span{display:block;opacity:0;animation:assemble 1.1s cubic-bezier(0.23,1,0.32,1) forwards}
+.lede{color:var(--mut);font-size:clamp(14px,1.8vw,17px);max-width:60ch;margin:14px 0 0}
 .cta-row{display:flex;gap:12px;flex-wrap:wrap;margin-top:26px}
-.btn{border:1px solid var(--line);background:linear-gradient(180deg,rgba(20,24,46,.85),rgba(10,14,24,.9));color:var(--txt);border-radius:10px;padding:12px 20px;font-size:14px;font-weight:700;cursor:pointer;text-decoration:none;display:inline-block;transition:transform .15s,border-color .2s}
-.btn.primary{background:linear-gradient(92deg,var(--acc),var(--acc2));color:#030406;border:none}
-.btn:hover{transform:translateY(-1px);border-color:var(--line-bright)}
-.btn:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
-.btn[disabled]{opacity:.55;cursor:wait;transform:none}
-.grid{display:grid;gap:14px}
-.stats{grid-template-columns:repeat(4,1fr);margin:24px 0}
-.card{background:linear-gradient(180deg,rgba(20,24,46,.7),rgba(10,14,24,.8));border:1px solid var(--line);border-radius:var(--r);padding:18px;position:relative;overflow:hidden}
-.card::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent 0%,rgba(139,92,246,.04) 50%,transparent 100%);opacity:0;transition:opacity .3s}
-.card:hover::before{opacity:1}
-.card h3{margin:0 0 4px;font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);font-weight:800}
-.big{font-size:32px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-1px}
-.sub{color:var(--mut);font-size:13px}
-.meter{height:10px;border-radius:999px;background:rgba(139,92,246,.1);overflow:hidden;border:1px solid var(--line)}
-.meter>i{display:block;height:100%;width:0;border-radius:999px;background:linear-gradient(90deg,var(--acc),var(--acc2));transition:width 1s ease}
-.mrow{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.pill{display:inline-block;font-family:var(--font-mono);font-size:11px;font-weight:700;border-radius:999px;padding:2px 10px;border:1px solid var(--line);color:var(--mut);letter-spacing:0.05em}
-.pill.verified{color:#06281c;background:var(--ok);border-color:var(--ok)}
-.pill.in_progress{color:#030406;background:var(--acc);border-color:var(--acc)}
-.pill.needs_review{color:#3a2a06;background:var(--warn);border-color:var(--warn)}
-.pill.planned{color:var(--mut)}
-.mile{border:1px solid var(--line);border-radius:10px;padding:14px;margin:10px 0;background:rgba(10,14,24,.65);display:flex;flex-direction:column;gap:8px}
+@keyframes assemble{0%{opacity:0;transform:translateY(30px) scale(1.1);filter:blur(8px)}100%{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}}
+.frag span:nth-child(1){animation-delay:0.1s}.frag span:nth-child(2){animation-delay:0.25s}.frag span:nth-child(3){animation-delay:0.4s}
+.status-chip{margin-top:24px;font-family:var(--font-mono);font-size:11px;font-weight:700;color:var(--ok);border:1px solid rgba(163,230,53,.25);padding:6px 14px;border-radius:999px;background:rgba(163,230,53,.05);display:inline-block;letter-spacing:0.08em;text-transform:uppercase}
+.scroll-hint{position:absolute;bottom:32px;left:50%;transform:translateX(-50%);font-family:var(--font-mono);font-size:10px;color:var(--dim);letter-spacing:0.1em;text-transform:uppercase;animation:bob 2.5s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(6px)}}
+.chapter{position:relative;z-index:1;padding:80px 0;border-bottom:1px solid var(--line)}
+.chapter-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:40px}
+.chapter-head .num{font-family:var(--font-display);font-weight:900;font-size:28px;color:var(--dim);letter-spacing:-1px}
+.chapter-head h2{margin:0;font-family:var(--font-display);font-size:32px;letter-spacing:-0.5px;color:var(--fg)}
+.chapter-head p{margin:6px 0 0;color:var(--mut);font-size:13px}
+.reveal{opacity:0;transform:translateY(24px);transition:opacity 0.7s ease-out,transform 0.7s ease-out}
+.reveal.in{opacity:1;transform:translateY(0)}
+@media (prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}}
+.progress-visual{display:flex;flex-direction:column;gap:26px}
+.circ-wrap{position:relative;width:260px;height:260px;margin:0 auto}
+.circ-svg{width:100%;height:100%;transform:rotate(-90deg)}
+.circ-bg{fill:none;stroke:var(--line);stroke-width:10;stroke-linecap:round}
+.circ-prog{fill:none;stroke:var(--ok);stroke-width:3.2;stroke-linecap:round;stroke-dasharray:100;stroke-dashoffset:100;transition:stroke-dashoffset 1.2s cubic-bezier(0.23,1,0.32,1)}
+@media (prefers-reduced-motion:reduce){.circ-prog{transition:none}.frag span{opacity:1!important;animation:none!important}.field::before{animation:none!important}.scroll-hint{animation:none!important}}
+.circ-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:var(--font-mono)}
+.circ-pct{font-size:48px;font-weight:900;color:var(--fg);line-height:1}
+.circ-sub{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:0.1em;margin-top:6px}
+.circ-ring{position:absolute;inset:-14px;border-radius:50%;border:1px solid var(--line);opacity:.5}
+.meter-note{text-align:center;color:var(--mut);font-size:13px;font-family:var(--font-mono)}
+.mile-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.mile{border:1px solid var(--line);border-radius:var(--r);padding:16px;background:rgba(2,2,5,.6);display:flex;flex-direction:column;gap:10px;transition:transform 0.4s ease,border-color 0.3s ease}
+.mile:hover{border-color:var(--line-bright)}
 .mile .t{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
 .mono{font-family:var(--font-mono);font-size:12px;color:var(--dim)}
 .mile .c{color:var(--mut);font-size:12.5px;margin:4px 0 0}
-.sec{margin:34px 0}
-.sec-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:18px}
-.sec-head h2{margin:0;font-family:var(--font-display);font-size:22px;letter-spacing:-.5px}
-.sec-head p{margin:0;color:var(--dim);font-size:13px}
-.feed{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;max-height:340px;overflow:auto}
-.feed li{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:rgba(10,14,24,.65);font-size:14px;display:flex;align-items:flex-start;gap:10px}
-.meta{color:var(--dim);font-size:12px;font-family:var(--font-mono)}
-.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:8px;flex-shrink:0}
+.pill{display:inline-block;font-family:var(--font-mono);font-size:10px;font-weight:700;border-radius:999px;padding:3px 10px;border:1px solid var(--line);color:var(--mut);letter-spacing:0.06em;text-transform:uppercase}
+.pill.verified{color:#06281c;background:var(--ok);border-color:var(--ok)}
+.pill.in_progress{color:#020205;background:var(--acc);border-color:var(--acc)}
+.pill.needs_review{color:#3a2a06;background:var(--warn);border-color:var(--warn)}
+.pill.planned{color:var(--mut)}
+.st-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.st-cell{border:1px solid var(--line);border-radius:var(--r);padding:16px;background:rgba(2,2,5,.4);display:flex;flex-direction:column;gap:10px}
+.st-cell .lbl{font-family:var(--font-mono);font-size:10px;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:0.08em}
+.st-cell .val{font-family:var(--font-mono);font-size:20px;font-weight:800;color:var(--fg);letter-spacing:-0.5px}
+.st-cell .at{font-family:var(--font-mono);font-size:11px;color:var(--dim)}
+.feed{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.feed li{border:1px solid var(--line);border-radius:var(--r);padding:12px 16px;background:rgba(2,2,5,.5);font-size:13px;display:flex;align-items:flex-start;gap:10px;position:relative}
+.feed li::before{content:"";position:absolute;left:-1px;top:-1px;bottom:-1px;width:2px;background:linear-gradient(180deg,var(--acc),transparent);border-radius:var(--r) 0 0 var(--r);opacity:0;transition:opacity 0.3s ease}
+.feed li:hover::before{opacity:1}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-right:8px}
 .dot.passed{background:var(--ok);box-shadow:0 0 8px var(--ok)}
 .dot.failed{background:var(--bad);box-shadow:0 0 8px var(--bad)}
 .dot.running{background:var(--warn);box-shadow:0 0 8px var(--warn)}
 .dot.info{background:var(--acc);box-shadow:0 0 8px var(--acc)}
 .dot.unknown{background:var(--dim);box-shadow:0 0 8px var(--dim)}
-.s3{grid-template-columns:repeat(3,1fr)}
-form.panel{border:1px solid var(--line);border-radius:var(--r);padding:20px;background:rgba(10,14,24,.65)}
-label{display:block;font-family:var(--font-mono);font-size:12px;color:var(--mut);margin:12px 0 6px;letter-spacing:0.05em}
-input,textarea,select{width:100%;background:#060810;border:1px solid var(--line);border-radius:10px;color:var(--txt);padding:11px 12px;font-size:14px;font-family:inherit}
+.meta{color:var(--dim);font-size:11px;font-family:var(--font-mono)}
+form.panel{border:1px solid var(--line);border-radius:var(--r);padding:20px;background:rgba(2,2,5,.6)}
+label{display:block;font-family:var(--font-mono);font-size:11px;color:var(--mut);margin:12px 0 6px;letter-spacing:0.05em;text-transform:uppercase}
+input,textarea,select{width:100%;background:#05060b;border:1px solid var(--line);border-radius:10px;color:var(--fg);padding:11px 12px;font-size:14px;font-family:inherit}
 input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--acc);outline-offset:1px;border-color:var(--acc)}
 textarea{min-height:90px;resize:vertical}
 .hint{font-family:var(--font-mono);font-size:11px;color:var(--dim)}
 .fmsg{font-size:13px;margin:10px 0 0;min-height:1.2em}
 .fmsg.ok{color:var(--ok)}
 .fmsg.err{color:var(--bad)}
-.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-#chatList{max-height:300px}
-.chat-item{font-size:14px}
-.chat-item .who{font-family:var(--font-mono);font-weight:800;font-size:12px;color:var(--acc)}
-.chat-item .when{color:var(--dim);font-size:11px;margin-left:8px}
-.idea{position:relative;border:1px solid var(--line);border-radius:10px;padding:14px;margin:10px 0;background:rgba(10,14,24,.65)}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:10px;font-family:var(--font-mono);font-weight:800;font-size:13px;cursor:pointer;border:1px solid transparent;text-decoration:none;transition:transform 0.2s ease,box-shadow 0.2s ease,border-color 0.2s ease}
+.btn.primary{background:var(--acc);color:#020205;border-color:var(--acc)}
+.btn.primary:hover{transform:translateY(-1px);box-shadow:0 0 20px rgba(139,92,246,.25)}
+.btn.ghost{border:1px solid var(--line);color:var(--fg);background:transparent}
+.btn.ghost:hover{border-color:var(--line-bright)}
+.idea{position:relative;border:1px solid var(--line);border-radius:var(--r);padding:16px;background:rgba(2,2,5,.5)}
 .idea .t{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
-.idea .vrow{display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap}
-.vote-btn{border:1px solid var(--line);background:transparent;color:var(--txt);border-radius:999px;padding:6px 14px;cursor:pointer;font-family:var(--font-mono);font-weight:800;font-size:12px}
-.vote-btn[aria-pressed="true"]{background:var(--acc);color:#030406;border-color:var(--acc)}
+.idea .vrow{display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap}
+.vote-btn{border:1px solid var(--line);background:transparent;color:var(--fg);border-radius:999px;padding:6px 14px;cursor:pointer;font-family:var(--font-mono);font-weight:800;font-size:12px}
+.vote-btn[aria-pressed="true"]{background:var(--acc);color:#020205;border-color:var(--acc)}
 .vote-btn:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
-.count{display:flex;gap:12px;flex-wrap:wrap;margin-top:14px}
-.count .cell{background:rgba(10,14,24,.7);border:1px solid var(--line);border-radius:10px;padding:14px;text-align:center;min-width:80px}
-.count .n{font-family:'JetBrains Mono',var(--mono);font-size:34px;font-weight:900;font-variant-numeric:tabular-nums;letter-spacing:-1px;color:var(--ok)}
-.count .l{font-family:var(--font-mono);font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:1px}
-footer{border-top:1px solid var(--line);margin-top:50px;padding:30px 0 70px;color:var(--dim);font-size:13px}
-footer .kbd{font-family:var(--font-mono);background:rgba(139,92,246,.1);border:1px solid var(--line);color:var(--acc);padding:2px 8px;border-radius:6px;font-size:12px}
-@media (max-width:860px){
-  .stats{grid-template-columns:repeat(2,1fr)}
-  .mrow,.two,.s3{grid-template-columns:1fr}
-  .links{display:none}
-  .hero h1{font-size:34px}
-}
-</style>
-<style>
-@media (prefers-reduced-motion:no-preference){
-  @keyframes pulse-ok{
-    0%,100%{opacity:.6;transform:scale(1)}
-    50%{opacity:1;transform:scale(1.05)}
-  }
-  @keyframes scan{
-    0%{transform:translateY(-100%)}
-    100%{transform:translateY(100%)}
-  }
-  .pulse::before{content:"";position:absolute;inset:-2px;border-radius:inherit;border:1px solid var(--ok);opacity:0;animation:pulse-ok 2s ease-out infinite}
-  .scan{position:relative;overflow:hidden}
-  .scan::after{content:"";position:absolute;inset:0;background:linear-gradient(transparent,rgba(139,92,246,.15),transparent);transform:translateY(-100%);animation:scan 3s linear infinite;pointer-events:none}
-}
-</style>
-</head>
-<body>
+.chat-item{font-size:13px;display:flex;flex-direction:column;gap:4px}
+.chat-item .who{font-family:var(--font-mono);font-weight:800;font-size:11px;color:var(--acc);text-transform:uppercase;letter-spacing:0.05em}
+.chat-item .when{color:var(--dim);font-size:10px;margin-left:6px}
+.count{display:flex;gap:14px;flex-wrap:wrap;margin-top:16px}
+.count .cell{background:rgba(2,2,5,.6);border:1px solid var(--line);border-radius:var(--r);padding:14px;text-align:center;min-width:70px}
+.count .n{font-family:'JetBrains Mono',var(--mono);font-size:32px;font-weight:900;font-variant-numeric:tabular-nums;letter-spacing:-1px;color:var(--ok)}
+.count .l{font-family:var(--font-mono);font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1px}
+.closing{padding:100px 0;text-align:center;position:relative;overflow:hidden}
+.closing::before{content:"";position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:conic-gradient(from 0deg,transparent,rgba(139,92,246,.03),transparent);pointer-events:none;z-index:0}
+.close-body{position:relative;z-index:1}
+.close-title{font-family:var(--font-display);font-weight:900;font-size:clamp(32px,8vw,56px);line-height:1.1;margin:0 0 16px;letter-spacing:-0.05em;color:var(--fg)}
+.close-sub{font-size:17px;color:var(--mut);line-height:1.7;max-width:620px;margin:0 auto 32px}
+.close-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+footer{border-top:1px solid var(--line);padding:40px 0 70px;color:var(--dim);font-size:12px}
+footer .wrap{display:flex;flex-direction:column;gap:10px;align-items:center;text-align:center}
+footer .kbd{font-family:var(--font-mono);background:rgba(139,92,246,.08);border:1px solid var(--line);color:var(--acc);padding:2px 8px;border-radius:6px;font-size:11px}
+@media (max-width:860px){.chapter{padding:56px 0}.st-grid{grid-template-columns:1fr}.mile-grid{grid-template-columns:1fr}.close-actions{flex-direction:column;align-items:center}.frag{font-size:clamp(32px,10vw,90px)}.circ-wrap{width:200px;height:200px}.circ-pct{font-size:34px}}
+</style></head><body>
+<div class="plane grid" aria-hidden="true"></div><div class="plane uv" aria-hidden="true"></div><div class="plane scan" aria-hidden="true"></div>
+<a class="skip" href="#main">Skip to content</a>
 <nav class="nav" aria-label="Sections"><div class="wrap">
 <a class="brand" href="/build"><span class="logo" aria-hidden="true">X</span>XamCode AI&nbsp;<span style="color:var(--dim);font-weight:500">/ building in public</span></a>
-<span class="live" id="liveBadge" role="status">● live feed</span>
+<span class="live" id="liveBadge" role="status">&#10003; live feed</span>
 <div class="links"><a href="#progress">Progress</a><a href="#roadmap">Roadmap</a><a href="#activity">Activity</a><a href="#ideas">Ideas</a><a href="#chat">Chat</a><a href="#launch">Launch</a><a href="#waitlist">Waitlist</a><a href="#guidelines">Guidelines</a></div>
 </div></nav>
 <main id="main"><div class="wrap">
-<header class="hero">
-<span class="eyebrow"><span class="dot info" aria-hidden="true"></span><span id="phaseLabel">Loading build status…</span></span>
-<h1>We are building <span class="grad">XamCode AI</span> in the open.</h1>
-<p class="lede">XamCode AI turns lecture PDFs into animated, unit-by-unit study lessons with the AURA tutor, quizzes and formula cards. This page shows <strong>verified</strong> progress — a milestone counts only when its checks pass or a maintainer confirms it. Commits alone never move the bar.</p>
-<div class="cta-row"><a class="btn primary" href="#waitlist">Get launch access</a><a class="btn" href="#ideas">Suggest a feature</a><a class="btn" href="/">Open the study app →</a></div>
-<div class="grid stats" role="list">
-<div class="card" role="listitem"><h3>Readiness</h3><div class="big" id="statProgress">–</div><div class="sub">weighted verified milestones</div></div>
-<div class="card" role="listitem"><h3>Phase</h3><div class="big" id="statPhase" style="font-size:20px">–</div><div class="sub" id="statMilestone">current milestone</div></div>
-<div class="card" role="listitem"><h3>Ideas</h3><div class="big" id="statIdeas">–</div><div class="sub">community suggestions</div></div>
-<div class="card" role="listitem"><h3>Waitlist</h3><div class="big" id="statWait">–</div><div class="sub">students waiting for access</div></div>
-</div>
-</header>
-
-<section class="sec" id="progress" aria-labelledby="h-progress">
-<div class="sec-head"><h2 id="h-progress">Live development progress</h2><p>weighted verified milestones — never commits or lines of code</p></div>
-<div class="mrow" style="margin-bottom:20px">
-<div class="card scan" style="grid-column:1"><h3>Overall readiness</h3>
-<div style="display:flex;align-items:center;gap:16px;margin-top:12px">
-<div class="meter pulse" role="progressbar" aria-label="Overall readiness" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="pctBar"><i id="pctFill"></i></div>
-<div class="big" id="pctNum">–</div>
-</div>
-<p class="sub" id="pctSub">loading…</p>
-</div>
-<div class="card" style="grid-column:2"><h3>Milestone breakdown</h3>
-<div style="margin-top:14px">
-<div style="margin-bottom:6px"><span class="pill verified" style="margin-right:8px">verified</span></div>
-<div id="mDone" style="margin-bottom:10px"></div>
-<div style="margin-bottom:6px"><span class="pill in_progress" style="margin-right:8px">in progress</span></div>
-<div id="mProg" style="margin-bottom:10px"></div>
-<div style="margin-bottom:6px"><span class="pill planned" style="margin-right:8px">upcoming</span></div>
-<div id="mUp" style="margin-bottom:10px"></div>
-<div style="margin-bottom:6px"><span class="pill needs_review" style="margin-right:8px">needs review</span></div>
-<div id="mRev" style="margin-bottom:0"></div>
-</div>
-</div>
+<section class="opening" id="opening" aria-label="The experiment">
+<div class="field">
+<span class="tech-label"><span class="dot info" aria-hidden="true"></span>EXPERIMENT &#183; XAMCODE AI &#183; PUBLIC BUILD LOG</span>
+<h1 class="frag" id="heroTitle" aria-label="An idea becoming a system"><span>AN IDEA</span><span>BECOMING</span><span>A SYSTEM.</span></h1>
+<p class="lede">XamCode AI turns lecture PDFs into animated, unit-by-unit study lessons. This page is the public record of that system taking shape &#8212; verified progress, real CI signal, open ideas, and a community watching it form.</p>
+<div><span class="status-chip" id="phaseLabel">Assembling&#8230;</span></div>
+<div class="cta-row"><a class="btn primary" href="#waitlist">Follow the experiment</a><a class="btn ghost" href="#progress">Watch the build unfold</a><a class="btn ghost" href="#ideas">Suggest a feature</a></div>
+<span class="scroll-hint" aria-hidden="true">scroll to begin &#8595;</span>
 </div>
 </section>
-<section class="sec" id="roadmap" aria-labelledby="h-roadmap">
-<div class="sec-head"><h2 id="h-roadmap">Public roadmap</h2><p>official plan — only maintainers change these statuses</p></div>
-<div class="card"><div id="roadmapList"><p class="sub">loading…</p></div></div>
-</section>
-
-<section class="sec" id="activity" aria-labelledby="h-activity">
-<div class="sec-head"><h2 id="h-activity">Development activity</h2><p id="feedNote">latest verified development events</p></div>
-<div class="grid s3">
-<div class="card"><h3>Build</h3><div class="big" id="stBuild">–</div><div class="sub mono" id="stBuildAt">no data yet</div></div>
-<div class="card"><h3>Tests</h3><div class="big" id="stTests">–</div><div class="sub mono" id="stTestsAt">no data yet</div></div>
-<div class="card"><h3>Deploy</h3><div class="big" id="stDeploy">–</div><div class="sub mono" id="stDeployAt">no data yet</div></div>
+<section class="chapter" id="progress" aria-labelledby="h-progress">
+<div class="chapter-head"><span class="num">01</span><div><h2 id="h-progress">The current state</h2><p>weighted verified milestones &#8212; never commits or lines of code</p></div></div>
+<div class="progress-visual reveal">
+<div class="circ-wrap"><svg class="circ-svg" viewBox="0 0 36 36"><circle class="circ-bg" cx="18" cy="18" r="15.9155"/><circle class="circ-prog" id="pctFill" cx="18" cy="18" r="15.9155"/></svg><div class="circ-center"><span class="circ-pct" id="pctNum">&#8212;</span><span class="circ-sub" id="pctSub">verified weight</span></div><div class="circ-ring"></div></div>
+<div role="progressbar" aria-label="Overall readiness" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="pctBar" style="display:none"></div>
 </div>
-<div class="card" style="margin-top:14px"><ul class="feed" id="actList" aria-live="off"><li class="sub">loading…</li></ul></div>
+<div class="mile-grid reveal" style="margin-top:26px">
+<div style="grid-column:1 / -1"><span class="pill verified" style="margin-right:8px">verified</span><div id="mDone" style="margin-bottom:10px"></div></div>
+<div style="grid-column:1 / -1"><span class="pill in_progress" style="margin-right:8px">in progress</span><div id="mProg" style="margin-bottom:10px"></div></div>
+<div style="grid-column:1 / -1"><span class="pill planned" style="margin-right:8px">upcoming</span><div id="mUp" style="margin-bottom:10px"></div></div>
+<div style="grid-column:1 / -1"><span class="pill needs_review" style="margin-right:8px">needs review</span><div id="mRev" style="margin-bottom:0"></div></div>
+</div>
+<div class="st-grid reveal" style="margin-top:30px">
+<div class="st-cell"><span class="lbl">Readiness</span><span class="val" id="statProgress">&#8212;</span><span class="at" id="statPhase">&#8212;</span></div>
+<div class="st-cell"><span class="lbl">Phase</span><span class="val" id="statMilestone" style="font-size:20px">&#8212;</span><span class="at">current milestone</span></div>
+<div class="st-cell"><span class="lbl">Ideas</span><span class="val" id="statIdeas">&#8212;</span><span class="at">community suggestions</span></div>
+<div class="st-cell"><span class="lbl">Waitlist</span><span class="val" id="statWait">&#8212;</span><span class="at">students waiting</span></div>
+</div>
 </section>
-<section class="sec" id="ideas" aria-labelledby="h-ideas">
-<div class="sec-head"><h2 id="h-ideas">Community ideas</h2><p>suggestions welcome — they never auto-commit to the roadmap</p></div>
-<div class="two">
-<div><div id="ideaList"><p class="sub">No ideas yet — be the first.</p></div></div>
+<section class="chapter" id="roadmap" aria-labelledby="h-roadmap">
+<div class="chapter-head"><span class="num">02</span><h2 id="h-roadmap">The roadmap</h2><p>official plan &#8212; only maintainers change these statuses</p></div>
+<div class="reveal"><div id="roadmapList"><p class="sub">loading&#8230;</p></div></div>
+</section>
+<section class="chapter" id="activity" aria-labelledby="h-activity">
+<div class="chapter-head"><span class="num">03</span><h2 id="h-activity">Development signal</h2><p id="feedNote">latest verified development events</p></div>
+<div class="st-grid reveal" style="margin-bottom:20px">
+<div class="st-cell"><span class="lbl">Build</span><span class="val" id="stBuild">&#8212;</span><span class="at" id="stBuildAt">no data yet</span></div>
+<div class="st-cell"><span class="lbl">Tests</span><span class="val" id="stTests">&#8212;</span><span class="at" id="stTestsAt">no data yet</span></div>
+<div class="st-cell"><span class="lbl">Deploy</span><span class="val" id="stDeploy">&#8212;</span><span class="at" id="stDeployAt">no data yet</span></div>
+</div>
+<div class="reveal"><ul class="feed" id="actList" aria-live="off"><li class="sub">loading&#8230;</li></ul></div>
+</section>
+<section class="chapter" id="ideas" aria-labelledby="h-ideas">
+<div class="chapter-head"><span class="num">04</span><h2 id="h-ideas">Open ideas</h2><p>suggestions welcome &#8212; they never auto-commit to the roadmap</p></div>
+<div style="display:grid;grid-template-columns:1fr 320px;gap:26px;align-items:start">
+<div id="ideaList"><p class="sub">No ideas yet &#8212; be the first.</p></div>
 <div><form class="panel" id="ideaForm">
 <h3 style="margin:0;font-family:var(--font-display)">Suggest a feature</h3>
 <label for="ideaTitle">Title (min 4 characters)</label>
@@ -219,11 +185,10 @@ footer .kbd{font-family:var(--font-mono);background:rgba(139,92,246,.1);border:1
 </form></div>
 </div>
 </section>
-
-<section class="sec" id="chat" aria-labelledby="h-chat">
-<div class="sec-head"><h2 id="h-chat">Community chat</h2><p>realtime discussion — be kind, no spam</p></div>
-<div class="two">
-<div class="card"><ul class="feed" id="chatList" aria-live="off"><li class="sub">No messages yet — say hello.</li></ul></div>
+<section class="chapter" id="chat" aria-labelledby="h-chat">
+<div class="chapter-head"><span class="num">05</span><h2 id="h-chat">The community</h2><p>realtime discussion &#8212; be kind, no spam</p></div>
+<div style="display:grid;grid-template-columns:1fr 320px;gap:26px;align-items:start">
+<div class="card" style="border:1px solid var(--line);border-radius:var(--r);padding:20px;background:rgba(2,2,5,.6)"><ul class="feed" id="chatList" aria-live="off"><li class="sub">No messages yet &#8212; say hello.</li></ul></div>
 <div><form class="panel" id="chatForm">
 <h3 style="margin:0;font-family:var(--font-display)">Join the discussion</h3>
 <label for="chatNick">Display name</label>
@@ -236,10 +201,10 @@ footer .kbd{font-family:var(--font-mono);background:rgba(139,92,246,.1);border:1
 </form></div>
 </div>
 </section>
-<section class="sec" id="launch" aria-labelledby="h-launch">
-<div class="sec-head"><h2 id="h-launch">Launch countdown</h2><p>readiness first — a date only when it is real</p></div>
-<div class="card scan">
-<div class="big" id="launchState">–</div>
+<section class="chapter" id="launch" aria-labelledby="h-launch">
+<div class="chapter-head"><span class="num">&#8211;</span><h2 id="h-launch">Launch countdown</h2><p>readiness first &#8212; a date only when it is real</p></div>
+<div class="reveal"><div class="card" style="border:1px solid var(--line);border-radius:var(--r);padding:20px;background:rgba(2,2,5,.6)">
+<div class="big" id="launchState">&#8212;</div>
 <p class="sub" id="launchNote"></p>
 <div class="count" id="countCells" hidden>
 <div class="cell"><div class="n" id="cdD">0</div><div class="l">days</div></div>
@@ -248,12 +213,11 @@ footer .kbd{font-family:var(--font-mono);background:rgba(139,92,246,.1);border:1
 <div class="cell"><div class="n" id="cdS">0</div><div class="l">seconds</div></div>
 </div>
 <p class="hint" id="launchKind"></p>
-</div>
+</div></div>
 </section>
-
-<section class="sec" id="waitlist" aria-labelledby="h-wait">
-<div class="sec-head"><h2 id="h-wait">Waitlist</h2><p>one email, one seat — we never publish addresses</p></div>
-<div class="two">
+<section class="chapter" id="waitlist" aria-labelledby="h-wait">
+<div class="chapter-head"><span class="num">&#8211;</span><h2 id="h-wait">Follow the experiment</h2><p>one email, one seat &#8212; we never publish addresses</p></div>
+<div style="display:grid;grid-template-columns:1fr 320px;gap:26px;align-items:start">
 <form class="panel" id="waitForm">
 <label for="waitEmail">Email address</label>
 <input id="waitEmail" name="email" type="email" required autocomplete="email" maxlength="254">
@@ -263,26 +227,36 @@ footer .kbd{font-family:var(--font-mono);background:rgba(139,92,246,.1);border:1
 <button class="btn primary" type="submit" id="waitBtn">Join the waitlist</button>
 <p class="fmsg" id="waitMsg" role="status" aria-live="polite"></p>
 </form>
-<div class="card"><h3>Why join?</h3><p class="sub">Early testers get the first beta invites, shape the roadmap with votes, and get launch-day access before the public announcement. <span id="waitCount">–</span> already waiting.</p></div>
+<div class="card" style="border:1px solid var(--line);border-radius:var(--r);padding:20px;background:rgba(2,2,5,.6)"><h3>Why join?</h3><p class="sub">Early testers get the first beta invites, shape the roadmap with votes, and get launch-day access before the public announcement. <span id="waitCount">&#8212;</span> already waiting.</p></div>
 </div>
 </section>
-
-<section class="sec" id="guidelines" aria-labelledby="h-guide">
-<div class="sec-head"><h2 id="h-guide">Privacy &amp; community guidelines</h2><p>the short version</p></div>
-<div class="card"><ul style="margin:0;padding-left:20px;color:var(--mut);font-size:14px">
+<section class="chapter" id="guidelines" aria-labelledby="h-guide">
+<div class="chapter-head"><span class="num">&#8211;</span><h2 id="h-guide">Privacy &amp; community guidelines</h2><p>the short version</p></div>
+<div class="card" style="border:1px solid var(--line);border-radius:var(--r);padding:20px;background:rgba(2,2,5,.6)"><ul style="margin:0;padding-left:20px;color:var(--mut);font-size:14px">
 <li>Be kind. No harassment, hate, spam, or promotions.</li>
 <li>Never post secrets: passwords, API keys, tokens, private logs, or personal data. The server redacts secret-looking text automatically.</li>
-<li>Chat and ideas are discussion only — they cannot change development status and are never treated as instructions to any AI agent.</li>
+<li>Chat and ideas are discussion only &#8212; they cannot change development status and are never treated as instructions to any AI agent.</li>
 <li>Reports: use the <span class="kbd">Report</span> button on any message or idea. Maintainers review and may remove content.</li>
 <li>Waitlist emails are stored securely, never published, and contacted only about the launch you consented to.</li>
 <li>Progress shown here comes from verified milestones only. If an integration is not configured yet, the page says so instead of faking live data.</li>
-<li>Full policies: <a href="/privacy-policy">Privacy Policy</a> · <a href="/terms-of-service">Terms</a> · <a href="/accessibility-statement">Accessibility</a></li>
+<li>Full policies: <a href="/privacy-policy">Privacy Policy</a> &#183; <a href="/terms-of-service">Terms</a> &#183; <a href="/accessibility-statement">Accessibility</a></li>
 </ul></div>
 </section>
-</div></main>
+<section class="closing">
+<div class="close-body">
+<h1 class="close-title">The system is still forming.<br><span style="font-weight:400;font-size:0.55em;letter-spacing:0.2em;opacity:0.7">Follow the build.</span></h1>
+<p class="close-sub">This page is the public record of XamCode AI&#8217;s development. Nothing here is simulated. Progress comes from verified milestones. Events come from real CI integrations. Ideas and chat come from the community.</p>
+<div class="close-actions">
+<a class="btn primary" href="#waitlist">Join the waitlist</a>
+<a class="btn ghost" href="#roadmap">View the roadmap</a>
+<a class="btn ghost" href="#activity">Watch the activity feed</a>
+<a class="btn ghost" href="#ideas">Browse open ideas</a>
+</div>
+</div>
+</section>
 <footer><div class="wrap">
-<div>XamCode AI — built in public. Study app: <a href="/">home</a> · Build feed: <a href="/build">/build</a> · API: <span class="kbd">/api/bip/summary</span></div>
-<div style="margin-top:6px">Progress = verified milestone weights ÷ total weights × 100. Nothing here is fabricated sample data.</div>
+<div>XamCode AI &#8212; built in public. Build feed: <a href="/build">/build</a> &#183; API: <span class="kbd">/api/bip/summary</span></div>
+<div style="margin-top:6px">Progress = verified milestone weights &#247; total weights &#215; 100. Nothing here is fabricated sample data.</div>
 </div></footer>
 <script>
 'use strict';
@@ -294,145 +268,164 @@ async function get(path){var r=await fetch(path,{headers:{Accept:'application/js
 async function post(path,body){var r=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify(body)});var j=null;try{j=await r.json();}catch(e){}if(!r.ok)throw new Error((j&&j.error)||('Request failed ('+r.status+')'));return j;}
 var state={launch:null,timer:null};
 function mileCard(m){
+m=m||{};
+var st=String(m.status||'planned');
 var d=el('div','mile');
 var t=el('div','t');
-t.appendChild(el('strong',null,m.title));
-var p=el('span','pill '+m.status,null);p.textContent=String(m.status).replace(/_/g,' ');
+t.appendChild(el('strong',null,m.title||'Untitled milestone'));
+var p=el('span','pill '+st,null);p.textContent=st.replace(/_/g,' ');
 t.appendChild(p);d.appendChild(t);
-var meta=el('div','mono','weight '+m.weight+' · '+(m.verifiedAt?('verified '+fmtTime(m.verifiedAt)):(m.status.replace(/_/g,' '))));
+var meta=el('div','mono','weight '+(m.weight||0)+' \u00b7 '+((m.verifiedAt)?('verified '+fmtTime(m.verifiedAt)):st.replace(/_/g,' ')));
 d.appendChild(meta);
 if(m.criteria)d.appendChild(el('p','c','Check: '+m.criteria));
 return d;
 }
+function setText(id,text){var n=$(id);if(n)n.textContent=text;}
+function renderSection(fn){try{fn();}catch(e){}}
 function renderProgress(data){
-var p=data.progress;$('pctNum').textContent=p.percent+'%';
-$('pctFill').style.width=p.percent+'%';
-$('pctBar').setAttribute('aria-valuenow',String(p.percent));
-$('statProgress').textContent=p.percent+'%';
-$('statPhase').textContent=p.phase||'–';
-$('statMilestone').textContent=(p.currentMilestone&&p.currentMilestone.title)||'all milestones mapped';
-$('phaseLabel').textContent=(p.phase||'Building')+' · '+(p.currentMilestone?('now: '+p.currentMilestone.title):'roadmap complete');
-$('pctSub').textContent=p.verifiedWeight+' of '+p.totalWeight+' weight verified across '+p.counts.total+' milestones · '+p.counts.verified+' verified, '+p.counts.inProgress+' in progress, '+p.counts.needsReview+' in review, '+p.counts.planned+' planned';
+if(!data||!data.progress)return;
+var p=data.progress;var ms=data.milestones||[];
+var c=p.counts||{total:ms.length,verified:0,inProgress:0,needsReview:0,planned:0};
+setText('pctNum',(p.percent!=null?p.percent:0)+'%');
+var fill=$('pctFill');if(fill&&fill.style){try{fill.style.strokeDashoffset=String(100-(p.percent||0));}catch(e){}}
+var bar=$('pctBar');if(bar&&bar.setAttribute){try{bar.setAttribute('aria-valuenow',String(p.percent||0));}catch(e){}}
+setText('statProgress',(p.percent!=null?p.percent:0)+'%');
+setText('statPhase',p.phase||'Building');
+setText('statMilestone',(p.currentMilestone&&p.currentMilestone.title)||'all milestones mapped');
+setText('phaseLabel',(p.phase||'Building')+' \u00b7 '+((p.currentMilestone)?('now: '+p.currentMilestone.title):'roadmap complete'));
+setText('pctSub',(p.verifiedWeight||0)+' of '+(p.totalWeight||0)+' weight verified across '+(c.total||0)+' milestones \u00b7 '+(c.verified||0)+' verified, '+(c.inProgress||0)+' in progress, '+(c.needsReview||0)+' in review, '+(c.planned||0)+' planned');
 var done=$('mDone'),prog=$('mProg'),up=$('mUp'),rev=$('mRev');
-done.textContent='';prog.textContent='';up.textContent='';rev.textContent='';
-data.milestones.forEach(function(m){
-if(m.status==='verified')done.appendChild(mileCard(m));
-else if(m.status==='in_progress')prog.appendChild(mileCard(m));
-else if(m.status==='needs_review')rev.appendChild(mileCard(m));
-else up.appendChild(mileCard(m));
+if(done)done.textContent='';if(prog)prog.textContent='';if(up)up.textContent='';if(rev)rev.textContent='';
+ms.forEach(function(m){
+var card=mileCard(m);var st=String((m&&m.status)||'planned');
+if(st==='verified'){if(done)done.appendChild(card);}
+else if(st==='in_progress'){if(prog)prog.appendChild(card);}
+else if(st==='needs_review'){if(rev)rev.appendChild(card);}
+else{if(up)up.appendChild(card);}
 });
-if(!done.children.length)done.appendChild(el('p','sub','No verified milestones yet.'));
-if(!prog.children.length)prog.appendChild(el('p','sub','Nothing in progress right now.'));
-if(!up.children.length)up.appendChild(el('p','sub','Nothing queued.'));
-if(!rev.children.length)rev.appendChild(el('p','sub','Nothing under review.'));
+if(done&&!done.children.length)done.appendChild(el('p','sub','No verified milestones yet.'));
+if(prog&&!prog.children.length)prog.appendChild(el('p','sub','Nothing in progress right now.'));
+if(up&&!up.children.length)up.appendChild(el('p','sub','Nothing queued.'));
+if(rev&&!rev.children.length)rev.appendChild(el('p','sub','Nothing under review.'));
 }
 function renderRoadmap(items){
-var box=$('roadmapList');box.textContent='';
+var box=$('roadmapList');if(!box)return;box.textContent='';
+items=items||[];
 if(!items.length){box.appendChild(el('p','sub','Roadmap coming soon.'));return;}
 items.forEach(function(r){
+r=r||{};
 var d=el('div','mile');var t=el('div','t');
-t.appendChild(el('strong',null,r.title));
-var s=el('span','pill '+String(r.status).replace(/-/g,'_'),null);s.textContent=String(r.status).replace(/_/g,' ');
+t.appendChild(el('strong',null,r.title||'Untitled'));
+var rst=String((r.status==null?'planned':r.status));
+var s=el('span','pill '+rst.replace(/-/g,'_'),null);s.textContent=rst.replace(/_/g,' ');
 t.appendChild(s);d.appendChild(t);
 if(r.summary)d.appendChild(el('p','c',r.summary));
 box.appendChild(d);
 });
 }
 function renderStatus(st){
+st=st||{};
 function cell(name,when,val){
-var b=$(name);b.textContent=(val&&val.state)||'unknown';
-var w=$(when);w.textContent=(val&&val.at)?(fmtTime(val.at)+(val.ref?(' · '+String(val.ref).slice(0,7)):'')):'no data yet';
+var b=$(name);if(b)b.textContent=((val&&val.state)||'unknown');
+var w=$(when);if(w)w.textContent=((val&&val.at)?(fmtTime(val.at)+((val.ref)?(' \u00b7 '+String(val.ref).slice(0,7)):'')):'no data yet');
 }
 cell('stBuild','stBuildAt',st.build);cell('stTests','stTestsAt',st.tests);cell('stDeploy','stDeployAt',st.deploy);
 }
 function renderActivity(list,integration){
-var box=$('actList');box.textContent='';
-if(!list.length){box.appendChild(el('li','sub','No development events yet.'));return;}
-list.forEach(function(e){
+var box=$('actList');if(!box)return;box.textContent='';
+list=list||[];
+if(!list.length){box.appendChild(el('li','sub','No development events yet.'));}
+else{list.forEach(function(e){
+e=e||{};
 var li=el('li');
 var dot=el('span','dot '+(e.status||'info'));dot.setAttribute('aria-hidden','true');li.appendChild(dot);
-li.appendChild(el('span',null,e.summary||e.type));
-li.appendChild(el('div','meta',(e.at?fmtTime(e.at):'')+(e.ref?(' · '+String(e.ref).slice(0,7)):'')+' · '+e.type));
+li.appendChild(el('span',null,e.summary||e.type||'event'));
+li.appendChild(el('div','meta',(e.at?fmtTime(e.at):'')+(e.ref?(' \u00b7 '+String(e.ref).slice(0,7)):'')+' \u00b7 '+(e.type||'')));
 box.appendChild(li);
-});
+});}
 var note=$('feedNote');
-if(integration&&integration.live)note.textContent='live from GitHub webhooks / CI';
-else note.textContent='maintainer-updated feed — GitHub webhooks not connected yet (see deployment docs)';
+if(note)note.textContent=(integration&&integration.live)?'live from GitHub webhooks / CI':'maintainer-updated feed \u2014 GitHub webhooks not connected yet (see deployment docs)';
 var badge=$('liveBadge');
-if(integration&&integration.live){badge.textContent='● live feed';badge.classList.add('on');}
-else{badge.textContent='◆ setup mode';badge.classList.remove('on');}
+if(badge){
+if(integration&&integration.live){badge.textContent='\u2713 live feed';if(badge.classList)badge.classList.add('on');}
+else{badge.textContent='\u25C7 setup mode';if(badge.classList)badge.classList.remove('on');}
+}
 }
 function renderIdeas(items){
-var box=$('ideaList');box.textContent='';
-if(!items.length){box.appendChild(el('p','sub','No ideas yet — be the first.'));return;}
+var box=$('ideaList');if(!box)return;box.textContent='';
+items=items||[];
+if(!items.length){box.appendChild(el('p','sub','No ideas yet \u2014 be the first.'));return;}
 items.forEach(function(idea){
+idea=idea||{};
 var d=el('div','idea');
-var t=el('div','t');t.appendChild(el('strong',null,idea.title));
-var s=el('span','pill',null);s.textContent=String(idea.status).replace(/_/g,' ');t.appendChild(s);
+var t=el('div','t');t.appendChild(el('strong',null,idea.title||'Untitled idea'));
+var s=el('span','pill',null);s.textContent=String(idea.status||'submitted').replace(/_/g,' ');t.appendChild(s);
 d.appendChild(t);
-d.appendChild(el('p','c',idea.description));
+d.appendChild(el('p','c',idea.description||''));
 var row=el('div','vrow');
 var btn=el('button','vote-btn',null);
-btn.type='button';btn.textContent='▾ '+idea.votes+(idea.votedByMe?' · voted':'');
+btn.type='button';btn.textContent='\u25BE '+(idea.votes||0)+(idea.votedByMe?' \u00b7 voted':'');
 btn.setAttribute('aria-pressed',idea.votedByMe?'true':'false');
-btn.setAttribute('aria-label','Vote for '+idea.title);
-btn.addEventListener('click',function(){vote(idea.id,btn);});
+btn.setAttribute('aria-label','Vote for '+(idea.title||'idea'));
+(function(iid,b){btn.addEventListener('click',function(){vote(iid,b);});})(idea.id,btn);
 row.appendChild(btn);
-row.appendChild(el('span','mono',idea.commentCount+' comments'));
+row.appendChild(el('span','mono',(idea.commentCount||0)+' comments'));
 var rep=el('button','vote-btn',null);rep.type='button';rep.textContent='Report';
-rep.setAttribute('aria-label','Report '+idea.title);
-rep.addEventListener('click',function(){report('idea',idea.id);});
-row.appendChild(rep);
-d.appendChild(row);
-box.appendChild(d);
+rep.setAttribute('aria-label','Report '+(idea.title||'idea'));
+(function(iid){rep.addEventListener('click',function(){report('idea',iid);});})(idea.id);
+row.appendChild(rep);d.appendChild(row);box.appendChild(d);
 });
 }
 async function vote(id,btn){
-btn.disabled=true;
-try{var r=await post('/api/bip/ideas/'+encodeURIComponent(id)+'/vote',{});await refreshIdeas();}
-catch(e){announce('ideaMsg',e.message,false);}
-btn.disabled=false;
+if(btn)btn.disabled=true;
+try{await post('/api/bip/ideas/'+encodeURIComponent(id)+'/vote',{});await refreshIdeas();}
+catch(e){announce('ideaMsg',(e&&e.message)||'Vote failed',false);}
+if(btn)btn.disabled=false;
 }
 async function report(kind,targetId){
-var reason=window.prompt('Report this '+kind+' — what is wrong with it?','');
+var reason=null;
+try{reason=window.prompt('Report this '+kind+' \u2014 what is wrong with it?','');}catch(e){return;}
 if(reason==null)return;
-try{await post('/api/bip/reports',{kind:kind,targetId:targetId,reason:reason});window.alert('Thanks — a maintainer will review it.');}
-catch(e){window.alert(e.message);}
+try{await post('/api/bip/reports',{kind:kind,targetId:targetId,reason:reason});window.alert('Thanks \u2014 a maintainer will review it.');}
+catch(e){window.alert((e&&e.message)||'Report failed');}
 }
 function renderChat(list){
-var box=$('chatList');box.textContent='';
-if(!list.length){box.appendChild(el('li','sub','No messages yet — say hello.'));return;}
+var box=$('chatList');if(!box)return;box.textContent='';
+list=list||[];
+if(!list.length){box.appendChild(el('li','sub','No messages yet \u2014 say hello.'));return;}
 list.forEach(function(m){
+m=m||{};
 var li=el('li','chat-item');
 var head=el('div',null,null);
 head.appendChild(el('span','who',m.nickname||'Visitor'));
 head.appendChild(el('span','when',fmtTime(m.at)));
 li.appendChild(head);
-li.appendChild(el('div',null,m.text));
+li.appendChild(el('div',null,m.text||''));
 var row=el('div','vrow');
 var rep=el('button','vote-btn',null);rep.type='button';rep.textContent='Report';
 rep.setAttribute('aria-label','Report message from '+(m.nickname||'Visitor'));
-rep.addEventListener('click',function(){report('chat',m.id);});
+(function(mid){rep.addEventListener('click',function(){report('chat',mid);});})(m.id);
 row.appendChild(rep);li.appendChild(row);
 box.appendChild(li);
 });
-box.scrollTop=box.scrollHeight;
+try{box.scrollTop=box.scrollHeight;}catch(e){}
 }
 function renderLaunch(L){
-state.launch=L;
-if(L.hasConfirmedDate){
-$('launchState').textContent='Confirmed launch — counting down';
-$('launchKind').textContent='Confirmed date'+(L.note?(' · '+L.note):'')+' · readiness '+L.readinessPercent+'% ('+L.readiness+')';
-$('countCells').hidden=false;startCountdown(new Date(L.confirmed).getTime());
-}else if(L.estimated){
-$('launchState').textContent='Estimated launch — not a promise';
-$('launchKind').textContent='Estimate'+(L.note?(' · '+L.note):'')+' · readiness '+L.readinessPercent+'% ('+L.readiness+') · ordinary commits never move this date';
-$('countCells').hidden=false;startCountdown(new Date(L.estimated).getTime());
+state.launch=L||{};
+var ls=$('launchState'),ln=$('launchNote'),lk=$('launchKind'),cc=$('countCells');
+if(state.launch.hasConfirmedDate){
+if(ls)ls.textContent='Confirmed launch \u2014 counting down';
+if(lk)lk.textContent='Confirmed date'+(state.launch.note?(' \u00b7 '+state.launch.note):'')+' \u00b7 readiness '+(state.launch.readinessPercent||0)+'% ('+(state.launch.readiness||'')+')';
+if(cc)cc.hidden=false;try{startCountdown(new Date(state.launch.confirmed).getTime());}catch(e){}
+}else if(state.launch.estimated){
+if(ls)ls.textContent='Estimated launch \u2014 not a promise';
+if(lk)lk.textContent='Estimate'+(state.launch.note?(' \u00b7 '+state.launch.note):'')+' \u00b7 readiness '+(state.launch.readinessPercent||0)+'% ('+(state.launch.readiness||'')+') \u00b7 ordinary commits never move this date';
+if(cc)cc.hidden=false;try{startCountdown(new Date(state.launch.estimated).getTime());}catch(e){}
 }else{
-$('launchState').textContent='Launch date not set — readiness '+L.readinessPercent+'% ('+L.readiness+')';
-$('launchNote').textContent=L.note||'The date appears here only when maintainers confirm it.';
-$('launchKind').textContent='Track readiness above; the countdown starts when a real date lands.';
-$('countCells').hidden=true;stopCountdown();
+if(ls)ls.textContent='Launch date not set \u2014 readiness '+(state.launch.readinessPercent||0)+'% ('+(state.launch.readiness||'')+')';
+if(ln)ln.textContent=state.launch.note||'The date appears here only when maintainers confirm it.';
+if(lk)lk.textContent='Track readiness above; the countdown starts when a real date lands.';
+if(cc)cc.hidden=true;stopCountdown();
 }
 }
 function startCountdown(target){
@@ -440,24 +433,22 @@ stopCountdown();
 function tick(){
 var ms=target-Date.now();if(ms<0)ms=0;
 var s=Math.floor(ms/1000);
-$('cdD').textContent=String(Math.floor(s/86400));
-$('cdH').textContent=String(Math.floor(s%86400/3600)).padStart(2,'0');
-$('cdM').textContent=String(Math.floor(s%3600/60)).padStart(2,'0');
-$('cdS').textContent=String(s%60).padStart(2,'0');
+setText('cdD',String(Math.floor(s/86400)));
+setText('cdH',String(Math.floor(s%86400/3600)).padStart(2,'0'));
+setText('cdM',String(Math.floor(s%3600/60)).padStart(2,'0'));
+setText('cdS',String(s%60).padStart(2,'0'));
 }
-tick();state.timer=setInterval(tick,1000);
+tick();try{state.timer=setInterval(tick,1000);}catch(e){}
 }
 function stopCountdown(){if(state.timer){clearInterval(state.timer);state.timer=null;}}
-function announce(id,msg,ok){var n=$(id);n.textContent=msg;n.className='fmsg '+(ok?'ok':'err');}
-function setText(id,text){var n=$(id);if(n)n.textContent=text;}
-function renderSection(fn){try{fn();}catch(e){}}
+function announce(id,msg,ok){var n=$(id);if(!n)return;n.textContent=msg;n.className='fmsg '+(ok?'ok':'err');}
 async function refreshAll(){
 var s=null;
 try{
 s=await get('/api/bip/summary');
 }catch(e){
 var why=(e&&e.message)?String(e.message):'the server did not respond';
-setText('phaseLabel','Build status unavailable — '+why);
+setText('phaseLabel','Build status unavailable \u2014 '+why);
 }
 if(s){
 renderSection(function(){renderProgress({progress:s.progress,milestones:s.milestones});});
@@ -465,7 +456,7 @@ renderSection(function(){renderRoadmap(s.roadmap||[]);});
 renderSection(function(){renderStatus(s.status||{});});
 renderSection(function(){renderActivity(s.recentActivity||[],s.integration);});
 renderSection(function(){renderIdeas(s.ideas||[]);});
-renderSection(function(){renderLaunch(s.launch);});
+renderSection(function(){if(s.launch)renderLaunch(s.launch);});
 renderSection(function(){
 setText('statIdeas',String((s.counts&&s.counts.ideas)||0));
 setText('statWait',String((s.counts&&s.counts.waitlist)||0));
@@ -486,39 +477,61 @@ else if(p.kind==='idea'||p.kind==='vote')refreshIdeas();
 else if(p.kind==='dev-event'||p.kind==='launch')refreshAll();
 }catch(e){}
 };
-es.onerror=function(){try{es.close();}catch(e){}setTimeout(connectStream,15000);}
+es.onerror=function(){try{es.close();}catch(e){}setTimeout(connectStream,15000);};
 }catch(e){}
 }
 async function refreshChatOnly(){try{var c=await get('/api/bip/chat?limit=30');renderChat(c.messages||[]);}catch(e){}}
 function wireForms(){
-$('ideaForm').addEventListener('submit',async function(e){
-e.preventDefault();var b=$('ideaBtn');b.disabled=true;announce('ideaMsg','',true);
+var iF=$('ideaForm');if(iF)iF.addEventListener('submit',async function(e){
+e.preventDefault();var b=$('ideaBtn');if(b)b.disabled=true;announce('ideaMsg','',true);
 try{
 await post('/api/bip/ideas',{title:$('ideaTitle').value,description:$('ideaDesc').value});
 $('ideaTitle').value='';$('ideaDesc').value='';
-announce('ideaMsg','Idea submitted — thank you!',true);await refreshIdeas();
-}catch(err){announce('ideaMsg',err.message,false);}
-b.disabled=false;
+announce('ideaMsg','Idea submitted \u2014 thank you!',true);await refreshIdeas();
+}catch(err){announce('ideaMsg',(err&&err.message)||'Submit failed',false);}
+if(b)b.disabled=false;
 });
-$('chatForm').addEventListener('submit',async function(e){
-e.preventDefault();var b=$('chatBtn');b.disabled=true;announce('chatMsg','',true);
+var cF=$('chatForm');if(cF)cF.addEventListener('submit',async function(e){
+e.preventDefault();var b=$('chatBtn');if(b)b.disabled=true;announce('chatMsg','',true);
 try{
 await post('/api/bip/chat',{nickname:$('chatNick').value,text:$('chatText').value});
 $('chatText').value='';await refreshChatOnly();
-}catch(err){announce('chatMsg',err.message,false);}
-b.disabled=false;
+}catch(err){announce('chatMsg',(err&&err.message)||'Send failed',false);}
+if(b)b.disabled=false;
 });
-$('waitForm').addEventListener('submit',async function(e){
-e.preventDefault();var b=$('waitBtn');b.disabled=true;announce('waitMsg','',true);
+var wF=$('waitForm');if(wF)wF.addEventListener('submit',async function(e){
+e.preventDefault();var b=$('waitBtn');if(b)b.disabled=true;announce('waitMsg','',true);
 try{
 var r=await post('/api/bip/waitlist',{email:$('waitEmail').value,nickname:$('waitNick').value,consent:$('waitConsent').checked});
-announce('waitMsg',r.duplicate?('You are already on the list — position #'+r.position+'.'):('You are in! Position #'+r.position+'.'),true);
+announce('waitMsg',r.duplicate?('You are already on the list \u2014 position #'+r.position+'.'):('You are in! Position #'+r.position+'.'),true);
 $('waitEmail').value='';
 await refreshAll();
-}catch(err){announce('waitMsg',err.message,false);}
-b.disabled=false;
+}catch(err){announce('waitMsg',(err&&err.message)||'Join failed',false);}
+if(b)b.disabled=false;
 });
 }
+/* motion: reveal + assembly, all transform/opacity only */
+(function(){
+try{
+var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+document.body.classList.add('bip-ready');
+if(!reduce){
+var io=('IntersectionObserver' in window)?new IntersectionObserver(function(es){
+es.forEach(function(en){if(en.isIntersecting){en.target.classList.add('in');io.unobserve(en.target);}});
+},{threshold:0.12}):null;
+Array.prototype.forEach.call(document.querySelectorAll('.reveal'),function(n){if(io)io.observe(n);else n.classList.add('in');});
+var hero=$('heroTitle');
+var onScroll=function(){
+var y=window.scrollY||0;
+if(hero)hero.style.transform='translateY('+Math.min(60,y*0.08)+'px)';
+};
+if(!reduce)window.addEventListener('scroll',onScroll,{passive:true});
+}
+else{
+Array.prototype.forEach.call(document.querySelectorAll('.reveal'),function(n){n.classList.add('in');});
+}
+}catch(e){}
+})();
 refreshAll();wireForms();connectStream();
 })();
 </script>
