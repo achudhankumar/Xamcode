@@ -29,10 +29,16 @@ Browser ──HTTPS──▶ Render web service (node server.js :PORT)
    `/api/providers` shows ready models, `/build` loads the dashboard.
 
 Free-plan notes (from `render.yaml`): 512 MB RAM, spins down after
-15 min idle (~1 min wake), **local files wiped on every redeploy** —
-`bip-data/store.json` resets unless you attach a persistent disk and set
-`BIP_DATA_DIR` to it. Learner progress lives in browser localStorage and
-is unaffected.
+15 min idle (~1 min wake), **local files wiped on every redeploy AND
+restart** — a persistent disk is not available on the free plan. The
+Build-in-Public activity feed + CI status therefore live in Supabase
+Postgres: apply `supabase/migrations/20261016090000_bip_events.sql`
+first, then set `BIP_STORAGE=supabase`, `SUPABASE_URL` and
+`SUPABASE_SERVICE_ROLE_KEY` on the service. Without them, BIP writes
+answer 503 `DURABLE_STORAGE_UNAVAILABLE` instead of silently storing
+to the wiped disk. Milestones/community data stay in
+`bip-data/store.json` (re-seeded on boot); learner progress lives in
+browser localStorage and is unaffected.
 
 ## 3. Required production environment variables
 
@@ -47,7 +53,10 @@ is unaffected.
 | `GITHUB_WEBHOOK_SECRET` | For live feed | Must match repo webhook secret |
 | `BIP_INGEST_TOKEN` | For CI events | Must match Actions secret |
 | `BIP_SESSION_SECRET` | Recommended | ≥16 chars; set explicitly so votes survive redeploys |
-| `BIP_DATA_DIR` | With a disk | Path on the persistent disk |
+| `BIP_STORAGE` | For durable BIP feed | `supabase` — BIP events + build/test/deploy status persist in Postgres and survive redeploys/restarts. Unset = legacy JSON store (ephemeral on Render Free) |
+| `SUPABASE_URL` | With `BIP_STORAGE=supabase` | `https://<project-ref>.supabase.co`. Server-side only; apply the BIP migration first |
+| `SUPABASE_SERVICE_ROLE_KEY` | With `BIP_STORAGE=supabase` | Service-role key (bypasses RLS). Server-side only — never the anon key, never in responses, logs, or CI |
+| `BIP_DATA_DIR` | Optional | Alternate JSON-store location (ephemeral on Render Free) |
 
 Full reference with placeholders: `.env.example`. Never commit `.env`.
 
@@ -57,6 +66,11 @@ Full reference with placeholders: `.env.example`. Never commit `.env`.
 `npm ci` → `npm run check` → `npm test`. No secrets, no quota spend, no
 deploy step. Live tests (`test:e2e`, `test-chunk-live.js`,
 `test-pdf-allowance.js`, `test:smoke`) never run in CI.
+A final `if: always()` step reports the test result to
+`POST /api/bip/events/ingest` and fails visibly unless the response
+body confirms the event was stored (or was a legitimate duplicate) —
+HTTP 200 alone is not trusted. The step never changes the test step's
+own outcome.
 
 ## 5. Deploy procedure
 

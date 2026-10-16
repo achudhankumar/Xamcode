@@ -28,17 +28,25 @@ function requireAdmin(req, res, requestId){
 }
 
 /* ---------- milestones ---------- */
-function adminVerifyMilestone(req, res, id, body, requestId){
+async function adminVerifyMilestone(req, res, id, body, requestId){
   const r = progress.verifyMilestone(id, body && body.evidence, 'admin');
   if (!r.ok) return sendJson(res, r.code === 'NOT_FOUND' ? 404 : 400, { error: r.error, code: r.code, requestId }, requestId);
-  events.recordDevEvent({ type: 'milestone_verified', summary: 'Milestone verified: ' + r.milestone.title, ref: r.milestone.key || '', source: 'admin' });
+  const ev = await events.recordDevEventAsync({ type: 'milestone_verified', summary: 'Milestone verified: ' + r.milestone.title, ref: r.milestone.key || '', source: 'admin' });
+  if (ev.code === 'DURABLE_STORAGE_UNAVAILABLE'){
+    /* The milestone flip itself is local and already applied — say so
+       honestly instead of hiding the failure behind a fake 200. */
+    return sendJson(res, 503, { error: 'Durable Build-in-Public storage is unavailable; this verification is NOT in the public activity feed.', code: ev.code, milestoneChanged: true, requestId }, requestId);
+  }
   return sendJson(res, 200, { milestone: r.milestone, progress: r.progress, requestId }, requestId);
 }
 
-function adminReopenMilestone(req, res, id, body, requestId){
+async function adminReopenMilestone(req, res, id, body, requestId){
   const r = progress.reopenMilestone(id, body && body.reason, 'admin');
   if (!r.ok) return sendJson(res, r.code === 'NOT_FOUND' ? 404 : 400, { error: r.error, code: r.code, requestId }, requestId);
-  events.recordDevEvent({ type: 'milestone_reopened', summary: 'Milestone reopened for review: ' + r.milestone.title, ref: r.milestone.key || '', source: 'admin' });
+  const ev = await events.recordDevEventAsync({ type: 'milestone_reopened', summary: 'Milestone reopened for review: ' + r.milestone.title, ref: r.milestone.key || '', source: 'admin' });
+  if (ev.code === 'DURABLE_STORAGE_UNAVAILABLE'){
+    return sendJson(res, 503, { error: 'Durable Build-in-Public storage is unavailable; this reopen is NOT in the public activity feed.', code: ev.code, milestoneChanged: true, requestId }, requestId);
+  }
   return sendJson(res, 200, { milestone: r.milestone, progress: r.progress, requestId }, requestId);
 }
 

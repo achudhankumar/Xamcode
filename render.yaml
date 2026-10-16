@@ -100,3 +100,25 @@ services:
       #    redeploy and all votes would reset.
       - key: BIP_SESSION_SECRET
         sync: false
+      # ---------- Build-in-Public DURABLE storage (Render Free has no disk) ----------
+      # Render Free wipes local files on every redeploy AND restart, so
+      # the activity feed + CI status must live in Supabase Postgres.
+      # ORDER MATTERS:
+      #   1. Apply supabase/migrations/20261016090000_bip_events.sql in
+      #      the Supabase SQL editor (creates bip_events + bip_status with
+      #      RLS enabled and zero public policies; only the service role
+      #      can read/write, and the ingest function is execute-locked).
+      #   2. Set the three env vars below (Render dashboard env, or this
+      #      blueprint on the next deploy).
+      #   3. Redeploy / restart the service.
+      # Until SUPABASE_URL and the service-role key are present, BIP
+      # writes answer an honest 503 DURABLE_STORAGE_UNAVAILABLE — never
+      # a fake success and never a silent fall back to the disk.
+      - key: BIP_STORAGE
+        value: supabase
+      - key: SUPABASE_URL
+        sync: false
+      # Service-role key: server-side only, bypasses RLS, NEVER the anon
+      # key, NEVER sent to the browser, CI logs, or API responses.
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false

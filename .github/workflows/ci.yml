@@ -34,7 +34,12 @@ jobs:
       - id: tests
         run: npm test
       # P0-2: Report real CI test results to the Xamcode BIP telemetry.
-      # Runs even when tests fail; never masks the test outcome; never prints secrets.
+      # Runs even when tests fail and never masks the test outcome.
+      # HTTP 200 alone is NOT trusted: the response body must confirm
+      # the event was stored (or was a legitimate idempotent duplicate).
+      # A reporting failure fails THIS step visibly via ::error:: — the
+      # job's own test result is independent and never overwritten.
+      # No secrets are echoed in any log line.
       - name: Report test result to Build-in-Public ingest
         if: always()
         env:
@@ -47,8 +52,12 @@ jobs:
           TESTS_OUTCOME: ${{ steps.tests.outcome }}
         run: |
           if [ -z "$BIP_INGEST_TOKEN" ]; then
-            echo "BIP ingest skipped: BIP_INGEST_TOKEN secret is not configured."
-            exit 0
+            if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+              echo "BIP ingest skipped: secrets are unavailable for pull_request events (expected for fork PRs)."
+              exit 0
+            fi
+            echo "::error::BIP ingest reporting failed: BIP_INGEST_TOKEN secret is not configured on this repository."
+            exit 1
           fi
           TARGET_URL="${PUBLIC_URL:-$PUBLIC_URL_SECRET}"
           if [ -z "$TARGET_URL" ]; then
@@ -68,21 +77,76 @@ jobs:
           fi
           SHORT_SHA="$(printf '%s' "$COMMIT_SHA" | cut -c1-7)"
           DEDUPE_KEY="ci-tests-${RUN_ID}-${RUN_ATTEMPT}"
-          # Timeout + one retry only; failure to report must not fail the CI job.
-          # The Bearer token is passed via header only and never echoed.
+          BODY_FILE="$(mktemp)"
+          # Timeout + one retry only. The Bearer token is passed via
+          # header only and never echoed. The RESPONSE BODY is now
+          # validated too: the endpoint returns HTTP 200 with stored:0
+          # for duplicates and rejected events alike, so the status
+          # code alone never proved the event landed.
           set +x
           set +e
-          HTTP_CODE=$(curl --fail --silent --show-error \
+          HTTP_CODE=$(curl --silent --show-error \
             --max-time 15 --connect-timeout 10 --retry 1 \
             -X POST "$TARGET_URL/api/bip/events/ingest" \
             -H "Authorization: Bearer $BIP_INGEST_TOKEN" \
             -H "Content-Type: application/json" \
             -d "{\"type\":\"$EVENT_TYPE\",\"summary\":\"$SUMMARY on main @ $SHORT_SHA (run $RUN_ID)\",\"ref\":\"$COMMIT_SHA\",\"dedupeKey\":\"$DEDUPE_KEY\",\"source\":\"ci\"}" \
-            -o /dev/null -w "%{http_code}")
+            -o "$BODY_FILE" -w "%{http_code}")
           CURL_EXIT=$?
           set -e
+          BODY="$(cat "$BODY_FILE" 2>/dev/null || true)"
           if [ "$CURL_EXIT" -ne 0 ]; then
-            echo "BIP ingest report FAILED - HTTP ${HTTP_CODE:-000}, curl exit $CURL_EXIT. CI test result is unaffected."
-            exit 0
+            echo "::error::BIP ingest reporting failed: transport error (curl exit $CURL_EXIT, HTTP ${HTTP_CODE:-000}). CI test result is unaffected."
+            rm -f "$BODY_FILE"
+            exit 1
           fi
-          echo "BIP ingest report OK - HTTP $HTTP_CODE."
+          if [ "$HTTP_CODE" != "200" ]; then
+            # 401 = token mismatch, 503 = ingest or durable storage not
+            # configured server-side. All are reporting failures.
+            echo "::error::BIP ingest reporting failed - HTTP $HTTP_CODE. Body: $(printf '%.300s' "$BODY")"
+            rm -f "$BODY_FILE"
+            exit 1
+          fi
+          # JSON contract check: received=true, no rejected events, and
+          # stored>=1 or duplicates>=1 (a legitimate idempotent retry).
+          VERDICT=$(node -e '
+            const fs = require("fs");
+            let body;
+            try { body = JSON.parse(fs.readFileSync(process.argv[1], "utf8")); }
+            catch (e) { console.log("MALFORMED_RESPONSE"); process.exit(0); }
+            if (body.received !== true) { console.log("NO_RECEIPT"); process.exit(0); }
+            if (Array.isArray(body.errors) && body.errors.length > 0) {
+              console.log("EVENT_REJECTED:" + body.errors.join(","));
+              process.exit(0);
+            }
+            const stored = Number(body.stored) || 0;
+            const dup = Number(body.duplicates) || 0;
+            if (stored + dup < 1) { console.log("NOT_STORED"); process.exit(0); }
+            console.log("OK stored=" + stored + " duplicates=" + dup);
+          ' "$BODY_FILE")
+          rm -f "$BODY_FILE"
+          case "$VERDICT" in
+            OK*)
+              echo "BIP ingest report OK - HTTP $HTTP_CODE, ${VERDICT#OK }."
+              ;;
+            MALFORMED_RESPONSE)
+              echo "::error::BIP ingest reporting failed - HTTP 200 with a malformed response body. Body: $(printf '%.300s' "$BODY")"
+              exit 1
+              ;;
+            NO_RECEIPT)
+              echo "::error::BIP ingest reporting failed - response missing received=true."
+              exit 1
+              ;;
+            EVENT_REJECTED:*)
+              echo "::error::BIP ingest reporting failed - server rejected the event ($VERDICT)."
+              exit 1
+              ;;
+            NOT_STORED)
+              echo "::error::BIP ingest reporting failed - HTTP 200 but the event was NOT stored (storage failure or silent drop)."
+              exit 1
+              ;;
+            *)
+              echo "::error::BIP ingest reporting failed - unexpected validator output."
+              exit 1
+              ;;
+          esac

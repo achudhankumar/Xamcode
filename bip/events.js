@@ -17,6 +17,7 @@
 const crypto = require('node:crypto');
 const store = require('./store');
 const progress = require('./progress');
+const db = require('./db');
 const { sanitizePublicText, timingSafeEqualStr, isoNow } = require('./util');
 
 /* Event types the public feed will ever show. Anything else from a
@@ -43,12 +44,12 @@ function markDelivery(dedupeKey){
   }
 }
 
-function recordDevEvent(opts){
+/* Validation + field allowlist shared by the JSON path and the
+   durable path, so both accept exactly the same events. */
+function prepareEvent(opts){
   const o = opts || {};
   if (EVENT_TYPES.indexOf(o.type) < 0) return { ok: false, error: 'Unknown event type.', code: 'BAD_TYPE' };
   const dedupeKey = o.dedupeKey ? String(o.dedupeKey).slice(0, 200) : null;
-  if (dedupeKey && isDuplicate(dedupeKey)) return { ok: true, duplicate: true };
-  const d = store.ensureLoaded();
   let status = o.status;
   if (status !== 'failed' && status !== 'passed' && status !== 'running'){
     // Default from the type suffix so CI can send just the type name.
@@ -67,11 +68,47 @@ function recordDevEvent(opts){
     at: o.at || isoNow()
   };
   if (!ev.summary) return { ok: false, error: 'Event summary is required.', code: 'BAD_SUMMARY' };
+  return { ok: true, ev, dedupeKey };
+}
+
+/* JSON-store path (the dev/test default). Refuses to run when
+   durable mode is selected so a misconfigured caller can never
+   silently write to the ephemeral filesystem while the service
+   claims durability (see bip/db.js). */
+function recordDevEvent(opts){
+  if (db.isDurableMode()) return { ok: false, error: 'Durable storage is selected; use recordDevEventAsync.', code: 'STORAGE_MODE_MISMATCH' };
+  const prep = prepareEvent(opts);
+  if (!prep.ok) return prep;
+  const ev = prep.ev, dedupeKey = prep.dedupeKey;
+  if (dedupeKey && isDuplicate(dedupeKey)) return { ok: true, duplicate: true };
+  const d = store.ensureLoaded();
   d.devEvents.push(ev);
   store.trimCollection('devEvents', store.CAPS.devEvents);
   if (dedupeKey) markDelivery(dedupeKey);
   updateStatusBoard(ev);
   store.persist();
+  broadcast({ kind: 'dev-event', event: ev });
+  return { ok: true, event: ev };
+}
+
+/* Durable path: identical validation, then ONE atomic Postgres write
+   (event insert + status-board upsert inside the bip_ingest_event()
+   SQL transaction). Dedupe is enforced by the unique index, so
+   concurrent CI retries cannot double-store. Storage failures come
+   back as DURABLE_STORAGE_UNAVAILABLE so HTTP callers answer an
+   honest 503 instead of pretending the event was accepted. */
+async function recordDevEventAsync(opts){
+  if (!db.isDurableMode()) return recordDevEvent(opts);
+  const prep = prepareEvent(opts);
+  if (!prep.ok) return prep;
+  const ev = prep.ev, dedupeKey = prep.dedupeKey;
+  let res;
+  try{
+    res = await db.insertEvent(ev, dedupeKey, statusUpdateFor(ev));
+  }catch(e){
+    return { ok: false, error: 'Durable storage is unavailable; the event was not recorded.', code: 'DURABLE_STORAGE_UNAVAILABLE' };
+  }
+  if (res.stored === false) return { ok: true, duplicate: true };
   broadcast({ kind: 'dev-event', event: ev });
   return { ok: true, event: ev };
 }
@@ -140,18 +177,26 @@ function mapGitHubEvent(eventName, action, payload, deliveryId){
 }
 
 /* ---------- status board ---------- */
-function updateStatusBoard(ev){
-  const d = store.ensureLoaded();
+/* Which status-board slot (if any) an event type updates. Shared by
+   the JSON writer and the durable RPC so both stay identical. */
+function statusUpdateFor(ev){
   const state = ev.status === 'passed' ? 'passed'
     : ev.status === 'failed' ? 'failed'
     : ev.status === 'running' ? 'running' : 'unknown';
   const entry = { state, at: ev.at, ref: ev.ref || null };
-  if (ev.type === 'tests_passed' || ev.type === 'tests_failed') d.settings.tests = entry;
-  else if (ev.type === 'deploy_started' || ev.type === 'deploy_succeeded' || ev.type === 'deploy_failed') d.settings.deploy = entry;
-  else if (ev.type.indexOf('build') === 0) d.settings.build = entry;
+  if (ev.type === 'tests_passed' || ev.type === 'tests_failed') return { slot: 'tests', entry };
+  if (ev.type === 'deploy_started' || ev.type === 'deploy_succeeded' || ev.type === 'deploy_failed') return { slot: 'deploy', entry };
+  if (ev.type.indexOf('build') === 0) return { slot: 'build', entry };
   /* milestone_verified from CI only reports WHAT passed; the actual
      milestone flip still requires the admin verify call (progress.js).
      Nothing is mutated here by design. */
+  return null;
+}
+
+function updateStatusBoard(ev){
+  const u = statusUpdateFor(ev);
+  if (!u) return;
+  store.ensureLoaded().settings[u.slot] = u.entry;
 }
 
 /* ---------- SSE realtime bus (in-memory) ---------- */
@@ -187,23 +232,53 @@ function statusBoard(){
   };
 }
 
+/* Storage-aware readers used by the HTTP layer. JSON mode reads the
+   local store; durable mode reads Postgres. Durable failures throw a
+   StorageError (code DURABLE_STORAGE_UNAVAILABLE) — never a stale
+   local answer dressed up as current data. */
+async function readActivity(limit){
+  progress.ensureSeeded();
+  if (!db.isDurableMode()) return latestActivity(limit);
+  return db.fetchEvents(Math.max(1, Math.min(50, Number(limit) || 20)));
+}
+
+async function readStatusBoard(){
+  if (!db.isDurableMode()) return statusBoard();
+  const rows = await db.fetchStatus();
+  const bySlot = {};
+  for (const r of rows) bySlot[r.slot] = { state: r.state, at: r.at, ref: r.ref == null ? null : r.ref };
+  const blank = { state: 'unknown', at: null, ref: null };
+  return {
+    build: bySlot.build || blank,
+    tests: bySlot.tests || blank,
+    deploy: bySlot.deploy || blank,
+    integration: integrationStatus()
+  };
+}
+
 /* Honest integration state: until GITHUB_WEBHOOK_SECRET and
    BIP_INGEST_TOKEN are configured, the feed is seeded + admin-driven
-   and the UI must say so instead of pretending to be live. */
+   and the UI must say so instead of pretending to be live.
+   `storage`/`durable` go further: `durable` is true only when the
+   supabase mode is selected AND its credentials are present, so the
+   dashboard can tell ephemeral JSON storage from Postgres. */
 function integrationStatus(){
   return {
     webhooks: Boolean(process.env.GITHUB_WEBHOOK_SECRET && process.env.GITHUB_WEBHOOK_SECRET.length >= 8),
     ciIngest: Boolean(process.env.BIP_INGEST_TOKEN && process.env.BIP_INGEST_TOKEN.length >= 8),
     live: Boolean(process.env.GITHUB_WEBHOOK_SECRET && process.env.GITHUB_WEBHOOK_SECRET.length >= 8) ||
-          Boolean(process.env.BIP_INGEST_TOKEN && process.env.BIP_INGEST_TOKEN.length >= 8)
+          Boolean(process.env.BIP_INGEST_TOKEN && process.env.BIP_INGEST_TOKEN.length >= 8),
+    storage: db.isDurableMode() ? 'supabase' : 'json',
+    durable: db.isDurableMode() && db.isConfigured()
   };
 }
 
 module.exports = {
   EVENT_TYPES,
-  isDuplicate, markDelivery, recordDevEvent,
+  isDuplicate, markDelivery, recordDevEvent, recordDevEventAsync,
   verifyGitHubSignature, mapGitHubEvent,
   subscribe, unsubscribe, broadcast, subscriberCount,
-  latestActivity, statusBoard, integrationStatus
+  latestActivity, statusBoard, readActivity, readStatusBoard,
+  integrationStatus
 };
 

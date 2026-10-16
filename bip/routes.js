@@ -68,6 +68,21 @@ function denied(res, limiter, key, requestId){
   return false;
 }
 
+/* Durable-storage read/write failure: an honest 503. Never serves
+   stale or empty local data as if it were live, and never falls back
+   to the ephemeral JSON store when supabase mode is selected. */
+function durableUnavailable(res, requestId, detail){
+  sendJson(res, 503, {
+    error: 'Durable Build-in-Public storage is unavailable. Nothing was read or stored.',
+    code: 'DURABLE_STORAGE_UNAVAILABLE',
+    received: true,
+    stored: 0,
+    detail: detail || undefined,
+    requestId
+  }, requestId);
+  return true;
+}
+
 async function readJsonBody(req){
   try{
     return await readJson(req, 64 * 1024);
@@ -101,8 +116,9 @@ function serveBuildPage(req, res, requestId){
 }
 
 /* One-call homepage payload: progress, launch, status, roadmap,
-   recent activity, ideas top-5 and counts — no secrets attached. */
-function publicSummary(){
+   recent activity, ideas top-5 and counts — no secrets attached.
+   Async because status/activity reads may hit durable storage. */
+async function publicSummary(){
   progress.ensureSeeded();
   const d = store.ensureLoaded();
   const p = progress.computeProgress();
@@ -110,10 +126,10 @@ function publicSummary(){
     progress: p,
     milestones: d.milestones,
     launch: admin.publicLaunch(),
-    status: events.statusBoard(),
+    status: await events.readStatusBoard(),
     integration: events.integrationStatus(),
     roadmap: d.roadmapItems,
-    recentActivity: events.latestActivity(10),
+    recentActivity: await events.readActivity(10),
     ideas: community.listIdeas({ sort: 'top' }).ideas.slice(0, 5),
     counts: {
       waitlist: community.waitlistCount(),
@@ -130,7 +146,9 @@ async function handleBipApi(req, res, p, url, requestId){
 
   /* ---------- public reads ---------- */
   if (req.method === 'GET' && p === '/api/bip/summary'){
-    return sendJson(res, 200, Object.assign({ requestId }, publicSummary()), requestId);
+    try{
+      return sendJson(res, 200, Object.assign({ requestId }, await publicSummary()), requestId);
+    }catch(e){ return durableUnavailable(res, requestId, e && e.message); }
   }
   if (req.method === 'GET' && p === '/api/bip/progress'){
     progress.ensureSeeded();
@@ -143,10 +161,14 @@ async function handleBipApi(req, res, p, url, requestId){
   }
   if (req.method === 'GET' && p === '/api/bip/activity'){
     const limit = Number(url.searchParams.get('limit')) || 20;
-    return sendJson(res, 200, { activity: events.latestActivity(limit), integration: events.integrationStatus(), requestId }, requestId);
+    try{
+      return sendJson(res, 200, { activity: await events.readActivity(limit), integration: events.integrationStatus(), requestId }, requestId);
+    }catch(e){ return durableUnavailable(res, requestId, e && e.message); }
   }
   if (req.method === 'GET' && p === '/api/bip/status'){
-    return sendJson(res, 200, Object.assign({ requestId }, events.statusBoard()), requestId);
+    try{
+      return sendJson(res, 200, Object.assign({ requestId }, await events.readStatusBoard()), requestId);
+    }catch(e){ return durableUnavailable(res, requestId, e && e.message); }
   }
   if (req.method === 'GET' && p === '/api/bip/stream'){
     res.writeHead(200, {
@@ -275,7 +297,10 @@ async function handleWebhook(req, res, p, requestId){
   const mapped = events.mapGitHubEvent(eventName, action, payload, deliveryId);
   let stored = 0, duplicates = 0;
   for (const m of mapped){
-    const r = events.recordDevEvent(m);
+    const r = await events.recordDevEventAsync(m);
+    if (r.code === 'DURABLE_STORAGE_UNAVAILABLE'){
+      return durableUnavailable(res, requestId, 'A mapped event could not be stored.');
+    }
     if (r.ok && r.duplicate) duplicates++;
     else if (r.ok) stored++;
   }
@@ -299,11 +324,14 @@ async function handleIngest(req, res, p, requestId){
   let stored = 0, duplicates = 0;
   const errors = [];
   for (const item of items.slice(0, 20)){
-    const r = events.recordDevEvent({
+    const r = await events.recordDevEventAsync({
       type: item.type, summary: item.summary, detail: item.detail,
       ref: item.ref, status: item.status, source: 'ci',
       dedupeKey: item.dedupeKey, at: item.at
     });
+    if (r.code === 'DURABLE_STORAGE_UNAVAILABLE'){
+      return durableUnavailable(res, requestId, 'The event could not be stored.');
+    }
     if (r.ok && r.duplicate) duplicates++;
     else if (r.ok) stored++;
     else errors.push(r.code || 'BAD_EVENT');
