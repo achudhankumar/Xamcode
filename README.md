@@ -60,6 +60,32 @@ bip-data/              # JSON store (git-ignored; tests use temp dirs)
 test-*.js              # offline suites + manual live tests
 .github/workflows/ci.yml
 docs/                  # SETUP, TESTING, DEPLOYMENT, ARCHITECTURE, BUILD-IN-PUBLIC, ...
+## Build pipeline (Build-in-Public dashboard)
+
+`build.html` is assembled from source parts in `build-parts/` and is NOT edited directly.
+
+| File / Step | Purpose |
+| --- | --- |
+| `build-parts/p01.txt` – `p13.txt` | Semantic parts of the HTML shell (head, CSS, sections, JS) |
+| `build-parts/concat.js` | Joins the parts into `build.html`, reports duplicate IDs and missing IDs |
+| `build-parts/syncheck.js` | Optional node syntax check for the assembled inline script |
+
+Workflow:
+
+```bash
+# 1. edit the .txt parts (or keep build.new.html as the staged target)
+# 2. rebuild
+node build-parts/concat.js
+# 3. syntax-check the inlined script
+node build-parts/syncheck.js
+# 4. validate render + security
+node test-bip-render.js
+node test-bip-security.js
+```
+
+The concat step blocks on `DUP_IDS` or `MISSING` reports before writing `build.html`.
+Intermediate and generated files (`build.new.html`, `tmp-*.html`, `tmp-audit.js`,
+`build.html`) are git-ignored; commit the `build-parts/` source parts instead.
 ```
 
 ## Docs

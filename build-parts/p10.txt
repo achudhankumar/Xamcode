@@ -1,0 +1,28 @@
+<script>
+'use strict';
+(function(){
+var $=function(id){return document.getElementById(id);};
+function el(t,c,x){var n=document.createElement(t);if(c)n.className=c;if(x!=null)n.textContent=x;return n;}
+function fm(iso){try{return new Date(iso).toLocaleString();}catch(e){return iso||'';}}
+function gt(p){return fetch(p,{headers:{Accept:'application/json'}}).then(function(r){return r.json().then(function(j){if(!r.ok)throw new Error((j&&j.error)||('Request failed ('+r.status+')'));return j;});});}
+function pt(p,b){return fetch(p,{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify(b)}).then(function(r){return r.json().then(function(j){if(!r.ok)throw new Error((j&&j.error)||('Request failed ('+r.status+')'));return j;});});}
+function st(id,t){var n=$(id);if(n)n.textContent=t;}
+function rs(fn){try{fn();}catch(e){}}
+var S={launch:null,timer:null,seen:{},feedMode:'setup'};
+function mc(m){m=m||{};var s=String(m.status||'planned');var d=el('div','mile');var t=el('div','t');t.appendChild(el('strong',null,m.title||'Untitled milestone'));var p=el('span','pill '+s,null);p.textContent=s.replace(/_/g,' ');t.appendChild(p);d.appendChild(t);d.appendChild(el('div','mono','weight '+(m.weight||0)+' · '+((m.verifiedAt)?('verified '+fm(m.verifiedAt)):s.replace(/_/g,' '))));if(m.criteria)d.appendChild(el('p','c','Check: '+m.criteria));return d;}
+function rp(d){if(!d||!d.progress)return;var p=d.progress;var ms=d.milestones||[];var c=p.counts||{total:ms.length,verified:0,inProgress:0,needsReview:0,planned:0};
+st('pctNum',(p.percent!=null?p.percent:0)+'%');var f=$('pctFill');if(f&&f.style){try{f.style.strokeDashoffset=String(100-(p.percent||0));}catch(e){}}
+var bar=$('pctBar');if(bar&&bar.setAttribute){try{bar.setAttribute('aria-valuenow',String(p.percent||0));}catch(e){}}
+st('statProgress',(p.percent!=null?p.percent:0)+'%');st('statProgress2',(p.percent!=null?p.percent:0)+'%');
+st('statPhase',p.phase||'Building');st('statPhase2',p.phase||'Building');
+st('statMilestone',(p.currentMilestone&&p.currentMilestone.title)||'all milestones mapped');
+st('phaseLabel',(p.phase||'Building')+' · '+((p.currentMilestone)?('now: '+p.currentMilestone.title):'roadmap complete'));
+st('pctSub',(p.verifiedWeight||0)+' of '+(p.totalWeight||0)+' weight verified across '+(c.total||0)+' milestones · '+(c.verified||0)+' verified, '+(c.inProgress||0)+' in progress, '+(c.needsReview||0)+' in review, '+(c.planned||0)+' planned');
+st('menuReadiness',String(p.percent!=null?p.percent:0)+'%');
+var dn=$('mDone'),pg=$('mProg'),up=$('mUp'),rv=$('mRev');
+if(dn)dn.textContent='';if(pg)pg.textContent='';if(up)up.textContent='';if(rv)rv.textContent='';
+ms.forEach(function(m){var cd=mc(m);var q=String((m&&m.status)||'planned');if(q==='verified'){if(dn)dn.appendChild(cd);}else if(q==='in_progress'){if(pg)pg.appendChild(cd);}else if(q==='needs_review'){if(rv)rv.appendChild(cd);}else{if(up)up.appendChild(cd);}});
+if(dn&&!dn.children.length)dn.appendChild(el('p','sub','No verified milestones yet.'));
+if(pg&&!pg.children.length)pg.appendChild(el('p','sub','Nothing in progress right now.'));
+if(up&&!up.children.length)up.appendChild(el('p','sub','Nothing queued.'));
+if(rv&&!rv.children.length)rv.appendChild(el('p','sub','Nothing under review.'));}

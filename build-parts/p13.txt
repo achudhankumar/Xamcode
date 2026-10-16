@@ -1,0 +1,41 @@
+function hero(){try{
+var cv=$('heroCanvas');if(!cv)return;
+var reduce=false;try{reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;}catch(e){}
+var ctx=null;try{ctx=cv.getContext('2d');}catch(e){return;}if(!ctx)return;
+var W=800,H=600,mx=.5,my=.4,t=0;var pts=[];
+function size(){try{var r=cv.parentElement.getBoundingClientRect();if(r&&r.width)W=Math.floor(r.width);if(r&&r.height)H=Math.floor(r.height);}catch(e){}
+cv.width=W;cv.height=H;pts=[];var n=Math.floor(Math.min(90,Math.max(36,W/16)));for(var i=0;i<n;i++){pts.push({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.35,vy:(Math.random()-.5)*.35,r:Math.random()*1.8+.6});}}
+size();try{window.addEventListener('resize',size);}catch(e){}
+if(!reduce){try{cv.parentElement.addEventListener('pointermove',function(e){try{var r=cv.getBoundingClientRect();mx=(e.clientX-r.left)/r.width;my=(e.clientY-r.top)/r.height;}catch(x){}});}catch(e){}}
+function frame(){t+=.008;try{ctx.clearRect(0,0,W,H);}catch(e){return;}
+try{
+var gx=W*(.3+.4*mx),gy=H*(.35+.3*my);
+var g=ctx.createRadialGradient(gx,gy,0,gx,gy,Math.max(W,H)*.7);g.addColorStop(0,'rgba(200,255,61,.10)');g.addColorStop(.4,'rgba(91,108,255,.08)');g.addColorStop(1,'rgba(11,14,7,0)');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+ctx.strokeStyle='rgba(200,255,61,.16)';ctx.lineWidth=1;
+for(var i=0;i<pts.length;i++){var a=pts[i];
+if(!reduce){a.x+=a.vx+(mx-.5)*.4;a.y+=a.vy+(my-.4)*.4;if(a.x<0)a.x=W;if(a.x>W)a.x=0;if(a.y<0)a.y=H;if(a.y>H)a.y=0;}
+for(var j=i+1;j<pts.length;j++){var b=pts[j];var dx=a.x-b.x,dy=a.y-b.y;var d=Math.sqrt(dx*dx+dy*dy);if(d<130){ctx.globalAlpha=Math.max(0,(130-d)/130*.5);ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();}}
+ctx.globalAlpha=.9;ctx.fillStyle=i%5===0?'#C8FF3D':'rgba(241,239,227,.7)';ctx.beginPath();ctx.arc(a.x+Math.sin(t+i)*4,a.y+Math.cos(t*.8+i)*4,a.r,0,7);ctx.fill();}
+ctx.globalAlpha=1;}catch(e){}
+if(!reduce){try{if(typeof requestAnimationFrame!=='undefined')requestAnimationFrame(frame);}catch(e){}}}
+try{frame();}catch(e){}
+try{var heroT=$('heroTitle');window.addEventListener('scroll',function(){try{var y=window.scrollY||0;if(heroT&&heroT.style)heroT.style.transform='translateY('+Math.min(60,y*.08)+'px)';}catch(x){}},{passive:true});}catch(e){}
+}catch(e){}}
+function menu(){try{
+var btn=$('menuBtn'),ov=$('menuOverlay'),veil=$('menuVeil');if(!btn||!ov)return;var open=false;var last=null;
+function set(o){open=o;btn.setAttribute('aria-expanded',o?'true':'false');ov.classList.toggle('show',o);if(veil)veil.classList.toggle('show',o);ov.setAttribute('aria-hidden',o?'false':'true');var lb=$('menuBtnLabel');if(lb)lb.textContent=o?'CLOSE':'MENU';
+if(o){last=document.activeElement;var f=ov.querySelector('a');if(f)f.focus();}else if(last&&last.focus){try{last.focus();}catch(e){}}}
+btn.addEventListener('click',function(){set(!open);});if(veil)veil.addEventListener('click',function(){set(false);});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&open)set(false);});
+var links=[];try{links=ov.querySelectorAll('a');}catch(e){links=[];}for(var i=0;i<links.length;i++){links[i].addEventListener('click',function(){set(false);});}
+try{if('IntersectionObserver' in window){var io=new IntersectionObserver(function(es){es.forEach(function(en){if(en.isIntersecting){var id=en.target.id;for(var k=0;k<links.length;k++){var on=links[k].getAttribute('href')==='#'+id;if(on)links[k].classList.add('act');else links[k].classList.remove('act');}}});},{rootMargin:'-40% 0px -55% 0px'});
+['progress','roadmap','activity','ideas','chat','launch','waitlist'].forEach(function(id){var s=$(id);if(s)io.observe(s);});}}catch(e){}}catch(e){}}
+function reveal(){try{var rz=false;try{rz=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;}catch(e){}
+if(rz||!('IntersectionObserver' in window)){try{var ax=document.querySelectorAll('.reveal');for(var q=0;q<ax.length;q++)ax[q].classList.add('in');}catch(e){}return;}
+var io2=new IntersectionObserver(function(es){es.forEach(function(en){if(en.isIntersecting){en.target.classList.add('in');io2.unobserve(en.target);}});},{threshold:.12});
+var ex=document.querySelectorAll('.reveal');for(var w=0;w<ex.length;w++)io2.observe(ex[w]);}catch(e){}}
+hero();menu();reveal();rAll();forms();stream();
+})();
+</script>
+</body>
+</html>

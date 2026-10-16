@@ -1,0 +1,25 @@
+function rr(items){var box=$('roadmapList');if(!box)return;box.textContent='';items=items||[];if(!items.length){box.appendChild(el('p','sub','Roadmap coming soon.'));return;}
+items.forEach(function(r){r=r||{};var d=el('div','rm');var rst=String((r.status==null?'planned':r.status));if(rst==='done'||rst==='verified'||rst==='completed')d.className+=' dn';if(rst==='in-progress'||rst==='in_progress'||rst==='active')d.className+=' ac';
+var t=el('div','t');t.appendChild(el('strong',null,r.title||'Untitled'));var s=el('span','pill '+rst.replace(/-/g,'_'),null);s.textContent=rst.replace(/_/g,' ').replace(/-/g,' ');t.appendChild(s);d.appendChild(t);if(r.summary)d.appendChild(el('p','c',r.summary));box.appendChild(d);});}
+function rstatus(s){s=s||{};function cell(n,w,v){var b=$(n);if(b)b.textContent=((v&&v.state)||'unknown');var x=$(w);if(x)x.textContent=((v&&v.at)?(fm(v.at)+((v.ref)?(' · '+String(v.ref).slice(0,7)):'')):'no data yet');}
+cell('stBuild','stBuildAt',s.build);cell('stTests','stTestsAt',s.tests);cell('stDeploy','stDeployAt',s.deploy);
+var all=[s.build,s.tests,s.deploy].map(function(v){return v&&v.state;});var live=all.some(function(x){return x==='passed'||x==='failed'||x==='running';});
+st('statSignal',live?'active':'standby');st('statFeedSrc',live?'live':'setup');}
+function ract(list,ig){var box=$('actList');if(!box)return;var fresh=S.seen;box.textContent='';list=list||[];
+if(!list.length){box.appendChild(el('li','sub','No development events yet.'));}
+else{list.forEach(function(e){e=e||{};var li=el('li');if(e.id&&!fresh[e.id]){li.className='fr';fresh[e.id]=1;}
+var dot=el('span','dot '+(e.status||'info'));dot.setAttribute('aria-hidden','true');li.appendChild(dot);li.appendChild(el('span',null,e.summary||e.type||'event'));li.appendChild(el('div','meta',(e.at?fm(e.at):'')+(e.ref?(' · '+String(e.ref).slice(0,7)):'')+' · '+(e.type||'')));box.appendChild(li);});}
+var note=$('feedNote');if(note)note.textContent=(ig&&ig.live)?'live from GitHub webhooks / CI':'maintainer-updated feed — GitHub webhooks not connected yet (see deployment docs)';
+var badge=$('liveBadge');if(badge){if(ig&&ig.live){badge.textContent='✓ live feed';if(badge.classList)badge.classList.add('on');}else{badge.textContent='◇ setup mode';if(badge.classList)badge.classList.remove('on');}}
+var mf=$('menuFeedState');if(mf)mf.textContent=(ig&&ig.live)?'live':'setup';var ms=$('menuStorage');if(ms)ms.textContent=(ig&&ig.storage)||'json';}
+function ri(items){var box=$('ideaList');if(!box)return;box.textContent='';items=items||[];if(!items.length){box.appendChild(el('p','sub','No ideas yet — be the first.'));return;}
+items.forEach(function(g){g=g||{};var d=el('div','idea');var t=el('div','t');t.appendChild(el('strong',null,g.title||'Untitled idea'));var s=el('span','pill',null);s.textContent=String(g.status||'submitted').replace(/_/g,' ');t.appendChild(s);d.appendChild(t);d.appendChild(el('p','c',g.description||''));
+var row=el('div','vrow');var btn=el('button','vote-btn',null);btn.type='button';btn.textContent='▾ '+(g.votes||0)+(g.votedByMe?' · voted':'');btn.setAttribute('aria-pressed',g.votedByMe?'true':'false');btn.setAttribute('aria-label','Vote for '+(g.title||'idea'));
+(function(id,b){btn.addEventListener('click',function(){vote(id,b);});})(g.id,btn);row.appendChild(btn);row.appendChild(el('span','mono',(g.commentCount||0)+' comments'));
+var rep=el('button','vote-btn',null);rep.type='button';rep.textContent='Report';rep.setAttribute('aria-label','Report '+(g.title||'idea'));(function(id){rep.addEventListener('click',function(){report('idea',id);});})(g.id);row.appendChild(rep);d.appendChild(row);box.appendChild(d);});}
+function vote(id,btn){if(btn)btn.disabled=true;pt('/api/bip/ideas/'+encodeURIComponent(id)+'/vote',{}).then(function(){return ri2();}).catch(function(e){an('ideaMsg',(e&&e.message)||'Vote failed',false);}).then(function(){if(btn)btn.disabled=false;});}
+function report(k,id){var r=null;try{r=window.prompt('Report this '+k+' — what is wrong with it?','');}catch(e){return;}if(r==null)return;pt('/api/bip/reports',{kind:k,targetId:id,reason:r}).then(function(){window.alert('Thanks — a maintainer will review it.');}).catch(function(e){window.alert((e&&e.message)||'Report failed');});}
+function rc(list){var box=$('chatList');if(!box)return;box.textContent='';list=list||[];if(!list.length){box.appendChild(el('li','sub','No messages yet — say hello.'));return;}
+list.forEach(function(m){m=m||{};var li=el('li','chat-item');var head=el('div',null,null);head.appendChild(el('span','who',m.nickname||'Visitor'));head.appendChild(el('span','when',fm(m.at)));li.appendChild(head);li.appendChild(el('div',null,m.text||''));
+var row=el('div','vrow');var rep=el('button','vote-btn',null);rep.type='button';rep.textContent='Report';rep.setAttribute('aria-label','Report message from '+(m.nickname||'Visitor'));(function(id){rep.addEventListener('click',function(){report('chat',id);});})(m.id);row.appendChild(rep);li.appendChild(row);box.appendChild(li);});
+try{box.scrollTop=box.scrollHeight;}catch(e){}}
