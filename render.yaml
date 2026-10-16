@@ -100,6 +100,16 @@ services:
       #    redeploy and all votes would reset.
       - key: BIP_SESSION_SECRET
         sync: false
+      # 5. HMAC signing secret for POST /api/bip/webhooks/render (Render deploy
+      #    lifecycle: deploy_started / deploy_ended -> succeeded|failed).
+      #    Render's Standard Webhooks REQUIRE a Pro plan: create the webhook in
+      #    Render Dashboard > Integrations > Webhooks, URL
+      #    https://<your-domain>/api/bip/webhooks/render, events = deploy_started
+      #    + deploy_ended, signing secret = this value. Until it is configured the
+      #    route answers an honest 503 and deploy status stays "unknown" — never a
+      #    fabricated success.
+      - key: RENDER_WEBHOOK_SECRET
+        sync: false
       # ---------- Build-in-Public DURABLE storage (Render Free has no disk) ----------
       # Render Free wipes local files on every redeploy AND restart, so
       # the activity feed + CI status must live in Supabase Postgres.

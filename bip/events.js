@@ -127,6 +127,76 @@ function verifyGitHubSignature(rawBody, sigHeader){
 }
 
 
+/* ---------- Render deploy webhook -> Standard Webhooks verification ------
+   Render signs deliveries with the Standard Webhooks (Svix) scheme:
+     headers  webhook-id, webhook-timestamp (unix seconds), webhook-signature
+     sign     base64( HMAC-SHA256( key, "<id>.<timestamp>.<rawBody>" ) )
+     key      base64-decode( secret with any leading "whsec_" stripped )
+     compare  a "v1,<sig>" entry in a space-separated webhook-signature list
+   A +/-5 minute timestamp window rejects replays. Reads RENDER_WEBHOOK_SECRET;
+   configured:false lets the route answer an honest 503 while it is unset
+   (Render webhooks also require a Pro plan — see docs/deployment.md). */
+const RENDER_TOLERANCE_S = 300;
+function verifyRenderSignature(rawBody, headers){
+  const secret = process.env.RENDER_WEBHOOK_SECRET;
+  if (!secret || secret.length < 8) return { ok: false, configured: false };
+  const id = headers && headers['webhook-id'];
+  const ts = headers && headers['webhook-timestamp'];
+  const sig = headers && headers['webhook-signature'];
+  if (!id || !ts || !sig) return { ok: false, configured: true, error: 'Missing webhook-id, webhook-timestamp, or webhook-signature header.' };
+  const now = Math.floor(Date.now() / 1000);
+  const t = parseInt(String(ts), 10);
+  if (Number.isNaN(t)) return { ok: false, configured: true, error: 'Invalid webhook-timestamp.' };
+  if (now - t > RENDER_TOLERANCE_S) return { ok: false, configured: true, error: 'webhook-timestamp is outside the accepted window (too old).' };
+  if (t - now > RENDER_TOLERANCE_S) return { ok: false, configured: true, error: 'webhook-timestamp is outside the accepted window (too new).' };
+  let k = String(secret);
+  if (k.startsWith('whsec_')) k = k.slice(6);
+  const key = Buffer.from(k, 'base64');
+  if (!key.length) return { ok: false, configured: true, error: 'Signing secret could not be decoded.' };
+  const toSign = String(id) + '.' + t + '.' + String(rawBody);
+  const expected = crypto.createHmac('sha256', key).update(toSign, 'utf8').digest('base64');
+  for (const entry of String(sig).split(' ')){
+    const i = entry.indexOf(',');
+    if (i < 0) continue;
+    if (entry.slice(0, i) !== 'v1') continue;
+    if (timingSafeEqualStr(entry.slice(i + 1), expected)) return { ok: true, configured: true };
+  }
+  return { ok: false, configured: true, error: 'Signature mismatch.' };
+}
+
+/* ---------- Render deploy webhook -> event mapping (allowlist only) ------
+   Only deploy lifecycle notifications become public events; every other
+   workspace notification (scale, restart, postgres, disks, ...) is dropped.
+   Render's webhook payload carries NO commit SHA (that needs a separate
+   Render API lookup), so ref stays empty rather than inventing one — the
+   commit is reported by the CI ingest path instead. deploy_ended is trusted
+   only when it carries an explicit status: succeeded -> deploy_succeeded,
+   failed -> deploy_failed; an unknown status is ignored, never guessed.
+   The webhook-id header is the stable, idempotent dedupe key (stable across
+   Render's automatic retries). */
+function mapRenderWebhook(payload, deliveryId){
+  if (!payload || typeof payload.type !== 'string') return [];
+  const data = (payload.data && typeof payload.data === 'object') ? payload.data : {};
+  const service = String(data.serviceName || data.serviceId || 'service').slice(0, 80);
+  const at = (typeof payload.timestamp === 'string') ? payload.timestamp : undefined;
+  const common = {
+    source: 'webhook',
+    ref: '',
+    at,
+    detail: data.serviceId ? String(data.serviceId).slice(0, 80) : '',
+    dedupeKey: deliveryId ? ('render-' + String(deliveryId).slice(0, 200)) : null
+  };
+  if (payload.type === 'deploy_started'){
+    return [Object.assign({ type: 'deploy_started', summary: 'Render deploy started for ' + service }, common)];
+  }
+  if (payload.type === 'deploy_ended'){
+    if (data.status === 'succeeded') return [Object.assign({ type: 'deploy_succeeded', summary: 'Render deploy succeeded for ' + service }, common)];
+    if (data.status === 'failed') return [Object.assign({ type: 'deploy_failed', summary: 'Render deploy failed for ' + service }, common)];
+    return [];
+  }
+  return [];
+}
+
 /* ---------- GitHub webhook -> event mapping (allowlist only) ----------
    Only three delivery types turn into public events, and each maps to
    an explicit field picklist: message, short sha, branch, run status.
@@ -276,7 +346,7 @@ function integrationStatus(){
 module.exports = {
   EVENT_TYPES,
   isDuplicate, markDelivery, recordDevEvent, recordDevEventAsync,
-  verifyGitHubSignature, mapGitHubEvent,
+  verifyGitHubSignature, mapGitHubEvent, verifyRenderSignature, mapRenderWebhook,
   subscribe, unsubscribe, broadcast, subscriberCount,
   latestActivity, statusBoard, readActivity, readStatusBoard,
   integrationStatus

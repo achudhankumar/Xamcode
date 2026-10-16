@@ -29,10 +29,50 @@ jobs:
         with:
           node-version: "22"
           cache: npm
+      # Build lifecycle telemetry: report build_started BEFORE the build runs.
+      # continue-on-error so a reporting hiccup can never block the real build —
+      # the reporter still emits a visible ::error:: when it fails. REF carries the
+      # commit this run is building; the reporter skips silently on fork PRs (no secrets).
+      - name: Report build started to Build-in-Public ingest
+        continue-on-error: true
+        env:
+          BIP_INGEST_TOKEN: ${{ secrets.BIP_INGEST_TOKEN }}
+          PUBLIC_URL: ${{ vars.PUBLIC_URL }}
+          PUBLIC_URL_SECRET: ${{ secrets.PUBLIC_URL }}
+          REF: ${{ github.sha }}
+          DEDUPE_KEY: ci-build-start-${{ github.run_id }}-${{ github.run_attempt }}
+          SOURCE: ci
+        run: |
+          SHORT_SHA="$(printf '%s' "$GITHUB_SHA" | cut -c1-7)"
+          EVENT_TYPE="build_started" SUMMARY="CI build started @ $SHORT_SHA (run $GITHUB_RUN_ID)" node .github/report-bip.js
       - run: npm ci
-      - run: npm run check
+      - id: build
+        run: npm run check
       - id: tests
         run: npm test
+      # Build outcome: reported from the syntax/load gate (`npm run check`, id:
+      # build) — NEVER derived from the test result, so a green test run can never
+      # masquerade as a successful build. Runs even if earlier steps failed and
+      # exits nonzero with a visible ::error:: if the report itself fails, without
+      # altering the build step's own outcome (it reads steps.build.outcome).
+      - name: Report build result to Build-in-Public ingest
+        if: always()
+        env:
+          BIP_INGEST_TOKEN: ${{ secrets.BIP_INGEST_TOKEN }}
+          PUBLIC_URL: ${{ vars.PUBLIC_URL }}
+          PUBLIC_URL_SECRET: ${{ secrets.PUBLIC_URL }}
+          REF: ${{ github.sha }}
+          DEDUPE_KEY: ci-build-${{ github.run_id }}-${{ github.run_attempt }}
+          SOURCE: ci
+          BUILD_OUTCOME: ${{ steps.build.outcome }}
+        run: |
+          SHORT_SHA="$(printf '%s' "$GITHUB_SHA" | cut -c1-7)"
+          if [ "$BUILD_OUTCOME" = "success" ]; then
+            ET="build_passed"; SUM="CI build passed @ $SHORT_SHA (run $GITHUB_RUN_ID)"
+          else
+            ET="build_failed"; SUM="CI build failed @ $SHORT_SHA (run $GITHUB_RUN_ID) [${BUILD_OUTCOME:-unknown}]"
+          fi
+          EVENT_TYPE="$ET" SUMMARY="$SUM" node .github/report-bip.js
       # P0-2: Report real CI test results to the Xamcode BIP telemetry.
       # Runs even when tests fail and never masks the test outcome.
       # HTTP 200 alone is NOT trusted: the response body must confirm

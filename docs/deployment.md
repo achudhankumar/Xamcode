@@ -79,7 +79,51 @@ own outcome.
 3. Render auto-deploys (`autoDeploy: true` in `render.yaml`).
 4. Verify `/api/health`, `/api/quota`, and `/build` on the live URL.
 
-## 6. Rollback
+## 6. Build-in-Public deploy lifecycle (Render webhooks)
+
+CI reports build status (`build_started` / `build_passed` / `build_failed`) to
+`POST /api/bip/events/ingest`. Render deploy lifecycle events flow through a
+separate path: Render → `POST /api/bip/webhooks/render` → build status board.
+
+### Prerequisite: Render Pro plan
+Render webhooks are a **Pro plan** feature. This service runs on the **Free**
+tier, so deploy status stays `unknown` on the `/build` dashboard until the
+service is upgraded to Pro and the webhook is configured. (Documented in
+`render.yaml` comments; `RENDER_WEBHOOK_SECRET` is set `sync: false` so it
+never drifts from the dashboard.)
+
+### Setup
+1. Upgrade the Render web service to a **Pro** plan.
+2. Render Dashboard → service → **Webhooks** → **Add webhook**.
+3. Destination URL:
+   `https://<service>.onrender.com/api/bip/webhooks/render`
+4. Events to send: `deploy_started`, `deploy_ended`.
+5. Secret: create a strong random value (e.g. `openssl rand -base64 32`),
+   set it as a Render **Environment Variable** named `RENDER_WEBHOOK_SECRET`
+   (matching `render.yaml`, `sync: false`).
+6. Save. Render sends a `ping` event on creation — it is ignored by the
+   allowlist mapper (only `deploy_*` events are stored), so no spurious
+   status appears.
+
+### What the webhook handler does
+- Verifies each request with **Standard Webhooks (Svix) HMAC-SHA256**: header
+  `webhook-signature: v1,<hex>` over `id.timestamp.body`, key =
+  `base64_decode(strip(whsec_, secret))`, ±5 min replay window.
+- Dedupe via `webhook-id` (replayed deliveries are reported but not re-stored).
+- Maps only confirmed statuses: `deploy_started` → `deploy_started`
+  (status `running`); `deploy_ended` with `succeeded` → `deploy_succeeded`
+  (`passed`); `deploy_ended` with `failed` → `deploy_failed` (`failed`).
+  `deploy_ended` with no status and all other notification types are
+  **ignored** — the board never guesses.
+- Fails closed: `503 WEBHOOK_NOT_CONFIGURED` when `RENDER_WEBHOOK_SECRET`
+  is unset; `401 BAD_SIGNATURE` on forged/missing signatures.
+
+### Verification
+After configuring, trigger a deploy and watch `/api/bip/status`:
+`deploy.state` moves `running` → `passed`/`failed`. The `/build` dashboard
+reflects it without a page refresh (polling).
+
+## 7. Rollback
 
 1. Render Dashboard → service → Deploys → **Rollback** to the last good
    deploy (fastest, no code change), or `git revert HEAD` + push.
@@ -88,7 +132,7 @@ own outcome.
 4. Note: rollback does not restore `bip-data/` — without a disk, store
    state (votes, chat, waitlist) resets on every deploy regardless.
 
-## 7. Custom domain + HTTPS
+## 8. Custom domain + HTTPS
 
 1. Render Dashboard → service → Settings → Custom Domains → add domain.
 2. Add the `CNAME` record Render shows at your DNS provider
@@ -97,7 +141,7 @@ own outcome.
    is already sent when `NODE_ENV=production`.
 4. Wait for DNS propagation, then verify `https://<domain>/api/health`.
 
-## 8. Pre-launch security checklist
+## 9. Pre-launch security checklist
 
 - [ ] `.env` not committed; secrets only in Render dashboard
 - [ ] `NODE_ENV=production` set (HSTS on, production bind)

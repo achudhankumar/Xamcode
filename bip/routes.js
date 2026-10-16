@@ -270,10 +270,52 @@ async function handleBipPosts(req, res, p, url, requestId){
   return null;
 }
 
+/* Render deploy webhook: Standard Webhooks HMAC over the RAW body,
+   idempotent per webhook-id, allowlisted deploy-lifecycle mapping only.
+   Returns after responding so the caller short-circuits (no 404 fall-through).
+   Honest 503 until RENDER_WEBHOOK_SECRET is set — Render's deploy webhooks
+   additionally require a Pro plan and a manually created webhook
+   (see docs/deployment.md). */
+async function handleRenderWebhook(req, res, requestId){
+  let raw;
+  try{
+    raw = await readRawBody(req, 256 * 1024);
+  }catch{
+    return sendJson(res, 413, { error: 'Delivery too large.', code: 'BODY_TOO_LARGE', requestId }, requestId);
+  }
+  const check = events.verifyRenderSignature(raw, req.headers);
+  if (!check.configured){
+    return sendJson(res, 503, { error: 'Render deploy webhooks are not configured on this server.', code: 'WEBHOOK_NOT_CONFIGURED', received: true, stored: false, requestId }, requestId);
+  }
+  if (!check.ok){
+    return sendJson(res, 401, { error: check.error || 'Invalid webhook signature.', code: 'BAD_SIGNATURE', requestId }, requestId);
+  }
+  let payload;
+  try{ payload = JSON.parse(raw); }
+  catch{ return sendJson(res, 400, { error: 'Delivery body was unreadable.', code: 'BAD_JSON', requestId }, requestId); }
+  const deliveryId = req.headers['webhook-id'] || '';
+  const mapped = events.mapRenderWebhook(payload, deliveryId);
+  let stored = 0, duplicates = 0;
+  for (const m of mapped){
+    const r = await events.recordDevEventAsync(m);
+    if (r.code === 'DURABLE_STORAGE_UNAVAILABLE'){
+      return durableUnavailable(res, requestId, 'A deploy event could not be stored.');
+    }
+    if (r.ok && r.duplicate) duplicates++;
+    else if (r.ok) stored++;
+  }
+  return sendJson(res, 200, { received: true, stored, duplicates, ignored: mapped.length === 0, requestId }, requestId);
+}
+
 /* GitHub webhook: HMAC over the RAW body, idempotent per delivery id,
    allowlisted event mapping. Never trusts parsed JSON for the check. */
 async function handleWebhook(req, res, p, requestId){
-  if (req.method !== 'POST' || p !== '/api/bip/webhooks/github') return null;
+  if (req.method !== 'POST') return null;
+  if (p === '/api/bip/webhooks/render'){
+    await handleRenderWebhook(req, res, requestId);
+    return true;
+  }
+  if (p !== '/api/bip/webhooks/github') return null;
   let raw;
   try{
     raw = await readRawBody(req, 256 * 1024);

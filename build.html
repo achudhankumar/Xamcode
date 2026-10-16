@@ -176,6 +176,8 @@ footer{border-top:1px solid var(--line);margin-top:44px;padding:26px 0 60px;colo
 
 <div class="card" role="listitem"><h3>Readiness</h3><div class="big" id="statProgress">–</div><div class="sub">weighted verified milestones</div></div>
 <div class="card" role="listitem"><h3>Phase</h3><div class="big" id="statPhase" style="font-size:22px">–</div><div class="sub" id="statMilestone">current milestone</div></div>
+<div class="card" role="listitem"><h3>Ideas</h3><div class="big" id="statIdeas">–</div><div class="sub">community suggestions</div></div>
+<div class="card" role="listitem"><h3>Waitlist</h3><div class="big" id="statWait">–</div><div class="sub">students waiting for access</div></div>
 <section class="sec" id="launch" aria-labelledby="h-launch">
 <div class="sec-head"><h2 id="h-launch">Launch countdown</h2><p>readiness first — a date only when it is real</p></div>
 <div class="card">
@@ -394,22 +396,39 @@ tick();state.timer=setInterval(tick,1000);
 function stopCountdown(){if(state.timer){clearInterval(state.timer);state.timer=null;}}
 function announce(id,msg,ok){var n=$(id);n.textContent=msg;n.className='fmsg '+(ok?'ok':'err');}
 
+/* Null-safe setter: a missing optional element can never throw. */
+function setText(id,text){var n=$(id);if(n)n.textContent=text;}
+/* Render one section behind its own guard so a single failing section
+   cannot blank (or hide) the rest of the page. */
+function renderSection(fn){try{fn();}catch(e){}}
 async function refreshAll(){
-try{
-var s=await get('/api/bip/summary');
-renderProgress({progress:s.progress,milestones:s.milestones});
-renderRoadmap(s.roadmap||[]);
-renderStatus(s.status||{});
-renderActivity(s.recentActivity||[],s.integration);
-renderIdeas(s.ideas||[]);
-renderLaunch(s.launch);
-$('statIdeas').textContent=String((s.counts&&s.counts.ideas)||0);
-$('statWait').textContent=String((s.counts&&s.counts.waitlist)||0);
-$('waitCount').textContent=String((s.counts&&s.counts.waitlist)||0);
-}catch(e){
-$('phaseLabel').textContent='Could not load build status — is the server running?';
-}
-try{var c=await get('/api/bip/chat?limit=30');renderChat(c.messages||[]);}catch(e){}
+ /* The fetch is separated from rendering. A failed request surfaces an
+    honest, non-sensitive reason (the server may simply be busy, or one
+    source is down) instead of the old blanket "is the server running?"
+    that blamed a healthy server. A valid response renders each section
+    behind its own guard, so one bad field or missing element can no
+    longer hide the already-rendered status board behind an error banner. */
+ var s=null;
+ try{
+   s=await get('/api/bip/summary');
+ }catch(e){
+   var why=(e&&e.message)?String(e.message):'the server did not respond';
+   setText('phaseLabel','Build status unavailable — '+why);
+ }
+ if(s){
+   renderSection(function(){renderProgress({progress:s.progress,milestones:s.milestones});});
+   renderSection(function(){renderRoadmap(s.roadmap||[]);});
+   renderSection(function(){renderStatus(s.status||{});});
+   renderSection(function(){renderActivity(s.recentActivity||[],s.integration);});
+   renderSection(function(){renderIdeas(s.ideas||[]);});
+   renderSection(function(){renderLaunch(s.launch);});
+   renderSection(function(){
+     setText('statIdeas',String((s.counts&&s.counts.ideas)||0));
+     setText('statWait',String((s.counts&&s.counts.waitlist)||0));
+     setText('waitCount',String((s.counts&&s.counts.waitlist)||0));
+   });
+ }
+ try{var c=await get('/api/bip/chat?limit=30');renderChat(c.messages||[]);}catch(e){}
 }
 async function refreshIdeas(){try{var r=await get('/api/bip/ideas?sort=top');renderIdeas(r.ideas||[]);}catch(e){}}
 function connectStream(){
