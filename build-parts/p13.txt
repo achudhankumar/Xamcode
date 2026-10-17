@@ -19,7 +19,7 @@ ctx.globalAlpha=.9;ctx.fillStyle=i%5===0?'#C8FF3D':'rgba(241,239,227,.7)';ctx.be
 ctx.globalAlpha=1;}catch(e){}
 if(!reduce){try{if(typeof requestAnimationFrame!=='undefined')requestAnimationFrame(frame);}catch(e){}}}
 try{frame();}catch(e){}
-try{var heroT=$('heroTitle');window.addEventListener('scroll',function(){try{var y=window.scrollY||0;if(heroT&&heroT.style)heroT.style.transform='translateY('+Math.min(60,y*.08)+'px)';}catch(x){}},{passive:true});}catch(e){}
+try{var heroT=$('heroTitle');window.addEventListener('scroll',function(){try{var y=window.scrollY||0;if(heroT&&heroT.style)heroT.style.transform='translateY(-'+Math.min(60,y*.08)+'px)';}catch(x){}},{passive:true});}catch(e){}
 }catch(e){}}
 function menu(){try{
 var btn=$('menuBtn'),ov=$('menuOverlay'),veil=$('menuVeil');if(!btn||!ov)return;var open=false;var last=null;

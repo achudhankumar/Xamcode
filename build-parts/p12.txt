@@ -6,7 +6,9 @@ function tickTo(t){stopT();function tick(){var ms=t-Date.now();if(ms<0)ms=0;var 
 function stopT(){if(S.timer){clearInterval(S.timer);S.timer=null;}}
 function an(id,msg,ok){var n=$(id);if(!n)return;n.textContent=msg;n.className='fmsg '+(ok?'ok':'err');}
 function rAll(){var s=null;gt('/api/bip/summary').then(function(r){s=r;}).catch(function(e){var w=(e&&e.message)?String(e.message):'the server did not respond';st('phaseLabel','Build status unavailable — '+w);}).then(function(){
-if(!s)return;rs(function(){rp({progress:s.progress,milestones:s.milestones});});rs(function(){rr(s.roadmap||[]);});rs(function(){rstatus(s.status||{});});rs(function(){ract(s.recentActivity||[],s.integration);});rs(function(){ri(s.ideas||[]);});rs(function(){if(s.launch)rl(s.launch);});
+if(!s)return;rs(function(){rp({progress:s.progress,milestones:s.milestones});});rs(function(){rr(s.roadmap||[]);});rs(function(){rstatus(s.status||{});});rs(function(){ract(s.recentActivity||[],s.integration);});
+rs(function(){rReadiness(s);});
+rs(function(){ri(s.ideas||[]);});rs(function(){if(s.launch)rl(s.launch);});
 rs(function(){st('statIdeas',String((s.counts&&s.counts.ideas)||0));st('statWait',String((s.counts&&s.counts.waitlist)||0));st('waitCount',String((s.counts&&s.counts.waitlist)||0));});});
 gt('/api/bip/chat?limit=30').then(function(c){rc(c.messages||[]);}).catch(function(){});}
 function ri2(){return gt('/api/bip/ideas?sort=top').then(function(r){ri(r.ideas||[]);}).catch(function(){});}

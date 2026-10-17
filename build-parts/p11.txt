@@ -16,7 +16,65 @@ var dot=el('span','dot '+(e.status||'info'));dot.setAttribute('aria-hidden','tru
 var note=$('feedNote');if(note)note.textContent=(ig&&ig.live)?'live from GitHub webhooks / CI':'maintainer-updated feed — GitHub webhooks not connected yet (see deployment docs)';
 var badge=$('liveBadge');if(badge){if(ig&&ig.live){badge.textContent='✓ live feed';if(badge.classList)badge.classList.add('on');}else{badge.textContent='◇ setup mode';if(badge.classList)badge.classList.remove('on');}}
 var mf=$('menuFeedState');if(mf)mf.textContent=(ig&&ig.live)?'live':'setup';var ms=$('menuStorage');if(ms)ms.textContent=(ig&&ig.storage)||'json';}
-function ri(items){var box=$('ideaList');if(!box)return;box.textContent='';items=items||[];if(!items.length){box.appendChild(el('p','sub','No ideas yet — be the first.'));return;}
+
+function rReadiness(s){
+  s=s||{};
+  function set(n,v){var b=$(n);if(!b)return v;b.textContent=v;return v;}
+  var ph=(s.progress&&s.progress.phase)?s.progress.phase:'—';
+  set('lrStage',ph);
+  set('lrStagePill','verified weight');
+  if(!ph)set('lrStage','—');
+  var latest=null;
+  (s.milestones||[]).forEach(function(m){
+    if(!latest&&(m.status==='verified'||m.status==='done'||m.status==='completed'))latest=m;
+  });
+  if(latest){
+    set('lrVerified',latest.title||'—');
+    set('lrVerifiedPill','verified');
+    set('lrVerifiedMeta','Verified and recorded '+fm(latest.verifiedAt||''));
+  }else{
+    set('lrVerified','—');
+    set('lrVerifiedPill','none');
+    set('lrVerifiedMeta','No verified milestone recorded yet.');
+  }
+  var nx=null;
+  (s.milestones||[]).forEach(function(m){
+    if(!nx&&(m.status==='in_progress'||m.status==='in-progress'||m.status==='active'))nx=m;
+  });
+  if(!nx){
+    (s.milestones||[]).forEach(function(m){
+      if(!nx&&(m.status==='planned'||m.status==='upcoming'||m.status==='todo'))nx=m;
+    });
+  }
+  if(nx){
+    set('lrNext',nx.title||'—');
+    set('lrNextPill','in_progress');
+    set('lrNextMeta','Unverified until completion criteria pass.');
+  }else{
+    set('lrNext','—');
+    set('lrNextPill','none');
+    set('lrNextMeta','No next development milestone yet.');
+  }
+  var lap='pre-launch';
+  var lpad='';
+  var l=s.launch||{};
+  if(l.hasConfirmedDate&&s.launch.readinessPercent>=100){
+    lap='ready to launch';
+  }else if(s.launch.readinessPercent!=null){
+    lap='building toward launch';
+    lpad=Math.round(s.launch.readinessPercent)+'% verified';
+  }else if(l.hasConfirmedDate){
+    lap='pending confirmation';
+  }
+  set('lrLaunch',lap);
+  set('lrLaunchPill',lap==='ready to launch'?'ready':(lap==='building toward launch'?'in_progress':'pre-launch'));
+  set('lrLaunchMeta',lpad||'All release milestones must be verified before launch.');
+  set('lrUpdateTitle','Verified Milestone & Development Log');
+  set('lrUpdateBadge','public record');
+}
+function ri(items){
+
+var box=$('ideaList');if(!box)return;box.textContent='';items=items||[];if(!items.length){box.appendChild(el('p','sub','No ideas yet — be the first.'));return;}
 items.forEach(function(g){g=g||{};var d=el('div','idea');var t=el('div','t');t.appendChild(el('strong',null,g.title||'Untitled idea'));var s=el('span','pill',null);s.textContent=String(g.status||'submitted').replace(/_/g,' ');t.appendChild(s);d.appendChild(t);d.appendChild(el('p','c',g.description||''));
 var row=el('div','vrow');var btn=el('button','vote-btn',null);btn.type='button';btn.textContent='▾ '+(g.votes||0)+(g.votedByMe?' · voted':'');btn.setAttribute('aria-pressed',g.votedByMe?'true':'false');btn.setAttribute('aria-label','Vote for '+(g.title||'idea'));
 (function(id,b){btn.addEventListener('click',function(){vote(id,b);});})(g.id,btn);row.appendChild(btn);row.appendChild(el('span','mono',(g.commentCount||0)+' comments'));

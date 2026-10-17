@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>XamCode AI — Building in Public</title><meta name="description" content="Verified development progress, roadmap, changelog, ideas, chat, countdown and waitlist for XamCode AI."><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Space+Grotesk:wght@300;400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"><style id="bip-css">
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>XamCode AI — Building in Public</title><meta name="description" content="Verified development progress, roadmap, changelog, ideas, chat, countdown and waitlist for XamCode AI."><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Space+Grotesk:wght@300;400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"><noscript><style>.reveal{opacity:1!important;transform:none!important}.mbtn{display:none}</style></noscript><style id="bip-css">
 /* ---------- DESIGN TOKENS (missing in the redesign commit) ---------- */
 /* All 17 tokens below are referenced by var() throughout this stylesheet.
    Anchored to colors already hardcoded in this file (dock rgba(6,8,3),
@@ -32,10 +32,17 @@ html,body{
   font-family:var(--mono);
   line-height:1.5;
 }
+/* Smooth in-page navigation; disabled under prefers-reduced-motion below. */
+html{scroll-behavior:smooth}
+/* The dock is fixed at top:12px (~64px tall) — keep anchor targets and
+   section headings from hiding behind it. */
+section[id],#main{scroll-margin-top:96px}
 /* Skip link: kept out of view until keyboard focus (bug fix — it had
    no CSS at all and rendered as unwanted visible content at the top). */
 .skip{position:absolute;left:12px;top:-64px;z-index:300;background:var(--lime);color:var(--limeink);padding:12px 18px;border-radius:10px;border:1px solid var(--limeink);font-family:var(--mono);font-weight:700;font-size:13px;text-decoration:none;transition:top .2s ease}
 .skip:focus{top:12px}
+/* Programmatic skip-target: focus lands here without needing a ring. */
+main:focus{outline:none}
 .bg{position:fixed;inset:0;pointer-events:none;z-index:0}
 .bg-grid{background-image:linear-gradient(rgba(200,255,61,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(200,255,61,.045) 1px,transparent 1px);background-size:56px 56px}
 .bg-glow{background:
@@ -54,7 +61,8 @@ html,body{
 .docknav{display:flex;gap:2px;margin-left:8px;flex:1;justify-content:center}
 .docknav a{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--mut);text-decoration:none;padding:8px 11px;border-radius:8px;transition:color .2s ease,background .2s ease}
 .docknav a:hover{color:var(--lime);background:rgba(200,255,61,.08)}
-.docknav a.act{color:var(--limeink);background:var(--lime)}
+.docknav a.act{color:var(--lime);background:transparent;box-shadow:inset 0 -2px 0 0 var(--lime)}
+.docknav a:focus-visible,.mlinks a:focus-visible{outline:2px solid var(--lime);outline-offset:2px;border-radius:8px}
 /* Live feed badge (id=liveBadge, class toggled by JS: .on = live feed). */
 .live{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:5px 11px;border-radius:999px;border:1px solid var(--warn);color:var(--warn);white-space:nowrap}
 .live::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;animation:pf 2s infinite}
@@ -87,6 +95,12 @@ html.menu-open{overflow:hidden}
 .mlinks a.act::before{transform:scaleY(1)}
 .mlinks a small{font-family:var(--mono);font-size:10px;color:var(--dim);font-weight:400;letter-spacing:.06em}
 .mbtn .bars::after{content:"";position:absolute;left:0;top:5px;width:18px;height:2px;background:var(--paper);border-radius:2px}
+/* Desktop shows the inline section nav — the MENU button would duplicate it.
+   It becomes the primary navigation again as soon as docknav hides (<=960px). */
+@media (min-width:961px){.mbtn{display:none}}
+/* Between 961–1120px the live badge collides with brand + links.
+   Below 961px the badge stays: the dock shrinks to brand + MENU and fits. */
+@media (min-width:961px) and (max-width:1120px){.live{display:none}}
 
 /* ---------- OPENING / HERO ---------- */
 .opening{position:relative;z-index:1;min-height:100svh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;overflow:hidden;padding:60px 24px 80px}
@@ -113,8 +127,9 @@ html.menu-open{overflow:hidden}
 .hmeta{display:flex;flex-wrap:wrap;gap:10px 26px;margin-top:22px;font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:.06em;text-transform:uppercase;max-width:800px;margin-left:auto;margin-right:auto}
 .hmeta span{white-space:nowrap}
 .crow{display:flex;gap:14px;flex-wrap:wrap;margin-top:30px;justify-content:center}
-.xcta{position:relative;display:inline-flex;align-items:center;gap:12px;text-decoration:none;border-radius:999px;padding:15px 24px;font-weight:700;font-size:14px;border:1px solid transparent;text-align:left;transition:transform .28s cubic-bezier(.22,1,.36,1),background .28s ease,color .28s ease,border-color .28s ease}
+.xcta{position:relative;display:inline-flex;align-items:center;gap:12px;text-decoration:none;border-radius:14px;padding:0 22px;min-height:48px;box-sizing:border-box;font-weight:700;font-family:var(--mono);font-size:13.5px;letter-spacing:.02em;border:1px solid transparent;text-align:left;transition:transform .28s cubic-bezier(.22,1,.36,1),background .28s ease,color .28s ease,border-color .28s ease}
 .xcta:focus-visible{outline:2px solid var(--lime);outline-offset:4px}
+.xcta:active{transform:translateY(0) scale(.985)}
 
 /* ---------- CHAPTER LAYOUT ---------- */
 .chapter{position:relative;z-index:1;padding:100px 0;border-top:1px solid var(--soft)}
@@ -125,6 +140,8 @@ html.menu-open{overflow:hidden}
 .chead p{margin:8px 0 0;color:var(--mut);font-size:14px;grid-column:2;max-width:60ch}
 .reveal{opacity:0;transform:translateY(32px);transition:opacity .9s ease,transform .9s cubic-bezier(.22,1,.36,1)}
 .reveal.in{opacity:1;transform:none}
+/* No-JS fallback: content must never stay hidden because a script failed.
+   <noscript> in <head> flips these back to visible when JS is off. */
 /* ---------- PROGRESS ---------- */
 .pgrid{display:grid;grid-template-columns:1.05fr .95fr;gap:26px;align-items:stretch}
 .pstage{position:relative;border:1px solid var(--line2);border-radius:24px;background:radial-gradient(420px 260px at 28% 22%,rgba(200,255,61,.07),transparent 60%),radial-gradient(420px 280px at 88% 92%,rgba(92,109,255,.13),transparent 60%),var(--card);padding:34px 34px 28px;overflow:hidden}
@@ -159,8 +176,9 @@ html.menu-open{overflow:hidden}
 .sgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:18px}
 
 /* ---------- FORM BUTTONS ---------- */
-.btn{display:inline-flex;align-items:center;gap:10px;border-radius:999px;padding:14px 26px;font-weight:700;font-size:14px;cursor:pointer;border:1px solid transparent;text-decoration:none;transition:transform .22s ease,background .22s ease,border-color .22s ease,box-shadow .22s ease;color:var(--inkink)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;border-radius:12px;padding:0 24px;min-height:46px;box-sizing:border-box;font-family:var(--mono);font-weight:700;font-size:13.5px;cursor:pointer;border:1px solid transparent;text-decoration:none;transition:transform .22s ease,background .22s ease,border-color .22s ease,box-shadow .22s ease;color:var(--inkink)}
 .btn:focus-visible{outline:2px solid var(--lime);outline-offset:4px}
+.btn:active{transform:translateY(0) scale(.985)}
 .btn.primary{background:var(--lime);color:var(--limeink);border-color:var(--limeink);box-shadow:0 0 0 1px var(--lime)}
 .btn.primary:hover{background:var(--limeink);color:var(--lime);transform:translateY(-2px);box-shadow:0 8px 24px -8px rgba(200,255,61,.45)}
 .btn.primary:disabled{opacity:.6;cursor:wait;transform:none}
@@ -184,6 +202,9 @@ html.menu-open{overflow:hidden}
 .chat-item .body{color:var(--paper);font-size:14px;line-height:1.55}
 /* ---------- LAUNCH COUNTDOWN ---------- */
 .count{padding:24px 0}
+/* `hidden` must always win — the <=600px rule sets display:flex, which
+   would otherwise expose empty countdown cells when no date is set. */
+.count[hidden]{display:none!important}
 .cell{display:flex;flex-direction:column;align-items:center;background:rgba(92,109,255,.08);border:1px solid var(--line2);border-radius:16px;padding:16px 22px;margin:0 14px;min-width:80px}
 .cell .n{font-family:var(--disp);font-size:42px;font-weight:800;color:var(--paper);line-height:1}
 .cell .l{font-family:var(--mono);font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.12em;margin-top:6px}
@@ -280,6 +301,12 @@ html.menu-open{overflow:hidden}
 .chip{display:inline-flex;align-items:center;gap:9px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;padding:8px 15px;border-radius:999px;border:1px solid var(--line);background:rgba(6,8,3,.6);color:var(--mut)}
 .chip b{color:var(--lime);font-weight:700}
 .chiprow{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+/* Contextual in-section action: quieter than a hero CTA, still obvious. */
+.slink{display:inline-flex;align-items:center;gap:8px;margin-top:16px;font-family:var(--mono);font-size:12.5px;font-weight:700;letter-spacing:.04em;color:var(--lime);text-decoration:none;border:1px solid var(--soft);border-radius:12px;background:rgba(200,255,61,.05);padding:11px 16px;min-height:42px;box-sizing:border-box;transition:border-color .2s ease,background .2s ease,transform .2s ease}
+.slink:hover{border-color:var(--lime);background:rgba(200,255,61,.1);transform:translateY(-1px)}
+.slink:focus-visible{outline:2px solid var(--lime);outline-offset:3px}
+.slink .ar{font-family:var(--mono);font-size:15px;transition:transform .2s ease}
+.slink:hover .ar{transform:translate(3px,-3px)}
 /* ---------- RESPONSIVE ---------- */
 @media (max-width:960px){
   .pgrid,.split,.mgrid{display:grid;grid-template-columns:1fr}
@@ -339,6 +366,10 @@ html.menu-open{overflow:hidden}
   .xcta{width:100%;box-sizing:border-box;justify-content:center}
 }
 /* ---------- REDUCED MOTION ---------- */
+@media print{
+  .reveal{opacity:1!important;transform:none!important}
+  .bg,#heroCanvas,.shint,.veil,.menu,.mbtn{display:none!important}
+}
 @media (prefers-reduced-motion:reduce){
   *{transition:none!important;animation:none!important}
   html{scroll-behavior:auto}
@@ -356,8 +387,12 @@ html.menu-open{overflow:hidden}
 .cacts .xcta.gho:hover::after{transform:scaleX(1);background:var(--lime)}
 /* ---------- COLOPHON FOOTER ---------- */
 .colophon{border-top:1px solid var(--soft);padding:40px 0 90px;color:var(--dim);font-size:12px}
-.fmark{font-family:var(--disp);font-weight:800;font-size:clamp(52px,11vw,150px);line-height:.9;letter-spacing:-.04em;color:transparent;-webkit-text-stroke:1px rgba(241,239,227,.22);text-transform:uppercase;white-space:nowrap;overflow:hidden;margin:0 0 18px}
+.fmark{font-family:var(--disp);font-weight:800;font-size:clamp(30px,9.4vw,124px);line-height:.9;letter-spacing:-.04em;color:transparent;-webkit-text-stroke:1px rgba(241,239,227,.22);text-transform:uppercase;white-space:nowrap;overflow:hidden;margin:0 0 18px}
 .frow{display:flex;gap:20px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+.fnav{display:flex;flex-wrap:wrap;gap:8px 6px;margin:0 0 22px;padding-bottom:20px;border-bottom:1px solid var(--line2)}
+.fnav a{font-family:var(--mono);font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);text-decoration:none;padding:8px 12px;border-radius:8px;transition:color .2s ease,background .2s ease}
+.fnav a:hover{color:var(--lime);background:rgba(200,255,61,.08)}
+.fnav a:focus-visible{outline:2px solid var(--lime);outline-offset:2px}
 .frow a{color:var(--mut);text-decoration:none;transition:color .25s ease}
 .frow a:hover{color:var(--lime)}
 .kbd{font-family:var(--mono);background:rgba(200,255,61,.08);border:1px solid var(--line);color:var(--dim);padding:2px 8px;border-radius:6px;font-size:11px}
@@ -371,7 +406,7 @@ html.menu-open{overflow:hidden}
 .xcta .ar{font-family:var(--mono);font-size:16px;transition:transform .28s ease}
 .xcta:hover .ar{transform:translate(3px,-4px)}
 .xcta.pri{background:var(--lime);color:var(--limeink);border-color:var(--limeink);box-shadow:0 0 0 1px var(--lime)}
-.xcta.pri:hover{background:var(--limeink);color:var(--lime);transform:translateY(-2px)}
+.xcta.pri:hover{background:var(--limeink);color:var(--lime);transform:translateY(-2px);box-shadow:0 10px 30px -10px rgba(200,255,61,.5)}
 .xcta.gho{border-color:var(--soft);color:var(--paper);background:rgba(6,8,3,.55)}
 .xcta.gho::after{content:"";position:absolute;left:24px;right:24px;bottom:12px;height:1px;background:var(--lime);transform:scaleX(0);transform-origin:left;transition:transform .4s ease}
 .xcta.gho:hover{border-color:var(--lime);color:var(--lime)}
@@ -380,6 +415,45 @@ html.menu-open{overflow:hidden}
 .shint .wh{width:18px;height:28px;border:1px solid var(--dim);border-radius:10px;position:relative;animation:dr 1.8s ease-in-out infinite}
 .shint .wh::after{content:"";position:absolute;left:50%;top:5px;width:3px;height:7px;margin-left:-1.5px;border-radius:2px;background:var(--lime)}
 @keyframes dr{0%{transform:translateY(0);opacity:1}70%{transform:translateY(8px);opacity:0}100%{opacity:0}}
+/* ---------- LAUNCH READINESS SECTION ---------- */
+.lr-sec #activity{background:var(--bg)}
+.lr-shell{background:linear-gradient(180deg,var(--bg) 0%,rgba(6,8,3,.92) 40%,var(--bg) 100%);border:1px solid var(--line);border-radius:26px;box-shadow:0 0 0 1px var(--line2),0 40px 80px -30px rgba(0,0,0,.75),inset 0 1px 0 0 rgba(255,255,255,.03);padding:34px 36px 30px;position:relative;overflow:hidden}
+.lr-shell::before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(120% 60% at 50% 0%,rgba(139,92,246,.05),transparent 60%)}
+.lr-sec .chead{padding-bottom:0}
+.lr-sec .chead .num.lr-num{font-size:22px;top:-4px}
+.lr-sec .chead h2{font-size:clamp(24px,4vw,38px);margin-bottom:8px}
+.lr-sec .chead p{color:var(--dim);font-size:14px;max-width:56ch;margin:0}
+.lr-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
+@media (max-width:640px){.lr-grid{grid-template-columns:1fr}}
+.lr-card{background:linear-gradient(180deg,rgba(241,239,227,.04),rgba(241,239,227,.01));border:1px solid var(--line2);border-radius:18px;padding:20px 22px;position:relative;overflow:hidden;transition:transform .3s ease,border-color .3s ease}
+.lr-card:hover{transform:translateY(-3px);border-color:rgba(139,92,246,.5)}
+.lr-card::after{content:"";position:absolute;inset:0;border-radius:18px;background:radial-gradient(120% 80% at 100% 0%,rgba(139,92,246,.06),transparent 60%)}
+.lr-card:focus-within{outline:2px solid rgba(139,92,246,.5);outline-offset:2px}
+.lr-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:10px;flex-wrap:wrap;row-gap:8px}
+.lr-kicker{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);white-space:nowrap;min-width:0}
+.lr-val{font-family:var(--disp);font-weight:800;font-size:clamp(26px,4vw,40px);letter-spacing:-.02em;line-height:1.1}
+.lr-meta{margin:0;font-size:12.5px;color:var(--dim);line-height:1.5}
+.lr-verified .lr-val{color:var(--lime)}
+.pill{font-size:10px;letter-spacing:.12em;text-transform:uppercase;padding:4px 10px;border-radius:999px;background:rgba(63,63,63,.18);color:var(--dim);border:1px solid var(--line2);white-space:nowrap}
+.pill.in_progress{background:rgba(168,85,247,.14);color:var(--violet);border-color:rgba(168,85,247,.4)}
+.pill.verified{background:rgba(200,255,61,.1);color:var(--lime);border-color:rgba(200,255,61,.35)}
+.lr-update{margin-top:22px;background:rgba(0,0,0,.18);border:1px solid var(--line2);border-radius:18px;padding:18px 22px}
+.lr-uhead{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:14px;flex-wrap:wrap}
+.lr-utitle{font-family:var(--disp);font-weight:800;font-size:18px;margin:0;letter-spacing:-.01em}
+.lr-update .pill{font-size:10px;padding:4px 12px}
+.lr-feed{list-style:none;margin:0;padding:0;max-height:340px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+.lr-feed::-webkit-scrollbar{width:8px}
+.lr-feed::-webkit-scrollbar-thumb{background:var(--line2);border-radius:4px}
+.feed li{padding:12px 0;border-bottom:1px solid var(--line)}
+.feed li:last-child{border-bottom:none}
+.feed .sub{font-size:12px;color:var(--dim);padding:10px 0;opacity:.8}
+.feed .sub em{font-style:normal;color:var(--dim);font-weight:600}
+.feed li .li-l{display:flex;gap:12px;align-items:flex-start}
+.feed li .li-t{font-family:var(--disp);font-weight:800;font-size:15px;color:var(--paper);line-height:1.3;flex:1;min-width:0}
+.feed li .li-d{font-size:12px;color:var(--dim);line-height:1.5;margin-top:2px}
+.feed li .li-s{display:inline-block;font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:2px 8px;border-radius:999px;margin-top:6px}
+.feed li .li-r{font-family:var(--mono);font-size:11px;color:var(--violet);white-space:nowrap}
+.lr-foot{margin-top:16px;font-size:11px;color:var(--dim);line-height:1.6;font-style:italic}
 </style></head><body>
 
 
@@ -390,22 +464,22 @@ html.menu-open{overflow:hidden}
 
 <div class="bg grid" aria-hidden="true"></div><div class="bg glow" aria-hidden="true"></div>
 <a class="skip" href="#main">Skip to content</a>
-<header class="dock"><a class="dock-brand" href="/build"><span class="logo-mark" aria-hidden="true">X</span><span>XamCode AI</span><span class="dock-sub">/ living build log</span></a><nav class="docknav" aria-label="Sections"><a href="#progress" data-sec="progress">Overview</a><a href="#roadmap" data-sec="roadmap">Roadmap</a><a href="#activity" data-sec="activity">Signal</a><a href="#ideas" data-sec="ideas">Ideas</a><a href="#chat" data-sec="chat">Community</a><a href="#waitlist" data-sec="waitlist">Waitlist</a></nav><span class="live" id="liveBadge" role="status">setup mode</span><button class="mbtn" id="menuBtn" aria-expanded="false" aria-controls="menuOverlay"><span class="bars" aria-hidden="true"></span><span id="menuBtnLabel">MENU</span></button></header>
+<header class="dock"><a class="dock-brand" href="/build"><span class="logo-mark" aria-hidden="true">X</span><span>XamCode AI</span><span class="dock-sub">/ living build log</span></a><nav class="docknav" aria-label="Sections"><a href="#progress" data-sec="progress">Overview</a><a href="#roadmap" data-sec="roadmap">Roadmap</a><a href="#activity" data-sec="activity">Readiness</a><a href="#ideas" data-sec="ideas">Ideas</a><a href="#chat" data-sec="chat">Community</a><a href="#launch" data-sec="launch">Launch</a><a href="#waitlist" data-sec="waitlist">Waitlist</a></nav><span class="live" id="liveBadge" role="status">setup mode</span><button class="mbtn" id="menuBtn" aria-expanded="false" aria-controls="menuOverlay"><span class="bars" aria-hidden="true"></span><span id="menuBtnLabel">MENU</span></button></header>
 <div class="veil" id="menuVeil" aria-hidden="true"></div>
-<div class="menu" id="menuOverlay" aria-hidden="true"><div class="mpanel" role="dialog" aria-modal="true" aria-label="Site sections"><div class="mgrid"><nav class="mlinks" aria-label="Sections"><a href="#progress" data-sec="progress"><small>01</small>Current state</a><a href="#roadmap" data-sec="roadmap"><small>02</small>Roadmap</a><a href="#activity" data-sec="activity"><small>03</small>Signal</a><a href="#ideas" data-sec="ideas"><small>04</small>Ideas</a><a href="#chat" data-sec="chat"><small>05</small>Community</a><a href="#launch" data-sec="launch"><small>06</small>Launch</a><a href="#waitlist" data-sec="waitlist"><small>07</small>Waitlist</a><a href="#guidelines" data-sec="guidelines"><small>§</small>Guidelines</a></nav><div class="mside"><div class="rl"><span>FEED</span><span id="menuFeedState">checking</span></div><div class="rl"><span>READINESS</span><span id="menuReadiness">—</span></div><div class="rl"><span>STORAGE</span><span id="menuStorage">—</span></div><p class="hint">Verified milestones only. Unknown states stay unknown.</p></div></div></div></div>
-<main id="main"><div class="wrap">
-<section class="opening" id="opening" aria-label="The experiment"><canvas id="heroCanvas" aria-hidden="true"></canvas><div class="shade" aria-hidden="true"></div><div class="hero-in"><span class="kick"><span class="pulse" aria-hidden="true"></span>Experiment · XamCode AI · Public build log</span><h1 class="frag" id="heroTitle" aria-label="An idea in motion"><span class="k"><span><span class="w">An</span><span class="w hl">idea.</span></span></span><span class="k"><span class="out"><span class="w">In</span><span class="w">motion.</span></span></span><span class="k"><span><span class="w">Becoming</span></span></span><span class="k"><span><span class="w hl">real.</span></span></span></h1><p class="lede"><strong>XamCode AI</strong> turns lecture PDFs into animated, unit-by-unit study lessons. This page is the living record of that system taking shape — verified milestones, real CI signal, open ideas and a community watching it form.</p><div><span class="schip" id="phaseLabel">Assembling…</span></div><div class="hp" role="group" aria-label="Verified readiness"><span class="hp-lab">Readiness</span><span class="hp-val" id="heroPct">—</span><span class="pbar" aria-hidden="true"><span id="heroBar"></span></span><span class="hp-sub" id="heroPhase">verified weight</span></div><div class="crow"><a class="xcta pri" href="#waitlist">Follow the experiment <span class="ar" aria-hidden="true">↗</span></a><a class="xcta gho" href="#progress">Watch the build <span class="ar" aria-hidden="true">↓</span></a><a class="xcta gho" href="#ideas">Suggest a feature <span class="ar" aria-hidden="true">→</span></a></div><div class="hmeta"><span>CH.01–07 · one continuous story</span><span>Progress = verified weight ÷ total × 100</span><span>Unknown stays unknown</span></div><span class="shint" aria-hidden="true"><span class="wh"></span>scroll to enter the system</span></div></section>
+<div class="menu" id="menuOverlay" aria-hidden="true"><div class="mpanel" role="dialog" aria-modal="true" aria-label="Site sections"><div class="mgrid"><nav class="mlinks" aria-label="Sections"><a href="#progress" data-sec="progress"><small>01</small>Current state</a><a href="#roadmap" data-sec="roadmap"><small>02</small>Roadmap</a><a href="#activity" data-sec="activity"><small>03</small>Launch readiness</a><a href="#ideas" data-sec="ideas"><small>04</small>Ideas</a><a href="#chat" data-sec="chat"><small>05</small>Community</a><a href="#launch" data-sec="launch"><small>06</small>Launch</a><a href="#waitlist" data-sec="waitlist"><small>07</small>Waitlist</a><a href="#guidelines" data-sec="guidelines"><small>§</small>Guidelines</a></nav><div class="mside"><div class="rl"><span>FEED</span><span id="menuFeedState">checking</span></div><div class="rl"><span>READINESS</span><span id="menuReadiness">—</span></div><div class="rl"><span>STORAGE</span><span id="menuStorage">—</span></div><p class="hint">Verified milestones only. Unknown states stay unknown.</p></div></div></div></div>
+<main id="main" tabindex="-1"><div class="wrap">
+<section class="opening" id="opening" aria-label="The experiment"><canvas id="heroCanvas" aria-hidden="true"></canvas><div class="shade" aria-hidden="true"></div><div class="hero-in"><span class="kick"><span class="pulse" aria-hidden="true"></span>Experiment · XamCode AI · Public build log</span><h1 class="frag" id="heroTitle" aria-label="An idea in motion"><span class="k"><span><span class="w">An</span><span class="w hl">idea.</span></span></span><span class="k"><span class="out"><span class="w">In</span><span class="w">motion.</span></span></span><span class="k"><span><span class="w">Becoming</span></span></span><span class="k"><span><span class="w hl">real.</span></span></span></h1><p class="lede"><strong>XamCode AI</strong> turns lecture PDFs into animated, unit-by-unit study lessons. This page is the living record of that system taking shape — verified milestones, real CI signal, open ideas and a community watching it form.</p><div><span class="schip" id="phaseLabel">Assembling…</span></div><div class="hp" role="group" aria-label="Verified readiness"><span class="hp-lab">Readiness</span><span class="hp-val" id="heroPct">—</span><span class="pbar" aria-hidden="true"><span id="heroBar"></span></span><span class="hp-sub" id="heroPhase">verified weight</span></div><div class="crow"><a class="xcta pri" href="#waitlist">Join the waitlist <span class="ar" aria-hidden="true">↗</span></a><a class="xcta gho" href="#progress">Watch the build <span class="ar" aria-hidden="true">↓</span></a><a class="xcta gho" href="#ideas">Suggest a feature <span class="ar" aria-hidden="true">→</span></a></div><div class="hmeta"><span>CH.01–07 · one continuous story</span><span>Progress = verified weight ÷ total × 100</span></div><span class="shint" aria-hidden="true"><span class="wh"></span>scroll to enter the system</span></div></section>
 <section class="chapter" id="progress" aria-labelledby="h-progress"><div class="chead"><span class="num">01</span><div><h2 id="h-progress">The current state</h2><p>weighted verified milestones — never commits or lines of code</p></div></div><div class="pgrid reveal"><div class="pstage"><div class="cw"><svg class="csvg" viewBox="0 0 36 36" aria-hidden="true"><circle class="cbg" cx="18" cy="18" r="15.9155"></circle><circle class="cp" id="pctFill" cx="18" cy="18" r="15.9155"></circle></svg><div class="cc"><span class="cpct" id="pctNum">—</span><span class="csub" id="pctSub">verified weight</span></div></div><div class="pbar" role="progressbar" aria-label="Overall readiness" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="pctBar"><span id="pctBarFill"></span></div><div class="pbar-legend"><span id="pctLegL">verified weight ÷ total weight</span><span id="pctLegR">0%</span></div></div><div class="pside"><div class="bigstat"><em id="statProgress">—</em> verified</div><p class="sub">Phase: <span id="statPhase">—</span> · Now: <span id="statMilestone">—</span></p><p class="mono" id="menuReadinessLine">readiness computed from verified milestone weights</p><div class="chiprow"><span class="chip">verified <b id="mDoneCount">—</b></span><span class="chip">in progress <b id="mProgCount">—</b></span><span class="chip">upcoming <b id="mUpCount">—</b></span><span class="chip">in review <b id="mRevCount">—</b></span></div></div></div><div class="mgrid2 reveal"><div class="mcol"><h3>Verified</h3><div id="mDone"></div></div><div class="mcol"><h3>In progress</h3><div id="mProg"></div></div><div class="mcol"><h3>Upcoming</h3><div id="mUp"></div></div><div class="mcol"><h3>Needs review</h3><div id="mRev"></div></div></div><div class="sgrid reveal"><div class="scell"><span class="lb">Build</span><span class="vl" id="stBuild" data-state="unknown">—</span><span class="at2" id="stBuildAt">no data yet</span></div><div class="scell"><span class="lb">Tests</span><span class="vl" id="stTests" data-state="unknown">—</span><span class="at2" id="stTestsAt">no data yet</span></div><div class="scell"><span class="lb">Deploy</span><span class="vl" id="stDeploy" data-state="unknown">—</span><span class="at2" id="stDeployAt">no data yet</span></div><div class="scell"><span class="lb">Integration</span><span class="vl" id="statFeedSrc" data-state="setup">—</span><span class="at2">webhooks / CI / maintainer</span></div><div class="scell"><span class="lb">Milestones</span><span class="vl" id="statProgress2">—</span><span class="at2" id="statPhase2">—</span></div><div class="scell"><span class="lb">Ideas</span><span class="vl" id="statIdeas">—</span><span class="at2">community suggestions</span></div><div class="scell"><span class="lb">Waitlist</span><span class="vl" id="statWait">—</span><span class="at2">students waiting</span></div><div class="scell"><span class="lb">Signal</span><span class="vl" id="statSignal" data-state="standby">—</span><span class="at2">build · tests · deploy</span></div></div></section>
-<section class="chapter" id="roadmap" aria-labelledby="h-roadmap"><div class="chead"><span class="num">02</span><div><h2 id="h-roadmap">The roadmap</h2><p>official plan — only maintainers change these statuses · readiness <span class="chip" style="padding:5px 12px">verified <b id="rmProgress">—</b></span></p></div></div><div class="reveal"><div class="rmtl" id="roadmapList"><p class="sub">loading…</p></div></div></section>
-<section class="chapter" id="activity" aria-labelledby="h-activity"><div class="chead"><span class="num">03</span><div><h2 id="h-activity">Development signal</h2><p id="feedNote">latest verified development events</p></div></div><div class="reveal"><ul class="feed" id="actList" aria-live="off"><li class="sub">loading…</li></ul></div></section>
+<section class="chapter" id="roadmap" aria-labelledby="h-roadmap"><div class="chead"><span class="num">02</span><div><h2 id="h-roadmap">The roadmap</h2><p>official plan — only maintainers change these statuses · readiness <span class="chip" style="padding:5px 12px">verified <b id="rmProgress">—</b></span></p></div></div><div class="reveal"><div class="rmtl" id="roadmapList"><p class="sub">loading…</p></div><a class="slink" href="#ideas">Suggest a roadmap feature <span class="ar" aria-hidden="true">↗</span></a></div></section>
+<section class="chapter lr-sec" id="activity" aria-labelledby="h-activity"><div class="chead"><span class="num lr-num">03</span><div><h2 id="h-activity">Launch readiness</h2><p id="feedNote">Building, refining, and preparing Xamcode for launch.</p></div></div><div class="lr-shell reveal"><div class="lr-grid" role="list" aria-label="Launch readiness overview"><article class="lr-card" role="listitem"><div class="lr-top"><span class="lr-kicker">01 · Development Stage</span><span class="pill lr-pill" id="lrStagePill">verified weight</span></div><div class="lr-val" id="lrStage">—</div><p class="lr-meta" id="lrStageMeta">Readiness is measured strictly from verified milestone weights.</p></article><article class="lr-card lr-verified" role="listitem"><div class="lr-top"><span class="lr-kicker">02 · Latest Verified Milestone</span><span class="pill verified" id="lrVerifiedPill">verified</span></div><div class="lr-val" id="lrVerified">—</div><p class="lr-meta" id="lrVerifiedMeta">Awaiting verified milestone record.</p></article><article class="lr-card" role="listitem"><div class="lr-top"><span class="lr-kicker">03 · Next Development Milestone</span><span class="pill in_progress" id="lrNextPill">in progress</span></div><div class="lr-val" id="lrNext">—</div><p class="lr-meta" id="lrNextMeta">Unverified until completion criteria pass.</p></article><article class="lr-card" role="listitem"><div class="lr-top"><span class="lr-kicker">04 · Overall Launch Status</span><span class="pill lr-pill" id="lrLaunchPill">pre-launch</span></div><div class="lr-val" id="lrLaunch">—</div><p class="lr-meta" id="lrLaunchMeta">Launch readiness requires all release milestones to be verified.</p></article></div><div class="lr-update"><div class="lr-uhead"><div><span class="lr-kicker">05 · Latest Public Project Update</span><h3 class="lr-utitle" id="lrUpdateTitle">Verified Milestone &amp; Development Log</h3></div><span class="pill lr-pill" id="lrUpdateBadge">public record</span></div><ul class="feed lr-feed" id="actList" aria-live="off"><li class="sub">Loading public project updates…</li></ul><p class="lr-foot" id="lrFootNote">Verified milestones are distinct from active work in progress. Automated builds or deployments alone do not mark features launch-ready.</p><a class="slink" href="#waitlist">Get launch updates <span class="ar" aria-hidden="true">↗</span></a></div></div></section>
 <section class="chapter" id="ideas" aria-labelledby="h-ideas"><div class="chead"><span class="num">04</span><div><h2 id="h-ideas">Open ideas</h2><p>suggestions welcome — they never auto-commit to the roadmap</p></div></div><div class="split"><div id="ideaList"><p class="sub">No ideas yet — be the first.</p></div><div><form class="panel" id="ideaForm"><h3>Suggest a feature</h3><label for="ideaTitle">Title (min 4 characters)</label><input id="ideaTitle" name="title" maxlength="120" required autocomplete="off"><label for="ideaDesc">Description (min 10 characters)</label><textarea id="ideaDesc" name="description" maxlength="2000" required></textarea><p class="hint">Be specific. Ideas start as <span class="kbd">submitted</span>; maintainers triage them.</p><button class="btn primary" type="submit" id="ideaBtn">Submit idea</button><p class="fmsg" id="ideaMsg" role="status" aria-live="polite"></p></form></div></div></section>
 <section class="chapter" id="chat" aria-labelledby="h-chat"><div class="chead"><span class="num">05</span><div><h2 id="h-chat">The community</h2><p>realtime discussion — be kind, no spam</p></div></div><div class="split"><div class="panel"><ul class="feed" id="chatList" aria-live="off"><li class="sub">No messages yet — say hello.</li></ul></div><div><form class="panel" id="chatForm"><h3>Join the discussion</h3><label for="chatNick">Display name</label><input id="chatNick" name="nickname" maxlength="40" autocomplete="nickname" placeholder="Visitor"><label for="chatText">Message (max 1000 characters)</label><textarea id="chatText" name="text" maxlength="1000" required></textarea><p class="hint">Messages are public. Never post secrets. Chat can never change development status.</p><button class="btn primary" type="submit" id="chatBtn">Send message</button><p class="fmsg" id="chatMsg" role="status" aria-live="polite"></p></form></div></div></section>
 <section class="chapter" id="launch" aria-labelledby="h-launch"><div class="chead"><span class="num">06</span><div><h2 id="h-launch">Launch countdown</h2><p>readiness first — a date only when it is real</p></div></div><div class="reveal"><div class="panel"><div class="big" id="launchState">—</div><p class="sub" id="launchNote"></p><div class="count" id="countCells" hidden><div class="cell"><div class="n" id="cdD">0</div><div class="l">days</div></div><div class="cell"><div class="n" id="cdH">0</div><div class="l">hours</div></div><div class="cell"><div class="n" id="cdM">0</div><div class="l">minutes</div></div><div class="cell"><div class="n" id="cdS">0</div><div class="l">seconds</div></div></div><p class="hint" id="launchKind"></p></div></div></section>
 <section class="chapter" id="waitlist" aria-labelledby="h-wait"><div class="chead"><span class="num">07</span><div><h2 id="h-wait">Follow the experiment</h2><p>one email, one seat — we never publish addresses</p></div></div><div class="split"><form class="panel" id="waitForm"><label for="waitEmail">Email address</label><input id="waitEmail" name="email" type="email" required autocomplete="email" maxlength="254"><label for="waitNick">Display name (optional)</label><input id="waitNick" name="nickname" maxlength="40" autocomplete="nickname"><label class="consent" for="waitConsent"><input type="checkbox" id="waitConsent" required><span>I agree to be contacted about the XamCode AI launch. No marketing without consent.</span></label><button class="btn primary" type="submit" id="waitBtn">Join the waitlist</button><p class="fmsg" id="waitMsg" role="status" aria-live="polite"></p></form><div class="panel"><h3>Why join?</h3><p class="sub">Early testers get the first beta invites. <span id="waitCount">—</span> already waiting.</p><p class="hint">Emails stay private. The count is the only public number.</p></div></div></section>
 <section class="chapter" id="guidelines" aria-labelledby="h-guide"><div class="chead"><span class="num">§</span><div><h2 id="h-guide">Privacy and guidelines</h2><p>the short version</p></div></div><div class="guide"><ul><li>Be kind. No harassment, hate, spam, or promotions.</li><li>Never post secrets. The server redacts secret-looking text automatically.</li><li>Chat and ideas are discussion only — they cannot change development status.</li><li>Reports: use the <span class="kbd">Report</span> button on any message or idea.</li><li>Waitlist emails are stored securely and never published.</li><li>Progress comes from verified milestones only. Unknown stays unknown.</li><li>Full policies: <a href="/privacy-policy">Privacy Policy</a> · <a href="/terms-of-service">Terms</a> · <a href="/accessibility-statement">Accessibility</a></li></ul></div></section>
-<section class="closing"><div class="ck">Final transmission · the system keeps forming</div><h2 class="ct">The system is still forming.<span class="thin">Follow the build.</span></h2><p class="csub2">Public record of XamCode AI development. Nothing simulated. Verified milestones, real CI signal, community ideas and chat.</p><div class="cacts"><a class="xcta pri" href="#waitlist">Join the waitlist <span class="ar" aria-hidden="true">↗</span></a><a class="xcta gho" href="#roadmap">View the roadmap <span class="ar" aria-hidden="true">→</span></a><a class="xcta gho" href="#activity">Watch the signal <span class="ar" aria-hidden="true">↓</span></a><a class="xcta gho" href="#ideas">Browse open ideas <span class="ar" aria-hidden="true">→</span></a></div></section>
+<section class="closing"><div class="ck">Final transmission · the system keeps forming</div><h2 class="ct">The system is still forming.<span class="thin">Follow the build.</span></h2><p class="csub2">Public record of XamCode AI development. Nothing simulated. Verified milestones, real CI signal, community ideas and chat.</p><div class="cacts"><a class="xcta pri" href="#waitlist">Join the waitlist <span class="ar" aria-hidden="true">↗</span></a><a class="xcta gho" href="#roadmap">View the roadmap <span class="ar" aria-hidden="true">→</span></a><a class="xcta gho" href="#ideas">Browse open ideas <span class="ar" aria-hidden="true">→</span></a></div></section>
 </div></main>
-<footer class="colophon"><div class="wrap"><p class="fmark" aria-hidden="true">XAMCODE</p><div class="frow"><div>XamCode AI — built in public. Build feed: <a href="/build">/build</a> · API: <span class="kbd">/api/bip/summary</span></div><div>Progress = verified milestone weights / total weights x 100. Nothing here is fabricated sample data.</div></div><div class="frow"><div><a href="/privacy-policy">Privacy Policy</a> · <a href="/terms-of-service">Terms of Service</a> · <a href="/accessibility-statement">Accessibility Statement</a></div><div>honest states only · <span id="launchKind2">unknown stays unknown</span></div></div></div></footer>
+<footer class="colophon"><div class="wrap"><p class="fmark" aria-hidden="true">XAMCODE</p><nav class="fnav" aria-label="Footer sections"><a href="#progress">Overview</a><a href="#roadmap">Roadmap</a><a href="#activity">Readiness</a><a href="#ideas">Ideas</a><a href="#chat">Community</a><a href="#launch">Launch</a><a href="#waitlist">Waitlist</a><a href="#guidelines">Guidelines</a></nav><div class="frow"><div>XamCode AI — built in public. Build feed: <a href="/build">/build</a> · API: <span class="kbd">/api/bip/summary</span></div><div>Progress = verified milestone weights / total weights x 100. Nothing here is fabricated sample data.</div></div><div class="frow"><div><a href="/privacy-policy">Privacy Policy</a> · <a href="/terms-of-service">Terms of Service</a> · <a href="/accessibility-statement">Accessibility Statement</a></div><div>honest states only · <span id="launchKind2">unknown stays unknown</span></div></div></div></footer>
 <script>
 'use strict';
 (function(){
@@ -460,7 +534,65 @@ var dot=el('span','dot '+(e.status||'info'));dot.setAttribute('aria-hidden','tru
 var note=$('feedNote');if(note)note.textContent=(ig&&ig.live)?'live from GitHub webhooks / CI':'maintainer-updated feed — GitHub webhooks not connected yet (see deployment docs)';
 var badge=$('liveBadge');if(badge){if(ig&&ig.live){badge.textContent='✓ live feed';if(badge.classList)badge.classList.add('on');}else{badge.textContent='◇ setup mode';if(badge.classList)badge.classList.remove('on');}}
 var mf=$('menuFeedState');if(mf)mf.textContent=(ig&&ig.live)?'live':'setup';var ms=$('menuStorage');if(ms)ms.textContent=(ig&&ig.storage)||'json';}
-function ri(items){var box=$('ideaList');if(!box)return;box.textContent='';items=items||[];if(!items.length){box.appendChild(el('p','sub','No ideas yet — be the first.'));return;}
+
+function rReadiness(s){
+  s=s||{};
+  function set(n,v){var b=$(n);if(!b)return v;b.textContent=v;return v;}
+  var ph=(s.progress&&s.progress.phase)?s.progress.phase:'—';
+  set('lrStage',ph);
+  set('lrStagePill','verified weight');
+  if(!ph)set('lrStage','—');
+  var latest=null;
+  (s.milestones||[]).forEach(function(m){
+    if(!latest&&(m.status==='verified'||m.status==='done'||m.status==='completed'))latest=m;
+  });
+  if(latest){
+    set('lrVerified',latest.title||'—');
+    set('lrVerifiedPill','verified');
+    set('lrVerifiedMeta','Verified and recorded '+fm(latest.verifiedAt||''));
+  }else{
+    set('lrVerified','—');
+    set('lrVerifiedPill','none');
+    set('lrVerifiedMeta','No verified milestone recorded yet.');
+  }
+  var nx=null;
+  (s.milestones||[]).forEach(function(m){
+    if(!nx&&(m.status==='in_progress'||m.status==='in-progress'||m.status==='active'))nx=m;
+  });
+  if(!nx){
+    (s.milestones||[]).forEach(function(m){
+      if(!nx&&(m.status==='planned'||m.status==='upcoming'||m.status==='todo'))nx=m;
+    });
+  }
+  if(nx){
+    set('lrNext',nx.title||'—');
+    set('lrNextPill','in_progress');
+    set('lrNextMeta','Unverified until completion criteria pass.');
+  }else{
+    set('lrNext','—');
+    set('lrNextPill','none');
+    set('lrNextMeta','No next development milestone yet.');
+  }
+  var lap='pre-launch';
+  var lpad='';
+  var l=s.launch||{};
+  if(l.hasConfirmedDate&&s.launch.readinessPercent>=100){
+    lap='ready to launch';
+  }else if(s.launch.readinessPercent!=null){
+    lap='building toward launch';
+    lpad=Math.round(s.launch.readinessPercent)+'% verified';
+  }else if(l.hasConfirmedDate){
+    lap='pending confirmation';
+  }
+  set('lrLaunch',lap);
+  set('lrLaunchPill',lap==='ready to launch'?'ready':(lap==='building toward launch'?'in_progress':'pre-launch'));
+  set('lrLaunchMeta',lpad||'All release milestones must be verified before launch.');
+  set('lrUpdateTitle','Verified Milestone & Development Log');
+  set('lrUpdateBadge','public record');
+}
+function ri(items){
+
+var box=$('ideaList');if(!box)return;box.textContent='';items=items||[];if(!items.length){box.appendChild(el('p','sub','No ideas yet — be the first.'));return;}
 items.forEach(function(g){g=g||{};var d=el('div','idea');var t=el('div','t');t.appendChild(el('strong',null,g.title||'Untitled idea'));var s=el('span','pill',null);s.textContent=String(g.status||'submitted').replace(/_/g,' ');t.appendChild(s);d.appendChild(t);d.appendChild(el('p','c',g.description||''));
 var row=el('div','vrow');var btn=el('button','vote-btn',null);btn.type='button';btn.textContent='▾ '+(g.votes||0)+(g.votedByMe?' · voted':'');btn.setAttribute('aria-pressed',g.votedByMe?'true':'false');btn.setAttribute('aria-label','Vote for '+(g.title||'idea'));
 (function(id,b){btn.addEventListener('click',function(){vote(id,b);});})(g.id,btn);row.appendChild(btn);row.appendChild(el('span','mono',(g.commentCount||0)+' comments'));
@@ -479,7 +611,9 @@ function tickTo(t){stopT();function tick(){var ms=t-Date.now();if(ms<0)ms=0;var 
 function stopT(){if(S.timer){clearInterval(S.timer);S.timer=null;}}
 function an(id,msg,ok){var n=$(id);if(!n)return;n.textContent=msg;n.className='fmsg '+(ok?'ok':'err');}
 function rAll(){var s=null;gt('/api/bip/summary').then(function(r){s=r;}).catch(function(e){var w=(e&&e.message)?String(e.message):'the server did not respond';st('phaseLabel','Build status unavailable — '+w);}).then(function(){
-if(!s)return;rs(function(){rp({progress:s.progress,milestones:s.milestones});});rs(function(){rr(s.roadmap||[]);});rs(function(){rstatus(s.status||{});});rs(function(){ract(s.recentActivity||[],s.integration);});rs(function(){ri(s.ideas||[]);});rs(function(){if(s.launch)rl(s.launch);});
+if(!s)return;rs(function(){rp({progress:s.progress,milestones:s.milestones});});rs(function(){rr(s.roadmap||[]);});rs(function(){rstatus(s.status||{});});rs(function(){ract(s.recentActivity||[],s.integration);});
+rs(function(){rReadiness(s);});
+rs(function(){ri(s.ideas||[]);});rs(function(){if(s.launch)rl(s.launch);});
 rs(function(){st('statIdeas',String((s.counts&&s.counts.ideas)||0));st('statWait',String((s.counts&&s.counts.waitlist)||0));st('waitCount',String((s.counts&&s.counts.waitlist)||0));});});
 gt('/api/bip/chat?limit=30').then(function(c){rc(c.messages||[]);}).catch(function(){});}
 function ri2(){return gt('/api/bip/ideas?sort=top').then(function(r){ri(r.ideas||[]);}).catch(function(){});}
@@ -512,7 +646,7 @@ ctx.globalAlpha=.9;ctx.fillStyle=i%5===0?'#C8FF3D':'rgba(241,239,227,.7)';ctx.be
 ctx.globalAlpha=1;}catch(e){}
 if(!reduce){try{if(typeof requestAnimationFrame!=='undefined')requestAnimationFrame(frame);}catch(e){}}}
 try{frame();}catch(e){}
-try{var heroT=$('heroTitle');window.addEventListener('scroll',function(){try{var y=window.scrollY||0;if(heroT&&heroT.style)heroT.style.transform='translateY('+Math.min(60,y*.08)+'px)';}catch(x){}},{passive:true});}catch(e){}
+try{var heroT=$('heroTitle');window.addEventListener('scroll',function(){try{var y=window.scrollY||0;if(heroT&&heroT.style)heroT.style.transform='translateY(-'+Math.min(60,y*.08)+'px)';}catch(x){}},{passive:true});}catch(e){}
 }catch(e){}}
 function menu(){try{
 var btn=$('menuBtn'),ov=$('menuOverlay'),veil=$('menuVeil');if(!btn||!ov)return;var open=false;var last=null;
