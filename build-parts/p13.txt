@@ -27,7 +27,7 @@ function set(o){open=o;btn.setAttribute('aria-expanded',o?'true':'false');ov.cla
 if(o){last=document.activeElement;var f=ov.querySelector('a');if(f)f.focus();}else if(last&&last.focus){try{last.focus();}catch(e){}}}
 btn.addEventListener('click',function(){set(!open);});if(veil)veil.addEventListener('click',function(){set(false);});
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&open)set(false);});
-var links=[];try{links=ov.querySelectorAll('a');}catch(e){links=[];}for(var i=0;i<links.length;i++){links[i].addEventListener('click',function(){set(false);});}
+var links=[];try{links=Array.prototype.slice.call(ov.querySelectorAll('a')).concat(Array.prototype.slice.call(document.querySelectorAll('.docknav a')));}catch(e){links=[];}for(var i=0;i<links.length;i++){links[i].addEventListener('click',function(){set(false);});}
 try{if('IntersectionObserver' in window){var io=new IntersectionObserver(function(es){es.forEach(function(en){if(en.isIntersecting){var id=en.target.id;for(var k=0;k<links.length;k++){var on=links[k].getAttribute('href')==='#'+id;if(on)links[k].classList.add('act');else links[k].classList.remove('act');}}});},{rootMargin:'-40% 0px -55% 0px'});
 ['progress','roadmap','activity','ideas','chat','launch','waitlist'].forEach(function(id){var s=$(id);if(s)io.observe(s);});}}catch(e){}}catch(e){}}
 function reveal(){try{var rz=false;try{rz=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;}catch(e){}

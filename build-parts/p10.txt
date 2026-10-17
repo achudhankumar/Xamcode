@@ -12,13 +12,21 @@ var S={launch:null,timer:null,seen:{},feedMode:'setup'};
 function mc(m){m=m||{};var s=String(m.status||'planned');var d=el('div','mile');var t=el('div','t');t.appendChild(el('strong',null,m.title||'Untitled milestone'));var p=el('span','pill '+s,null);p.textContent=s.replace(/_/g,' ');t.appendChild(p);d.appendChild(t);d.appendChild(el('div','mono','weight '+(m.weight||0)+' · '+((m.verifiedAt)?('verified '+fm(m.verifiedAt)):s.replace(/_/g,' '))));if(m.criteria)d.appendChild(el('p','c','Check: '+m.criteria));return d;}
 function rp(d){if(!d||!d.progress)return;var p=d.progress;var ms=d.milestones||[];var c=p.counts||{total:ms.length,verified:0,inProgress:0,needsReview:0,planned:0};
 st('pctNum',(p.percent!=null?p.percent:0)+'%');var f=$('pctFill');if(f&&f.style){try{f.style.strokeDashoffset=String(100-(p.percent||0));}catch(e){}}
+var pct=Math.max(0,Math.min(100,p.percent||0));st('pctLegR',pct+'%');
+st('pctLegL',(p.verifiedWeight||0)+' of '+(p.totalWeight||0)+' weight verified');
+var tbar=$('pctBarFill');if(tbar&&tbar.style)tbar.style.width=pct+'%';
+st('heroPct',pct+'%');var hbar=$('heroBar');if(hbar&&hbar.style)hbar.style.width=pct+'%';
+st('heroPhase',(p.verifiedWeight||0)+' of '+(p.totalWeight||0)+' weight');
+st('rmProgress',pct+'%');
 var bar=$('pctBar');if(bar&&bar.setAttribute){try{bar.setAttribute('aria-valuenow',String(p.percent||0));}catch(e){}}
-st('statProgress',(p.percent!=null?p.percent:0)+'%');st('statProgress2',(p.percent!=null?p.percent:0)+'%');
+st('statProgress',(p.percent!=null?p.percent:0)+'%');st('statProgress2',(c.verified||0)+' / '+(c.total||0));
 st('statPhase',p.phase||'Building');st('statPhase2',p.phase||'Building');
 st('statMilestone',(p.currentMilestone&&p.currentMilestone.title)||'all milestones mapped');
 st('phaseLabel',(p.phase||'Building')+' · '+((p.currentMilestone)?('now: '+p.currentMilestone.title):'roadmap complete'));
 st('pctSub',(p.verifiedWeight||0)+' of '+(p.totalWeight||0)+' weight verified across '+(c.total||0)+' milestones · '+(c.verified||0)+' verified, '+(c.inProgress||0)+' in progress, '+(c.needsReview||0)+' in review, '+(c.planned||0)+' planned');
 st('menuReadiness',String(p.percent!=null?p.percent:0)+'%');
+st('mDoneCount',String(c.verified||0));st('mProgCount',String(c.inProgress||0));
+st('mUpCount',String(c.planned||0));st('mRevCount',String(c.needsReview||0));
 var dn=$('mDone'),pg=$('mProg'),up=$('mUp'),rv=$('mRev');
 if(dn)dn.textContent='';if(pg)pg.textContent='';if(up)up.textContent='';if(rv)rv.textContent='';
 ms.forEach(function(m){var cd=mc(m);var q=String((m&&m.status)||'planned');if(q==='verified'){if(dn)dn.appendChild(cd);}else if(q==='in_progress'){if(pg)pg.appendChild(cd);}else if(q==='needs_review'){if(rv)rv.appendChild(cd);}else{if(up)up.appendChild(cd);}});
