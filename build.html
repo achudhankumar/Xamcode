@@ -1,5 +1,37 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>XamCode AI — Building in Public</title><meta name="description" content="Verified development progress, roadmap, changelog, ideas, chat, countdown and waitlist for XamCode AI."><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Space+Grotesk:wght@300;400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"><style id="bip-css">
+/* ---------- DESIGN TOKENS (missing in the redesign commit) ---------- */
+/* All 17 tokens below are referenced by var() throughout this stylesheet.
+   Anchored to colors already hardcoded in this file (dock rgba(6,8,3),
+   lime rgba(200,255,61), paper rgba(241,239,227), cobalt rgb(92,109,255),
+   warn rgba(255,180,61)) so no new design decisions are introduced. */
+:root{
+  --paper:#f1efe3;
+  --lime:#c8ff3d;
+  --limeink:#121804;
+  --inkink:#0b0e05;
+  --disp:"Syne",system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,monospace;
+  --mut:#9aa38d;
+  --dim:#6b745c;
+  --cobalt:#5c6dff;
+  --line:rgba(255,255,255,.10);
+  --line2:rgba(255,255,255,.06);
+  --soft:rgba(200,255,61,.35);
+  --warn:#ffb43d;
+  --bad:#ff5f5f;
+  --cyan:#5eead4;
+  --card:#0e1206;
+  --max:1200px;
+}
+html,body{
+  margin:0;
+  padding:0;
+  background:#060803;
+  color:var(--paper);
+  font-family:var(--mono);
+  line-height:1.5;
+}
 .bg{position:fixed;inset:0;pointer-events:none;z-index:0}
 .bg-grid{background-image:linear-gradient(rgba(200,255,61,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(200,255,61,.045) 1px,transparent 1px);background-size:56px 56px}
 .bg-glow{background:
