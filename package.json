@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "test": "npm run test:providers && npm run test:aura && npm run test:fidelity && npm run test:quiz && npm run test:content && npm run test:sections && npm run test:diagrams && npm run test:mermaid && npm run test:journey && npm run test:markup && npm run test:jobs && npm run test:jobs-http && npm run test:topics && npm run test:chunks && npm run test:render && npm run test:allowance && npm run test:bip && npm run test:bip-smoke && npm run test:bip-security && npm run test:bip-durable",
+    "test": "npm run test:providers && npm run test:aura && npm run test:fidelity && npm run test:quiz && npm run test:content && npm run test:sections && npm run test:diagrams && npm run test:mermaid && npm run test:journey && npm run test:markup && npm run test:jobs && npm run test:jobs-http && npm run test:topics && npm run test:chunks && npm run test:render && npm run test:allowance && npm run test:bip && npm run test:bip-smoke && npm run test:bip-security && npm run test:bip-durable && npm run test:bip-countdown",
     "test:providers": "node test-provider-failover.js",
     "test:aura": "node test-aura-diagram.js",
     "test:fidelity": "node test-subject-fidelity.js",
@@ -28,11 +28,12 @@
     "test:bip-smoke": "node test-bip-smoke.js",
     "test:bip-security": "node test-bip-security.js",
     "test:bip-durable": "node test-bip-durable.js",
+    "test:bip-countdown": "node test-bip-countdown.js",
     "test:wiring": "node test-aura-wiring.js",
     "test:bunq": "node test-bunq-layer.js",
     "test:smoke": "node test-journey-smoke.js",
     "test:e2e": "node test-pdf-subject-e2e.js",
-    "check": "node --check server.js && node --check bip/util.js && node --check bip/store.js && node --check bip/db.js && node --check bip/progress.js && node --check bip/events.js && node --check bip/community.js && node --check bip/admin.js && node --check bip/routes.js"
+    "check": "node --check server.js && node --check bip/util.js && node --check bip/store.js && node --check bip/db.js && node --check bip/progress.js && node --check bip/events.js && node --check bip/community.js && node --check bip/admin.js && node --check bip/routes.js && node --check bip/estimate.js"
   },
   "engines": {
     "node": ">=18"

@@ -23,6 +23,8 @@
      GET  /api/bip/ideas/:id/comments   -> comments
      POST /api/bip/ideas/:id/comments   -> comment (rate limited)
      POST /api/bip/reports              -> report abuse (rate limited)
+      GET  /api/bip/estimate             -> deterministic effort estimate (public)
+      GET  /api/bip/estimate/history    -> estimate change history (public)
      GET  /api/bip/launch               -> readiness + countdown
      GET  /api/bip/waitlist/count       -> count only (never emails)
      POST /api/bip/waitlist             -> join (rate limited, consent)
@@ -45,6 +47,7 @@ const progress = require('./progress');
 const events = require('./events');
 const community = require('./community');
 const admin = require('./admin');
+const estimate = require('./estimate');
 const {
   sendJson, readJson, readRawBody, clientIp,
   getOrCreateVisitor, createRateLimiter, bearerMatches,
@@ -193,6 +196,13 @@ async function handleBipApi(req, res, p, url, requestId){
   }
   if (req.method === 'GET' && p === '/api/bip/launch'){
     return sendJson(res, 200, Object.assign({ requestId }, admin.publicLaunch()), requestId);
+  }
+  if (req.method === 'GET' && p === '/api/bip/estimate'){
+    return sendJson(res, 200, Object.assign({ requestId, estimate: estimate.computeEstimate() }), requestId);
+  }
+  if (req.method === 'GET' && p === '/api/bip/estimate/history'){
+    const limit = url.searchParams ? Number(url.searchParams.get('limit')) : NaN;
+    return sendJson(res, 200, { history: estimate.history(Number.isFinite(limit) ? limit : 50), requestId }, requestId);
   }
   if (req.method === 'GET' && p === '/api/bip/waitlist/count'){
     return sendJson(res, 200, { count: community.waitlistCount(), requestId }, requestId);
@@ -429,6 +439,35 @@ async function handleAdmin(req, res, p, requestId){
   }
   if (req.method === 'GET' && tail === 'waitlist/export'){
     return admin.adminExportWaitlist(req, res, requestId);
+  }
+  m = tail.match(/^estimate\/tasks\/([^/]+)$/);
+  if ((req.method === 'PUT' || req.method === 'POST') && m){
+    const body = await readJsonBody(req);
+    if (body.__bodyError) return sendJson(res, 400, { error: body.__bodyError, code: 'BAD_JSON', requestId }, requestId);
+    return admin.adminSetTaskEstimate(req, res, decodeURIComponent(m[1]), body, requestId);
+  }
+  m = tail.match(/^estimate\/tasks\/([^/]+)\/status$/);
+  if ((req.method === 'PUT' || req.method === 'POST') && m){
+    const body = await readJsonBody(req);
+    if (body.__bodyError) return sendJson(res, 400, { error: body.__bodyError, code: 'BAD_JSON', requestId }, requestId);
+    return admin.adminSetTaskStatus(req, res, decodeURIComponent(m[1]), body, requestId);
+  }
+  m = tail.match(/^estimate\/bugs\/([^/]+)$/);
+  if ((req.method === 'PUT' || req.method === 'POST') && m){
+    const body = await readJsonBody(req);
+    if (body.__bodyError) return sendJson(res, 400, { error: body.__bodyError, code: 'BAD_JSON', requestId }, requestId);
+    return admin.adminSetBug(req, res, decodeURIComponent(m[1]), body, requestId);
+  }
+  m = tail.match(/^estimate\/blockers\/([^/]+)$/);
+  if ((req.method === 'PUT' || req.method === 'POST') && m){
+    const body = await readJsonBody(req);
+    if (body.__bodyError) return sendJson(res, 400, { error: body.__bodyError, code: 'BAD_JSON', requestId }, requestId);
+    return admin.adminSetBlocker(req, res, decodeURIComponent(m[1]), body, requestId);
+  }
+  if ((req.method === 'PUT' || req.method === 'POST') && tail === 'estimate/velocity'){
+    const body = await readJsonBody(req);
+    if (body.__bodyError) return sendJson(res, 400, { error: body.__bodyError, code: 'BAD_JSON', requestId }, requestId);
+    return admin.adminSetVelocity(req, res, body, requestId);
   }
   return sendJson(res, 404, { error: 'Unknown admin route.', code: 'NOT_FOUND', requestId }, requestId);
 }

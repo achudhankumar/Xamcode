@@ -241,6 +241,20 @@ html.menu-open{overflow:hidden}
 .split>div,.split>form{min-width:0}
 .hint{margin-top:12px;font-family:var(--mono);font-size:11.5px;line-height:1.65;color:var(--dim)}
 .hint .kbd{font-size:10.5px}
+/* ---------- Deterministic effort-model panel (countdown) ---------- */
+details.est-model{margin-top:18px;border:1px solid var(--line2);border-radius:14px;background:rgba(14,18,6,.65);padding:14px 18px}
+details.est-model summary{cursor:pointer;font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut)}
+details.est-model summary:hover{color:var(--paper)}
+details.est-model summary:focus-visible{outline:2px solid var(--lime);outline-offset:3px;border-radius:6px}
+details.est-model .em-body{margin-top:12px;font-size:13px;line-height:1.7;color:var(--mut)}
+details.est-model .em-body p{margin:0 0 10px}
+details.est-model .em-body p:last-child{margin-bottom:0}
+details.est-model .em-body code{font-family:var(--mono);font-size:11px;color:var(--paper)}
+details.est-model .em-body em{color:var(--paper);font-style:normal;font-weight:600}
+#estPanel .sgrid{margin-top:18px}
+#estCells{display:flex;flex-wrap:wrap;justify-content:center;gap:14px;padding:24px 0}
+#estCells .cell{margin:0;min-width:104px}
+@media(max-width:560px){#estPanel .sgrid{grid-template-columns:1fr}#estCells{gap:10px}#estCells .cell{min-width:64px;padding:12px 14px}}
 /* ---------- DEVELOPMENT ACTIVITY TIMELINE ---------- */
 .feed{list-style:none;margin:0;padding:0}
 .feed li{position:relative;padding:16px 0 16px 34px;border-bottom:1px dashed var(--line2);color:var(--paper);font-size:14px;line-height:1.6}
@@ -474,7 +488,7 @@ html.menu-open{overflow:hidden}
 <section class="chapter lr-sec" id="activity" aria-labelledby="h-activity"><div class="chead"><span class="num lr-num">03</span><div><h2 id="h-activity">Launch readiness</h2><p id="feedNote">Building, refining, and preparing Xamcode for launch.</p></div></div><div class="lr-shell reveal"><div class="lr-grid" role="list" aria-label="Launch readiness overview"><article class="lr-card" role="listitem"><div class="lr-top"><span class="lr-kicker">01 · Development Stage</span><span class="pill lr-pill" id="lrStagePill">verified weight</span></div><div class="lr-val" id="lrStage">—</div><p class="lr-meta" id="lrStageMeta">Readiness is measured strictly from verified milestone weights.</p></article><article class="lr-card lr-verified" role="listitem"><div class="lr-top"><span class="lr-kicker">02 · Latest Verified Milestone</span><span class="pill verified" id="lrVerifiedPill">verified</span></div><div class="lr-val" id="lrVerified">—</div><p class="lr-meta" id="lrVerifiedMeta">Awaiting verified milestone record.</p></article><article class="lr-card" role="listitem"><div class="lr-top"><span class="lr-kicker">03 · Next Development Milestone</span><span class="pill in_progress" id="lrNextPill">in progress</span></div><div class="lr-val" id="lrNext">—</div><p class="lr-meta" id="lrNextMeta">Unverified until completion criteria pass.</p></article><article class="lr-card" role="listitem"><div class="lr-top"><span class="lr-kicker">04 · Overall Launch Status</span><span class="pill lr-pill" id="lrLaunchPill">pre-launch</span></div><div class="lr-val" id="lrLaunch">—</div><p class="lr-meta" id="lrLaunchMeta">Launch readiness requires all release milestones to be verified.</p></article></div><div class="lr-update"><div class="lr-uhead"><div><span class="lr-kicker">05 · Latest Public Project Update</span><h3 class="lr-utitle" id="lrUpdateTitle">Verified Milestone &amp; Development Log</h3></div><span class="pill lr-pill" id="lrUpdateBadge">public record</span></div><ul class="feed lr-feed" id="actList" aria-live="off"><li class="sub">Loading public project updates…</li></ul><p class="lr-foot" id="lrFootNote">Verified milestones are distinct from active work in progress. Automated builds or deployments alone do not mark features launch-ready.</p><a class="slink" href="#waitlist">Get launch updates <span class="ar" aria-hidden="true">↗</span></a></div></div></section>
 <section class="chapter" id="ideas" aria-labelledby="h-ideas"><div class="chead"><span class="num">04</span><div><h2 id="h-ideas">Open ideas</h2><p>suggestions welcome — they never auto-commit to the roadmap</p></div></div><div class="split"><div id="ideaList"><p class="sub">No ideas yet — be the first.</p></div><div><form class="panel" id="ideaForm"><h3>Suggest a feature</h3><label for="ideaTitle">Title (min 4 characters)</label><input id="ideaTitle" name="title" maxlength="120" required autocomplete="off"><label for="ideaDesc">Description (min 10 characters)</label><textarea id="ideaDesc" name="description" maxlength="2000" required></textarea><p class="hint">Be specific. Ideas start as <span class="kbd">submitted</span>; maintainers triage them.</p><button class="btn primary" type="submit" id="ideaBtn">Submit idea</button><p class="fmsg" id="ideaMsg" role="status" aria-live="polite"></p></form></div></div></section>
 <section class="chapter" id="chat" aria-labelledby="h-chat"><div class="chead"><span class="num">05</span><div><h2 id="h-chat">The community</h2><p>realtime discussion — be kind, no spam</p></div></div><div class="split"><div class="panel"><ul class="feed" id="chatList" aria-live="off"><li class="sub">No messages yet — say hello.</li></ul></div><div><form class="panel" id="chatForm"><h3>Join the discussion</h3><label for="chatNick">Display name</label><input id="chatNick" name="nickname" maxlength="40" autocomplete="nickname" placeholder="Visitor"><label for="chatText">Message (max 1000 characters)</label><textarea id="chatText" name="text" maxlength="1000" required></textarea><p class="hint">Messages are public. Never post secrets. Chat can never change development status.</p><button class="btn primary" type="submit" id="chatBtn">Send message</button><p class="fmsg" id="chatMsg" role="status" aria-live="polite"></p></form></div></div></section>
-<section class="chapter" id="launch" aria-labelledby="h-launch"><div class="chead"><span class="num">06</span><div><h2 id="h-launch">Launch countdown</h2><p>readiness first — a date only when it is real</p></div></div><div class="reveal"><div class="panel"><div class="big" id="launchState">—</div><p class="sub" id="launchNote"></p><div class="count" id="countCells" hidden><div class="cell"><div class="n" id="cdD">0</div><div class="l">days</div></div><div class="cell"><div class="n" id="cdH">0</div><div class="l">hours</div></div><div class="cell"><div class="n" id="cdM">0</div><div class="l">minutes</div></div><div class="cell"><div class="n" id="cdS">0</div><div class="l">seconds</div></div></div><p class="hint" id="launchKind"></p></div></div></section>
+<section class="chapter" id="launch" aria-labelledby="h-launch"><div class="chead"><span class="num">06</span><div><h2 id="h-launch">Launch countdown</h2><p>readiness first — a date only when it is real</p></div></div><div class="reveal"><div class="panel"><div class="big" id="launchState">—</div><p class="sub" id="launchNote"></p><div class="count" id="countCells" hidden><div class="cell"><div class="n" id="cdD">0</div><div class="l">days</div></div><div class="cell"><div class="n" id="cdH">0</div><div class="l">hours</div></div><div class="cell"><div class="n" id="cdM">0</div><div class="l">minutes</div></div><div class="cell"><div class="n" id="cdS">0</div><div class="l">seconds</div></div></div><p class="hint" id="launchKind"></p></div></div><div class="reveal" style="margin-top:18px"><div class="panel" id="estPanel" aria-labelledby="estKicker"><div class="lr-top"><span class="lr-kicker" id="estKicker">Deterministic effort model</span><span class="pill lr-pill" id="estStage">loading…</span></div><p class="sub" id="estNote">Fetching the live estimate…</p><div class="count" id="estCells" hidden role="timer" aria-label="Time remaining until the model-projected launch date"><div class="cell"><div class="n" id="ecdD">0</div><div class="l">days</div></div><div class="cell"><div class="n" id="ecdH">0</div><div class="l">hours</div></div><div class="cell"><div class="n" id="ecdM">0</div><div class="l">minutes</div></div><div class="cell"><div class="n" id="ecdS">0</div><div class="l">seconds</div></div></div><p class="mono" id="estTarget">projected date —</p><div class="sgrid"><div class="scell"><span class="lb">Remaining effort</span><span class="vl" id="estHours">—</span><span class="at2">open tasks + bugs + blockers</span></div><div class="scell"><span class="lb">Velocity</span><span class="vl" id="estVel">—</span><span class="at2">hours per working day</span></div><div class="scell"><span class="lb">Confidence</span><span class="vl" id="estConf">—</span><span class="at2">calibrated from completed work</span></div><div class="scell"><span class="lb">Tasks done</span><span class="vl" id="estCounts">—</span><span class="at2" id="estCountsAt">tasks · bugs · blockers</span></div></div><details class="est-model" id="estModel"><summary>How this estimate works</summary><div class="em-body"><p>Remaining effort = open roadmap tasks (seeded from <code>docs/REMAINING-ROADMAP.md</code>) + open bug repair effort by severity (critical 16h · high 8h · medium 4h · low 2h) + unresolved blockers — with blockers that overlap an open bug deduplicated, so the same work is never counted twice.</p><p>The projected date is <em>remaining effort ÷ velocity</em> expressed in calendar days. No date is hardcoded anywhere: the target comes from the server on every refresh, and only the seconds between refreshes are interpolated locally. Commits and CI runs never verify milestones and never move this number. It is a model projection, not a promise.</p></div></details></div></div></section>
 <section class="chapter" id="waitlist" aria-labelledby="h-wait"><div class="chead"><span class="num">07</span><div><h2 id="h-wait">Follow the experiment</h2><p>one email, one seat — we never publish addresses</p></div></div><div class="split"><form class="panel" id="waitForm"><label for="waitEmail">Email address</label><input id="waitEmail" name="email" type="email" required autocomplete="email" maxlength="254"><label for="waitNick">Display name (optional)</label><input id="waitNick" name="nickname" maxlength="40" autocomplete="nickname"><label class="consent" for="waitConsent"><input type="checkbox" id="waitConsent" required><span>I agree to be contacted about the XamCode AI launch. No marketing without consent.</span></label><button class="btn primary" type="submit" id="waitBtn">Join the waitlist</button><p class="fmsg" id="waitMsg" role="status" aria-live="polite"></p></form><div class="panel"><h3>Why join?</h3><p class="sub">Early testers get the first beta invites. <span id="waitCount">—</span> already waiting.</p><p class="hint">Emails stay private. The count is the only public number.</p></div></div></section>
 <section class="chapter" id="guidelines" aria-labelledby="h-guide"><div class="chead"><span class="num">§</span><div><h2 id="h-guide">Privacy and guidelines</h2><p>the short version</p></div></div><div class="guide"><ul><li>Be kind. No harassment, hate, spam, or promotions.</li><li>Never post secrets. The server redacts secret-looking text automatically.</li><li>Chat and ideas are discussion only — they cannot change development status.</li><li>Reports: use the <span class="kbd">Report</span> button on any message or idea.</li><li>Waitlist emails are stored securely and never published.</li><li>Progress comes from verified milestones only. Unknown stays unknown.</li><li>Full policies: <a href="/privacy-policy">Privacy Policy</a> · <a href="/terms-of-service">Terms</a> · <a href="/accessibility-statement">Accessibility</a></li></ul></div></section>
 <section class="closing"><div class="ck">Final transmission · the system keeps forming</div><h2 class="ct">The system is still forming.<span class="thin">Follow the build.</span></h2><p class="csub2">Public record of XamCode AI development. Nothing simulated. Verified milestones, real CI signal, community ideas and chat.</p><div class="cacts"><a class="xcta pri" href="#waitlist">Join the waitlist <span class="ar" aria-hidden="true">↗</span></a><a class="xcta gho" href="#roadmap">View the roadmap <span class="ar" aria-hidden="true">→</span></a><a class="xcta gho" href="#ideas">Browse open ideas <span class="ar" aria-hidden="true">→</span></a></div></section>
@@ -490,7 +504,7 @@ function gt(p){return fetch(p,{headers:{Accept:'application/json'}}).then(functi
 function pt(p,b){return fetch(p,{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify(b)}).then(function(r){return r.json().then(function(j){if(!r.ok)throw new Error((j&&j.error)||('Request failed ('+r.status+')'));return j;});});}
 function st(id,t){var n=$(id);if(n)n.textContent=t;}
 function rs(fn){try{fn();}catch(e){}}
-var S={launch:null,timer:null,seen:{},feedMode:'setup'};
+var S={launch:null,timer:null,seen:{},feedMode:'setup',est:null,estFetchedAt:0,estTimer:null,estRefreshTimer:null};
 function mc(m){m=m||{};var s=String(m.status||'planned');var d=el('div','mile');var t=el('div','t');t.appendChild(el('strong',null,m.title||'Untitled milestone'));var p=el('span','pill '+s,null);p.textContent=s.replace(/_/g,' ');t.appendChild(p);d.appendChild(t);d.appendChild(el('div','mono','weight '+(m.weight||0)+' · '+((m.verifiedAt)?('verified '+fm(m.verifiedAt)):s.replace(/_/g,' '))));if(m.criteria)d.appendChild(el('p','c','Check: '+m.criteria));return d;}
 function rp(d){if(!d||!d.progress)return;var p=d.progress;var ms=d.milestones||[];var c=p.counts||{total:ms.length,verified:0,inProgress:0,needsReview:0,planned:0};
 st('pctNum',(p.percent!=null?p.percent:0)+'%');var f=$('pctFill');if(f&&f.style){try{f.style.strokeDashoffset=String(100-(p.percent||0));}catch(e){}}
@@ -610,6 +624,78 @@ else{if(a)a.textContent='Launch date not set — readiness '+(S.launch.readiness
 function tickTo(t){stopT();function tick(){var ms=t-Date.now();if(ms<0)ms=0;var s=Math.floor(ms/1000);st('cdD',String(Math.floor(s/86400)));st('cdH',String(Math.floor(s%86400/3600)).padStart(2,'0'));st('cdM',String(Math.floor(s%3600/60)).padStart(2,'0'));st('cdS',String(s%60).padStart(2,'0'));}tick();try{S.timer=setInterval(tick,1000);}catch(e){}}
 function stopT(){if(S.timer){clearInterval(S.timer);S.timer=null;}}
 function an(id,msg,ok){var n=$(id);if(!n)return;n.textContent=msg;n.className='fmsg '+(ok?'ok':'err');}
+/* ---------- Deterministic effort-model countdown (GET /api/bip/estimate) ----------
+   The server owns the projection (remaining effort ÷ velocity). Between
+   authoritative refreshes the client only interpolates elapsed seconds,
+   anchored to the server's own `at` timestamp so a skewed local clock can
+   never invent or erase time. On fetch failure the panel falls back to an
+   honest "unavailable" state — no fake numbers, no frozen stale countdown. */
+function rest(){
+  gt('/api/bip/estimate').then(function(r){
+    var e=(r&&r.estimate)||null;
+    if(!e)throw new Error('estimate payload missing');
+    S.est=e;S.estFetchedAt=Date.now();
+    rs(function(){restRender();});rs(function(){restTick();});
+    if(!S.estTimer){try{S.estTimer=setInterval(restTick,1000);}catch(x){}}
+  }).catch(function(){
+    S.est=null;stopEstTick();
+    st('estStage','unavailable');try{$('estStage').setAttribute('data-state','failed');}catch(x){}
+    st('estNote','The live estimate could not be loaded right now — no projection is shown rather than a stale or invented one.');
+    st('estTarget','projected date —');
+    var cc=$('estCells');if(cc)cc.hidden=true;
+  });
+}
+function restStageOf(e){
+  var c=e.counts||{};
+  if(e.remainingHours<=0)return{label:'work remaining cleared',state:'passed'};
+  if(c.openBlockers>0)return{label:'blocked',state:'failed'};
+  if(c.openBugs>0)return{label:'bugs open',state:'running'};
+  if(c.tasksDone>0)return{label:'in progress',state:'running'};
+  return{label:'queued',state:'unknown'};
+}
+function restRender(){
+  var e=S.est;if(!e)return;
+  var c=e.counts||{};
+  var sg=restStageOf(e);
+  st('estStage',sg.label);try{$('estStage').setAttribute('data-state',sg.state);}catch(x){}
+  st('estHours',(e.remainingHours!=null?e.remainingHours:'—')+'h');
+  st('estVel',(e.velocityHoursPerDay!=null?e.velocityHoursPerDay:'—')+' h/day');
+  st('estConf',(e.confidencePercent!=null?e.confidencePercent+'%':'—'));
+  st('estCounts',(c.tasksDone!=null?c.tasksDone:'—')+'/'+(c.tasksTotal!=null?c.tasksTotal:'—'));
+  st('estCountsAt',(c.openBugs||0)+' open bugs · '+(c.openBlockers||0)+' open blockers');
+  if(!e.projectedAt){
+    stopEstTick();
+    st('estNote','Remaining effort is zero — no future date is projected. A confirmed launch date appears in the panel above when maintainers set one.');
+    st('estTarget','projected date — none');
+    var cc0=$('estCells');if(cc0)cc0.hidden=true;
+    return;
+  }
+  var tgt=Date.parse(e.projectedAt);
+  var srv=Date.parse(e.at);
+  if(!isFinite(tgt)){stopEstTick();st('estNote','The server returned an unreadable projection — hiding the countdown rather than guessing.');var cc1=$('estCells');if(cc1)cc1.hidden=true;return;}
+  S.estAnchor={targetMs:tgt,serverAtMs:isFinite(srv)?srv:tgt,fetchLocalMs:S.estFetchedAt};
+  st('estNote','Model projection — recalculated from live task, bug and blocker data. Not a promise; it moves only when the underlying work moves.');
+  st('estTarget','projected '+fm(e.projectedAt)+' · as of server time '+fm(e.at));
+  var cc=$('estCells');if(cc)cc.hidden=false;
+}
+function restTick(){
+  var a=S.estAnchor;if(!a)return;
+  var serverNow=a.serverAtMs+(Date.now()-a.fetchLocalMs);
+  var ms=a.targetMs-serverNow;
+  if(ms<0)ms=0;
+  var s=Math.floor(ms/1000);
+  st('ecdD',String(Math.floor(s/86400)));
+  st('ecdH',String(Math.floor(s%86400/3600)).padStart(2,'0'));
+  st('ecdM',String(Math.floor(s%3600/60)).padStart(2,'0'));
+  st('ecdS',String(s%60).padStart(2,'0'));
+}
+function stopEstTick(){if(S.estTimer){clearInterval(S.estTimer);S.estTimer=null;}}
+function restRefreshBind(){
+  rs(function(){rest();});
+  try{window.addEventListener('focus',function(){rest();});}catch(e){}
+  try{document.addEventListener('visibilitychange',function(){if(!document.hidden)rest();});}catch(e){}
+  if(!S.estRefreshTimer){try{S.estRefreshTimer=setInterval(function(){rest();},60000);}catch(e){}}
+}
 function rAll(){var s=null;gt('/api/bip/summary').then(function(r){s=r;}).catch(function(e){var w=(e&&e.message)?String(e.message):'the server did not respond';st('phaseLabel','Build status unavailable — '+w);}).then(function(){
 if(!s)return;rs(function(){rp({progress:s.progress,milestones:s.milestones});});rs(function(){rr(s.roadmap||[]);});rs(function(){rstatus(s.status||{});});rs(function(){ract(s.recentActivity||[],s.integration);});
 rs(function(){rReadiness(s);});
@@ -661,7 +747,7 @@ function reveal(){try{var rz=false;try{rz=window.matchMedia&&window.matchMedia('
 if(rz||!('IntersectionObserver' in window)){try{var ax=document.querySelectorAll('.reveal');for(var q=0;q<ax.length;q++)ax[q].classList.add('in');}catch(e){}return;}
 var io2=new IntersectionObserver(function(es){es.forEach(function(en){if(en.isIntersecting){en.target.classList.add('in');io2.unobserve(en.target);}});},{threshold:.12});
 var ex=document.querySelectorAll('.reveal');for(var w=0;w<ex.length;w++)io2.observe(ex[w]);}catch(e){}}
-hero();menu();reveal();rAll();forms();stream();
+hero();menu();reveal();rAll();forms();stream();restRefreshBind();
 })();
 </script>
 </body>

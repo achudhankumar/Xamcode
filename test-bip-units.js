@@ -17,7 +17,7 @@ function ok(c, m){ if (c){ pass++; console.log('  ok   ' + m); } else { fail++; 
 function freshDataDir(){
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'bip-units-'));
   process.env.BIP_DATA_DIR = dir;
-  for (const mod of ['bip/store', 'bip/progress', 'bip/events', 'bip/community', 'bip/admin']) {
+  for (const mod of ['bip/store', 'bip/progress', 'bip/events', 'bip/community', 'bip/admin', 'bip/estimate']) {
     try { delete require.cache[require.resolve('./' + mod)]; } catch (e) {}
   }
   try { delete require.cache[require.resolve('./bip/util')]; } catch (e) {}
@@ -113,6 +113,27 @@ const dirs = [];
   var L = admin.publicLaunch();
   ok(L.hasConfirmedDate === false && L.countdownMs === null, 'no confirmed date means no countdown');
   ok(L.readinessPercent === 56 && typeof L.readiness === 'string', 'readiness separate from dates');
+
+  var d5 = freshDataDir(); dirs.push(d5);
+  var estimate = require('./bip/estimate');
+  var base = estimate.computeEstimate();
+  ok(base.remainingHours === 50, 'estimate seeds 50 remaining hours (got ' + base.remainingHours + ')');
+  ok(base.velocityHoursPerDay === 8 && typeof base.projectedAt === 'string', 'nominal velocity 8 h/day with projected date');
+  var doneTask = estimate.setTaskStatus('load-testing', 'done', 'unit-test');
+  ok(doneTask.ok && doneTask.estimate.remainingHours === 42, 'done task drops 8h of remaining (got ' + doneTask.estimate.remainingHours + ')');
+  ok(estimate.setTaskStatus('load-testing', 'bogus', 'unit-test').ok === false, 'invalid task status rejected');
+  ok(estimate.setTaskEstimate('nope', { effortHours: 1 }, 'unit-test').ok === false, 'unknown task key rejected');
+  var bugHigh = estimate.setBug(null, { title: 'pdf render crash', severity: 'high' }, 'unit-test');
+  ok(bugHigh.ok && bugHigh.estimate.remainingHours === 50, 'high bug adds 8h repair effort (got ' + bugHigh.estimate.remainingHours + ')');
+  ok(estimate.setBug(null, { title: 'x', severity: 'nonsense' }, 'unit-test').ok === false, 'invalid severity rejected');
+  var overlap = estimate.setBlocker(null, { title: 'pdf render infra blocked', effortHours: 5 }, 'unit-test');
+  ok(overlap.ok && overlap.estimate.remainingHours === 50, 'blocker overlapping an open bug is deduped (got ' + overlap.estimate.remainingHours + ')');
+  var distinct = estimate.setBlocker(null, { title: 'unrelated deploy token wait', effortHours: 5 }, 'unit-test');
+  ok(distinct.ok && distinct.estimate.remainingHours === 55, 'distinct blocker adds effort (got ' + distinct.estimate.remainingHours + ')');
+  var vel = estimate.setVelocity(4, null, 'unit-test');
+  ok(vel.ok && vel.estimate.velocityHoursPerDay === 4, 'velocity calibration halves the rate');
+  ok(estimate.setVelocity(-1, null, 'unit-test').ok === false, 'non-positive velocity rejected');
+  ok(estimate.history(50).length >= 4, 'estimate mutations record history');
 
   for (var i = 0; i < dirs.length; i++){ try { fs.rmSync(dirs[i], { recursive: true, force: true }); } catch (e) {} }
   console.log('UNITS: ' + pass + ' passed, ' + fail + ' failed');

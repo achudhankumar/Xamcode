@@ -34,7 +34,7 @@ function reveal(){try{var rz=false;try{rz=window.matchMedia&&window.matchMedia('
 if(rz||!('IntersectionObserver' in window)){try{var ax=document.querySelectorAll('.reveal');for(var q=0;q<ax.length;q++)ax[q].classList.add('in');}catch(e){}return;}
 var io2=new IntersectionObserver(function(es){es.forEach(function(en){if(en.isIntersecting){en.target.classList.add('in');io2.unobserve(en.target);}});},{threshold:.12});
 var ex=document.querySelectorAll('.reveal');for(var w=0;w<ex.length;w++)io2.observe(ex[w]);}catch(e){}}
-hero();menu();reveal();rAll();forms();stream();
+hero();menu();reveal();rAll();forms();stream();restRefreshBind();
 })();
 </script>
 </body>

@@ -5,6 +5,78 @@ else{if(a)a.textContent='Launch date not set — readiness '+(S.launch.readiness
 function tickTo(t){stopT();function tick(){var ms=t-Date.now();if(ms<0)ms=0;var s=Math.floor(ms/1000);st('cdD',String(Math.floor(s/86400)));st('cdH',String(Math.floor(s%86400/3600)).padStart(2,'0'));st('cdM',String(Math.floor(s%3600/60)).padStart(2,'0'));st('cdS',String(s%60).padStart(2,'0'));}tick();try{S.timer=setInterval(tick,1000);}catch(e){}}
 function stopT(){if(S.timer){clearInterval(S.timer);S.timer=null;}}
 function an(id,msg,ok){var n=$(id);if(!n)return;n.textContent=msg;n.className='fmsg '+(ok?'ok':'err');}
+/* ---------- Deterministic effort-model countdown (GET /api/bip/estimate) ----------
+   The server owns the projection (remaining effort ÷ velocity). Between
+   authoritative refreshes the client only interpolates elapsed seconds,
+   anchored to the server's own `at` timestamp so a skewed local clock can
+   never invent or erase time. On fetch failure the panel falls back to an
+   honest "unavailable" state — no fake numbers, no frozen stale countdown. */
+function rest(){
+  gt('/api/bip/estimate').then(function(r){
+    var e=(r&&r.estimate)||null;
+    if(!e)throw new Error('estimate payload missing');
+    S.est=e;S.estFetchedAt=Date.now();
+    rs(function(){restRender();});rs(function(){restTick();});
+    if(!S.estTimer){try{S.estTimer=setInterval(restTick,1000);}catch(x){}}
+  }).catch(function(){
+    S.est=null;stopEstTick();
+    st('estStage','unavailable');try{$('estStage').setAttribute('data-state','failed');}catch(x){}
+    st('estNote','The live estimate could not be loaded right now — no projection is shown rather than a stale or invented one.');
+    st('estTarget','projected date —');
+    var cc=$('estCells');if(cc)cc.hidden=true;
+  });
+}
+function restStageOf(e){
+  var c=e.counts||{};
+  if(e.remainingHours<=0)return{label:'work remaining cleared',state:'passed'};
+  if(c.openBlockers>0)return{label:'blocked',state:'failed'};
+  if(c.openBugs>0)return{label:'bugs open',state:'running'};
+  if(c.tasksDone>0)return{label:'in progress',state:'running'};
+  return{label:'queued',state:'unknown'};
+}
+function restRender(){
+  var e=S.est;if(!e)return;
+  var c=e.counts||{};
+  var sg=restStageOf(e);
+  st('estStage',sg.label);try{$('estStage').setAttribute('data-state',sg.state);}catch(x){}
+  st('estHours',(e.remainingHours!=null?e.remainingHours:'—')+'h');
+  st('estVel',(e.velocityHoursPerDay!=null?e.velocityHoursPerDay:'—')+' h/day');
+  st('estConf',(e.confidencePercent!=null?e.confidencePercent+'%':'—'));
+  st('estCounts',(c.tasksDone!=null?c.tasksDone:'—')+'/'+(c.tasksTotal!=null?c.tasksTotal:'—'));
+  st('estCountsAt',(c.openBugs||0)+' open bugs · '+(c.openBlockers||0)+' open blockers');
+  if(!e.projectedAt){
+    stopEstTick();
+    st('estNote','Remaining effort is zero — no future date is projected. A confirmed launch date appears in the panel above when maintainers set one.');
+    st('estTarget','projected date — none');
+    var cc0=$('estCells');if(cc0)cc0.hidden=true;
+    return;
+  }
+  var tgt=Date.parse(e.projectedAt);
+  var srv=Date.parse(e.at);
+  if(!isFinite(tgt)){stopEstTick();st('estNote','The server returned an unreadable projection — hiding the countdown rather than guessing.');var cc1=$('estCells');if(cc1)cc1.hidden=true;return;}
+  S.estAnchor={targetMs:tgt,serverAtMs:isFinite(srv)?srv:tgt,fetchLocalMs:S.estFetchedAt};
+  st('estNote','Model projection — recalculated from live task, bug and blocker data. Not a promise; it moves only when the underlying work moves.');
+  st('estTarget','projected '+fm(e.projectedAt)+' · as of server time '+fm(e.at));
+  var cc=$('estCells');if(cc)cc.hidden=false;
+}
+function restTick(){
+  var a=S.estAnchor;if(!a)return;
+  var serverNow=a.serverAtMs+(Date.now()-a.fetchLocalMs);
+  var ms=a.targetMs-serverNow;
+  if(ms<0)ms=0;
+  var s=Math.floor(ms/1000);
+  st('ecdD',String(Math.floor(s/86400)));
+  st('ecdH',String(Math.floor(s%86400/3600)).padStart(2,'0'));
+  st('ecdM',String(Math.floor(s%3600/60)).padStart(2,'0'));
+  st('ecdS',String(s%60).padStart(2,'0'));
+}
+function stopEstTick(){if(S.estTimer){clearInterval(S.estTimer);S.estTimer=null;}}
+function restRefreshBind(){
+  rs(function(){rest();});
+  try{window.addEventListener('focus',function(){rest();});}catch(e){}
+  try{document.addEventListener('visibilitychange',function(){if(!document.hidden)rest();});}catch(e){}
+  if(!S.estRefreshTimer){try{S.estRefreshTimer=setInterval(function(){rest();},60000);}catch(e){}}
+}
 function rAll(){var s=null;gt('/api/bip/summary').then(function(r){s=r;}).catch(function(e){var w=(e&&e.message)?String(e.message):'the server did not respond';st('phaseLabel','Build status unavailable — '+w);}).then(function(){
 if(!s)return;rs(function(){rp({progress:s.progress,milestones:s.milestones});});rs(function(){rr(s.roadmap||[]);});rs(function(){rstatus(s.status||{});});rs(function(){ract(s.recentActivity||[],s.integration);});
 rs(function(){rReadiness(s);});

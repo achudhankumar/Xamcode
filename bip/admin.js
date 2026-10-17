@@ -9,6 +9,7 @@ const store = require('./store');
 const progress = require('./progress');
 const community = require('./community');
 const events = require('./events');
+const estimate = require('./estimate');
 const { sendJson, isAdmin, sanitizePublicText, sanitizeMultiline } = require('./util');
 
 /* Resolve the guard once per request; handlers call requireAdmin()
@@ -212,6 +213,46 @@ function adminDeleteMessage(req, res, id, requestId){
   return sendJson(res, 200, { deleted: true, id, requestId }, requestId);
 }
 
+/* ---------- estimate (deterministic effort model) ---------- */
+
+function adminSetTaskEstimate(req, res, key, body, requestId){
+  if (requireAdmin(req, res, requestId)) return;
+  const r = estimate.setTaskEstimate(key, body || {}, 'admin');
+  if (!r.ok) return sendJson(res, r.code === 'NOT_FOUND' ? 404 : 400, { error: r.error, code: r.code, requestId }, requestId);
+  return sendJson(res, 200, { task: r.task, estimate: r.estimate, requestId }, requestId);
+}
+
+function adminSetTaskStatus(req, res, key, body, requestId){
+  if (requireAdmin(req, res, requestId)) return;
+  const r = estimate.setTaskStatus(key, body && body.status, 'admin');
+  if (!r.ok) return sendJson(res, r.code === 'NOT_FOUND' ? 404 : 400, { error: r.error, code: r.code, requestId }, requestId);
+  return sendJson(res, 200, { task: r.task, estimate: r.estimate, requestId }, requestId);
+}
+
+function adminSetBug(req, res, bugId, body, requestId){
+  if (requireAdmin(req, res, requestId)) return;
+  const id = bugId === 'new' ? null : bugId;
+  const r = estimate.setBug(id, body || {}, 'admin');
+  if (!r.ok) return sendJson(res, 400, { error: r.error, code: r.code, requestId }, requestId);
+  return sendJson(res, 200, { bug: r.bug, estimate: r.estimate, requestId }, requestId);
+}
+
+function adminSetBlocker(req, res, blockerId, body, requestId){
+  if (requireAdmin(req, res, requestId)) return;
+  const id = blockerId === 'new' ? null : blockerId;
+  const r = estimate.setBlocker(id, body || {}, 'admin');
+  if (!r.ok) return sendJson(res, 400, { error: r.error, code: r.code, requestId }, requestId);
+  return sendJson(res, 200, { blocker: r.blocker, estimate: r.estimate, requestId }, requestId);
+}
+
+function adminSetVelocity(req, res, body, requestId){
+  if (requireAdmin(req, res, requestId)) return;
+  const b = body || {};
+  const r = estimate.setVelocity(b.observedHoursPerDay, b.samples, 'admin');
+  if (!r.ok) return sendJson(res, 400, { error: r.error, code: r.code, requestId }, requestId);
+  return sendJson(res, 200, { velocity: r.velocity, estimate: r.estimate, requestId }, requestId);
+}
+
 /* CSV export of waitlist EMAILS is admin-only. Public API exposes
    only the count, never addresses. */
 function adminExportWaitlist(req, res, requestId){
@@ -244,5 +285,6 @@ module.exports = {
   adminSetLaunch, publicLaunch, readinessLabel,
   adminSetRoadmap, adminSetIdeaStatus,
   adminListReports, adminResolveReport,
-  adminDeleteMessage, adminExportWaitlist
+  adminDeleteMessage, adminExportWaitlist,
+  adminSetTaskEstimate, adminSetTaskStatus, adminSetBug, adminSetBlocker, adminSetVelocity
 };

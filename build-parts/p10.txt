@@ -8,7 +8,7 @@ function gt(p){return fetch(p,{headers:{Accept:'application/json'}}).then(functi
 function pt(p,b){return fetch(p,{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify(b)}).then(function(r){return r.json().then(function(j){if(!r.ok)throw new Error((j&&j.error)||('Request failed ('+r.status+')'));return j;});});}
 function st(id,t){var n=$(id);if(n)n.textContent=t;}
 function rs(fn){try{fn();}catch(e){}}
-var S={launch:null,timer:null,seen:{},feedMode:'setup'};
+var S={launch:null,timer:null,seen:{},feedMode:'setup',est:null,estFetchedAt:0,estTimer:null,estRefreshTimer:null};
 function mc(m){m=m||{};var s=String(m.status||'planned');var d=el('div','mile');var t=el('div','t');t.appendChild(el('strong',null,m.title||'Untitled milestone'));var p=el('span','pill '+s,null);p.textContent=s.replace(/_/g,' ');t.appendChild(p);d.appendChild(t);d.appendChild(el('div','mono','weight '+(m.weight||0)+' · '+((m.verifiedAt)?('verified '+fm(m.verifiedAt)):s.replace(/_/g,' '))));if(m.criteria)d.appendChild(el('p','c','Check: '+m.criteria));return d;}
 function rp(d){if(!d||!d.progress)return;var p=d.progress;var ms=d.milestones||[];var c=p.counts||{total:ms.length,verified:0,inProgress:0,needsReview:0,planned:0};
 st('pctNum',(p.percent!=null?p.percent:0)+'%');var f=$('pctFill');if(f&&f.style){try{f.style.strokeDashoffset=String(100-(p.percent||0));}catch(e){}}

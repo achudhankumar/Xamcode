@@ -21,7 +21,8 @@ limit below is enforced in `bip/*.js`.
 | Ideas board + voting + comments | `/api/bip/ideas/*` | Live |
 | Abuse reporting | `/api/bip/reports` | Live (admin resolves) |
 | Waitlist (consent + dedupe) | `/api/bip/waitlist` | Live |
-| Launch countdown / readiness | `/api/bip/launch` | Live |
+| Launch countdown / readiness | `/build` panel + `/api/bip/launch` | Live |
+| Deterministic effort estimate | `/build` countdown panel + `/api/bip/estimate`, `/api/bip/estimate/history` | Live (public reads; admin writes) |
 | GitHub webhook ingestion | `/api/bip/webhooks/github` | **Dormant until `GITHUB_WEBHOOK_SECRET` is set** |
 | CI event ingestion | `/api/bip/events/ingest` | **Dormant until `BIP_INGEST_TOKEN` is set** |
 
@@ -83,6 +84,8 @@ Base: `/api/bip`. All JSON unless noted. Every response carries
 | GET | `/ideas/:id` | One idea + its comment count |
 | GET | `/ideas/:id/comments` | Comments on an idea |
 | GET | `/launch` | Readiness %, estimated/confirmed dates, countdown |
+| GET | `/estimate` | Deterministic effort estimate (remaining hours, velocity, projected date, confidence) |
+| GET | `/estimate/history?limit=` | Estimate change history (newest first) |
 | GET | `/waitlist/count` | Count only — **never** emails |
 
 ### Public writes (rate limited per IP / identity)
@@ -119,6 +122,11 @@ Base: `/api/bip`. All JSON unless noted. Every response carries
 | POST | `/admin/milestones/:id/status` | Set any status |
 | POST | `/admin/milestones/:id/criteria` | Edit verification criteria |
 | PUT | `/admin/launch` | Set estimated / confirmed date + note |
+| PUT/POST | `/admin/estimate/tasks/:key` | Set task `effortHours` / `remainingHours` / `title` |
+| PUT/POST | `/admin/estimate/tasks/:key/status` | Set task status; done-family zeroes remaining |
+| PUT/POST | `/admin/estimate/bugs/new` or `/admin/estimate/bugs/:id` | File / update a bug (severity → effort: critical 16h, high 8h, medium 4h, low 2h) |
+| PUT/POST | `/admin/estimate/blockers/new` or `/admin/estimate/blockers/:id` | Add / update / resolve a blocker (`resolved: true` removes its effort; titles overlapping an open bug are deduped) |
+| PUT/POST | `/admin/estimate/velocity` | Calibrate `observedHoursPerDay` (or derive from `samples: [{hours}]`) |
 | PUT | `/admin/roadmap/:key` | Change official roadmap status |
 | PUT | `/admin/ideas/:id/status` | Move an idea through the lifecycle |
 | GET | `/admin/reports` | Moderation queue |
@@ -213,6 +221,11 @@ privileged actions.
   admin; there is no profanity/ML classifier.
 - **Admin console is the HTTP API**, not a UI. Drive it with `curl` or a
   small script; no privileged admin panel is shipped.
+- **The `/build` effort-model countdown is a projection, not a promise.**
+  It is rendered from `GET /api/bip/estimate` (remaining effort ÷ velocity);
+  the client only interpolates seconds between authoritative refreshes
+  (60s interval + refocus). If the API is unreachable the panel shows an
+  honest "unavailable" state instead of a stale or invented date.
 
 ## Related docs
 
