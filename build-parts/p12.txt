@@ -12,6 +12,7 @@ function an(id,msg,ok){var n=$(id);if(!n)return;n.textContent=msg;n.className='f
    never invent or erase time. On fetch failure the panel falls back to an
    honest "unavailable" state — no fake numbers, no frozen stale countdown. */
 function rest(){
+  if(S.estBusy)return;S.estBusy=true; /* focus + visibilitychange both fire on tab return; one request is enough */
   gt('/api/bip/estimate').then(function(r){
     var e=(r&&r.estimate)||null;
     if(!e)throw new Error('estimate payload missing');
@@ -24,7 +25,7 @@ function rest(){
     st('estNote','The live estimate could not be loaded right now — no projection is shown rather than a stale or invented one.');
     st('estTarget','projected date —');
     var cc=$('estCells');if(cc)cc.hidden=true;
-  });
+  }).then(function(){S.estBusy=false;});
 }
 function restStageOf(e){
   var c=e.counts||{};

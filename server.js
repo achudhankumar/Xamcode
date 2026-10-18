@@ -1626,17 +1626,73 @@ async function readJson(request, limitBytes, tooLargeMessage){
   try{ return JSON.parse(raw); }
   catch{ throw mkErr(400, 'The request body was unreadable.'); }
 }
-const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.svg': 'image/svg+xml', '.mp4': 'video/mp4' };
+const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8', '.txt': 'text/plain; charset=utf-8', '.xml': 'application/xml; charset=utf-8', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.svg': 'image/svg+xml', '.mp4': 'video/mp4' };
+const PUBLIC_ROOT_FILES = new Set(['/XamCode.html', '/privacy-policy.html', '/terms-of-service.html', '/accessibility-statement.html', '/robots.txt', '/sitemap.xml']);
+const PUBLIC_ASSETS = new Set(['/assets/xamcode-ai-intro.mp4', '/assets/xamcode-build-trailer.mp4', '/assets/xamcode-build-trailer-poster.jpg']);
 function serveStatic(req, res){
-  let p = decodeURIComponent(req.url.split('?')[0]);
+  if (req.method !== 'GET' && req.method !== 'HEAD') return sendJson(res, 405, { error: 'Method not allowed.' });
+  let p;
+  try{ p = decodeURIComponent(req.url.split('?')[0]); }
+  catch{ return sendJson(res, 400, { error: 'Bad request.' }); }
   if (p === '/') p = '/XamCode.html';
-  const file = path.normalize(path.join(__dirname, p));
-  if (!file.startsWith(__dirname)) return sendJson(res, 403, { error: 'Forbidden.' });
-  fs.readFile(file, (e, data) => {
-    if (e) return sendJson(res, 404, { error: 'Not found.' });
-    res.setHeader('Content-Type', MIME[path.extname(file)] || 'application/octet-stream');
+  else if (p === '/privacy-policy') p = '/privacy-policy.html';
+  else if (p === '/terms-of-service') p = '/terms-of-service.html';
+  else if (p === '/accessibility-statement') p = '/accessibility-statement.html';
+  if (p.indexOf('\0') >= 0 || p.indexOf('\\') >= 0 || /(^|\/)\.\.(\/|$)/.test(p) || /(^|\/)\./.test(p)){
+    return sendJson(res, 403, { error: 'Forbidden.' });
+  }
+  const allowed = PUBLIC_ROOT_FILES.has(p) || PUBLIC_ASSETS.has(p) || /^\/(css|js)\/[A-Za-z0-9._-]+\.(css|js)$/.test(p);
+  if (!allowed){
+    if (/^\/(bip-data|bip|build-parts|setup|supabase|server\.js|package)/.test(p)) return sendJson(res, 403, { error: 'Forbidden.' });
+    return sendJson(res, 404, { error: 'Not found.' });
+  }
+  const rootDir = path.resolve(__dirname);
+  const file = path.resolve(rootDir, '.' + p);
+  if (!file.startsWith(rootDir + path.sep)) return sendJson(res, 403, { error: 'Forbidden.' });
+  fs.stat(file, (e, st) => {
+    if (e || !st || !st.isFile()) return sendJson(res, 404, { error: 'Not found.' });
+    const ctype = MIME[path.extname(file).toLowerCase()] || 'application/octet-stream';
+    res.setHeader('Content-Type', ctype);
+    res.setHeader('Accept-Ranges', 'bytes');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    const rangeHdr = req.headers && req.headers.range;
+    if (rangeHdr){
+      const m = /^bytes=(\d*)-(\d*)$/.exec(String(rangeHdr).trim());
+      if (!m){
+        res.setHeader('Content-Range', 'bytes */' + st.size);
+        res.writeHead(416);
+        return res.end();
+      }
+      let start = m[1] === '' ? 0 : parseInt(m[1], 10);
+      let end = m[2] === '' ? st.size - 1 : parseInt(m[2], 10);
+      if (m[1] === '' && m[2] !== ''){
+        const suffix = parseInt(m[2], 10);
+        start = Math.max(0, st.size - suffix);
+        end = st.size - 1;
+      }
+      if (!Number.isFinite(start) || !Number.isFinite(end) || start < 0 || start >= st.size || start > end){
+        res.setHeader('Content-Range', 'bytes */' + st.size);
+        res.writeHead(416);
+        return res.end();
+      }
+      if (end >= st.size) end = st.size - 1;
+      const chunkLen = end - start + 1;
+      res.setHeader('Content-Range', 'bytes ' + start + '-' + end + '/' + st.size);
+      res.setHeader('Content-Length', String(chunkLen));
+      res.writeHead(206);
+      if (req.method === 'HEAD') return res.end();
+      const s = fs.createReadStream(file, { start, end });
+      s.on('error', () => { try{ res.destroy(); }catch{} });
+      return s.pipe(res);
+    }
+    res.setHeader('Content-Length', String(st.size));
     res.writeHead(200);
-    res.end(data);
+    if (req.method === 'HEAD') return res.end();
+    const s = fs.createReadStream(file);
+    s.on('error', () => { try{ res.destroy(); }catch{} });
+    s.pipe(res);
   });
 }
 async function analyzePdf(req, res){

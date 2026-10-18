@@ -85,6 +85,17 @@ const JSONH = { 'Content-Type':'application/json' };
   ok(/How this estimate works/.test(r.body) && /<details[^>]*id="estModel"/.test(r.body), 'expandable model explainer present');
   ok(/restRefreshBind\(\)/.test(r.body), 'refresh-on-interval/focus binding is initialised');
   ok(/estRefreshTimer/.test(r.body) && /60000/.test(r.body), 'panel schedules its own 60s authoritative refresh');
+  ok(/id="countCells"[^>]*hidden/.test(r.body) && /id="estCells"[^>]*hidden/.test(r.body), 'both countdown cell containers are hidden in initial server HTML');
+  ok(!/id="(?:e?cd[DHMS])">0</.test(r.body) && /id="ecdD">—</.test(r.body) && /id="cdD">—</.test(r.body), 'initial countdown cells use em-dash placeholders (never fake 0:0:0:0 before hydration)');
+  ok(/estBusy/.test(r.body), 'in-flight fetch guard prevents duplicate focus + visibilitychange estimate calls');
+  ok(/id="trailerPanel"/.test(r.body) && /id="buildTrailer"/.test(r.body) && /preload="none"/.test(r.body), '/build includes the launch trailer panel with preload="none"');
+  const rp = await req('GET', '/assets/xamcode-build-trailer-poster.jpg', undefined, { Accept:'image/jpeg' });
+  ok(rp.status === 200 && /image\/jpeg/.test(rp.headers['content-type'] || '') && rp.body.length > 1000, 'poster JPG served at /assets/xamcode-build-trailer-poster.jpg with image/jpeg');
+  const rv = await req('GET', '/assets/xamcode-build-trailer.mp4', undefined, { Range:'bytes=0-1023' });
+  ok(rv.status === 206 && /video\/mp4/.test(rv.headers['content-type'] || '') && /^bytes 0-1023\/\d+$/.test(rv.headers['content-range'] || '') && Buffer.byteLength(rv.body, 'utf8') > 0, 'trailer MP4 supports HTTP 206 Range requests for video seeking');
+  const rTrav = await req('GET', '/assets/../.env');
+  const rPriv = await req('GET', '/bip-data/store.json');
+  ok(rTrav.status === 403 && rPriv.status === 403, 'path traversal and private store paths are refused with 403');
 
   /* ---------- 3. admin mutation: task completion drops remaining ---------- */
   r = await req('POST', '/api/bip/admin/estimate/tasks/load-testing/status', { status:'done' }, AUTH);

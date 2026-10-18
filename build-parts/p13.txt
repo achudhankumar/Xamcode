@@ -34,7 +34,8 @@ function reveal(){try{var rz=false;try{rz=window.matchMedia&&window.matchMedia('
 if(rz||!('IntersectionObserver' in window)){try{var ax=document.querySelectorAll('.reveal');for(var q=0;q<ax.length;q++)ax[q].classList.add('in');}catch(e){}return;}
 var io2=new IntersectionObserver(function(es){es.forEach(function(en){if(en.isIntersecting){en.target.classList.add('in');io2.unobserve(en.target);}});},{threshold:.12});
 var ex=document.querySelectorAll('.reveal');for(var w=0;w<ex.length;w++)io2.observe(ex[w]);}catch(e){}}
-hero();menu();reveal();rAll();forms();stream();restRefreshBind();
+function trailer(){try{var v=$('buildTrailer'),b=$('trailerPlayBtn'),f=$('trailerFrame');if(!v||!f)return;function sync(){try{var act=(!v.paused&&!v.ended)||(v.currentTime>0&&!v.ended);f.setAttribute('data-playing',act?'true':'false');}catch(e){}}if(b){b.addEventListener('click',function(){try{f.setAttribute('data-playing','true');var p=v.play();if(p&&p.catch)p.catch(function(){sync();});}catch(e){}});}v.addEventListener('play',sync);v.addEventListener('pause',sync);v.addEventListener('seeked',sync);v.addEventListener('ended',sync);}catch(e){}}
+hero();menu();reveal();trailer();rAll();forms();stream();restRefreshBind();
 })();
 </script>
 </body>

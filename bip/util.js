@@ -44,6 +44,7 @@ function cspForPage(nonce){
     "script-src 'self' 'nonce-" + nonce + "'",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "img-src 'self' data:",
+    "media-src 'self'",
     "connect-src 'self'",
     "font-src 'self' https://fonts.gstatic.com",
     "object-src 'none'",
