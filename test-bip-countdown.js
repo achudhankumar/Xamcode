@@ -88,7 +88,7 @@ const JSONH = { 'Content-Type':'application/json' };
   ok(/id="countCells"[^>]*hidden/.test(r.body) && /id="estCells"[^>]*hidden/.test(r.body), 'both countdown cell containers are hidden in initial server HTML');
   ok(!/id="(?:e?cd[DHMS])">0</.test(r.body) && /id="ecdD">—</.test(r.body) && /id="cdD">—</.test(r.body), 'initial countdown cells use em-dash placeholders (never fake 0:0:0:0 before hydration)');
   ok(/estBusy/.test(r.body), 'in-flight fetch guard prevents duplicate focus + visibilitychange estimate calls');
-  ok(/id="trailerPanel"/.test(r.body) && /id="buildTrailer"/.test(r.body) && /preload="none"/.test(r.body), '/build includes the launch trailer panel with preload="none"');
+  ok(/id="trailerPanel"/.test(r.body) && /YOUR VISUAL TRAILER/.test(r.body) && /TRAILER IN PRODUCTION/.test(r.body), '/build includes the launch trailer teaser card in production');
   const rp = await req('GET', '/assets/xamcode-build-trailer-poster.jpg', undefined, { Accept:'image/jpeg' });
   ok(rp.status === 200 && /image\/jpeg/.test(rp.headers['content-type'] || '') && rp.body.length > 1000, 'poster JPG served at /assets/xamcode-build-trailer-poster.jpg with image/jpeg');
   const rv = await req('GET', '/assets/xamcode-build-trailer.mp4', undefined, { Range:'bytes=0-1023' });
