@@ -234,13 +234,8 @@ function header(){
   return `<header class="header"><div class="h-inner">
     <div class="h-left">
       <button type="button" class="logo-wrap" data-nav="landing" aria-label="XamCode AI home">
-        <span class="brand-mark logo" aria-hidden="true">
-          <svg viewBox="0 0 48 48" focusable="false">
-            <path class="mark-page" d="M23.5 14.5c-4.9-2.2-9.3-2.2-13.5-.3v20c4.1-1.9 8.6-1.9 13.5.3z"/>
-            <path class="mark-page" d="M24.5 14.5c4.9-2.2 9.3-2.2 13.5-.3v20c-4.1-1.9-8.6-1.9-13.5.3z"/>
-            <path class="mark-code" d="m19.5 21-3 3 3 3m9-6 3 3-3 3"/>
-            <path class="mark-spine" d="M24 15v19"/>
-          </svg>
+        <span class="brand-mark logo" aria-hidden="true" style="display:inline-flex;align-items:center;justify-content:center;background:transparent;box-shadow:none;">
+          <img src="/assets/xamcode-metallic-x.png" alt="XamCode AI" class="brand-logo-img" style="width:28px;height:28px;object-fit:contain;filter:drop-shadow(0 0 8px rgba(34,197,94,0.5));vertical-align:middle;">
         </span>
         <span class="brand">XamCode <span class="brand-ai">AI</span></span>
       </button>
@@ -335,6 +330,7 @@ function landingView(){
       <div class="bq-marquee-track"><span class="bq-marquee-item"><i>✳</i> Visual learning steps</span><span class="bq-marquee-item"><i>✳</i> Active recall</span><span class="bq-marquee-item"><i>✳</i> Grounded AI tutor</span><span class="bq-marquee-item"><i>✳</i> Practice questions</span><span class="bq-marquee-item"><i>✳</i> Flashcards</span><span class="bq-marquee-item"><i>✳</i> <em>Any subject, your PDF</em></span></div>
       <div class="bq-marquee-track"><span class="bq-marquee-item"><i>✳</i> Visual learning steps</span><span class="bq-marquee-item"><i>✳</i> Active recall</span><span class="bq-marquee-item"><i>✳</i> Grounded AI tutor</span><span class="bq-marquee-item"><i>✳</i> Practice questions</span><span class="bq-marquee-item"><i>✳</i> Flashcards</span><span class="bq-marquee-item"><i>✳</i> <em>Any subject, your PDF</em></span></div>
     </div>
+    ${(typeof window.XC!=='undefined'&&window.XC.trailerShowcase)?window.XC.trailerShowcase.renderMarkup():''}
     <section class="sec feature-section">
       <div class="section-heading"><div><span class="section-kicker">MADE TO MAKE IT CLICK</span><h2>From your document<br><span>to real understanding.</span></h2></div><p class="sub">Your material becomes clear concepts, visual learning steps, practice, and revision—whatever the subject.</p></div>
       <div class="grid-3">
@@ -347,7 +343,7 @@ function landingView(){
       </div>
     </section>
     <section class="course-cta">
-      <div class="course-cta-mark" aria-hidden="true">X<span>.</span></div>
+      <div class="course-cta-mark" aria-hidden="true" style="display:flex;align-items:center;justify-content:center;"><img src="/assets/xamcode-metallic-x.png" alt="XamCode AI" style="width:72px;height:72px;object-fit:contain;filter:drop-shadow(0 0 18px rgba(34,197,94,0.65));"></div>
       <div><span class="section-kicker">YOUR NEXT CONCEPT IS CLOSER THAN YOU THINK</span><h2>Start with your PDF.<br><span>See the whole picture.</span></h2><p>Build a personal AI study space from the subject you’re learning.</p></div>
       <button class="btn-hero" data-open="upload">Create your AI study space <span aria-hidden="true">↗</span></button>
     </section>
@@ -2079,6 +2075,9 @@ function render(){
      Mermaid cannot load. Fire and forget: rendering must never block. */
   hydrateAiMermaid(app);
   refreshPlayBtn();
+  if(state.view==='landing' && typeof window.XC!=='undefined' && window.XC.trailerShowcase){
+    window.XC.trailerShowcase.init();
+  }
   /* §15 — enter transition only on a real page change, never on in-page
      state re-renders (quiz clicks, autoplay ticks, chat messages…). */
   if(renderKey!==null && key!==renderKey && !window.matchMedia('(prefers-reduced-motion: reduce)').matches){

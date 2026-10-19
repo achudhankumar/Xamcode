@@ -1,4 +1,4 @@
-﻿'use strict';
+'use strict';
 /* BIP unit suite â€” pure module tests (no HTTP, no network).
    Covers: weighted progress + reversible verification, webhook HMAC
    + idempotency + field allowlisting, community validation + vote
@@ -77,6 +77,38 @@ const dirs = [];
   ok(events.latestActivity(50).filter(function(e){ return e.summary === 'CI green'; }).length === 1, 'no duplicate event in feed');
   ok(events.statusBoard().build.state === 'passed', 'status board reflects build_passed');
   ok(events.integrationStatus().live === false, 'integration honestly not-live without secrets');
+
+  // Render deployment webhook verification & mapping tests
+  var rawRender = JSON.stringify({ type: 'deploy_started', data: { serviceName: 'xamcode-ai', serviceId: 'srv-123' }, timestamp: '2026-10-19T10:00:00Z' });
+  var renderSecret = 'whsec_' + Buffer.from('my-render-secret-key-1234567890123456').toString('base64');
+  process.env.RENDER_WEBHOOK_SECRET = renderSecret;
+  var nowSec = Math.floor(Date.now() / 1000);
+  var renderId = 'msg-deploy-001';
+  var keyBuf = Buffer.from('my-render-secret-key-1234567890123456');
+  var expectedRenderSig = crypto2.createHmac('sha256', keyBuf).update(renderId + '.' + nowSec + '.' + rawRender, 'utf8').digest('base64');
+  var renderHeaders = { 'webhook-id': renderId, 'webhook-timestamp': String(nowSec), 'webhook-signature': 'v1,' + expectedRenderSig };
+
+  ok(events.verifyRenderSignature(rawRender, renderHeaders).ok === true, 'valid Render webhook signature verifies');
+  ok(events.verifyRenderSignature(rawRender, Object.assign({}, renderHeaders, { 'webhook-signature': 'v1,invalid' })).ok === false, 'forged Render signature rejected');
+  ok(events.verifyRenderSignature(rawRender, Object.assign({}, renderHeaders, { 'webhook-timestamp': String(nowSec - 600) })).ok === false, 'expired Render webhook timestamp rejected');
+  delete process.env.RENDER_WEBHOOK_SECRET;
+  ok(events.verifyRenderSignature(rawRender, renderHeaders).configured === false, 'missing Render secret reports not-configured');
+
+  var mappedStart = events.mapRenderWebhook(JSON.parse(rawRender), renderId);
+  ok(mappedStart.length === 1 && mappedStart[0].type === 'deploy_started', 'Render deploy_started maps to deploy_started event');
+  events.recordDevEvent(mappedStart[0]);
+  ok(events.statusBoard().deploy.state === 'running', 'status board deploy reflects running');
+
+  var rawEndSuccess = JSON.stringify({ type: 'deploy_ended', data: { serviceName: 'xamcode-ai', status: 'succeeded' } });
+  var mappedEnd = events.mapRenderWebhook(JSON.parse(rawEndSuccess), 'msg-deploy-002');
+  ok(mappedEnd.length === 1 && mappedEnd[0].type === 'deploy_succeeded', 'Render deploy_ended (succeeded) maps to deploy_succeeded');
+  events.recordDevEvent(mappedEnd[0]);
+  ok(events.statusBoard().deploy.state === 'passed', 'status board deploy reflects passed');
+
+  var rawEndUnknown = JSON.stringify({ type: 'deploy_ended', data: { serviceName: 'xamcode-ai', status: 'unknown_state' } });
+  var mappedUnknown = events.mapRenderWebhook(JSON.parse(rawEndUnknown), 'msg-deploy-003');
+  ok(mappedUnknown.length === 0, 'unknown deploy outcome is ignored (never guessed as passed)');
+
 
   var d3 = freshDataDir(); dirs.push(d3);
   var community = require('./bip/community');

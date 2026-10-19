@@ -1626,9 +1626,9 @@ async function readJson(request, limitBytes, tooLargeMessage){
   try{ return JSON.parse(raw); }
   catch{ throw mkErr(400, 'The request body was unreadable.'); }
 }
-const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8', '.txt': 'text/plain; charset=utf-8', '.xml': 'application/xml; charset=utf-8', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.svg': 'image/svg+xml', '.mp4': 'video/mp4' };
+const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8', '.txt': 'text/plain; charset=utf-8', '.xml': 'application/xml; charset=utf-8', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.svg': 'image/svg+xml', '.mp4': 'video/mp4', '.ico': 'image/x-icon' };
 const PUBLIC_ROOT_FILES = new Set(['/XamCode.html', '/privacy-policy.html', '/terms-of-service.html', '/accessibility-statement.html', '/robots.txt', '/sitemap.xml']);
-const PUBLIC_ASSETS = new Set(['/assets/xamcode-ai-intro.mp4', '/assets/xamcode-build-trailer.mp4', '/assets/xamcode-build-trailer-poster.jpg']);
+const PUBLIC_ASSETS = new Set(['/assets/xamcode-ai-intro.mp4', '/assets/xamcode-build-trailer.mp4', '/assets/xamcode-build-trailer-poster.jpg', '/assets/xamcode-metallic-x.png', '/assets/xamcode-logo.png', '/assets/favicon.ico', '/assets/favicon.png', '/assets/favicon-192.png', '/assets/favicon-512.png', '/assets/apple-touch-icon.png']);
 function serveStatic(req, res){
   if (req.method !== 'GET' && req.method !== 'HEAD') return sendJson(res, 405, { error: 'Method not allowed.' });
   let p;

@@ -47,10 +47,14 @@ async function main(){
   let base = process.env.PUBLIC_URL || process.env.PUBLIC_URL_SECRET || 'https://xamcode-ai.onrender.com';
   base = String(base).replace(/\/+$/, '');
 
+  const branch = process.env.BRANCH || process.env.GITHUB_REF_NAME || '';
+  const detail = process.env.DETAIL || (branch ? 'branch: ' + branch : '');
   const body = JSON.stringify({
     type: eventType,
     summary: summary,
+    detail: detail,
     ref: process.env.REF || '',
+    at: process.env.AT || new Date().toISOString(),
     dedupeKey: process.env.DEDUPE_KEY || undefined,
     source: process.env.SOURCE || 'ci'
   });

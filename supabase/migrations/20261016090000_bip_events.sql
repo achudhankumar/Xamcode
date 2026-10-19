@@ -124,5 +124,12 @@ $$;
 revoke execute on function public.bip_ingest_event(text, text, text, text, text, text, text, timestamptz, text, text, text, timestamptz, text) from public, anon, authenticated;
 grant  execute on function public.bip_ingest_event(text, text, text, text, text, text, text, timestamptz, text, text, text, timestamptz, text) to service_role;
 
+-- Revoke default table privileges (TRUNCATE, TRIGGER, REFERENCES) from public/anon/authenticated
+revoke all on table public.bip_events from public, anon, authenticated;
+revoke all on table public.bip_status from public, anon, authenticated;
+grant  usage on schema public to service_role;
+grant  select, insert, update, delete on table public.bip_events to service_role;
+grant  select, insert, update, delete on table public.bip_status to service_role;
+
 -- Ask PostgREST to reload its schema cache promptly.
 notify pgrst, 'reload schema';

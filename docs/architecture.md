@@ -26,7 +26,8 @@ XamCode AI turns an uploaded lecture PDF into interactive study material (animat
 ```
 
 - **One process** serves both the study app (`/`, `/api/*`) and the dashboard (`/build`, `/api/bip/*`).
-- **No database.** Persistence is JSON files: quota, the BIP store (`bip-data/store.json`), and browser `localStorage` for the study workspace.
+- **No database for the study app.** Persistence is JSON files (quota) and browser `localStorage` (study workspace).
+- **Optional durable database for BIP.** When `BIP_STORAGE=supabase`, the Build-in-Public activity feed and build/test/deploy status board are stored in Supabase Postgres (`bip_events`, `bip_status` via `bip/db.js`) so they survive Render Free redeploys/restarts. Otherwise BIP falls back to `bip-data/store.json` (ephemeral on Render Free).
 
 ## 3. Components
 

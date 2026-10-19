@@ -61,7 +61,32 @@ phase, build/test/deploy board, blockers).
 Bounded histories keep a free host safe: `devEvents` 500, `chatMessages` 500,
 `deliveries` 1000, `reports` 500. Writes are atomic (temp file + rename).
 
+### Durable storage (Supabase)
 
+Render Free wipes the local filesystem on every redeploy and restart, so the
+JSON store cannot hold the public activity feed or the build/test/deploy
+status board durably. When `BIP_STORAGE=supabase` is set, BIP events and the
+status board are written to Supabase Postgres through `bip/db.js` (PostgREST
+REST API, Node global fetch, no new dependencies) instead of the JSON store.
+
+Required server-side variables (never committed, never sent to the browser):
+
+| Variable | Purpose |
+|---|---|
+| `BIP_STORAGE` | `supabase` opts into durable storage; unset/any other value keeps the legacy JSON store |
+| `SUPABASE_URL` | `https://<project-ref>.supabase.co` |
+| `SUPABASE_SERVICE_ROLE_KEY` | Service-role key (bypasses RLS; server-side only) |
+
+Before enabling durable mode, apply
+`supabase/migrations/20261016090000_bip_events.sql` in the Supabase SQL
+editor. It creates `bip_events` and `bip_status`, the atomic
+`bip_ingest_event()` function, enables RLS with zero public policies, and
+locks the function to the service role.
+
+Durable mode is **fail-closed**: if the URL/key is missing or the database is
+unreachable, BIP reads and writes answer `503 DURABLE_STORAGE_UNAVAILABLE`
+instead of silently falling back to the ephemeral filesystem, and the
+service-role credential never appears in any HTTP response.
 
 ## HTTP API
 

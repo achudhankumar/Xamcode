@@ -176,6 +176,13 @@ async function unitTests(mock){
   ok(events.integrationStatus().durable === false, 'integration reports durable=false when credentials are missing');
   process.env.SUPABASE_URL = savedUrl;
 
+  // 7b. Invalid credentials (HTTP 401 from Supabase): honest error, never fallback.
+  const savedKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  process.env.SUPABASE_SERVICE_ROLE_KEY = 'wrong-service-key-must-not-match-mock';
+  const rBadKey = await events.recordDevEventAsync({ type: 'tests_passed', summary: 'bad key', dedupeKey: 'unit-badkey' });
+  ok(rBadKey.ok === false && rBadKey.code === 'DURABLE_STORAGE_UNAVAILABLE', 'invalid credentials -> DURABLE_STORAGE_UNAVAILABLE');
+  process.env.SUPABASE_SERVICE_ROLE_KEY = savedKey;
+
   // 8. The sync JSON writer refuses to run under durable mode.
   const rSync = events.recordDevEvent({ type: 'tests_passed', summary: 'sync path', dedupeKey: 'unit-sync' });
   ok(rSync.ok === false && rSync.code === 'STORAGE_MODE_MISMATCH', 'sync JSON writer refuses durable mode (no silent ephemeral write)');

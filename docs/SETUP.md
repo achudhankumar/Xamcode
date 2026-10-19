@@ -15,6 +15,8 @@ database, no `npm install` needed — the server uses only Node.js builtins.
 Optional: Groq / OpenRouter / Experiential Labs keys for AI failover.
 Optional: `BIP_ADMIN_TOKEN`, `GITHUB_WEBHOOK_SECRET`, `BIP_INGEST_TOKEN`
 for the Build-in-Public integrations (local dev works without them).
+Optional: `BIP_STORAGE=supabase`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
+for durable Build-in-Public storage (see `.env.example` and `docs/deployment.md`).
 
 ## 2. Clone and configure
 
@@ -76,7 +78,26 @@ To run the live end-to-end test (spends one real Gemini generation):
 npm run test:e2e
 ```
 
-## 5. Troubleshooting
+## 5. Durable storage (optional)
+
+Local dev defaults to the legacy JSON store (`bip-data/store.json`), which is
+fine on a persistent machine. On Render Free the local disk is wiped on every
+redeploy/restart, so the BIP activity feed and build/test/deploy status board
+need Supabase Postgres to survive.
+
+To opt in locally (mirrors production):
+1. Apply `supabase/migrations/20261016090000_bip_events.sql` in the Supabase
+   SQL editor (creates `bip_events`, `bip_status`, the `bip_ingest_event()`
+   function, and enables RLS with no public policies).
+2. In `.env`, set `BIP_STORAGE=supabase`, `SUPABASE_URL`, and
+   `SUPABASE_SERVICE_ROLE_KEY`. These are server-side only — never commit the
+   service-role key.
+3. Restart the server. `GET /api/bip/summary` then reports
+   `integration.durable === true` and reads/write events from Postgres.
+   If the URL/key is missing or unreachable, BIP answers an honest
+   `503 DURABLE_STORAGE_UNAVAILABLE` instead of silently falling back to disk.
+
+## 6. Troubleshooting
 
 | Symptom | Cause / fix |
 |---|---|
