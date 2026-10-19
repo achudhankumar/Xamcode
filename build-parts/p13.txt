@@ -1,6 +1,10 @@
 function hero(){try{
 var cv=$('heroCanvas');if(!cv)return;
 var reduce=false;try{reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;}catch(e){}
+if(!reduce){
+  document.body.classList.add('hero-ready');
+  setTimeout(function(){ document.body.classList.add('hero-complete'); }, 1400);
+}
 var ctx=null;try{ctx=cv.getContext('2d');}catch(e){return;}if(!ctx)return;
 var W=800,H=600,mx=.5,my=.4,t=0;var pts=[];
 function size(){try{var r=cv.parentElement.getBoundingClientRect();if(r&&r.width)W=Math.floor(r.width);if(r&&r.height)H=Math.floor(r.height);}catch(e){}
@@ -19,7 +23,6 @@ ctx.globalAlpha=.9;ctx.fillStyle=i%5===0?'#C8FF3D':'rgba(241,239,227,.7)';ctx.be
 ctx.globalAlpha=1;}catch(e){}
 if(!reduce){try{if(typeof requestAnimationFrame!=='undefined')requestAnimationFrame(frame);}catch(e){}}}
 try{frame();}catch(e){}
-try{var heroT=$('heroTitle');window.addEventListener('scroll',function(){try{var y=window.scrollY||0;if(heroT&&heroT.style)heroT.style.transform='translateY(-'+Math.min(60,y*.08)+'px)';}catch(x){}},{passive:true});}catch(e){}
 }catch(e){}}
 function menu(){try{
 var btn=$('menuBtn'),ov=$('menuOverlay'),veil=$('menuVeil');if(!btn||!ov)return;var open=false;var last=null;
@@ -105,6 +108,27 @@ function onScroll(){try{
   }
   if(actLabel&&actNames[curActIdx])actLabel.textContent=actNames[curActIdx];
   if(coords)coords.textContent='ACT: '+(curActIdx+1)+'/6 · '+(progress*100).toFixed(0)+'% SCROLL';
+
+  if(!reduce && window.innerWidth > 900){
+    var y = window.scrollY || 0;
+    var heroT = $('heroTitle');
+    var heroCv = $('heroCanvas');
+    var bgGlow = document.querySelector('.bg.glow') || document.querySelector('.bg-glow');
+    if(heroT && y < 1400){
+      heroT.style.transform = 'translate3d(0, -' + Math.min(50, (y * 0.09)).toFixed(1) + 'px, 0)';
+    }
+    if(heroCv && y < 1400){
+      heroCv.style.transform = 'translate3d(0, ' + Math.min(60, (y * 0.12)).toFixed(1) + 'px, 0)';
+    }
+    if(bgGlow){
+      bgGlow.style.transform = 'translate3d(0, -' + (y * 0.025).toFixed(1) + 'px, 0)';
+    }
+    var act1Gauge = document.querySelector('#act1 .cw');
+    if(act1Gauge && trackRect.top < winH && trackRect.bottom > 0){
+      var gOffset = Math.max(-18, Math.min(18, (trackRect.top / winH) * 14));
+      act1Gauge.style.transform = 'translate3d(0, ' + gOffset.toFixed(1) + 'px, 0)';
+    }
+  }
 }catch(x){}}
 
 window.addEventListener('scroll',onScroll,{passive:true});

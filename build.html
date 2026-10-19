@@ -45,12 +45,13 @@ section[id],#main{scroll-margin-top:96px}
 /* Programmatic skip-target: focus lands here without needing a ring. */
 main:focus{outline:none}
 .bg{position:fixed;inset:0;pointer-events:none;z-index:0}
-.bg-grid{background-image:linear-gradient(rgba(200,255,61,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(200,255,61,.045) 1px,transparent 1px);background-size:56px 56px}
-.bg-glow{background:
-  radial-gradient(700px 420px at 90% -4%,rgba(92,109,255,.16),transparent 60%),
-  radial-gradient(620px 380px at 4% 8%,rgba(200,255,61,.10),transparent 55%),
-  radial-gradient(800px 600px at 50% 115%,rgba(92,109,255,.08),transparent 60%),
-  radial-gradient(500px 300px at 88% 108%,rgba(200,255,61,.06),transparent 60%);
+.bg.grid,.bg-grid{position:fixed;inset:0;pointer-events:none;z-index:0;background-image:linear-gradient(rgba(200,255,61,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(200,255,61,.045) 1px,transparent 1px);background-size:56px 56px}
+.bg.glow,.bg-glow{position:fixed;inset:0;pointer-events:none;z-index:0;background:
+  radial-gradient(750px 450px at 90% -4%,rgba(92,109,255,.16),transparent 60%),
+  radial-gradient(650px 400px at 4% 8%,rgba(200,255,61,.10),transparent 55%),
+  radial-gradient(850px 650px at 50% 115%,rgba(92,109,255,.08),transparent 60%),
+  radial-gradient(550px 320px at 88% 108%,rgba(200,255,61,.06),transparent 60%);
+  will-change:transform;
 }
 .wrap{max-width:var(--max);margin:0 auto;padding:0 24px 0;position:relative;z-index:1}
 .dock{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:120;width:min(var(--max),calc(100% - 24px));box-sizing:border-box;max-width:calc(100vw - 16px);display:flex;align-items:center;gap:10px;padding:9px 12px 9px 14px;border-radius:999px;background:rgba(6,8,3,.88);border:1px solid var(--line);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
@@ -112,16 +113,62 @@ html.menu-open{overflow:hidden}
 .kick .pulse{width:8px;height:8px;border-radius:50%;background:var(--lime);animation:pf 2.2s infinite}
 .frag{font-family:var(--disp);font-weight:800;font-size:clamp(44px,7.5vw,80px);line-height:.94;letter-spacing:-.04em;margin:28px 0 10px;text-transform:uppercase;overflow-wrap:normal;word-break:normal}
 .frag .k{display:block;overflow:hidden;max-width:100%}
-.frag .k>span{display:block;max-width:100%;transform:translateY(130%);animation:rs 1.2s cubic-bezier(.22,1,.36,1) forwards}
-.frag .k:nth-child(2)>span{animation-delay:.14s}
-.frag .k:nth-child(3)>span{animation-delay:.28s}
-.frag .k:nth-child(4)>span{animation-delay:.42s}
+.frag .k>span{display:block;max-width:100%}
 .frag .k .w{display:inline-block;white-space:nowrap}
 .frag .k .w+.w{margin-left:.28em}
 .frag .hl{font-style:normal;color:var(--lime)}
 .frag .out{color:transparent;-webkit-text-stroke:2.5px var(--lime)}
 .frag .out.hl{-webkit-text-stroke:2.5px var(--lime)}
-@keyframes rs{to{transform:none}}
+@keyframes rs{from{transform:translate3d(0,115%,0);opacity:0}to{transform:translate3d(0,0,0);opacity:1}}
+@keyframes heroFadeLift{from{opacity:0;transform:translate3d(0,18px,0)}to{opacity:1;transform:translate3d(0,0,0)}}
+@keyframes heroScaleIn{from{opacity:0;transform:scale(.95) translate3d(0,12px,0)}to{opacity:1;transform:scale(1) translate3d(0,0,0)}}
+@keyframes heroShadeGlow{from{opacity:0}to{opacity:1}}
+
+/* Hero Entrance Choreography (Progressive Enhancement via body.hero-ready) */
+body.hero-ready #heroCanvas, body.hero-ready .shade, body.hero-ready .bg.glow, body.hero-ready .bg-glow{
+  animation: heroShadeGlow .75s ease-out both;
+}
+body.hero-ready .kick{
+  animation: heroFadeLift .6s cubic-bezier(.16,1,.3,1) .10s both;
+}
+body.hero-ready .frag .k>span{
+  animation: rs .82s cubic-bezier(.16,1,.3,1) both;
+}
+body.hero-ready .frag .k:nth-child(1)>span{animation-delay:.18s}
+body.hero-ready .frag .k:nth-child(2)>span{animation-delay:.28s}
+body.hero-ready .frag .k:nth-child(3)>span{animation-delay:.38s}
+body.hero-ready .frag .k:nth-child(4)>span{animation-delay:.48s}
+body.hero-ready .lede{
+  animation: heroFadeLift .65s cubic-bezier(.16,1,.3,1) .45s both;
+}
+body.hero-ready .schip{
+  animation: heroFadeLift .6s cubic-bezier(.16,1,.3,1) .58s both;
+}
+body.hero-ready .hp{
+  animation: heroScaleIn .7s cubic-bezier(.16,1,.3,1) .68s both;
+}
+body.hero-ready .crow{
+  animation: heroFadeLift .65s cubic-bezier(.16,1,.3,1) .82s both;
+}
+body.hero-ready .hmeta{
+  animation: heroFadeLift .65s cubic-bezier(.16,1,.3,1) .95s both;
+}
+body.hero-ready .shint{
+  animation: heroFadeLift .65s cubic-bezier(.16,1,.3,1) 1.05s both;
+}
+
+body.hero-complete .kick,
+body.hero-complete .frag .k>span,
+body.hero-complete .lede,
+body.hero-complete .schip,
+body.hero-complete .hp,
+body.hero-complete .crow,
+body.hero-complete .hmeta,
+body.hero-complete .shint{
+  animation: none !important;
+  opacity: 1 !important;
+  transform: none !important;
+}
 .lede{color:var(--mut);font-size:clamp(15px,1.9vw,17px);max-width:64ch;margin:0 auto 20px}
 .lede strong{color:var(--paper);font-weight:700}
 .schip{display:inline-block;margin-top:20px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--cobalt);border:1px solid var(--line);background:rgba(92,109,255,.08);padding:8px 16px;border-radius:999px}
@@ -570,6 +617,28 @@ body.js-cine .cine-reveal-delay-2{transition-delay:.24s}
 body.js-cine .cine-reveal-delay-3{transition-delay:.36s}
 body.js-cine .cine-reveal.in-view{opacity:1;transform:translate3d(0,0,0) scale(1)}
 
+/* Staggered card entrances inside in-view grids */
+body.js-cine .mgrid2.in-view .mcol:nth-child(1){animation:cellIn .55s cubic-bezier(.16,1,.3,1) .04s both}
+body.js-cine .mgrid2.in-view .mcol:nth-child(2){animation:cellIn .55s cubic-bezier(.16,1,.3,1) .12s both}
+body.js-cine .mgrid2.in-view .mcol:nth-child(3){animation:cellIn .55s cubic-bezier(.16,1,.3,1) .20s both}
+body.js-cine .mgrid2.in-view .mcol:nth-child(4){animation:cellIn .55s cubic-bezier(.16,1,.3,1) .28s both}
+
+body.js-cine .sgrid.in-view .scell:nth-child(1){animation:cellIn .5s cubic-bezier(.16,1,.3,1) .04s both}
+body.js-cine .sgrid.in-view .scell:nth-child(2){animation:cellIn .5s cubic-bezier(.16,1,.3,1) .09s both}
+body.js-cine .sgrid.in-view .scell:nth-child(3){animation:cellIn .5s cubic-bezier(.16,1,.3,1) .14s both}
+body.js-cine .sgrid.in-view .scell:nth-child(4){animation:cellIn .5s cubic-bezier(.16,1,.3,1) .19s both}
+body.js-cine .sgrid.in-view .scell:nth-child(5){animation:cellIn .5s cubic-bezier(.16,1,.3,1) .24s both}
+body.js-cine .sgrid.in-view .scell:nth-child(6){animation:cellIn .5s cubic-bezier(.16,1,.3,1) .29s both}
+body.js-cine .sgrid.in-view .scell:nth-child(7){animation:cellIn .5s cubic-bezier(.16,1,.3,1) .34s both}
+body.js-cine .sgrid.in-view .scell:nth-child(8){animation:cellIn .5s cubic-bezier(.16,1,.3,1) .39s both}
+
+body.js-cine .lr-grid.in-view .lr-card:nth-child(1){animation:cellIn .55s cubic-bezier(.16,1,.3,1) .04s both}
+body.js-cine .lr-grid.in-view .lr-card:nth-child(2){animation:cellIn .55s cubic-bezier(.16,1,.3,1) .12s both}
+body.js-cine .lr-grid.in-view .lr-card:nth-child(3){animation:cellIn .55s cubic-bezier(.16,1,.3,1) .20s both}
+body.js-cine .lr-grid.in-view .lr-card:nth-child(4){animation:cellIn .55s cubic-bezier(.16,1,.3,1) .28s both}
+
+@keyframes cellIn{from{opacity:0;transform:translate3d(0,14px,0)}to{opacity:1;transform:translate3d(0,0,0)}}
+
 #act1 .chead{margin-bottom:32px}
 #act1 .chead h2{font-family:var(--disp);font-weight:850;font-size:clamp(32px,3.8vw,48px);letter-spacing:-.03em;line-height:1.1;color:var(--paper)}
 #act1 .chead p{font-size:15px;color:var(--mut);margin-top:8px}
@@ -718,7 +787,18 @@ body.js-cine .cine-reveal.in-view{opacity:1;transform:translate3d(0,0,0) scale(1
 }
 @media(prefers-reduced-motion: reduce){
   .cine-reveal, body.js-cine .cine-reveal{opacity:1!important;transform:none!important;transition:none!important}
+  body.hero-ready #heroCanvas, body.hero-ready .shade, body.hero-ready .bg.glow, body.hero-ready .bg-glow,
+  body.hero-ready .kick, body.hero-ready .frag .k>span, body.hero-ready .lede, body.hero-ready .schip,
+  body.hero-ready .hp, body.hero-ready .crow, body.hero-ready .hmeta, body.hero-ready .shint{
+    animation:none!important;opacity:1!important;transform:none!important;
+  }
+  body.js-cine .mgrid2.in-view .mcol,
+  body.js-cine .sgrid.in-view .scell,
+  body.js-cine .lr-grid.in-view .lr-card{
+    animation:none!important;opacity:1!important;transform:none!important;
+  }
   .cine-hud .ch-dot{animation:none!important}
+  .pbar>span{transition:none!important}
 }
 
 </style></head><body>
@@ -754,7 +834,7 @@ body.js-cine .cine-reveal.in-view{opacity:1;transform:translate3d(0,0,0) scale(1
 <div class="cine-act" id="act4" data-act="4"><section class="chapter" id="roadmap" aria-labelledby="h-roadmap"><div class="chead cine-reveal cine-reveal-up"><span class="num">04</span><div><h2 id="h-roadmap">The roadmap</h2><p>official plan — only maintainers change these statuses · readiness <span class="chip" style="padding:5px 12px">verified <b id="rmProgress">—</b></span></p></div></div><div class="reveal cine-reveal cine-reveal-up"><div class="rmtl" id="roadmapList"><p class="sub">loading…</p></div><a class="slink" href="#ideas">Suggest a roadmap feature <span class="ar" aria-hidden="true">↗</span></a></div></section></div>
 
 <!-- ACT 5: DEVELOPMENT JOURNEY & READINESS -->
-<div class="cine-act" id="act5" data-act="5"><section class="chapter lr-sec" id="activity" aria-labelledby="h-activity"><div class="chead cine-reveal cine-reveal-up"><span class="num lr-num">05</span><div><h2 id="h-activity">Launch readiness</h2><p id="feedNote">Building, refining, and preparing Xamcode for launch.</p></div></div><div class="lr-shell reveal cine-reveal cine-reveal-up"><div class="lr-grid" role="list" aria-label="Launch readiness overview"><article class="lr-card cine-reveal cine-reveal-left" role="listitem"><div class="lr-top"><span class="lr-kicker">01 · Development Stage</span><span class="pill lr-pill" id="lrStagePill">verified weight</span></div><div class="lr-val" id="lrStage">—</div><p class="lr-meta" id="lrStageMeta">Readiness is measured strictly from verified milestone weights.</p></article><article class="lr-card lr-verified cine-reveal cine-reveal-up" role="listitem"><div class="lr-top"><span class="lr-kicker">02 · Latest Verified Milestone</span><span class="pill verified" id="lrVerifiedPill">verified</span></div><div class="lr-val" id="lrVerified">—</div><p class="lr-meta" id="lrVerifiedMeta">Awaiting verified milestone record.</p></article><article class="lr-card cine-reveal cine-reveal-up cine-reveal-delay-1" role="listitem"><div class="lr-top"><span class="lr-kicker">03 · Next Development Milestone</span><span class="pill in_progress" id="lrNextPill">in progress</span></div><div class="lr-val" id="lrNext">—</div><p class="lr-meta" id="lrNextMeta">Unverified until completion criteria pass.</p></article><article class="lr-card cine-reveal cine-reveal-right" role="listitem"><div class="lr-top"><span class="lr-kicker">04 · Overall Launch Status</span><span class="pill lr-pill" id="lrLaunchPill">pre-launch</span></div><div class="lr-val" id="lrLaunch">—</div><p class="lr-meta" id="lrLaunchMeta">Launch readiness requires all release milestones to be verified.</p></article></div><div class="lr-update cine-reveal cine-reveal-up cine-reveal-delay-1"><div class="lr-uhead"><div><span class="lr-kicker">05 · Latest Public Project Update</span><h3 class="lr-utitle" id="lrUpdateTitle">Verified Milestone &amp; Development Log</h3></div><span class="pill lr-pill" id="lrUpdateBadge">public record</span></div><ul class="feed lr-feed" id="actList" aria-live="off"><li class="sub">Loading public project updates…</li></ul><p class="lr-foot" id="lrFootNote">Verified milestones are distinct from active work in progress. Automated builds or deployments alone do not mark features launch-ready.</p><a class="slink" href="#waitlist">Get launch updates <span class="ar" aria-hidden="true">↗</span></a></div></div></section></div>
+<div class="cine-act" id="act5" data-act="5"><section class="chapter lr-sec" id="activity" aria-labelledby="h-activity"><div class="chead cine-reveal cine-reveal-up"><span class="num lr-num">05</span><div><h2 id="h-activity">Launch readiness</h2><p id="feedNote">Building, refining, and preparing Xamcode for launch.</p></div></div><div class="lr-shell reveal cine-reveal cine-reveal-up"><div class="lr-grid cine-reveal cine-reveal-up" role="list" aria-label="Launch readiness overview"><article class="lr-card cine-reveal cine-reveal-left" role="listitem"><div class="lr-top"><span class="lr-kicker">01 · Development Stage</span><span class="pill lr-pill" id="lrStagePill">verified weight</span></div><div class="lr-val" id="lrStage">—</div><p class="lr-meta" id="lrStageMeta">Readiness is measured strictly from verified milestone weights.</p></article><article class="lr-card lr-verified cine-reveal cine-reveal-up" role="listitem"><div class="lr-top"><span class="lr-kicker">02 · Latest Verified Milestone</span><span class="pill verified" id="lrVerifiedPill">verified</span></div><div class="lr-val" id="lrVerified">—</div><p class="lr-meta" id="lrVerifiedMeta">Awaiting verified milestone record.</p></article><article class="lr-card cine-reveal cine-reveal-up cine-reveal-delay-1" role="listitem"><div class="lr-top"><span class="lr-kicker">03 · Next Development Milestone</span><span class="pill in_progress" id="lrNextPill">in progress</span></div><div class="lr-val" id="lrNext">—</div><p class="lr-meta" id="lrNextMeta">Unverified until completion criteria pass.</p></article><article class="lr-card cine-reveal cine-reveal-right" role="listitem"><div class="lr-top"><span class="lr-kicker">04 · Overall Launch Status</span><span class="pill lr-pill" id="lrLaunchPill">pre-launch</span></div><div class="lr-val" id="lrLaunch">—</div><p class="lr-meta" id="lrLaunchMeta">Launch readiness requires all release milestones to be verified.</p></article></div><div class="lr-update cine-reveal cine-reveal-up cine-reveal-delay-1"><div class="lr-uhead"><div><span class="lr-kicker">05 · Latest Public Project Update</span><h3 class="lr-utitle" id="lrUpdateTitle">Verified Milestone &amp; Development Log</h3></div><span class="pill lr-pill" id="lrUpdateBadge">public record</span></div><ul class="feed lr-feed" id="actList" aria-live="off"><li class="sub">Loading public project updates…</li></ul><p class="lr-foot" id="lrFootNote">Verified milestones are distinct from active work in progress. Automated builds or deployments alone do not mark features launch-ready.</p><a class="slink" href="#waitlist">Get launch updates <span class="ar" aria-hidden="true">↗</span></a></div></div></section></div>
 
 <!-- ACT 6: FINAL REVEAL (Convergence into Launch & Trailer) -->
 <div class="cine-act" id="act6" data-act="6"><div class="cine-act-shell"><div class="chead cine-reveal cine-reveal-up"><span class="num">06</span><div><h2>Transparent Engineering</h2><p>Evidence over guesswork · Verified build to live production</p></div></div><div class="cine-reveal-grid"><div class="cr-featured cine-reveal cine-reveal-left"><div><span class="cr-kicker" style="color:var(--lime)">01 · AUTONOMOUS STUDY CORE</span><h3>Architecture Grounded in Proof</h3><p>Lecture notes transform into verified, unit-by-unit visual knowledge graphs with procedural SVG synthesis and zero drift between source text and recall notes.</p></div><div class="cr-arch-flow"><div class="cr-flow-step"><span class="lbl">INPUT</span><span class="val">Lecture PDFs</span></div><div class="cr-flow-step"><span class="lbl">ENGINE</span><span class="val">Chunked Mastery</span></div><div class="cr-flow-step"><span class="lbl">TUTOR</span><span class="val">Socratic AURA</span></div></div></div><div class="cr-stack"><div class="cr-card cine-reveal cine-reveal-right"><span class="cr-kicker" style="color:var(--cyan)">02 · AURA CONVERSATIONAL AI</span><h4>Context-Grounded Dialogue</h4><p>Procedural SVG technical diagram recipes and strict syllabus adherence, avoiding generic AI hallucinations.</p></div><div class="cr-card cine-reveal cine-reveal-right cine-reveal-delay-1"><span class="cr-kicker" style="color:var(--lime)">03 · VERIFIED RELEASE PROOF</span><h4>56% Readiness Weight</h4><p>Strict deterministic milestone proof with honest unknowns — never guessing a launch date.</p></div></div></div><div class="cr-cta-strip cine-reveal cine-reveal-up cine-reveal-delay-2"><div class="cta-lead">Experience the Next Generation of Study <span>· XamCode AI</span><p>Explore the live effort model, upcoming release roadmap, and preview trailer.</p></div><a class="xcta pri" href="#launch" style="display:inline-flex;">Enter Launch Deck &amp; Watch Trailer <span class="ar" aria-hidden="true">↓</span></a></div></div></div>
@@ -991,6 +1071,10 @@ pt('/api/bip/waitlist',{email:$('waitEmail').value,nickname:$('waitNick').value,
 function hero(){try{
 var cv=$('heroCanvas');if(!cv)return;
 var reduce=false;try{reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;}catch(e){}
+if(!reduce){
+  document.body.classList.add('hero-ready');
+  setTimeout(function(){ document.body.classList.add('hero-complete'); }, 1400);
+}
 var ctx=null;try{ctx=cv.getContext('2d');}catch(e){return;}if(!ctx)return;
 var W=800,H=600,mx=.5,my=.4,t=0;var pts=[];
 function size(){try{var r=cv.parentElement.getBoundingClientRect();if(r&&r.width)W=Math.floor(r.width);if(r&&r.height)H=Math.floor(r.height);}catch(e){}
@@ -1009,7 +1093,6 @@ ctx.globalAlpha=.9;ctx.fillStyle=i%5===0?'#C8FF3D':'rgba(241,239,227,.7)';ctx.be
 ctx.globalAlpha=1;}catch(e){}
 if(!reduce){try{if(typeof requestAnimationFrame!=='undefined')requestAnimationFrame(frame);}catch(e){}}}
 try{frame();}catch(e){}
-try{var heroT=$('heroTitle');window.addEventListener('scroll',function(){try{var y=window.scrollY||0;if(heroT&&heroT.style)heroT.style.transform='translateY(-'+Math.min(60,y*.08)+'px)';}catch(x){}},{passive:true});}catch(e){}
 }catch(e){}}
 function menu(){try{
 var btn=$('menuBtn'),ov=$('menuOverlay'),veil=$('menuVeil');if(!btn||!ov)return;var open=false;var last=null;
@@ -1095,6 +1178,27 @@ function onScroll(){try{
   }
   if(actLabel&&actNames[curActIdx])actLabel.textContent=actNames[curActIdx];
   if(coords)coords.textContent='ACT: '+(curActIdx+1)+'/6 · '+(progress*100).toFixed(0)+'% SCROLL';
+
+  if(!reduce && window.innerWidth > 900){
+    var y = window.scrollY || 0;
+    var heroT = $('heroTitle');
+    var heroCv = $('heroCanvas');
+    var bgGlow = document.querySelector('.bg.glow') || document.querySelector('.bg-glow');
+    if(heroT && y < 1400){
+      heroT.style.transform = 'translate3d(0, -' + Math.min(50, (y * 0.09)).toFixed(1) + 'px, 0)';
+    }
+    if(heroCv && y < 1400){
+      heroCv.style.transform = 'translate3d(0, ' + Math.min(60, (y * 0.12)).toFixed(1) + 'px, 0)';
+    }
+    if(bgGlow){
+      bgGlow.style.transform = 'translate3d(0, -' + (y * 0.025).toFixed(1) + 'px, 0)';
+    }
+    var act1Gauge = document.querySelector('#act1 .cw');
+    if(act1Gauge && trackRect.top < winH && trackRect.bottom > 0){
+      var gOffset = Math.max(-18, Math.min(18, (trackRect.top / winH) * 14));
+      act1Gauge.style.transform = 'translate3d(0, ' + gOffset.toFixed(1) + 'px, 0)';
+    }
+  }
 }catch(x){}}
 
 window.addEventListener('scroll',onScroll,{passive:true});
