@@ -559,12 +559,16 @@ details.est-model .em-body em{color:var(--paper);font-style:normal;font-weight:6
 .cine-act .chapter{width:100%;max-width:var(--max);margin:0 auto;box-sizing:border-box;padding:0;border-top:none}
 .cine-act-shell{width:100%;max-width:var(--max);margin:0 auto;box-sizing:border-box}
 
-.cine-reveal{opacity:0;will-change:transform,opacity;transition:opacity .75s cubic-bezier(.16,1,.3,1),transform .75s cubic-bezier(.16,1,.3,1)}
-.cine-reveal-up{transform:translate3d(0,32px,0)}
-.cine-reveal-left{transform:translate3d(-40px,0,0)}
-.cine-reveal-right{transform:translate3d(40px,0,0)}
-.cine-reveal-scale{transform:scale(.96) translate3d(0,20px,0)}
-.cine-act.act-entered .cine-reveal,.cine-act.act-active .cine-reveal,.cine-reveal.in-view{opacity:1;transform:translate3d(0,0,0) scale(1)}
+.cine-reveal{opacity:1;transform:none}
+body.js-cine .cine-reveal{opacity:0;will-change:transform,opacity;transition:opacity .75s cubic-bezier(.16,1,.3,1),transform .75s cubic-bezier(.16,1,.3,1)}
+body.js-cine .cine-reveal-up{transform:translate3d(0,32px,0)}
+body.js-cine .cine-reveal-left{transform:translate3d(-40px,0,0)}
+body.js-cine .cine-reveal-right{transform:translate3d(40px,0,0)}
+body.js-cine .cine-reveal-scale{transform:scale(.96) translate3d(0,20px,0)}
+body.js-cine .cine-reveal-delay-1{transition-delay:.12s}
+body.js-cine .cine-reveal-delay-2{transition-delay:.24s}
+body.js-cine .cine-reveal-delay-3{transition-delay:.36s}
+body.js-cine .cine-reveal.in-view{opacity:1;transform:translate3d(0,0,0) scale(1)}
 
 #act1 .chead{margin-bottom:32px}
 #act1 .chead h2{font-family:var(--disp);font-weight:850;font-size:clamp(32px,3.8vw,48px);letter-spacing:-.03em;line-height:1.1;color:var(--paper)}
@@ -665,12 +669,24 @@ details.est-model .em-body em{color:var(--paper);font-style:normal;font-weight:6
 #act6 .chead{margin-bottom:32px;text-align:center}
 #act6 .chead h2{font-family:var(--disp);font-weight:850;font-size:clamp(34px,4vw,52px);letter-spacing:-.03em;line-height:1.1;color:var(--paper)}
 #act6 .chead p{font-size:15.5px;color:var(--mut);margin-top:8px}
-.cine-reveal-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;margin-top:28px}
-.cr-card{background:rgba(18,24,15,.85);border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:30px 26px;box-shadow:0 20px 60px rgba(0,0,0,.5);transition:transform .25s ease,border-color .25s ease}
-.cr-card:hover{transform:translateY(-4px);border-color:rgba(200,255,61,.4)}
-.cr-card h4{font-family:var(--disp);font-size:22px;font-weight:800;margin:10px 0 12px}
-.cr-card p{font-size:14px;color:var(--dim);line-height:1.6}
-.cr-kicker{font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700}
+.cine-reveal-grid{display:grid;grid-template-columns:1.25fr 1fr;gap:24px;margin-top:32px;align-items:stretch}
+.cr-featured{background:linear-gradient(180deg,rgba(22,30,16,.9),rgba(12,16,10,.95));border:1px solid rgba(200,255,61,.35);border-radius:24px;padding:32px 28px;box-shadow:0 24px 70px rgba(0,0,0,.6),0 0 35px rgba(200,255,61,.08);display:flex;flex-direction:column;justify-content:space-between;box-sizing:border-box}
+.cr-featured h3{font-family:var(--disp);font-size:26px;font-weight:850;letter-spacing:-.02em;margin:12px 0 14px;color:var(--paper);line-height:1.2}
+.cr-featured p{font-size:14px;color:rgba(241,239,227,.82);line-height:1.65;margin:0 0 18px}
+.cr-arch-flow{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px;padding:14px;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.07);border-radius:14px}
+.cr-flow-step{display:flex;flex-direction:column;gap:4px}
+.cr-flow-step span.lbl{font-family:var(--mono);font-size:9.5px;color:var(--lime);letter-spacing:.12em;text-transform:uppercase;font-weight:700}
+.cr-flow-step span.val{font-size:12px;color:var(--paper);font-weight:600;line-height:1.3}
+.cr-stack{display:flex;flex-direction:column;gap:20px}
+.cr-card{background:rgba(18,24,15,.85);border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:26px 24px;box-shadow:0 20px 60px rgba(0,0,0,.5);transition:transform .25s ease,border-color .25s ease;box-sizing:border-box}
+.cr-card:hover{transform:translateY(-3px);border-color:rgba(200,255,61,.4)}
+.cr-card h4{font-family:var(--disp);font-size:20px;font-weight:800;margin:8px 0 10px;color:var(--paper)}
+.cr-card p{font-size:13.5px;color:var(--dim);line-height:1.6;margin:0}
+.cr-kicker{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:700}
+.cr-cta-strip{margin-top:36px;padding:22px 28px;background:linear-gradient(90deg,rgba(200,255,61,.08),rgba(94,234,212,.08),rgba(91,108,255,.08));border:1px solid rgba(255,255,255,.12);border-radius:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:18px}
+.cr-cta-strip .cta-lead{font-family:var(--disp);font-size:19px;font-weight:800;color:var(--paper)}
+.cr-cta-strip .cta-lead span{color:var(--lime)}
+.cr-cta-strip .cta-lead p{font-size:13px;color:var(--mut);font-family:var(--sans);font-weight:400;margin:4px 0 0}
 
 @media(max-width:1100px){
   .cine-study-grid{grid-template-columns:1fr 1fr}
@@ -684,6 +700,8 @@ details.est-model .em-body em{color:var(--paper);font-style:normal;font-weight:6
   #act1 .mgrid2{grid-template-columns:1fr}
   #act1 .sgrid{grid-template-columns:repeat(2,minmax(0,1fr))}
   .cine-study-grid,.cine-tutor-grid,#act4 .rmtl,.cine-reveal-grid{grid-template-columns:1fr}
+  .cr-arch-flow{grid-template-columns:1fr;gap:12px}
+  .cr-cta-strip{flex-direction:column;text-align:center;align-items:center}
   .cine-hud{display:none!important}
 }
 @media(max-width:600px){
@@ -699,7 +717,7 @@ details.est-model .em-body em{color:var(--paper);font-style:normal;font-weight:6
   #act5 .lr-shell{padding:18px 16px}
 }
 @media(prefers-reduced-motion: reduce){
-  .cine-reveal{opacity:1!important;transform:none!important;transition:none!important}
+  .cine-reveal, body.js-cine .cine-reveal{opacity:1!important;transform:none!important;transition:none!important}
   .cine-hud .ch-dot{animation:none!important}
 }
 
@@ -724,7 +742,7 @@ details.est-model .em-body em{color:var(--paper);font-style:normal;font-weight:6
 <div class="cine-camera" id="cineCamera">
 
 <!-- ACT 1: ARRIVAL (The Current State / Verified Readiness) -->
-<div class="cine-act act-active" id="act1" data-act="1"><section class="chapter" id="progress" aria-labelledby="h-progress"><div class="chead cine-reveal cine-reveal-up"><span class="num">01</span><div><h2 id="h-progress">The current state</h2><p>weighted verified milestones — never commits or lines of code</p></div></div><div class="pgrid reveal cine-reveal cine-reveal-scale"><div class="pstage"><div class="cw"><svg class="csvg" viewBox="0 0 36 36" aria-hidden="true"><circle class="cbg" cx="18" cy="18" r="15.9155"></circle><circle class="cp" id="pctFill" cx="18" cy="18" r="15.9155"></circle></svg><div class="cc"><span class="cpct" id="pctNum">—</span><span class="csub" id="pctSub">verified weight</span></div></div><div class="pbar" role="progressbar" aria-label="Overall readiness" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="pctBar"><span id="pctBarFill"></span></div><div class="pbar-legend"><span id="pctLegL">verified weight ÷ total weight</span><span id="pctLegR">0%</span></div></div><div class="pside"><div class="bigstat"><em id="statProgress">—</em> verified</div><p class="sub">Phase: <span id="statPhase">—</span> · Now: <span id="statMilestone">—</span></p><p class="mono" id="menuReadinessLine">readiness computed from verified milestone weights</p><div class="chiprow"><span class="chip">verified <b id="mDoneCount">—</b></span><span class="chip">in progress <b id="mProgCount">—</b></span><span class="chip">upcoming <b id="mUpCount">—</b></span><span class="chip">in review <b id="mRevCount">—</b></span></div></div></div><div class="mgrid2 reveal cine-reveal cine-reveal-up"><div class="mcol"><h3>Verified</h3><div id="mDone"></div></div><div class="mcol"><h3>In progress</h3><div id="mProg"></div></div><div class="mcol"><h3>Upcoming</h3><div id="mUp"></div></div><div class="mcol"><h3>Needs review</h3><div id="mRev"></div></div></div><div class="sgrid reveal cine-reveal cine-reveal-up"><div class="scell"><span class="lb">Build</span><span class="vl" id="stBuild" data-state="unknown">—</span><span class="at2" id="stBuildAt">no data yet</span></div><div class="scell"><span class="lb">Tests</span><span class="vl" id="stTests" data-state="unknown">—</span><span class="at2" id="stTestsAt">no data yet</span></div><div class="scell"><span class="lb">Deploy</span><span class="vl" id="stDeploy" data-state="unknown">—</span><span class="at2" id="stDeployAt">no data yet</span></div><div class="scell"><span class="lb">Integration</span><span class="vl" id="statFeedSrc" data-state="setup">—</span><span class="at2">webhooks / CI / maintainer</span></div><div class="scell"><span class="lb">Milestones</span><span class="vl" id="statProgress2">—</span><span class="at2" id="statPhase2">—</span></div><div class="scell"><span class="lb">Ideas</span><span class="vl" id="statIdeas">—</span><span class="at2">community suggestions</span></div><div class="scell"><span class="lb">Waitlist</span><span class="vl" id="statWait">—</span><span class="at2">students waiting</span></div><div class="scell"><span class="lb">Signal</span><span class="vl" id="statSignal" data-state="standby">—</span><span class="at2">build · tests · deploy</span></div></div></section></div>
+<div class="cine-act" id="act1" data-act="1"><section class="chapter" id="progress" aria-labelledby="h-progress"><div class="chead cine-reveal cine-reveal-up"><span class="num">01</span><div><h2 id="h-progress">The current state</h2><p>weighted verified milestones — never commits or lines of code</p></div></div><div class="pgrid reveal cine-reveal cine-reveal-scale"><div class="pstage"><div class="cw"><svg class="csvg" viewBox="0 0 36 36" aria-hidden="true"><circle class="cbg" cx="18" cy="18" r="15.9155"></circle><circle class="cp" id="pctFill" cx="18" cy="18" r="15.9155"></circle></svg><div class="cc"><span class="cpct" id="pctNum">—</span><span class="csub" id="pctSub">verified weight</span></div></div><div class="pbar" role="progressbar" aria-label="Overall readiness" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="pctBar"><span id="pctBarFill"></span></div><div class="pbar-legend"><span id="pctLegL">verified weight ÷ total weight</span><span id="pctLegR">0%</span></div></div><div class="pside"><div class="bigstat"><em id="statProgress">—</em> verified</div><p class="sub">Phase: <span id="statPhase">—</span> · Now: <span id="statMilestone">—</span></p><p class="mono" id="menuReadinessLine">readiness computed from verified milestone weights</p><div class="chiprow"><span class="chip">verified <b id="mDoneCount">—</b></span><span class="chip">in progress <b id="mProgCount">—</b></span><span class="chip">upcoming <b id="mUpCount">—</b></span><span class="chip">in review <b id="mRevCount">—</b></span></div></div></div><div class="mgrid2 reveal cine-reveal cine-reveal-up"><div class="mcol"><h3>Verified</h3><div id="mDone"></div></div><div class="mcol"><h3>In progress</h3><div id="mProg"></div></div><div class="mcol"><h3>Upcoming</h3><div id="mUp"></div></div><div class="mcol"><h3>Needs review</h3><div id="mRev"></div></div></div><div class="sgrid reveal cine-reveal cine-reveal-up"><div class="scell"><span class="lb">Build</span><span class="vl" id="stBuild" data-state="unknown">—</span><span class="at2" id="stBuildAt">no data yet</span></div><div class="scell"><span class="lb">Tests</span><span class="vl" id="stTests" data-state="unknown">—</span><span class="at2" id="stTestsAt">no data yet</span></div><div class="scell"><span class="lb">Deploy</span><span class="vl" id="stDeploy" data-state="unknown">—</span><span class="at2" id="stDeployAt">no data yet</span></div><div class="scell"><span class="lb">Integration</span><span class="vl" id="statFeedSrc" data-state="setup">—</span><span class="at2">webhooks / CI / maintainer</span></div><div class="scell"><span class="lb">Milestones</span><span class="vl" id="statProgress2">—</span><span class="at2" id="statPhase2">—</span></div><div class="scell"><span class="lb">Ideas</span><span class="vl" id="statIdeas">—</span><span class="at2">community suggestions</span></div><div class="scell"><span class="lb">Waitlist</span><span class="vl" id="statWait">—</span><span class="at2">students waiting</span></div><div class="scell"><span class="lb">Signal</span><span class="vl" id="statSignal" data-state="standby">—</span><span class="at2">build · tests · deploy</span></div></div></section></div>
 
 <!-- ACT 2: STUDY ENGINE (Real Modular Architecture) -->
 <div class="cine-act" id="act2" data-act="2"><div class="cine-act-shell"><div class="chead cine-reveal cine-reveal-up"><span class="num">02</span><div><h2>Study Engine Architecture</h2><p>Zero-drift syllabus grounding · Unit-by-unit visual lessons</p></div></div><div class="cine-study-grid"><div class="cine-panel-card hl-lime cine-reveal cine-reveal-left"><h3>Computer Networks / Syllabus</h3><p class="sub" style="margin-bottom:14px; font-size:12px;">Document-grounded lesson sequence</p><div class="cine-tree-item active"><span>01. TCP Congestion Control</span><span style="font-size:10px; color:var(--lime); font-weight:700;">ACTIVE</span></div><div class="cine-tree-item"><span>02. Sliding Window Protocol</span><span style="font-size:10px; opacity:.6;">READY</span></div><div class="cine-tree-item"><span>03. BGP Path Vector Routing</span><span style="font-size:10px; opacity:.6;">READY</span></div><div class="cine-tree-item"><span>04. Subnetting &amp; CIDR Math</span><span style="font-size:10px; opacity:.6;">READY</span></div></div><div class="cine-panel-card cine-reveal cine-reveal-up" style="display:flex; flex-direction:column; justify-content:space-between;"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;"><span class="lr-kicker">Unit 04 · Interactive Lesson</span><span class="pill verified">Animated Lesson</span></div><h3 style="font-family:var(--disp); font-size:24px; margin:0 0 10px;">TCP AIMD &amp; Slow Start Dynamics</h3><p style="font-size:13.5px; color:var(--paper); line-height:1.6; margin-bottom:16px;">Additive Increase / Multiplicative Decrease congestion window pacing anchored directly to university lecture syllabi. Zero drift between generated notes and reference textbooks.</p><div style="padding:14px; background:rgba(0,0,0,.35); border-radius:12px; border:1px solid var(--line2); font-family:var(--mono); font-size:12px; color:var(--lime);">ALGORITHM: W(t + RTT) = W(t) + 1 &nbsp;|&nbsp; ON LOSS: W(t) = W(t) / 2</div></div><div class="cine-panel-card hl-blue cine-reveal cine-reveal-right"><div class="lr-top"><span class="lr-kicker" style="color:var(--cobalt)">Recall Engine</span><span class="pill in_progress">Active Mode</span></div><h4 style="font-size:17px; margin:6px 0 10px;">Vaathiyar Exam Mode</h4><p style="font-size:13px; color:var(--dim); line-height:1.5; margin-bottom:14px;">Instant Socratic quizzes, formula cheat-sheets, and step-by-step mathematical derivations.</p><div style="padding:12px; background:rgba(92,109,255,.08); border:1px solid rgba(92,109,255,.3); border-radius:10px; font-size:12px; color:var(--paper);"><strong style="color:var(--cobalt)">98% syllabus fidelity</strong> anchored directly to course lecture notes.</div></div></div></div></div>
@@ -736,10 +754,10 @@ details.est-model .em-body em{color:var(--paper);font-style:normal;font-weight:6
 <div class="cine-act" id="act4" data-act="4"><section class="chapter" id="roadmap" aria-labelledby="h-roadmap"><div class="chead cine-reveal cine-reveal-up"><span class="num">04</span><div><h2 id="h-roadmap">The roadmap</h2><p>official plan — only maintainers change these statuses · readiness <span class="chip" style="padding:5px 12px">verified <b id="rmProgress">—</b></span></p></div></div><div class="reveal cine-reveal cine-reveal-up"><div class="rmtl" id="roadmapList"><p class="sub">loading…</p></div><a class="slink" href="#ideas">Suggest a roadmap feature <span class="ar" aria-hidden="true">↗</span></a></div></section></div>
 
 <!-- ACT 5: DEVELOPMENT JOURNEY & READINESS -->
-<div class="cine-act" id="act5" data-act="5"><section class="chapter lr-sec" id="activity" aria-labelledby="h-activity"><div class="chead cine-reveal cine-reveal-up"><span class="num lr-num">05</span><div><h2 id="h-activity">Launch readiness</h2><p id="feedNote">Building, refining, and preparing Xamcode for launch.</p></div></div><div class="lr-shell reveal cine-reveal cine-reveal-up"><div class="lr-grid" role="list" aria-label="Launch readiness overview"><article class="lr-card cine-reveal cine-reveal-up" role="listitem"><div class="lr-top"><span class="lr-kicker">01 · Development Stage</span><span class="pill lr-pill" id="lrStagePill">verified weight</span></div><div class="lr-val" id="lrStage">—</div><p class="lr-meta" id="lrStageMeta">Readiness is measured strictly from verified milestone weights.</p></article><article class="lr-card lr-verified cine-reveal cine-reveal-up" role="listitem"><div class="lr-top"><span class="lr-kicker">02 · Latest Verified Milestone</span><span class="pill verified" id="lrVerifiedPill">verified</span></div><div class="lr-val" id="lrVerified">—</div><p class="lr-meta" id="lrVerifiedMeta">Awaiting verified milestone record.</p></article><article class="lr-card cine-reveal cine-reveal-up" role="listitem"><div class="lr-top"><span class="lr-kicker">03 · Next Development Milestone</span><span class="pill in_progress" id="lrNextPill">in progress</span></div><div class="lr-val" id="lrNext">—</div><p class="lr-meta" id="lrNextMeta">Unverified until completion criteria pass.</p></article><article class="lr-card cine-reveal cine-reveal-up" role="listitem"><div class="lr-top"><span class="lr-kicker">04 · Overall Launch Status</span><span class="pill lr-pill" id="lrLaunchPill">pre-launch</span></div><div class="lr-val" id="lrLaunch">—</div><p class="lr-meta" id="lrLaunchMeta">Launch readiness requires all release milestones to be verified.</p></article></div><div class="lr-update cine-reveal cine-reveal-up"><div class="lr-uhead"><div><span class="lr-kicker">05 · Latest Public Project Update</span><h3 class="lr-utitle" id="lrUpdateTitle">Verified Milestone &amp; Development Log</h3></div><span class="pill lr-pill" id="lrUpdateBadge">public record</span></div><ul class="feed lr-feed" id="actList" aria-live="off"><li class="sub">Loading public project updates…</li></ul><p class="lr-foot" id="lrFootNote">Verified milestones are distinct from active work in progress. Automated builds or deployments alone do not mark features launch-ready.</p><a class="slink" href="#waitlist">Get launch updates <span class="ar" aria-hidden="true">↗</span></a></div></div></section></div>
+<div class="cine-act" id="act5" data-act="5"><section class="chapter lr-sec" id="activity" aria-labelledby="h-activity"><div class="chead cine-reveal cine-reveal-up"><span class="num lr-num">05</span><div><h2 id="h-activity">Launch readiness</h2><p id="feedNote">Building, refining, and preparing Xamcode for launch.</p></div></div><div class="lr-shell reveal cine-reveal cine-reveal-up"><div class="lr-grid" role="list" aria-label="Launch readiness overview"><article class="lr-card cine-reveal cine-reveal-left" role="listitem"><div class="lr-top"><span class="lr-kicker">01 · Development Stage</span><span class="pill lr-pill" id="lrStagePill">verified weight</span></div><div class="lr-val" id="lrStage">—</div><p class="lr-meta" id="lrStageMeta">Readiness is measured strictly from verified milestone weights.</p></article><article class="lr-card lr-verified cine-reveal cine-reveal-up" role="listitem"><div class="lr-top"><span class="lr-kicker">02 · Latest Verified Milestone</span><span class="pill verified" id="lrVerifiedPill">verified</span></div><div class="lr-val" id="lrVerified">—</div><p class="lr-meta" id="lrVerifiedMeta">Awaiting verified milestone record.</p></article><article class="lr-card cine-reveal cine-reveal-up cine-reveal-delay-1" role="listitem"><div class="lr-top"><span class="lr-kicker">03 · Next Development Milestone</span><span class="pill in_progress" id="lrNextPill">in progress</span></div><div class="lr-val" id="lrNext">—</div><p class="lr-meta" id="lrNextMeta">Unverified until completion criteria pass.</p></article><article class="lr-card cine-reveal cine-reveal-right" role="listitem"><div class="lr-top"><span class="lr-kicker">04 · Overall Launch Status</span><span class="pill lr-pill" id="lrLaunchPill">pre-launch</span></div><div class="lr-val" id="lrLaunch">—</div><p class="lr-meta" id="lrLaunchMeta">Launch readiness requires all release milestones to be verified.</p></article></div><div class="lr-update cine-reveal cine-reveal-up cine-reveal-delay-1"><div class="lr-uhead"><div><span class="lr-kicker">05 · Latest Public Project Update</span><h3 class="lr-utitle" id="lrUpdateTitle">Verified Milestone &amp; Development Log</h3></div><span class="pill lr-pill" id="lrUpdateBadge">public record</span></div><ul class="feed lr-feed" id="actList" aria-live="off"><li class="sub">Loading public project updates…</li></ul><p class="lr-foot" id="lrFootNote">Verified milestones are distinct from active work in progress. Automated builds or deployments alone do not mark features launch-ready.</p><a class="slink" href="#waitlist">Get launch updates <span class="ar" aria-hidden="true">↗</span></a></div></div></section></div>
 
 <!-- ACT 6: FINAL REVEAL (Convergence into Launch & Trailer) -->
-<div class="cine-act" id="act6" data-act="6"><div class="cine-act-shell"><div class="chead cine-reveal cine-reveal-up"><span class="num">06</span><div><h2>Transparent Engineering</h2><p>Evidence over guesswork · Verified build to live production</p></div></div><div class="cine-reveal-grid"><div class="cr-card cine-reveal cine-reveal-left"><span class="cr-kicker">01 · STUDY ENGINE</span><h4>Structured Visual Mastery</h4><p>Automated, unit-by-unit lessons created from dense lecture PDFs with high-yield exam recall.</p></div><div class="cr-card cine-reveal cine-reveal-up"><span class="cr-kicker" style="color:var(--cyan)">02 · AURA AI TUTOR</span><h4>Context-Grounded Dialogue</h4><p>Document-grounded tutor with procedural SVG technical diagram recipes and zero drift.</p></div><div class="cr-card cine-reveal cine-reveal-right"><span class="cr-kicker" style="color:var(--lime)">03 · VERIFIED BUILD</span><h4>56% Readiness Weight</h4><p>Strict deterministic milestone proof with honest unknowns — never guessing a launch date.</p></div></div><div style="margin-top:36px; text-align:center;" class="cine-reveal cine-reveal-up"><a class="xcta pri" href="#launch" style="display:inline-flex;">Enter Launch Deck &amp; Watch Trailer <span class="ar" aria-hidden="true">↓</span></a></div></div></div>
+<div class="cine-act" id="act6" data-act="6"><div class="cine-act-shell"><div class="chead cine-reveal cine-reveal-up"><span class="num">06</span><div><h2>Transparent Engineering</h2><p>Evidence over guesswork · Verified build to live production</p></div></div><div class="cine-reveal-grid"><div class="cr-featured cine-reveal cine-reveal-left"><div><span class="cr-kicker" style="color:var(--lime)">01 · AUTONOMOUS STUDY CORE</span><h3>Architecture Grounded in Proof</h3><p>Lecture notes transform into verified, unit-by-unit visual knowledge graphs with procedural SVG synthesis and zero drift between source text and recall notes.</p></div><div class="cr-arch-flow"><div class="cr-flow-step"><span class="lbl">INPUT</span><span class="val">Lecture PDFs</span></div><div class="cr-flow-step"><span class="lbl">ENGINE</span><span class="val">Chunked Mastery</span></div><div class="cr-flow-step"><span class="lbl">TUTOR</span><span class="val">Socratic AURA</span></div></div></div><div class="cr-stack"><div class="cr-card cine-reveal cine-reveal-right"><span class="cr-kicker" style="color:var(--cyan)">02 · AURA CONVERSATIONAL AI</span><h4>Context-Grounded Dialogue</h4><p>Procedural SVG technical diagram recipes and strict syllabus adherence, avoiding generic AI hallucinations.</p></div><div class="cr-card cine-reveal cine-reveal-right cine-reveal-delay-1"><span class="cr-kicker" style="color:var(--lime)">03 · VERIFIED RELEASE PROOF</span><h4>56% Readiness Weight</h4><p>Strict deterministic milestone proof with honest unknowns — never guessing a launch date.</p></div></div></div><div class="cr-cta-strip cine-reveal cine-reveal-up cine-reveal-delay-2"><div class="cta-lead">Experience the Next Generation of Study <span>· XamCode AI</span><p>Explore the live effort model, upcoming release roadmap, and preview trailer.</p></div><a class="xcta pri" href="#launch" style="display:inline-flex;">Enter Launch Deck &amp; Watch Trailer <span class="ar" aria-hidden="true">↓</span></a></div></div></div>
 
 </div> <!-- #cineCamera -->
 </div> <!-- #cineViewport -->
@@ -1013,23 +1031,36 @@ var acts=[$('act1'),$('act2'),$('act3'),$('act4'),$('act5'),$('act6')].filter(Bo
 var actLabel=$('chActLabel'),actBar=$('chProgFill'),coords=$('chCoords');
 var actNames=['ACT 01 · CURRENT STATE','ACT 02 · STUDY ENGINE','ACT 03 · AURA AI TUTOR','ACT 04 · ROADMAP','ACT 05 · LAUNCH READINESS','ACT 06 · FINAL REVEAL'];
 
-if('IntersectionObserver' in window){
+var cineRevs=document.querySelectorAll('.cine-reveal');
+var reduce=false;
+try{reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;}catch(e){}
+
+if(!reduce){
+  document.body.classList.add('js-cine');
+}
+
+if('IntersectionObserver' in window && !reduce){
+  var revIo=new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      if(en.isIntersecting){
+        en.target.classList.add('in-view');
+        revIo.unobserve(en.target);
+      }
+    });
+  },{threshold:0.12, rootMargin:'0px 0px -40px 0px'});
+  cineRevs.forEach(function(r){revIo.observe(r);});
+
   var actIo=new IntersectionObserver(function(entries){
     entries.forEach(function(en){
       if(en.isIntersecting){
         en.target.classList.add('act-entered');
-        var revs=en.target.querySelectorAll('.cine-reveal');
-        for(var r=0;r<revs.length;r++)revs[r].classList.add('in-view');
       }
     });
-  },{threshold:0.08});
+  },{threshold:0.05});
   acts.forEach(function(a){actIo.observe(a);});
 }else{
-  acts.forEach(function(a){
-    a.classList.add('act-entered');
-    var revs=a.querySelectorAll('.cine-reveal');
-    for(var r=0;r<revs.length;r++)revs[r].classList.add('in-view');
-  });
+  cineRevs.forEach(function(r){r.classList.add('in-view');});
+  acts.forEach(function(a){a.classList.add('act-entered');});
 }
 
 function onScroll(){try{

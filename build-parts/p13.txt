@@ -41,23 +41,36 @@ var acts=[$('act1'),$('act2'),$('act3'),$('act4'),$('act5'),$('act6')].filter(Bo
 var actLabel=$('chActLabel'),actBar=$('chProgFill'),coords=$('chCoords');
 var actNames=['ACT 01 · CURRENT STATE','ACT 02 · STUDY ENGINE','ACT 03 · AURA AI TUTOR','ACT 04 · ROADMAP','ACT 05 · LAUNCH READINESS','ACT 06 · FINAL REVEAL'];
 
-if('IntersectionObserver' in window){
+var cineRevs=document.querySelectorAll('.cine-reveal');
+var reduce=false;
+try{reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;}catch(e){}
+
+if(!reduce){
+  document.body.classList.add('js-cine');
+}
+
+if('IntersectionObserver' in window && !reduce){
+  var revIo=new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      if(en.isIntersecting){
+        en.target.classList.add('in-view');
+        revIo.unobserve(en.target);
+      }
+    });
+  },{threshold:0.12, rootMargin:'0px 0px -40px 0px'});
+  cineRevs.forEach(function(r){revIo.observe(r);});
+
   var actIo=new IntersectionObserver(function(entries){
     entries.forEach(function(en){
       if(en.isIntersecting){
         en.target.classList.add('act-entered');
-        var revs=en.target.querySelectorAll('.cine-reveal');
-        for(var r=0;r<revs.length;r++)revs[r].classList.add('in-view');
       }
     });
-  },{threshold:0.08});
+  },{threshold:0.05});
   acts.forEach(function(a){actIo.observe(a);});
 }else{
-  acts.forEach(function(a){
-    a.classList.add('act-entered');
-    var revs=a.querySelectorAll('.cine-reveal');
-    for(var r=0;r<revs.length;r++)revs[r].classList.add('in-view');
-  });
+  cineRevs.forEach(function(r){r.classList.add('in-view');});
+  acts.forEach(function(a){a.classList.add('act-entered');});
 }
 
 function onScroll(){try{
