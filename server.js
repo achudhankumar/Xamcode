@@ -241,7 +241,7 @@ async function callGeminiOnce(parts, opts, slug, key){
      JSON instead of near-JSON with comments/trailing commas. If a model
      rejects the mime type the call fails with 400, which is non-rotating,
      so only set it when the caller declares a schema. */
-  if (opts && opts.schema) body.generationConfig = { responseMimeType: 'application/json' };
+  if (opts && opts.schema) body.generationConfig = { responseMimeType: 'application/json', maxOutputTokens: 32768 };
   const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + slug + ':generateContent?key=' + encodeURIComponent(key);
   for (let attempts = 1; ; attempts++){
     let res;
@@ -449,11 +449,15 @@ async function uploadPdfToGemini(buf){
     buf,
     Buffer.from('\r\n--' + boundary + '--\r\n')
   ]);
-  const url = 'https://generativelanguage.googleapis.com/upload/v1beta/files?supportedMimeType=application%2Fpdf';
+  const url = 'https://generativelanguage.googleapis.com/upload/v1beta/files?key=' + encodeURIComponent(key);
   let res;
   try{
     res = await fetchJson(url, { method: 'POST',
-      headers: { 'Content-Type': 'multipart/related; boundary=' + boundary, 'x-goog-api-key': key },
+      headers: {
+        'Content-Type': 'multipart/related; boundary=' + boundary,
+        'X-Goog-Upload-Protocol': 'multipart',
+        'x-goog-api-key': key
+      },
       body: payload }, 300000);
   }catch{ return null; }
   if (!res.ok || !res.body || !res.body.file || !res.body.file.uri) return null;
@@ -757,25 +761,46 @@ function validateConcepts(concepts){
    study, and every lesson passes the shared concept rules above. */
 function validateUnitOutline(pack){
   try{
-    if (!pack || !Array.isArray(pack.units) || pack.units.length !== 1) return false;
-    if (!Array.isArray(pack.concepts) || pack.concepts.length < 3) return false;
+    if (!pack || !Array.isArray(pack.units) || pack.units.length !== 1) {
+      console.warn('[validateUnitOutline] invalid pack.units');
+      return false;
+    }
+    if (!Array.isArray(pack.concepts) || pack.concepts.length < 3) {
+      console.warn(`[validateUnitOutline] pack.concepts length ${pack.concepts ? pack.concepts.length : 0} < 3`);
+      return false;
+    }
     const unit = pack.units[0];
     if (!unit || !text(unit.title) || !text(unit.overview) ||
         !Array.isArray(unit.learningGoals) || !unit.learningGoals.length ||
-        !Array.isArray(unit.topics) || !unit.topics.length) return false;
+        !Array.isArray(unit.topics) || !unit.topics.length) {
+      console.warn('[validateUnitOutline] unit metadata invalid', unit && unit.title);
+      return false;
+    }
     const assigned = [];
     for (const topic of unit.topics){
       if (!topic || !text(topic.title) ||
-          !Array.isArray(topic.conceptIndices) || !topic.conceptIndices.length) return false;
+          !Array.isArray(topic.conceptIndices) || !topic.conceptIndices.length) {
+        console.warn('[validateUnitOutline] topic invalid', topic && topic.title);
+        return false;
+      }
       for (const index of topic.conceptIndices){
-        if (!Number.isInteger(index) || index < 0 || index >= pack.concepts.length) return false;
+        if (!Number.isInteger(index) || index < 0 || index >= pack.concepts.length) {
+          console.warn('[validateUnitOutline] index out of bounds', index, 'concepts:', pack.concepts.length);
+          return false;
+        }
         assigned.push(index);
       }
     }
     if (assigned.length !== pack.concepts.length ||
-        new Set(assigned).size !== pack.concepts.length) return false;
+        new Set(assigned).size !== pack.concepts.length) {
+      console.warn(`[validateUnitOutline] assigned mismatch: assigned=${assigned.length}, concepts=${pack.concepts.length}`);
+      return false;
+    }
     return validateConcepts(pack.concepts);
-  }catch{ return false; }
+  }catch(err){
+    console.warn('[validateUnitOutline] exception:', err);
+    return false;
+  }
 }
 /* Lightweight course plan for chunked builds: real units in PDF order,
    no lessons. Mirrors the browser's outline rules for everything present;
@@ -813,53 +838,122 @@ function normalizePlan(plan){
 }
 function validatePlan(plan){
   try{
-    if (!plan || !text(plan.title) || !text(plan.subject)) return false;
-    if (!Array.isArray(plan.units) || !plan.units.length) return false;
+    if (!plan || !text(plan.title) || !text(plan.subject)) {
+      console.warn('[validatePlan] title or subject missing');
+      return false;
+    }
+    if (!Array.isArray(plan.units) || !plan.units.length) {
+      console.warn('[validatePlan] units missing or empty');
+      return false;
+    }
     for (const unit of plan.units){
       if (!unit || !text(unit.title) || !text(unit.overview) ||
           !Array.isArray(unit.learningGoals) || !unit.learningGoals.length ||
-          !Array.isArray(unit.topics) || !unit.topics.length) return false;
+          !Array.isArray(unit.topics) || !unit.topics.length) {
+        console.warn('[validatePlan] unit schema invalid', unit && unit.title);
+        return false;
+      }
       for (const topic of unit.topics){
-        if (!topic || !text(topic.title) || !text(topic.overview)) return false;
+        if (!topic || !text(topic.title) || !text(topic.overview)) {
+          console.warn('[validatePlan] topic schema invalid', topic && topic.title);
+          return false;
+        }
       }
     }
     return true;
-  }catch{ return false; }
+  }catch(err){
+    console.warn('[validatePlan] exception:', err);
+    return false;
+  }
 }
 function validateStudyBank(bank, conceptCount){
   try{
-    if (!bank) return false;
-    if (!Array.isArray(bank.questions) || bank.questions.length < 8) return false;
-    if (!Array.isArray(bank.flashcards) || bank.flashcards.length < 8) return false;
+    if (!bank) {
+      console.warn('[validateStudyBank] bank is null/undefined');
+      return false;
+    }
+    if (!Array.isArray(bank.questions) || bank.questions.length < 8) {
+      console.warn(`[validateStudyBank] questions length ${bank.questions ? bank.questions.length : 0} < 8`);
+      return false;
+    }
+    if (!Array.isArray(bank.flashcards) || bank.flashcards.length < 8) {
+      console.warn(`[validateStudyBank] flashcards length ${bank.flashcards ? bank.flashcards.length : 0} < 8`);
+      return false;
+    }
     if (bank.formulas !== undefined){
-      if (!Array.isArray(bank.formulas)) return false;
+      if (!Array.isArray(bank.formulas)) {
+        console.warn('[validateStudyBank] formulas is not an array');
+        return false;
+      }
       for (const f of bank.formulas){
-        if (!text(f.name) || !text(f.expression) || !text(f.meaning)) return false;
+        if (!text(f.name) || !text(f.expression) || !text(f.meaning)) {
+          console.warn('[validateStudyBank] invalid formula', f);
+          return false;
+        }
       }
     }
     const questionVisualSignatures = [];
     const perConcept = {};
     for (const question of bank.questions){
-      if (!text(question.question) || !Array.isArray(question.options) || question.options.length !== 4) return false;
-      if (!Number.isInteger(question.answerIndex) || question.answerIndex < 0 || question.answerIndex > 3) return false;
-      if (!text(question.category) || !text(question.difficulty)) return false;
+      if (!text(question.question) || !Array.isArray(question.options) || question.options.length !== 4) {
+        console.warn('[validateStudyBank] question text or options invalid', question && question.question);
+        return false;
+      }
+      if (!Number.isInteger(question.answerIndex) || question.answerIndex < 0 || question.answerIndex > 3) {
+        console.warn('[validateStudyBank] question answerIndex invalid', question && question.answerIndex);
+        return false;
+      }
+      if (!text(question.category) || !text(question.difficulty)) {
+        console.warn('[validateStudyBank] question category/difficulty missing');
+        return false;
+      }
       if (!Number.isInteger(question.conceptIndex) || question.conceptIndex < 0 ||
-          (conceptCount > 0 && question.conceptIndex >= conceptCount)) return false;
-      if (!text(question.hint) || !text(question.explanation)) return false;
-      if (!Array.isArray(question.optionExplanations) || question.optionExplanations.length !== 4) return false;
-      if (!text(question.eli5)) return false;
+          (conceptCount > 0 && question.conceptIndex >= conceptCount)) {
+        console.warn('[validateStudyBank] question conceptIndex out of bounds', question && question.conceptIndex, 'conceptCount:', conceptCount);
+        return false;
+      }
+      if (!text(question.hint) || !text(question.explanation)) {
+        console.warn('[validateStudyBank] question hint/explanation missing');
+        return false;
+      }
+      if (!Array.isArray(question.optionExplanations) || question.optionExplanations.length !== 4) {
+        console.warn('[validateStudyBank] question optionExplanations invalid');
+        return false;
+      }
+      if (!text(question.eli5)) {
+        console.warn('[validateStudyBank] question eli5 missing');
+        return false;
+      }
       const vis = question.visual;
-      if (!vis || !text(vis.caption) || !text(vis.layout) || !Array.isArray(question.visual.steps) || question.visual.steps.length < 1) return false;
+      if (!vis || !text(vis.caption) || !text(vis.layout) || !Array.isArray(question.visual.steps) || question.visual.steps.length < 1) {
+        console.warn('[validateStudyBank] question visual steps invalid');
+        return false;
+      }
       for (const s of question.visual.steps){
-        if (!text(s.title) || !text(s.description)) return false;
-        if (!Array.isArray(s.nodes) || s.nodes.length < 3) return false;
+        if (!text(s.title) || !text(s.description)) {
+          console.warn('[validateStudyBank] question visual step missing title/desc');
+          return false;
+        }
+        if (!Array.isArray(s.nodes) || s.nodes.length < 3) {
+          console.warn('[validateStudyBank] question visual step nodes < 3');
+          return false;
+        }
         for (const nd of s.nodes){
-          if (!text(nd.label) || !text(nd.detail)) return false;
-          if (nd.code !== undefined && !(typeof nd.code === 'string' && nd.code.trim() && nd.code.trim().length <= 80)) return false;
+          if (!text(nd.label) || !text(nd.detail)) {
+            console.warn('[validateStudyBank] question visual node missing label/detail');
+            return false;
+          }
+          if (nd.code !== undefined && !(typeof nd.code === 'string' && nd.code.trim() && nd.code.trim().length <= 80)) {
+            console.warn('[validateStudyBank] question visual node code invalid');
+            return false;
+          }
         }
       }
       const fp = visualFingerprint(vis);
-      if (questionVisualSignatures.includes(fp)) return false;
+      if (questionVisualSignatures.includes(fp)) {
+        console.warn('[validateStudyBank] duplicate question visual signature');
+        return false;
+      }
       questionVisualSignatures.push(fp);
       perConcept[question.conceptIndex] = (perConcept[question.conceptIndex] || 0) + 1;
     }
@@ -868,14 +962,28 @@ function validateStudyBank(bank, conceptCount){
        display time, so it is refused here instead. */
     for (const card of bank.flashcards){
       if (!card || !Number.isInteger(card.conceptIndex) || card.conceptIndex < 0 ||
-          (conceptCount > 0 && card.conceptIndex >= conceptCount)) return false;
+          (conceptCount > 0 && card.conceptIndex >= conceptCount)) {
+        console.warn('[validateStudyBank] flashcard conceptIndex out of bounds', card && card.conceptIndex, 'conceptCount:', conceptCount);
+        return false;
+      }
     }
     if (conceptCount > 0){
-      if (bank.questions.length < conceptCount * 2) return false;
-      for (let i = 0; i < conceptCount; i++) if (!perConcept[i]) return false;
+      if (bank.questions.length < conceptCount * 2) {
+        console.warn(`[validateStudyBank] questions length ${bank.questions.length} < conceptCount * 2 (${conceptCount * 2})`);
+        return false;
+      }
+      for (let i = 0; i < conceptCount; i++) {
+        if (!perConcept[i]) {
+          console.warn(`[validateStudyBank] missing question for concept index ${i}`);
+          return false;
+        }
+      }
     }
     return true;
-  }catch{ return false; }
+  }catch(err){
+    console.warn('[validateStudyBank] exception:', err);
+    return false;
+  }
 }
 function validateStudyPack(pack) {
   if (!pack || !Array.isArray(pack.concepts) || !pack.concepts.length) return false;
@@ -904,31 +1012,65 @@ function validateStudyPack(pack) {
    lesson list exactly like the browser will. */
 function validateChunkedStudy(study){
   try{
-    if (!study || !Array.isArray(study.units) || !study.units.length) return false;
-    if (!Array.isArray(study.concepts) || study.concepts.length < 4) return false;
-    if (!Array.isArray(study.questions) || !Array.isArray(study.flashcards) || !Array.isArray(study.formulas)) return false;
+    if (!study || !Array.isArray(study.units) || !study.units.length) {
+      console.warn('[validateChunkedStudy] missing study.units');
+      return false;
+    }
+    const minConcepts = study.chunked ? 3 : 4;
+    if (!Array.isArray(study.concepts) || study.concepts.length < minConcepts) {
+      console.warn(`[validateChunkedStudy] study.concepts length ${study.concepts ? study.concepts.length : 0} < ${minConcepts}`);
+      return false;
+    }
+    if (!Array.isArray(study.questions) || !Array.isArray(study.flashcards) || !Array.isArray(study.formulas)) {
+      console.warn('[validateChunkedStudy] missing questions/flashcards/formulas array');
+      return false;
+    }
     const assigned = [];
     for (const unit of study.units){
       if (!unit || !text(unit.title) || !text(unit.overview) ||
           !Array.isArray(unit.learningGoals) || !unit.learningGoals.length ||
-          !Array.isArray(unit.topics)) return false;
+          !Array.isArray(unit.topics)) {
+        console.warn('[validateChunkedStudy] unit metadata missing', unit && unit.title);
+        return false;
+      }
       if (unit.locked) continue;
-      if (!unit.topics.length) return false;
+      if (!unit.topics.length) {
+        console.warn('[validateChunkedStudy] unlocked unit has no topics', unit.title);
+        return false;
+      }
       for (const topic of unit.topics){
         if (!topic || !text(topic.title) ||
-            !Array.isArray(topic.conceptIndices) || !topic.conceptIndices.length) return false;
+            !Array.isArray(topic.conceptIndices) || !topic.conceptIndices.length) {
+          console.warn('[validateChunkedStudy] topic missing title or conceptIndices', topic && topic.title);
+          return false;
+        }
         for (const index of topic.conceptIndices){
-          if (!Number.isInteger(index) || index < 0 || index >= study.concepts.length) return false;
+          if (!Number.isInteger(index) || index < 0 || index >= study.concepts.length) {
+            console.warn('[validateChunkedStudy] index out of bounds', index, 'concepts:', study.concepts.length);
+            return false;
+          }
           assigned.push(index);
         }
       }
     }
     if (assigned.length !== study.concepts.length ||
-        new Set(assigned).size !== study.concepts.length) return false;
-    if (!validateConcepts(study.concepts)) return false;
-    if (!validateStudyBank(study, study.concepts.length)) return false;
+        new Set(assigned).size !== study.concepts.length) {
+      console.warn(`[validateChunkedStudy] assigned mismatch: assigned=${assigned.length}, concepts=${study.concepts.length}`);
+      return false;
+    }
+    if (!validateConcepts(study.concepts)) {
+      console.warn('[validateChunkedStudy] validateConcepts failed');
+      return false;
+    }
+    if (!validateStudyBank(study, study.concepts.length)) {
+      console.warn('[validateChunkedStudy] validateStudyBank failed');
+      return false;
+    }
     return true;
-  }catch{ return false; }
+  }catch(err){
+    console.warn('[validateChunkedStudy] exception:', err);
+    return false;
+  }
 }
 /* Keyword router: picks one of the 15 layouts from question text, so the
    diagram archetype is a function of the content rather than the model's
@@ -1147,15 +1289,17 @@ function extractJson(text){
     s => stripJsonComments(s),
     /* trailing commas before } or ] */
     s => stripJsonComments(s).replace(/,\s*([}\]])/g, '$1'),
+    /* escape literal unescaped newlines/tabs inside strings */
+    s => escapeControlCharsInStrings(stripJsonComments(s).replace(/,\s*([}\]])/g, '$1')),
     /* smart quotes + trailing commas */
-    s => stripJsonComments(s).replace(/[\u201c\u201d]/g, '"').replace(/[\u2018\u2019]/g, "'").replace(/,\s*([}\]])/g, '$1'),
+    s => escapeControlCharsInStrings(stripJsonComments(s).replace(/[\u201c\u201d]/g, '"').replace(/[\u2018\u2019]/g, "'").replace(/,\s*([}\]])/g, '$1')),
     /* single-quoted keys/values -> double quotes (cautious) */
-    s => stripJsonComments(s).replace(/,\s*([}\]])/g, '$1').replace(/'([^'\\]*(?:\\.[^'\\]*)*)'/g, '"$1"'),
+    s => escapeControlCharsInStrings(stripJsonComments(s).replace(/,\s*([}\]])/g, '$1').replace(/'([^'\\]*(?:\\.[^'\\]*)*)'/g, '"$1"')),
     /* unquoted object keys -> double-quoted (the exact failure live Gemini
        produced:  { "title": "Web Browsing",\n  description: "..." } ) */
-    s => quoteUnquotedKeys(stripJsonComments(s).replace(/,\s*([}\]])/g, '$1')),
+    s => quoteUnquotedKeys(escapeControlCharsInStrings(stripJsonComments(s).replace(/,\s*([}\]])/g, '$1'))),
     /* truncate-and-close: cut at last complete } or ] then balance */
-    s => balanceBraces(stripJsonComments(s).replace(/,\s*([}\]])/g, '$1'))
+    s => balanceBraces(escapeControlCharsInStrings(stripJsonComments(s).replace(/,\s*([}\]])/g, '$1')))
   ];
   let lastErr = null;
   for (const cand of attempts){
@@ -1167,6 +1311,25 @@ function extractJson(text){
     }
   }
   throw lastErr || mkErr(502, 'The AI returned an unreadable response. Please try again.');
+}
+function escapeControlCharsInStrings(s){
+  let out = '', instr = false, esc = false;
+  for (let i = 0; i < s.length; i++){
+    const ch = s[i];
+    if (instr){
+      if (esc){ esc = false; out += ch; }
+      else if (ch === '\\'){ esc = true; out += ch; }
+      else if (ch === '"'){ instr = false; out += ch; }
+      else if (ch === '\n') out += '\\n';
+      else if (ch === '\r') out += '\\r';
+      else if (ch === '\t') out += '\\t';
+      else out += ch;
+      continue;
+    }
+    if (ch === '"'){ instr = true; out += ch; continue; }
+    out += ch;
+  }
+  return out;
 }
 function stripJsonComments(s){
   let out = '', instr = false, esc = false, line = false, block = false;
@@ -1220,7 +1383,19 @@ function balanceBraces(s){
   }
   if (lastGood > start) return s.slice(start, lastGood + 1);
   /* Truncated mid-object: close what is open. */
-  let cut = s.slice(start).replace(/,\s*$/, '');
+  let cut = s.slice(start);
+  instr = false; esc = false;
+  for (let i = 0; i < cut.length; i++){
+    const ch = cut[i];
+    if (instr){ if (esc) esc = false; else if (ch === '\\') esc = true; else if (ch === '"') instr = false; }
+    else if (ch === '"') instr = true;
+  }
+  if (instr) cut += '"';
+  // Strip trailing dangling keys like , "key": or , "key"
+  cut = cut.replace(/,\s*"[^"]*"\s*:\s*$/, '');
+  cut = cut.replace(/\{\s*"[^"]*"\s*:\s*$/, '{');
+  cut = cut.replace(/,\s*"[^"]*"\s*$/, '');
+  cut = cut.replace(/,\s*$/, '');
   const opens = [];
   instr = false; esc = false;
   for (const ch of cut){
@@ -1230,7 +1405,6 @@ function balanceBraces(s){
     else if (ch === '[') opens.push(']');
     else if ((ch === '}' || ch === ']') && opens.length) opens.pop();
   }
-  if (instr) cut += '"';
   while (opens.length) cut += opens.pop();
   return cut;
 }
@@ -1242,31 +1416,72 @@ function balanceBraces(s){
    guard only needs the document's own vocabulary, and the fingerprint
    builder ignores anything unparseable. Returns '' when nothing can be
    extracted; the guard degrades gracefully on an empty fingerprint. */
+function parsePdfTjArray(tjStr){
+  const itemRe = /\(((?:\\[\s\S]|[^\\()])*)\)|(-?\d+(?:\.\d+)?)/g;
+  let out = '', m;
+  while ((m = itemRe.exec(tjStr))){
+    if (m[1] !== undefined){
+      out += m[1].replace(/\\([0-9]{3})/g, (_, oct) => String.fromCharCode(parseInt(oct, 8)))
+                 .replace(/\\([()\\\\])/g, '$1');
+    } else if (m[2] !== undefined){
+      if (parseFloat(m[2]) <= -100) out += ' ';
+    }
+  }
+  return out;
+}
 function extractPdfTextLite(buf){
   try{
     const s = Buffer.isBuffer(buf) ? buf : Buffer.from(buf);
     const latin = s.toString('latin1');
-    const chunks = [];
-    const re = /stream\r?\n/g;
+    const textLines = [];
+    const re = /stream\r?\n([\s\S]*?)\r?\nendstream/g;
     let m;
     while ((m = re.exec(latin))){
-      const start = m.index + m[0].length;
-      const end = latin.indexOf('endstream', start);
-      if (end < 0) break;
-      const raw = s.subarray(start, end);
+      const raw = Buffer.from(m[1], 'latin1');
       let data = null;
-      try{ data = zlib.inflateSync(raw); }
-      catch{ try{ data = zlib.inflateRawSync(raw); }catch{ data = raw; } }
-      chunks.push(data.toString('latin1'));
-      re.lastIndex = end;
+      try{ data = zlib.inflateSync(raw).toString('latin1'); }
+      catch{ try{ data = zlib.inflateRawSync(raw).toString('latin1'); }catch{ data = m[1]; } }
+      if (!data) continue;
+      // 1. First preference: TJ arrays (which assemble kerning and syllables into whole words)
+      const tjRe = /\[([\s\S]*?)\]\s*TJ/g;
+      let tjm;
+      while ((tjm = tjRe.exec(data))){
+        const parsed = parsePdfTjArray(tjm[1]).trim();
+        if (parsed.length >= 2) textLines.push(parsed);
+      }
+      // 2. Second preference: BT ... ET text blocks with (str) Tj
+      const btRe = /BT\s*([\s\S]*?)\s*ET/g;
+      let btm;
+      while ((btm = btRe.exec(data))){
+        const block = btm[1];
+        const strRe = /\(((?:\\[\s\S]|[^\\()])*)\)/g;
+        let t;
+        while ((t = strRe.exec(block))){
+          const cleaned = t[1].replace(/\\([0-9]{3})/g, (_, oct) => String.fromCharCode(parseInt(oct, 8)))
+                              .replace(/\\([()\\\\])/g, '$1')
+                              .trim();
+          if (cleaned.length >= 2) textLines.push(cleaned);
+        }
+      }
+      // 3. Third preference: standalone (str) Tj or general string operators
+      const tjSingleRe = /\(((?:\\[\s\S]|[^\\()])*)\)\s*(?:Tj|'|")/g;
+      let sm;
+      while ((sm = tjSingleRe.exec(data))){
+        const cleaned = sm[1].replace(/\\([0-9]{3})/g, (_, oct) => String.fromCharCode(parseInt(oct, 8)))
+                             .replace(/\\([()\\\\])/g, '$1')
+                             .trim();
+        if (cleaned.length >= 2) textLines.push(cleaned);
+      }
     }
-    const all = chunks.length ? chunks.join('\n') : latin;
+    if (textLines.length > 0){
+      return textLines.join(' ').slice(0, 400000);
+    }
+    // Fallback if no stream text found (simple synthetic PDFs)
     const strings = [];
     const strRe = /\(((?:\\[\s\S]|[^\\()])*)\)/g;
     let t;
-    while ((t = strRe.exec(all))) strings.push(t[1]);
-    const text = strings.join(' ');
-    return (text || all).slice(0, 400000);
+    while ((t = strRe.exec(latin))) strings.push(t[1]);
+    return strings.join(' ').slice(0, 400000);
   }catch{ return ''; }
 }
 function createAnalyzeJob(pdfBuffer, level, requestId){
@@ -2035,7 +2250,12 @@ function buildLiteralSubjectFingerprint(text, quotes){
     'two','three','four','five','six','seven','eight','nine','ten',
     'one','ones','single','double','first','second','third','last',
     'all','both','either','neither','any','some','many','most','much',
-    'several','few'
+    'several','few',
+    'obj','endobj','stream','endstream','flatedecode','filter','devicergb','parent',
+    'contents','length','type','group','subtype','btox','xref','trailer','startxref',
+    'catalog','pages','page','font','fontdescriptor','mediabox','resources','procset',
+    'width','height','bitspercomponent','colorspace','glyph','glyf','hhea','hmtx',
+    'loca','maxp','post','prep','truetype','type1','cidfont'
   ]);
 
   const byToken = new Map();   // stemmed token -> { raw, weight, fromQuote }
@@ -2266,8 +2486,10 @@ function enforceOutlineSubjectFidelity(pack, job){
   if (!fp.trim()) return;
   const concepts = pack && Array.isArray(pack.concepts) ? pack.concepts : [];
   for (const c of concepts){
-    if (!conceptMatchesLiteralFingerprint(c, fp))
+    const matches = conceptMatchesLiteralFingerprint(c, fp);
+    if (!matches){
       throw mkErr(502, 'The study content does not match the subject of this PDF.', { code: 'SUBJECT_MISMATCH' });
+    }
   }
 }
 

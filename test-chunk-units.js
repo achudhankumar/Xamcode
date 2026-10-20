@@ -162,6 +162,15 @@ const stage1=H.assembleChunkStudy({chunk:Object.assign({},job.chunk,
   {built:[b0,null,null],states:['ready','building','locked']})});
 ok(S.validateChunkedStudy(stage1),'Unit 1 alone validates on the server');
 ok(C.validateAIStudyForDisplay(stage1)==='','Unit 1 alone validates in the browser');
+const b3={topics:[{title:'T0',overview:'o',conceptIndices:[0,1,2]}],
+  concepts:[0,1,2].map(i=>mkConcept(i,'b3-'+i)),
+  questions:[0,1,2,3,4,5,6,7].map(i=>mkQuestion(i,i%3,'b3q'+i)),
+  flashcards:[0,1,2,3,4,5,6,7].map(i=>mkCard(i%3)),
+  formulas:[]};
+const stage1Compact=H.assembleChunkStudy({chunk:Object.assign({},job.chunk,
+  {built:[b3,null,null],states:['ready','building','locked']})});
+ok(S.validateChunkedStudy(stage1Compact),'3-concept compact Unit 1 validates on the server');
+ok(C.validateAIStudyForDisplay(stage1Compact)==='','3-concept compact Unit 1 validates in the browser');
 /* A broken merge must be refused. */
 const broken=JSON.parse(JSON.stringify(merged));
 broken.units[0].topics=[];
