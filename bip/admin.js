@@ -114,11 +114,18 @@ function publicLaunch(){
   const launch = d.settings.launch || {};
   const now = Date.now();
   const confirmedAt = launch.confirmed ? Date.parse(launch.confirmed) : NaN;
-  const estimatedAt = launch.estimated ? Date.parse(launch.estimated) : NaN;
+  let estimated = launch.estimated || null;
+  if (!estimated) {
+    try {
+      const est = estimate.computeEstimate();
+      if (est && est.projectedAt) estimated = est.projectedAt;
+    } catch (e) {}
+  }
+  const estimatedAt = estimated ? Date.parse(estimated) : NaN;
   return {
     readinessPercent: p.percent,
     readiness: readinessLabel(p.percent),
-    estimated: launch.estimated || null,
+    estimated: estimated,
     confirmed: launch.confirmed || null,
     note: launch.note || '',
     countdownMs: !Number.isNaN(confirmedAt) ? Math.max(0, confirmedAt - now) : null,

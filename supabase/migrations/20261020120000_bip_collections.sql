@@ -141,3 +141,4 @@ JOIN pg_namespace n ON n.oid = c.relnamespace
 LEFT JOIN information_schema.table_privileges p ON p.table_name = c.relname AND p.table_schema = n.nspname
 WHERE n.nspname = 'public' AND c.relname = 'bip_collections'
 GROUP BY c.relname, c.relrowsecurity;
+  

@@ -3456,8 +3456,9 @@ try{box.scrollTop=box.scrollHeight;}catch(e){}}
 function rl(L){S.launch=L||{};var a=$('launchState'),b=$('launchNote'),k=$('launchKind'),cc=$('countCells');
 if(S.launch.hasConfirmedDate){if(a)a.textContent='Confirmed launch — counting down';if(k)k.textContent='Confirmed date'+(S.launch.note?(' · '+S.launch.note):'')+' · readiness '+(S.launch.readinessPercent||0)+'% ('+(S.launch.readiness||'')+')';if(cc)cc.hidden=false;try{tickTo(new Date(S.launch.confirmed).getTime());}catch(e){}}
 else if(S.launch.estimated){if(a)a.textContent='Estimated launch — not a promise';if(k)k.textContent='Estimate'+(S.launch.note?(' · '+S.launch.note):'')+' · readiness '+(S.launch.readinessPercent||0)+'% ('+(S.launch.readiness||'')+') · ordinary commits never move this date';if(cc)cc.hidden=false;try{tickTo(new Date(S.launch.estimated).getTime());}catch(e){}}
+else if(S.est&&S.est.projectedAt){if(a)a.textContent='Estimated launch — model projection';if(k)k.textContent='Estimate · readiness '+(S.launch.readinessPercent||0)+'% ('+(S.launch.readiness||'')+') · derived from verified tasks and effort';if(cc)cc.hidden=false;try{tickTo(new Date(S.est.projectedAt).getTime());}catch(e){}}
 else{if(a)a.textContent='Launch date not set — readiness '+(S.launch.readinessPercent||0)+'% ('+(S.launch.readiness||'')+')';if(b)b.textContent=S.launch.note||'The date appears here only when maintainers confirm it.';if(k)k.textContent='Track readiness above; the countdown starts when a real date lands.';if(cc)cc.hidden=true;stopT();}}
-function tickTo(t){stopT();function tick(){var ms=t-Date.now();if(ms<0)ms=0;var s=Math.floor(ms/1000);st('cdD',String(Math.floor(s/86400)));st('cdH',String(Math.floor(s%86400/3600)).padStart(2,'0'));st('cdM',String(Math.floor(s%3600/60)).padStart(2,'0'));st('cdS',String(s%60).padStart(2,'0'));}tick();try{S.timer=setInterval(tick,1000);}catch(e){}}
+function tickTo(t){stopT();if(!isFinite(t))return;function tick(){var ms=t-Date.now();if(ms<0)ms=0;var s=Math.floor(ms/1000);st('cdD',String(Math.floor(s/86400)));st('cdH',String(Math.floor(s%86400/3600)).padStart(2,'0'));st('cdM',String(Math.floor(s%3600/60)).padStart(2,'0'));st('cdS',String(s%60).padStart(2,'0'));}tick();try{S.timer=setInterval(tick,1000);}catch(e){}}
 function stopT(){if(S.timer){clearInterval(S.timer);S.timer=null;}}
 function an(id,msg,ok){var n=$(id);if(!n)return;n.textContent=msg;n.className='fmsg '+(ok?'ok':'err');}
 /* ---------- Deterministic effort-model countdown (GET /api/bip/estimate) ----------
@@ -3513,7 +3514,7 @@ function restRender(){
   S.estAnchor={targetMs:tgt,serverAtMs:isFinite(srv)?srv:tgt,fetchLocalMs:S.estFetchedAt};
   st('estNote','Model projection — recalculated from live task, bug and blocker data. Not a promise; it moves only when the underlying work moves.');
   st('estTarget','projected '+fm(e.projectedAt)+' · as of server time '+fm(e.at));
-  var cc=$('estCells');if(cc)cc.hidden=false;
+  var cc=$('estCells');if(cc)cc.hidden=false; if(S.launch&&!S.launch.hasConfirmedDate&&!S.launch.estimated&&e.projectedAt){rl(Object.assign({},S.launch,{estimated:e.projectedAt}));}
 }
 function restTick(){
   var a=S.estAnchor;if(!a)return;
