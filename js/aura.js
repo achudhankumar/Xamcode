@@ -101,11 +101,11 @@
       if(!m.diagramText && !m.visual) continue;
       const slot = slots[i++];
       if(!slot) break;
-      if(m.diagramText){ mountDiagram(slot, m); continue; }
-      if(av && typeof av.createPlayer === 'function'){
+      if(m.visual && av && typeof av.createPlayer === 'function'){
         const player = av.createPlayer(slot, m.visual.type, m.visual.params, { svg_instruction: m.visual.svg_instruction || '' });
-        if(player) players.push(player);
+        if(player){ players.push(player); continue; }
       }
+      if(m.diagramText){ mountDiagram(slot, m); continue; }
     }
   }
 
@@ -319,17 +319,19 @@
          visual_type/params stays behind it as the fallback when that engine
          cannot render, and keyword detection still covers older servers —
          so every answer ends up with an image. */
-      const KNOWN = { projectile:1, photosynthesis:1, pythagoras:1, motor:1, dna:1, wave:1, generic:1 };
-      const knownVisual = data.visual_type && KNOWN[data.visual_type]
-        ? { type:data.visual_type, params:(data.params && typeof data.params==='object')?data.params:{}, svg_instruction:data.svg_instruction||'' }
+      const KNOWN = { bicycle:1, engine:1, heart:1, projectile:1, photosynthesis:1, pythagoras:1, motor:1, dna:1, wave:1, generic:1 };
+      const av = window.XC.auraVisuals;
+      const detectedType = av && typeof av.detect==='function' ? av.detect(question + '\n' + answerText) : null;
+      const visualType = (data.visual_type && KNOWN[data.visual_type]) ? data.visual_type : detectedType;
+      const knownVisual = visualType && KNOWN[visualType]
+        ? { type:visualType, params:(data.params && typeof data.params==='object')?data.params:(av?av.extractParams(visualType, answerText):{}), svg_instruction:data.svg_instruction||'' }
         : null;
-      if(typeof data.diagram === 'string' && data.diagram.trim()){
-        auraMsg.diagramText = data.diagram.trim();
-        if(knownVisual) auraMsg.visual = knownVisual;
-      }else if(knownVisual){
+      if(knownVisual){
         auraMsg.visual = knownVisual;
+        if(typeof data.diagram === 'string' && data.diagram.trim()) auraMsg.diagramText = data.diagram.trim();
+      }else if(typeof data.diagram === 'string' && data.diagram.trim()){
+        auraMsg.diagramText = data.diagram.trim();
       }else{
-        const av = window.XC.auraVisuals;
         const type = av && typeof av.detect==='function' ? av.detect(question + '\n' + answerText) : null;
         if(type) auraMsg.visual = { type, params:av.extractParams(type, answerText), svg_instruction:'' };
         else auraMsg.diagramText = answerText;

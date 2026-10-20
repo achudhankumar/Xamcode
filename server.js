@@ -1949,7 +1949,7 @@ const AURA_JSON_PROMPT = [
   '  flowchart: flow: Step A, Step B, Outcome',
   '  sequence: seq: first step, second step, third step',
   'If no picture would help, use "diagram": "".',
-  '"visual_type" may be one of projectile, photosynthesis, pythagoras, motor, dna, wave, or null; "params" may be a small object of numbers for those scenes.',
+  '"visual_type" may be one of bicycle, engine, heart, projectile, photosynthesis, pythagoras, motor, dna, wave, or null; "params" may be a small object of numbers for those scenes.',
   'No markdown, no code fences — one valid JSON object only.'
 ].join(' ');
 /* Sanitizes the model's AURA answer: the explanation must be a non-empty

@@ -343,6 +343,247 @@
     }
   };
 
+  /* ---------------- 8. Bicycle Mechanics & Powertrain ---------------- */
+  const bicycle = {
+    label: 'Bicycle Powertrain & Mechanical Advantage',
+    defaults: { cadence: 60, gearRatio: 2.5 },
+    sliders: [
+      { key: 'cadence', label: 'Cadence (Pedaling RPM)', min: 20, max: 120, step: 1, unit: ' RPM' },
+      { key: 'gearRatio', label: 'Gear Ratio (Chainring / Sprocket)', min: 1.0, max: 4.5, step: 0.1, unit: 'x' }
+    ],
+    build(ctx, p){
+      const svg = ctx.svg;
+      svgEl('rect', { x:0, y:0, width:400, height:250, class:'av-bg' }, svg);
+
+      // Ground with dashed moving terrain
+      ctx.refs.ground = svgEl('line', { x1:10, y1:212, x2:390, y2:212, stroke:'#475569', 'stroke-width':3, 'stroke-dasharray':'12 8' }, svg);
+
+      // Wheel groups
+      const rG = svgEl('g', { transform:'translate(95, 160)' }, svg);
+      const fG = svgEl('g', { transform:'translate(305, 160)' }, svg);
+
+      // Tires & Rims
+      svgEl('circle', { cx:0, cy:0, r:48, stroke:'#0284c7', 'stroke-width':4, fill:'rgba(2,132,199,0.06)' }, rG);
+      svgEl('circle', { cx:0, cy:0, r:48, stroke:'#0284c7', 'stroke-width':4, fill:'rgba(2,132,199,0.06)' }, fG);
+      svgEl('circle', { cx:0, cy:0, r:12, fill:'#38bdf8' }, rG);
+      svgEl('circle', { cx:0, cy:0, r:12, fill:'#38bdf8' }, fG);
+
+      // Rotating Spokes
+      ctx.refs.rSpokes = [];
+      ctx.refs.fSpokes = [];
+      for(let i=0; i<6; i++){
+        const ang = (i * Math.PI) / 3;
+        ctx.refs.rSpokes.push(svgEl('line', { x1:0, y1:0, x2:(48*Math.cos(ang)).toFixed(1), y2:(48*Math.sin(ang)).toFixed(1), stroke:'#94a3b8', 'stroke-width':1.5 }, rG));
+        ctx.refs.fSpokes.push(svgEl('line', { x1:0, y1:0, x2:(48*Math.cos(ang)).toFixed(1), y2:(48*Math.sin(ang)).toFixed(1), stroke:'#94a3b8', 'stroke-width':1.5 }, fG));
+      }
+
+      // Diamond Frame Tubes (Standard Bicycle Geometry)
+      const frame = svgEl('g', { stroke:'#22c55e', 'stroke-width':3.5, 'stroke-linecap':'round', 'stroke-linejoin':'round' }, svg);
+      svgEl('line', { x1:95, y1:160, x2:195, y2:160 }, frame); // Chainstay
+      svgEl('line', { x1:95, y1:160, x2:160, y2:85 }, frame);  // Seatstay
+      svgEl('line', { x1:195, y1:160, x2:160, y2:85 }, frame); // Seat tube
+      svgEl('line', { x1:160, y1:85, x2:275, y2:75 }, frame);  // Top tube
+      svgEl('line', { x1:195, y1:160, x2:275, y2:75 }, frame); // Down tube
+      svgEl('line', { x1:275, y1:75, x2:305, y2:160 }, frame); // Fork
+
+      // Saddle & Handlebars
+      svgEl('path', { d:'M142 80 Q160 76 178 82 Q160 88 142 80 Z', fill:'#f8fafc', stroke:'#0f172a', 'stroke-width':1.5 }, svg);
+      svgEl('path', { d:'M275 75 L272 58 Q278 52 288 56 Q280 64 275 75 Z', fill:'none', stroke:'#e2e8f0', 'stroke-width':3 }, svg);
+
+      // Chain drive
+      svgEl('line', { x1:95, y1:152, x2:195, y2:144, stroke:'#facc15', 'stroke-width':2, 'stroke-dasharray':'4 3' }, svg);
+      svgEl('line', { x1:95, y1:168, x2:195, y2:176, stroke:'#facc15', 'stroke-width':2, 'stroke-dasharray':'4 3' }, svg);
+      ctx.refs.chainTop = svg.children[svg.children.length - 2];
+      ctx.refs.chainBottom = svg.children[svg.children.length - 1];
+
+      // Front Chainring
+      svgEl('circle', { cx:195, cy:160, r:18, stroke:'#facc15', 'stroke-width':2.5, fill:'rgba(250,204,21,0.2)' }, svg);
+      // Rear Sprocket
+      svgEl('circle', { cx:95, cy:160, r:9, stroke:'#facc15', 'stroke-width':2, fill:'rgba(250,204,21,0.4)' }, svg);
+
+      // Crank arms & Pedals
+      ctx.refs.crankGroup = svgEl('g', { transform:'translate(195, 160)' }, svg);
+      ctx.refs.crankArmA = svgEl('line', { x1:0, y1:0, x2:0, y2:22, stroke:'#cbd5e1', 'stroke-width':3 }, ctx.refs.crankGroup);
+      ctx.refs.crankArmB = svgEl('line', { x1:0, y1:0, x2:0, y2:-22, stroke:'#cbd5e1', 'stroke-width':3 }, ctx.refs.crankGroup);
+      ctx.refs.pedalA = svgEl('rect', { x:-6, y:18, width:12, height:6, rx:2, fill:'#f43f5e' }, ctx.refs.crankGroup);
+      ctx.refs.pedalB = svgEl('rect', { x:-6, y:-24, width:12, height:6, rx:2, fill:'#f43f5e' }, ctx.refs.crankGroup);
+
+      // Telemetry HUD
+      ctx.refs.speedText = svgEl('text', { x:200, y:28, class:'av-title-h', 'text-anchor':'middle', fill:'#38bdf8', 'font-size':13, 'font-weight':800 }, svg);
+      ctx.refs.ratioText = svgEl('text', { x:200, y:242, class:'av-eq', 'text-anchor':'middle', fill:'#94a3b8', 'font-size':11 }, svg);
+    },
+    update(ctx, p, t){
+      const r = ctx.refs;
+      const cadenceRps = (p.cadence || 60) / 60;
+      const crankAngle = (t * cadenceRps * 2 * Math.PI) % (2 * Math.PI);
+      const wheelAngle = (crankAngle * (p.gearRatio || 2.5)) % (2 * Math.PI);
+
+      // Rotate crank arm
+      const cDeg = (crankAngle * 180 / Math.PI).toFixed(1);
+      r.crankGroup.setAttribute('transform', `translate(195, 160) rotate(${cDeg})`);
+
+      // Rotate wheel spokes
+      for(let i=0; i<6; i++){
+        const baseAng = (i * Math.PI) / 3;
+        const curAng = baseAng + wheelAngle;
+        const x = (48 * Math.cos(curAng)).toFixed(1);
+        const y = (48 * Math.sin(curAng)).toFixed(1);
+        r.rSpokes[i].setAttribute('x2', x); r.rSpokes[i].setAttribute('y2', y);
+        r.fSpokes[i].setAttribute('x2', x); r.fSpokes[i].setAttribute('y2', y);
+      }
+
+      // Scroll ground line backwards to simulate forward velocity
+      const wheelCircumference = 2.12; // meters (standard 700c wheel)
+      const speedKmh = ((p.cadence || 60) * (p.gearRatio || 2.5) * wheelCircumference * 60) / 1000;
+      const groundOffset = ((t * speedKmh * 8) % 20).toFixed(1);
+      r.ground.setAttribute('stroke-dashoffset', groundOffset);
+      r.chainTop.setAttribute('stroke-dashoffset', (-groundOffset * 1.5).toFixed(1));
+      r.chainBottom.setAttribute('stroke-dashoffset', (groundOffset * 1.5).toFixed(1));
+
+      r.speedText.textContent = `Speed: ${speedKmh.toFixed(1)} km/h  ·  Pedaling: ${p.cadence} RPM`;
+      r.ratioText.textContent = `Gear Ratio: ${(p.gearRatio||2.5).toFixed(1)}:1  ·  Crank Torque → Chain Tension → Wheel Rotation`;
+    }
+  };
+
+  /* ---------------- 9. 4-Stroke Engine Cycle ---------------- */
+  const engine = {
+    label: '4-Stroke Internal Combustion Engine',
+    defaults: { rpm: 1200 },
+    sliders: [
+      { key: 'rpm', label: 'Engine Speed', min: 600, max: 3600, step: 100, unit: ' RPM' }
+    ],
+    build(ctx, p){
+      const svg = ctx.svg;
+      svgEl('rect', { x:0, y:0, width:400, height:250, class:'av-bg' }, svg);
+
+      // Cylinder block
+      svgEl('rect', { x:150, y:35, width:100, height:130, rx:4, fill:'#0b1120', stroke:'#334155', 'stroke-width':3 }, svg);
+      // Combustion chamber glow
+      ctx.refs.chamber = svgEl('rect', { x:154, y:38, width:92, height:30, fill:'rgba(244,63,94,0)' }, svg);
+
+      // Valves
+      ctx.refs.valvIn = svgEl('line', { x1:175, y1:35, x2:175, y2:45, stroke:'#38bdf8', 'stroke-width':4 }, svg);
+      ctx.refs.valvEx = svgEl('line', { x1:225, y1:35, x2:225, y2:45, stroke:'#f97316', 'stroke-width':4 }, svg);
+      // Spark plug
+      svgEl('rect', { x:197, y:25, width:6, height:14, fill:'#facc15' }, svg);
+      ctx.refs.spark = svgEl('circle', { cx:200, cy:40, r:0, fill:'#facc15', opacity:0 }, svg);
+
+      // Piston & Connecting Rod
+      ctx.refs.piston = svgEl('rect', { x:155, y:60, width:90, height:38, rx:5, fill:'#475569', stroke:'#94a3b8', 'stroke-width':2 }, svg);
+      ctx.refs.conRod = svgEl('line', { x1:200, y1:79, x2:200, y2:185, stroke:'#cbd5e1', 'stroke-width':5, 'stroke-linecap':'round' }, svg);
+
+      // Crankshaft
+      svgEl('circle', { cx:200, cy:185, r:30, fill:'none', stroke:'#1e293b', 'stroke-width':3, 'stroke-dasharray':'4 4' }, svg);
+      ctx.refs.crankPin = svgEl('circle', { cx:200, cy:160, r:7, fill:'#38bdf8', stroke:'#0284c7', 'stroke-width':2 }, svg);
+
+      // Status HUD
+      ctx.refs.phaseLabel = svgEl('text', { x:200, y:235, class:'av-title-h', 'text-anchor':'middle', fill:'#22c55e', 'font-size':13, 'font-weight':800 }, svg);
+      ctx.refs.telemetry = svgEl('text', { x:200, y:248, class:'av-eq', 'text-anchor':'middle', fill:'#94a3b8', 'font-size':10 }, svg);
+    },
+    update(ctx, p, t){
+      const r = ctx.refs;
+      const rps = (p.rpm || 1200) / 60;
+      const totalAngle = (t * rps * 2 * Math.PI) % (4 * Math.PI); // 4-stroke cycle = 720° (4pi)
+      const crankAngle = totalAngle % (2 * Math.PI);
+
+      const crankR = 24;
+      const rodL = 68;
+      const cX = 200 + crankR * Math.sin(crankAngle);
+      const cY = 185 + crankR * Math.cos(crankAngle);
+
+      // Piston slider-crank kinematics
+      const pistonY = cY - Math.sqrt(rodL*rodL - Math.pow(cX - 200, 2)) - 19;
+      r.piston.setAttribute('y', (pistonY - 19).toFixed(1));
+      r.conRod.setAttribute('x1', '200');
+      r.conRod.setAttribute('y1', pistonY.toFixed(1));
+      r.conRod.setAttribute('x2', cX.toFixed(1));
+      r.conRod.setAttribute('y2', cY.toFixed(1));
+      r.crankPin.setAttribute('cx', cX.toFixed(1));
+      r.crankPin.setAttribute('cy', cY.toFixed(1));
+
+      // 4-Stroke Cycle States
+      let phase = '', col = '#38bdf8';
+      if(totalAngle < Math.PI){
+        phase = '1. INTAKE STROKE · Air-Fuel Mixture Drawn In';
+        col = '#38bdf8';
+        r.valvIn.setAttribute('y2', '52'); r.valvEx.setAttribute('y2', '45');
+        r.chamber.setAttribute('fill', 'rgba(56, 189, 248, 0.25)');
+        r.spark.setAttribute('r', '0');
+      } else if(totalAngle < 2 * Math.PI){
+        phase = '2. COMPRESSION STROKE · Mixture Compressed';
+        col = '#f59e0b';
+        r.valvIn.setAttribute('y2', '45'); r.valvEx.setAttribute('y2', '45');
+        r.chamber.setAttribute('fill', 'rgba(245, 158, 11, 0.25)');
+        r.spark.setAttribute('r', '0');
+      } else if(totalAngle < 3 * Math.PI){
+        phase = '3. POWER STROKE · Spark Ignites Combustion';
+        col = '#f43f5e';
+        r.valvIn.setAttribute('y2', '45'); r.valvEx.setAttribute('y2', '45');
+        r.chamber.setAttribute('fill', 'rgba(244, 63, 94, 0.55)');
+        r.spark.setAttribute('r', totalAngle < 2.3 * Math.PI ? '10' : '0');
+      } else {
+        phase = '4. EXHAUST STROKE · Burned Gases Expelled';
+        col = '#94a3b8';
+        r.valvIn.setAttribute('y2', '45'); r.valvEx.setAttribute('y2', '52');
+        r.chamber.setAttribute('fill', 'rgba(148, 163, 184, 0.2)');
+        r.spark.setAttribute('r', '0');
+      }
+
+      r.phaseLabel.textContent = phase;
+      r.phaseLabel.setAttribute('fill', col);
+      r.telemetry.textContent = `Engine: ${p.rpm} RPM  ·  Kinematic Cycle: 4-Stroke Otto Cycle`;
+    }
+  };
+
+  /* ---------------- 10. Heart & Cardiovascular Dynamics ---------------- */
+  const heart = {
+    label: 'Cardiovascular Circulatory System',
+    defaults: { bpm: 72 },
+    sliders: [
+      { key: 'bpm', label: 'Heart Rate', min: 40, max: 160, step: 1, unit: ' BPM' }
+    ],
+    build(ctx, p){
+      const svg = ctx.svg;
+      svgEl('rect', { x:0, y:0, width:400, height:250, class:'av-bg' }, svg);
+
+      // Heart Muscle Outline
+      ctx.refs.heartG = svgEl('g', { transform:'translate(200, 110)' }, svg);
+      ctx.refs.heartPath = svgEl('path', { d:'M 0 -35 C -45 -75 -90 -25 -65 30 C -45 70 0 95 0 95 C 0 95 45 70 65 30 C 90 -25 45 -75 0 -35 Z', fill:'rgba(244,63,94,0.3)', stroke:'#f43f5e', 'stroke-width':3 }, ctx.refs.heartG);
+
+      // Chambers
+      svgEl('circle', { cx:-28, cy:-10, r:16, fill:'rgba(56,189,248,0.25)', stroke:'#38bdf8', 'stroke-width':1.5 }, ctx.refs.heartG);
+      svgEl('circle', { cx:28, cy:-10, r:16, fill:'rgba(244,63,94,0.25)', stroke:'#f43f5e', 'stroke-width':1.5 }, ctx.refs.heartG);
+      svgEl('text', { x:-28, y:-7, 'text-anchor':'middle', fill:'#38bdf8', 'font-size':9, 'font-weight':700 }, ctx.refs.heartG).textContent = 'RA';
+      svgEl('text', { x:28, y:-7, 'text-anchor':'middle', fill:'#f43f5e', 'font-size':9, 'font-weight':700 }, ctx.refs.heartG).textContent = 'LA';
+
+      // Ventricles
+      svgEl('circle', { cx:-20, cy:35, r:22, fill:'rgba(56,189,248,0.35)', stroke:'#38bdf8', 'stroke-width':1.5 }, ctx.refs.heartG);
+      svgEl('circle', { cx:20, cy:35, r:22, fill:'rgba(244,63,94,0.35)', stroke:'#f43f5e', 'stroke-width':1.5 }, ctx.refs.heartG);
+      svgEl('text', { x:-20, y:38, 'text-anchor':'middle', fill:'#38bdf8', 'font-size':10, 'font-weight':800 }, ctx.refs.heartG).textContent = 'RV';
+      svgEl('text', { x:20, y:38, 'text-anchor':'middle', fill:'#f43f5e', 'font-size':10, 'font-weight':800 }, ctx.refs.heartG).textContent = 'LV';
+
+      // ECG Waveform at bottom
+      ctx.refs.ecg = svgEl('path', { d:'M10 230 L120 230 L130 225 L140 230 L150 230 L155 240 L165 205 L175 245 L180 230 L195 230 L205 220 L215 230 L390 230', fill:'none', stroke:'#22c55e', 'stroke-width':2.5, 'stroke-linecap':'round' }, svg);
+
+      // HUD
+      ctx.refs.status = svgEl('text', { x:200, y:28, class:'av-title-h', 'text-anchor':'middle', fill:'#f43f5e', 'font-size':13, 'font-weight':800 }, svg);
+    },
+    update(ctx, p, t){
+      const r = ctx.refs;
+      const bps = (p.bpm || 72) / 60;
+      const phase = (t * bps) % 1; // 0 to 1 cardiac cycle
+
+      // Dual-pulse heartbeat expansion (lub-dub)
+      let scale = 1.0;
+      if(phase < 0.15) scale = 1.0 + 0.18 * Math.sin((phase / 0.15) * Math.PI); // Atrial systole
+      else if(phase > 0.25 && phase < 0.45) scale = 1.0 + 0.24 * Math.sin(((phase - 0.25) / 0.20) * Math.PI); // Ventricular systole
+
+      r.heartG.setAttribute('transform', `translate(200, 110) scale(${scale.toFixed(3)})`);
+      r.status.textContent = `Pulse: ${p.bpm} BPM  ·  ${phase < 0.45 ? 'Systole (Pumping)' : 'Diastole (Refilling)'}`;
+    }
+  };
+
+
   /* ---------------- 7. Generic (LLM-drawn) ---------------- */
   const generic = {
     label:'Illustration',
@@ -378,9 +619,12 @@
   /* ============================================================
      ENGINE — registry, RAF player, sliders, public API
      ============================================================ */
-  const VISUALS = { projectile, photosynthesis, pythagoras, motor, dna, wave, generic };
+  const VISUALS = { bicycle, engine, heart, projectile, photosynthesis, pythagoras, motor, dna, wave, generic };
 
   const KEYWORDS = {
+    bicycle: ['bicycle', 'bike', 'pedal', 'crank', 'chain drive', 'sprocket', 'gear ratio', 'cadence', 'cycling', 'two-wheeler', 'velocipede'],
+    engine: ['engine', 'internal combustion', '4-stroke', 'four-stroke', 'cylinder', 'piston', 'spark plug', 'crankshaft', 'combustion chamber', 'diesel', 'petrol engine'],
+    heart: ['heart', 'cardiac', 'circulatory', 'blood flow', 'ventricle', 'atrium', 'systole', 'diastole', 'pulse', 'pumping blood', 'aorta', 'myocardium'],
     projectile: ['projectile', 'parabola', 'trajectory', 'thrown', 'launch',
       'projectile motion', 'angle of projection', 'time of flight', 'maximum height', 'range of the'],
     photosynthesis: ['photosynthesis', 'photosynthes', 'chlorophyll', 'chloroplast',
