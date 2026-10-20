@@ -99,9 +99,15 @@ body.bq-ready #bq-cursor{opacity:.9}
   display: flex; flex-direction: column; justify-content: center;
   padding: clamp(40px, 8vw, 120px);
   clip-path: inset(0 0 100% 0);
-  transition: clip-path .7s var(--bq-ease);
+  transition: clip-path .7s var(--bq-ease), visibility .7s;
+  pointer-events: none;
+  visibility: hidden;
 }
-#bq-menu.bq-open{clip-path: inset(0 0 0 0)}
+#bq-menu.bq-open{
+  clip-path: inset(0 0 0 0);
+  pointer-events: auto;
+  visibility: visible;
+}
 #bq-menu .bq-menu-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
 #bq-menu .bq-menu-item{
   font-family: var(--bq-display); font-weight: 400;
