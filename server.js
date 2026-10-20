@@ -1992,7 +1992,30 @@ async function handleAsk(req, res, requestId, systemText){
       if (!norm.explanation) norm.explanation = String(raw || '').trim().slice(0, 4000);
       return sendJson(res, 200, { answer: norm.explanation, explanation: norm.explanation, diagram: norm.diagram, visual_type: norm.visual_type, params: norm.params, requestId }, requestId);
     }
-    const answer = await callAI([{ text: systemText + extra }, ...parts], { systemInstruction: systemText });
+    let contextText = '';
+    if (parsed && (parsed.context || parsed.contextConcepts || parsed.contextTitle)){
+      const ctx = parsed.context || {};
+      const title = parsed.contextTitle || ctx.title || '';
+      const subject = ctx.subject || '';
+      const summary = parsed.contextSummary || ctx.summary || '';
+      const concepts = parsed.contextConcepts || ctx.concepts || [];
+      const formulas = ctx.formulas || [];
+      const conceptSummary = Array.isArray(concepts)
+        ? concepts.slice(0, 10).map(c => typeof c === 'string' ? c : (c.title + (c.summary ? ': ' + c.summary : ''))).join('; ')
+        : '';
+      const formulaSummary = Array.isArray(formulas)
+        ? formulas.slice(0, 5).map(f => f.name + ': ' + f.expression).join('; ')
+        : '';
+      contextText = '\n\nCurrent Study Plan Context:\n' +
+        (subject ? 'Subject: ' + subject + '\n' : '') +
+        (title ? 'Course: ' + title + '\n' : '') +
+        (summary ? 'Summary: ' + summary + '\n' : '') +
+        (conceptSummary ? 'Key Concepts: ' + conceptSummary + '\n' : '') +
+        (formulaSummary ? 'Formulas: ' + formulaSummary + '\n' : '');
+    }
+    const tutorInstruction = systemText +
+      '\nYou are Athiyar (Vaathiyar), the dedicated XamCode study tutor. Ground your answers strictly in the provided study material and syllabus. If the concept cannot be answered from the document, acknowledge it gracefully. Explain clearly with examples, analogies, and step-by-step clarity.';
+    const answer = await callAI([{ text: tutorInstruction + contextText + extra }, ...parts], { systemInstruction: tutorInstruction });
     return sendJson(res, 200, { answer, requestId }, requestId);
   }catch(e){
     const p = errPayload(e, 'The AI request failed.');

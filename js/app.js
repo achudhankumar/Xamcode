@@ -83,7 +83,11 @@ aiQuizVisualStep: 0,
      the generated still is the lesson's header image. */
   aiJobId: null,
   aiTopicImages: {},
-  aiTopicImageBusy: {}
+  aiTopicImageBusy: {},
+  simStep: 0,
+  simPlaying: false,
+  simTimer: null,
+  simSpeed: 1
 };
 
 function escapeHtml(value){
@@ -987,6 +991,29 @@ function aiQuestionVisual(question,index){
   </section>`;
 }
 
+function stopSimAutoplay(){
+  if(state.simTimer){
+    clearInterval(state.simTimer);
+    state.simTimer=null;
+  }
+  state.simPlaying=false;
+}
+
+function startSimAutoplay(totalSteps){
+  stopSimAutoplay();
+  state.simPlaying=true;
+  const interval = Math.round(1000 / (state.simSpeed || 1));
+  state.simTimer=setInterval(()=>{
+    if(state.simStep >= totalSteps - 1){
+      stopSimAutoplay();
+    } else {
+      state.simStep += 1;
+      if(state.simStep >= totalSteps - 1) stopSimAutoplay();
+    }
+    render();
+  }, interval);
+}
+
 function stopAIVisualAutoplay(){
   if(state.aiVisualTimer){
     clearInterval(state.aiVisualTimer);
@@ -1191,15 +1218,23 @@ function aiStudyView(){
     const previous=conceptIndex>0?conceptIndex-1:null;
     const next=conceptIndex<study.concepts.length-1?conceptIndex+1:null;
     pageTitle=concept.title;
+    const isAlgo = window.XC && window.XC.simulations && window.XC.simulations.detectAlgorithmType(concept.title + ' ' + (concept.summary || '') + ' ' + (concept.explanation || ''));
     const lessonModes=[
-      ['crash','Crash Lesson'],['compare','Compare'],['solve','Solve Problem'],['life','Real-Life'],
+      ['crash','Crash Lesson'],
+      ...(isAlgo ? [['sim','🎮 Interactive Simulation']] : []),
+      ['compare','Compare'],['solve','Solve Problem'],['life','Real-Life'],
       ['history','History'],['flash','Flashcards'],['cheat','CheatCodes'],
       ['exam','Exam Mode'],['eli5','ELI5 → Advanced']
     ];
     const conceptCards=study.flashcards.filter(card=>card.conceptIndex===conceptIndex);
     const currentConceptCard=conceptCards[state.aiLessonFlashIdx%conceptCards.length];
-    const lessonBody=state.aiLessonMode==='crash'
-      ? `<section class="ai-visual-stage-card"><div class="ai-visual-stage-head"><div><div class="panel-tag">CRASH LESSON · SCENE ${visualStep+1}/${visualSteps.length}</div><h3>${escapeHtml(currentVisual.title)}</h3></div><span class="ai-visual-stage-id">${escapeHtml(concept.visualization.caption)}</span></div><figure class="ai-diagram-figure" data-layout="${escapeHtml(currentVisual.layout)}">${aiDiagramSvg(currentVisual,conceptIndex,visualStep,escapeHtml(concept.title))}<figcaption><span>SCENE ${String(visualStep+1).padStart(2,'0')} · ${escapeHtml(currentVisual.layout.toUpperCase())}</span><p>${escapeHtml(currentVisual.description)}</p></figcaption></figure>${topicImageSlot(conceptIndex)}<div class="ai-visual-step-track">${visualSteps.map((step,index)=>`<button type="button" class="ai-visual-step ${index===visualStep?'active':index<visualStep?'done':''}" data-ai-visual="${index}" aria-current="${index===visualStep?'step':'false'}"><span>${String(index+1).padStart(2,'0')}</span><b>${escapeHtml(step.title)}</b></button>`).join('')}</div><div class="ai-visual-controls"><button type="button" data-ai-visual-play>${state.aiVisualPlaying?'Pause lesson':'▶ Play lesson'}</button><span>${visualStep+1} of ${visualSteps.length} scenes</span><div><button type="button" data-ai-visual="${Math.max(0,visualStep-1)}" ${visualStep===0?'disabled':''}>← Previous</button><button type="button" data-ai-visual="${Math.min(visualSteps.length-1,visualStep+1)}" ${visualStep===visualSteps.length-1?'disabled':''}>Next scene →</button></div></div></section>`
+    const simSteps = (window.XC && window.XC.simulations) ? window.XC.simulations.generateBubbleSortSteps() : [];
+    const currentSimStep = Math.min(state.simStep || 0, Math.max(0, simSteps.length - 1));
+    const simBanner = isAlgo ? `<div class="ai-study-notice" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;background:rgba(56,189,248,0.12);border:1px solid rgba(56,189,248,0.3);border-radius:10px;padding:10px 14px;"><span>🎮 <b>Interactive Simulation Available:</b> Step through the array, observe comparisons and swaps, and inspect time complexity.</span><button type="button" class="btn-primary" data-ai-mode="sim" style="font-size:12px;padding:5px 12px;cursor:pointer;">Launch Simulation →</button></div>` : '';
+    const lessonBody=state.aiLessonMode==='sim'
+      ? (window.XC && window.XC.simulations ? window.XC.simulations.renderBubbleSortPlayerHtml('ai-interactive-sim', currentSimStep, simSteps.length, simSteps[currentSimStep], state.simSpeed || 1, state.simPlaying || false) : '<p>Simulation loading…</p>')
+      : state.aiLessonMode==='crash'
+      ? `${simBanner}<section class="ai-visual-stage-card"><div class="ai-visual-stage-head"><div><div class="panel-tag">CRASH LESSON · SCENE ${visualStep+1}/${visualSteps.length}</div><h3>${escapeHtml(currentVisual.title)}</h3></div><span class="ai-visual-stage-id">${escapeHtml(concept.visualization.caption)}</span></div><figure class="ai-diagram-figure" data-layout="${escapeHtml(currentVisual.layout)}">${aiDiagramSvg(currentVisual,conceptIndex,visualStep,escapeHtml(concept.title))}<figcaption><span>SCENE ${String(visualStep+1).padStart(2,'0')} · ${escapeHtml(currentVisual.layout.toUpperCase())}</span><p>${escapeHtml(currentVisual.description)}</p></figcaption></figure>${topicImageSlot(conceptIndex)}<div class="ai-visual-step-track">${visualSteps.map((step,index)=>`<button type="button" class="ai-visual-step ${index===visualStep?'active':index<visualStep?'done':''}" data-ai-visual="${index}" aria-current="${index===visualStep?'step':'false'}"><span>${String(index+1).padStart(2,'0')}</span><b>${escapeHtml(step.title)}</b></button>`).join('')}</div><div class="ai-visual-controls"><button type="button" data-ai-visual-play>${state.aiVisualPlaying?'Pause lesson':'▶ Play lesson'}</button><span>${visualStep+1} of ${visualSteps.length} scenes</span><div><button type="button" data-ai-visual="${Math.max(0,visualStep-1)}" ${visualStep===0?'disabled':''}>← Previous</button><button type="button" data-ai-visual="${Math.min(visualSteps.length-1,visualStep+1)}" ${visualStep===visualSteps.length-1?'disabled':''}>Next scene →</button></div></div></section>`
       :state.aiLessonMode==='compare'
         ? `<section class="ai-detail-card ai-comparison-panel"><div class="panel-tag">SIDE-BY-SIDE COMPARISON</div><div class="ai-comparison-head"><h3>${escapeHtml(concept.comparison.firstLabel)}</h3><span>VS</span><h3>${escapeHtml(concept.comparison.secondLabel)}</h3></div><div class="ai-comparison-table"><div class="ai-comparison-row ai-comparison-labels"><span>ASPECT</span><b>${escapeHtml(concept.comparison.firstLabel)}</b><b>${escapeHtml(concept.comparison.secondLabel)}</b></div>${concept.comparison.rows.map(row=>`<div class="ai-comparison-row"><strong>${escapeHtml(row.aspect)}</strong><span>${escapeHtml(row.first)}</span><span>${escapeHtml(row.second)}</span></div>`).join('')}</div><p class="ai-comparison-takeaway"><b>KEY DIFFERENCE · </b>${escapeHtml(concept.comparison.takeaway)}</p></section>`
         :state.aiLessonMode==='solve'
@@ -1235,7 +1270,8 @@ function aiStudyView(){
     content=`<div class="ai-breadcrumbs">${aiStudyPageButton('plan',escapeHtml(study.title))}<span>/</span><span>Flashcards</span></div><section class="ai-page-hero"><div class="panel-tag">ACTIVE RECALL · ${cards.length} CARDS</div><h1>Review the key ideas.</h1><p>Try to recall the answer before revealing the back of each card.</p></section><section class="ai-flashcard-page" aria-label="AI-generated flashcards"><button type="button" class="ai-flashcard" data-ai-flip aria-label="${state.aiFlashFlipped?'Show question':'Reveal answer'}"><small>${state.aiFlashFlipped?'ANSWER':'QUESTION'} · ${index+1} / ${cards.length}</small><p>${escapeHtml(state.aiFlashFlipped?card.back:card.front)}</p></button><div class="ai-flashcard-actions"><button type="button" data-ai-flash="prev" aria-label="Previous flashcard">← Previous</button><button type="button" data-ai-flip>${state.aiFlashFlipped?'Show question':'Reveal answer'}</button><button type="button" data-ai-flash="next" aria-label="Next flashcard">Next →</button></div></section>`;
   }else if(page.type==='ask'){
     pageTitle='Ask XAMCODE AI';
-    content=`<div class="ai-breadcrumbs">${aiStudyPageButton('plan',escapeHtml(study.title))}<span>/</span><span>Ask XAMCODE AI</span></div><section class="ai-page-hero"><div class="panel-tag">YOUR DOCUMENT, YOUR TUTOR</div><h1>What would you like to understand?</h1><p>Ask a follow-up question about ${escapeHtml(study.title)}. Answers use your generated study pack as context.</p></section><section class="ai-chat-panel" aria-label="Ask questions about your PDF">        <div class="ai-chat-messages" id="aiChatMessages" aria-live="polite">${state.aiMessages.length?state.aiMessages.map(message=>{
+    content=`<div class="ai-breadcrumbs">${aiStudyPageButton('plan',escapeHtml(study.title))}<span>/</span><span>Ask XAMCODE AI</span></div><section class="ai-page-hero"><div class="panel-tag">YOUR DOCUMENT, YOUR TUTOR</div><h1>What would you like to understand?</h1><p>Ask a follow-up question about ${escapeHtml(study.title)}. Answers use your generated study pack as context.</p></section><section class="ai-chat-panel" aria-label="Ask questions about your PDF">        <div class="ai-quick-prompts" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;"><button type="button" class="btn-ghost" data-quick-ask="Explain the most important concept in this course step by step" style="font-size:12px;padding:6px 12px;border-radius:6px;cursor:pointer;">💡 Step-by-step breakdown</button><button type="button" class="btn-ghost" data-quick-ask="Explain this course simply like I am 12 years old (ELI5)" style="font-size:12px;padding:6px 12px;border-radius:6px;cursor:pointer;">🧠 Simple ELI5 explanation</button><button type="button" class="btn-ghost" data-quick-ask="Give me the top 3 CheatCode memory tricks for this exam" style="font-size:12px;padding:6px 12px;border-radius:6px;cursor:pointer;">⚡ Exam CheatCodes</button><button type="button" class="btn-ghost" data-quick-ask="Test my understanding with a challenging conceptual question" style="font-size:12px;padding:6px 12px;border-radius:6px;cursor:pointer;">❓ Practice challenge</button></div>
+        <div class="ai-chat-messages" id="aiChatMessages" aria-live="polite">${state.aiMessages.length?state.aiMessages.map(message=>{
           const diagram=
             (message.diagram &&
               `<div class="ai-chat-visual" data-diagram-text="${escapeHtml(String(message.diagram).slice(0,400))}"></div>`)
@@ -2319,6 +2355,56 @@ document.addEventListener('click', async (e)=>{
     render();
     return;
   }
+  const simAction = e.target.closest('[data-sim-action]');
+  if(simAction){
+    const action = simAction.dataset.simAction;
+    const simSteps = window.XC && window.XC.simulations ? window.XC.simulations.generateBubbleSortSteps() : [];
+    const total = simSteps.length || 1;
+    if(action === 'play'){
+      if(state.simPlaying) stopSimAutoplay();
+      else {
+        if(state.simStep >= total - 1) state.simStep = 0;
+        startSimAutoplay(total);
+      }
+      render();
+    } else if(action === 'next'){
+      stopSimAutoplay();
+      state.simStep = Math.min(state.simStep + 1, total - 1);
+      render();
+    } else if(action === 'prev'){
+      stopSimAutoplay();
+      state.simStep = Math.max(state.simStep - 1, 0);
+      render();
+    } else if(action === 'reset'){
+      stopSimAutoplay();
+      state.simStep = 0;
+      render();
+    }
+    return;
+  }
+
+  const simSpeed = e.target.closest('[data-sim-speed]');
+  if(simSpeed){
+    state.simSpeed = parseFloat(simSpeed.dataset.simSpeed) || 1;
+    if(state.simPlaying){
+      const simSteps = window.XC && window.XC.simulations ? window.XC.simulations.generateBubbleSortSteps() : [];
+      startSimAutoplay(simSteps.length || 1);
+    }
+    render();
+    return;
+  }
+
+  const quickAsk = e.target.closest('[data-quick-ask]');
+  if(quickAsk){
+    const qText = quickAsk.dataset.quickAsk;
+    const form = document.getElementById('aiChatForm');
+    if(form && form.elements && form.elements.question){
+      form.elements.question.value = qText;
+      form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    }
+    return;
+  }
+
   if(e.target.closest('[data-ai-visual-play]')){
     if(state.aiVisualPlaying){
       stopAIVisualAutoplay();
