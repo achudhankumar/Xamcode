@@ -149,9 +149,45 @@ body[data-style="bubblegum"] .style-trigger{
   border:2px solid #ffffff;
   box-shadow:0 5px 14px rgba(230,46,122,.32);
 }
+body[data-style="bubblegum"] .style-trigger .st-cube-icon .fc{
+  background:rgba(255,255,255,.32);
+  border-color:#ffffff;
+}
 body[data-style="bubblegum"] .st-trig-cur{
   background:#ffffff;
   color:#d61f69;
+}
+body[data-style="bubblegum"] .live{
+  background:#fff0f6;
+  color:#d61f69;
+  border:1.5px solid #ff9ec4;
+}
+body[data-style="bubblegum"] .live.on{
+  background:#e62e7a;
+  color:#ffffff;
+  border-color:#e62e7a;
+}
+body[data-style="bubblegum"] .mbtn{
+  background:#fff5f9;
+  border:2px solid #ff9ec4;
+  border-radius:999px;
+  color:#d61f69;
+  box-shadow:0 3px 10px rgba(230,46,122,.16);
+}
+body[data-style="bubblegum"] .mbtn .bars,
+body[data-style="bubblegum"] .mbtn .bars::before,
+body[data-style="bubblegum"] .mbtn .bars::after{
+  background:#d61f69;
+}
+body[data-style="bubblegum"] .mpanel{
+  background:#fff8fb;
+  border:2px solid #ff9ec4;
+  box-shadow:0 24px 60px rgba(230,46,122,.24);
+}
+body[data-style="bubblegum"] .mlinks a:hover,
+body[data-style="bubblegum"] .mlinks a.act{
+  background:rgba(230,46,122,.1);
+  color:#e62e7a;
 }
 
 /* Bubblegum Hero Layout: Centered Playful Showcase with Stacked 3D Toy Stage */

@@ -57,7 +57,7 @@ main:focus{outline:none}
 }
 .wrap{max-width:var(--max);margin:0 auto;padding:0 24px 0;position:relative;z-index:1}
 .dock{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:120;width:min(var(--max),calc(100% - 24px));box-sizing:border-box;max-width:calc(100vw - 16px);display:flex;align-items:center;gap:10px;padding:9px 12px 9px 14px;border-radius:999px;background:rgba(6,8,3,.88);border:1px solid var(--line);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
-.dock-brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--paper);font-family:var(--disp);font-weight:800;font-size:14px;border:0;cursor:pointer}
+.dock-brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--paper);font-family:var(--disp);font-weight:700;letter-spacing:-.01em;font-size:14px;border:0;cursor:pointer;white-space:nowrap;flex-shrink:0}
 .logo-mark{width:28px;height:28px;border-radius:50%;background:conic-gradient(from 200deg,var(--lime),#7DDf2a,var(--cobalt),var(--lime));display:grid;place-items:center;color:var(--limeink);font-weight:800;font-size:13px;flex:none}
 .dock-sub{background:rgba(11,14,7,.55);font-family:var(--mono);font-size:10px;color:var(--mut);letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;padding:4px 9px;border-radius:6px;border:1px solid var(--line2)}
 /* Desktop section navigation inside the dock (hidden <=960px, the
@@ -434,7 +434,7 @@ details.est-model .em-body em{color:var(--paper);font-style:normal;font-weight:6
   .dock-sub{display:none}
   .docknav{display:none}
   .dock{width:calc(100% - 16px);max-width:calc(100vw - 16px);gap:8px;min-width:0}
-  .dock-brand{min-width:0;flex:none}
+  .dock-brand{min-width:0;flex:none;margin-right:auto}
   .dock-brand>span:nth-child(2){overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .live{flex:none}
   .mbtn{flex:none}
@@ -702,7 +702,8 @@ body.js-cine .lr-grid.in-view .lr-card:nth-child(4){animation:cellIn .55s cubic-
 #act2 .chead h2{font-family:var(--disp);font-weight:850;font-size:clamp(32px,3.8vw,48px);letter-spacing:-.03em;line-height:1.1;color:var(--paper)}
 #act2 .chead p{font-size:15px;color:var(--mut);margin-top:8px}
 .cine-study-grid{display:grid;grid-template-columns:320px 1.2fr 340px;gap:24px;align-items:stretch;margin-top:28px}
-.cine-panel-card{background:linear-gradient(180deg,rgba(24,32,20,.85),rgba(14,18,11,.92));border:1px solid rgba(241,239,227,.12);border-radius:20px;padding:26px;box-shadow:0 25px 70px rgba(0,0,0,.6);backdrop-filter:blur(10px);box-sizing:border-box;transition:transform .25s ease,border-color .25s ease}
+.cine-panel-card{background:linear-gradient(180deg,rgba(24,32,20,.85),rgba(14,18,11,.92));border:1px solid rgba(241,239,227,.12);border-radius:20px;padding:26px;box-shadow:0 25px 70px rgba(0,0,0,.6);backdrop-filter:blur(10px);box-sizing:border-box;min-width:0;max-width:100%;overflow-wrap:anywhere;transition:transform .25s ease,border-color .25s ease}
+.cine-panel-card>div:first-child{flex-wrap:wrap;gap:8px}
 .cine-panel-card:hover{border-color:rgba(168,85,247,.3)}
 .cine-panel-card.hl-lime{border-color:rgba(200,255,61,.35);box-shadow:0 25px 70px rgba(0,0,0,.6),0 0 35px rgba(200,255,61,.08)}
 .cine-panel-card.hl-blue{border-color:rgba(91,108,255,.35);box-shadow:0 25px 70px rgba(0,0,0,.6),0 0 35px rgba(91,108,255,.08)}
@@ -780,11 +781,13 @@ body.js-cine .lr-grid.in-view .lr-card:nth-child(4){animation:cellIn .55s cubic-
 }
 @media(max-width:900px){
   .cine-act{padding:70px 0 80px}
-  #act1 .pgrid{grid-template-columns:1fr;text-align:center}
+  #act1 .pgrid{grid-template-columns:minmax(0,1fr);text-align:center}
   #act1 .chiprow{justify-content:center}
-  #act1 .mgrid2{grid-template-columns:1fr}
+  #act1 .mgrid2{grid-template-columns:minmax(0,1fr)}
   #act1 .sgrid{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .cine-study-grid,.cine-tutor-grid,#act4 .rmtl,.cine-reveal-grid{grid-template-columns:1fr}
+  .cine-study-grid,.cine-tutor-grid,#act4 .rmtl,.cine-reveal-grid{grid-template-columns:minmax(0,1fr)}
+  .cine-study-grid>:last-child{grid-column:auto}
+  body.js-cine .cine-reveal-left,body.js-cine .cine-reveal-right{transform:translate3d(0,24px,0)}
   .cr-arch-flow{grid-template-columns:1fr;gap:12px}
   .cr-cta-strip{flex-direction:column;text-align:center;align-items:center}
   .cine-hud{display:none!important}
@@ -798,8 +801,12 @@ body.js-cine .lr-grid.in-view .lr-card:nth-child(4){animation:cellIn .55s cubic-
   #act1 .sgrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
   #act1 .scell{padding:12px 14px}
   #act1 .scell .vl{font-size:16px}
-  #act5 .lr-grid{grid-template-columns:1fr}
+  #act5 .lr-grid{grid-template-columns:minmax(0,1fr)}
   #act5 .lr-shell{padding:18px 16px}
+  .lr-kicker{white-space:normal}
+  .cine-panel-card{padding:18px 16px}
+  .cine-chat-user{margin-left:14px}
+  .cine-chat-tutor{margin-right:8px}
 }
 @media(prefers-reduced-motion: reduce){
   .cine-reveal, body.js-cine .cine-reveal{opacity:1!important;transform:none!important;transition:none!important}
@@ -1875,9 +1882,45 @@ body[data-style="bubblegum"] .style-trigger{
   border:2px solid #ffffff;
   box-shadow:0 5px 14px rgba(230,46,122,.32);
 }
+body[data-style="bubblegum"] .style-trigger .st-cube-icon .fc{
+  background:rgba(255,255,255,.32);
+  border-color:#ffffff;
+}
 body[data-style="bubblegum"] .st-trig-cur{
   background:#ffffff;
   color:#d61f69;
+}
+body[data-style="bubblegum"] .live{
+  background:#fff0f6;
+  color:#d61f69;
+  border:1.5px solid #ff9ec4;
+}
+body[data-style="bubblegum"] .live.on{
+  background:#e62e7a;
+  color:#ffffff;
+  border-color:#e62e7a;
+}
+body[data-style="bubblegum"] .mbtn{
+  background:#fff5f9;
+  border:2px solid #ff9ec4;
+  border-radius:999px;
+  color:#d61f69;
+  box-shadow:0 3px 10px rgba(230,46,122,.16);
+}
+body[data-style="bubblegum"] .mbtn .bars,
+body[data-style="bubblegum"] .mbtn .bars::before,
+body[data-style="bubblegum"] .mbtn .bars::after{
+  background:#d61f69;
+}
+body[data-style="bubblegum"] .mpanel{
+  background:#fff8fb;
+  border:2px solid #ff9ec4;
+  box-shadow:0 24px 60px rgba(230,46,122,.24);
+}
+body[data-style="bubblegum"] .mlinks a:hover,
+body[data-style="bubblegum"] .mlinks a.act{
+  background:rgba(230,46,122,.1);
+  color:#e62e7a;
 }
 
 /* Bubblegum Hero Layout: Centered Playful Showcase with Stacked 3D Toy Stage */
@@ -2140,6 +2183,16 @@ body[data-style="glass"] .st-trig-cur{
   background:rgba(56,189,248,.25);
   color:#bae6fd;
 }
+body[data-style="glass"] .mbtn{
+  background:rgba(255,255,255,.08);
+  border-color:rgba(186,230,253,.38);
+  color:#eef6ff;
+}
+body[data-style="glass"] .mpanel{
+  background:rgba(6,15,34,.96);
+  border-color:rgba(186,230,253,.32);
+  box-shadow:0 30px 80px rgba(0,0,0,.75);
+}
 
 /* Spatial Floating Window Hero Composition */
 body[data-style="glass"] .hero-layout{
@@ -2323,6 +2376,36 @@ body[data-style="brutalist"] .live{
   color:#0d0d0d;
   border:2px solid #0d0d0d;
   border-radius:0;
+}
+body[data-style="brutalist"] .style-trigger .st-cube-icon .fc{
+  background:#ffe600;
+  border-color:#0d0d0d;
+}
+body[data-style="brutalist"] .mbtn{
+  background:#ffe600;
+  color:#0d0d0d;
+  border:2.5px solid #0d0d0d;
+  border-radius:0;
+  box-shadow:3px 3px 0 #0d0d0d;
+}
+body[data-style="brutalist"] .mbtn .bars,
+body[data-style="brutalist"] .mbtn .bars::before,
+body[data-style="brutalist"] .mbtn .bars::after{
+  background:#0d0d0d;
+}
+body[data-style="brutalist"] .mpanel{
+  background:#ffffff;
+  border:3.5px solid #0d0d0d;
+  border-radius:0;
+  box-shadow:10px 10px 0 #0d0d0d;
+}
+body[data-style="brutalist"] .mlinks a{
+  border-radius:0;
+}
+body[data-style="brutalist"] .mlinks a:hover,
+body[data-style="brutalist"] .mlinks a.act{
+  background:#ffe600;
+  color:#0d0d0d;
 }
 
 /* Neo-Brutalist Hero: Asymmetric Poster Compartments */
@@ -2629,6 +2712,37 @@ body[data-style="minimal"] .live{
   color:#23533d;
   border-color:rgba(35,83,61,.3);
 }
+body[data-style="minimal"] .live.on{
+  background:#23533d;
+  color:#faf8f5;
+  border-color:#23533d;
+}
+body[data-style="minimal"] .style-trigger .st-cube-icon .fc{
+  background:rgba(250,248,245,.22);
+  border-color:#faf8f5;
+}
+body[data-style="minimal"] .mbtn{
+  background:#f2efe9;
+  border:1px solid rgba(24,24,22,.22);
+  border-radius:10px;
+  color:#181816;
+}
+body[data-style="minimal"] .mbtn .bars,
+body[data-style="minimal"] .mbtn .bars::before,
+body[data-style="minimal"] .mbtn .bars::after{
+  background:#181816;
+}
+body[data-style="minimal"] .mpanel{
+  background:#faf8f5;
+  border:1px solid rgba(24,24,22,.18);
+  border-radius:18px;
+  box-shadow:0 24px 60px rgba(24,24,22,.18);
+}
+body[data-style="minimal"] .mlinks a:hover,
+body[data-style="minimal"] .mlinks a.act{
+  background:#f2efe9;
+  color:#23533d;
+}
 
 /* Soft Minimal Hero: Editorial Monograph Spread */
 body[data-style="minimal"] .hero-layout{
@@ -2841,7 +2955,7 @@ body[data-style="minimal"] .cine-hud{
   body[data-style="glass"] .hero-layout,
   body[data-style="brutalist"] .hero-layout,
   body[data-style="minimal"] .hero-layout{
-    grid-template-columns:1fr !important;
+    grid-template-columns:minmax(0,1fr) !important;
     gap:24px;
   }
   body[data-style="brutalist"] .hero-in{
@@ -2852,15 +2966,19 @@ body[data-style="minimal"] .cine-hud{
   body[data-style="glass"] .hero-in{
     padding:24px 20px;
   }
-  .hero-3d-stage{
+  .hero-3d-stage,
+  body[data-style="brutalist"] .hero-3d-stage{
     min-height:280px;
     overflow:hidden;
+    box-sizing:border-box;
+    max-width:100%;
+    padding:16px;
   }
   .scene-3d-root{
     transform:scale(.84) rotateX(-16deg) rotateY(28deg);
   }
   body[data-style="bubblegum"] .cine-study-grid{
-    grid-template-columns:1fr;
+    grid-template-columns:minmax(0,1fr);
   }
   body[data-style="bubblegum"] .cine-study-grid > .cine-panel-card:nth-child(2){
     transform:none;
@@ -2872,6 +2990,82 @@ body[data-style="minimal"] .cine-hud{
   }
   .st-trig-cur{
     display:none;
+  }
+  #menuBtnLabel{
+    display:none;
+  }
+  .mbtn{
+    padding:0;
+    min-width:36px;
+    width:36px;
+    height:36px;
+  }
+}
+@media (max-width:640px){
+  .dock{
+    width:calc(100% - 12px);
+    max-width:calc(100vw - 12px);
+    padding:5px 7px 5px 9px;
+    gap:5px;
+  }
+  .dock-brand{
+    gap:6px;
+    font-family:"Space Grotesk",var(--sans),system-ui,sans-serif;
+    font-size:12.5px;
+    font-weight:700;
+    letter-spacing:-.02em;
+  }
+  .logo-mark{
+    width:24px;
+    height:24px;
+    font-size:11px;
+    box-sizing:border-box;
+  }
+  .style-trigger{
+    padding:0 7px;
+    height:30px;
+    gap:5px;
+    font-size:8.5px;
+    letter-spacing:.03em;
+    flex-shrink:0;
+    box-sizing:border-box;
+  }
+  body[data-style="brutalist"] .style-trigger{
+    box-shadow:2px 2px 0 #0d0d0d;
+    border-width:2px;
+  }
+  body[data-style="brutalist"] .dock{
+    box-shadow:3px 3px 0 #0d0d0d;
+    border-width:2.5px;
+  }
+  body[data-style="brutalist"] .mbtn{
+    box-shadow:2px 2px 0 #0d0d0d;
+    border-width:2px;
+  }
+  .st-cube-icon{
+    width:10px;
+    height:10px;
+  }
+  .live{
+    padding:0 7px;
+    height:28px;
+    font-size:8px;
+    letter-spacing:.02em;
+    gap:4px;
+    flex-shrink:0;
+    box-sizing:border-box;
+  }
+  .live::before{
+    width:5px;
+    height:5px;
+    flex-shrink:0;
+  }
+  .mbtn{
+    width:32px;
+    min-width:32px;
+    height:32px;
+    border-radius:8px;
+    box-sizing:border-box;
   }
 }
 @media (max-width:600px){
@@ -2904,14 +3098,10 @@ body[data-style="minimal"] .cine-hud{
   .sat-3d.s1{left:-8px;top:-10px}
   .sat-3d.s2{right:-8px;bottom:8px}
   .sat-3d.s3{left:4px;bottom:-16px}
-  .style-trigger{
-    padding:6px 10px;
-    font-size:10px;
-  }
 }
-@media (max-width:400px){
+@media (max-width:355px){
   .st-trig-lbl{
-    font-size:9.5px;
+    font-size:9px;
   }
   .live{
     display:none;
@@ -3047,7 +3237,7 @@ body[data-style="minimal"] .cine-hud{
 <div class="cine-act" id="act1" data-act="1"><section class="chapter" id="progress" aria-labelledby="h-progress"><div class="chead cine-reveal cine-reveal-up"><span class="num">01</span><div><h2 id="h-progress">The current state</h2><p>weighted verified milestones — never commits or lines of code</p></div></div><div class="pgrid reveal cine-reveal cine-reveal-scale"><div class="pstage"><div class="cw"><svg class="csvg" viewBox="0 0 36 36" aria-hidden="true"><circle class="cbg" cx="18" cy="18" r="15.9155"></circle><circle class="cp" id="pctFill" cx="18" cy="18" r="15.9155"></circle></svg><div class="cc"><span class="cpct" id="pctNum">—</span><span class="csub" id="pctSub">verified weight</span></div></div><div class="pbar" role="progressbar" aria-label="Overall readiness" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="pctBar"><span id="pctBarFill"></span></div><div class="pbar-legend"><span id="pctLegL">verified weight ÷ total weight</span><span id="pctLegR">0%</span></div></div><div class="pside"><div class="bigstat"><em id="statProgress">—</em> verified</div><p class="sub">Phase: <span id="statPhase">—</span> · Now: <span id="statMilestone">—</span></p><p class="mono" id="menuReadinessLine">readiness computed from verified milestone weights</p><div class="chiprow"><span class="chip">verified <b id="mDoneCount">—</b></span><span class="chip">in progress <b id="mProgCount">—</b></span><span class="chip">upcoming <b id="mUpCount">—</b></span><span class="chip">in review <b id="mRevCount">—</b></span></div></div></div><div class="mgrid2 reveal cine-reveal cine-reveal-up"><div class="mcol"><h3>Verified</h3><div id="mDone"></div></div><div class="mcol"><h3>In progress</h3><div id="mProg"></div></div><div class="mcol"><h3>Upcoming</h3><div id="mUp"></div></div><div class="mcol"><h3>Needs review</h3><div id="mRev"></div></div></div><div class="sgrid reveal cine-reveal cine-reveal-up"><div class="scell"><span class="lb">Build</span><span class="vl" id="stBuild" data-state="unknown">—</span><span class="at2" id="stBuildAt">no data yet</span></div><div class="scell"><span class="lb">Tests</span><span class="vl" id="stTests" data-state="unknown">—</span><span class="at2" id="stTestsAt">no data yet</span></div><div class="scell"><span class="lb">Deploy</span><span class="vl" id="stDeploy" data-state="unknown">—</span><span class="at2" id="stDeployAt">no data yet</span></div><div class="scell"><span class="lb">Integration</span><span class="vl" id="statFeedSrc" data-state="setup">—</span><span class="at2">webhooks / CI / maintainer</span></div><div class="scell"><span class="lb">Milestones</span><span class="vl" id="statProgress2">—</span><span class="at2" id="statPhase2">—</span></div><div class="scell"><span class="lb">Ideas</span><span class="vl" id="statIdeas">—</span><span class="at2">community suggestions</span></div><div class="scell"><span class="lb">Waitlist</span><span class="vl" id="statWait">—</span><span class="at2">students waiting</span></div><div class="scell"><span class="lb">Signal</span><span class="vl" id="statSignal" data-state="standby">—</span><span class="at2">build · tests · deploy</span></div></div></section></div>
 
 <!-- ACT 2: STUDY ENGINE (Real Modular Architecture) -->
-<div class="cine-act" id="act2" data-act="2"><div class="cine-act-shell"><div class="chead cine-reveal cine-reveal-up"><span class="num">02</span><div><h2>Study Engine Architecture</h2><p>Subject-agnostic study architecture · Unit-by-unit visual lessons</p></div></div><div class="cine-study-grid"><div class="cine-panel-card hl-lime cine-reveal cine-reveal-left"><div class="lr-top"><span class="lr-kicker" style="color:var(--lime)">Subject-Agnostic Core</span><span class="pill lr-pill">Demo Subject</span></div><h3 style="margin-top:6px;">Computer Networks (Demo)</h3><p class="sub" style="margin-bottom:14px; font-size:12px;">Sample course syllabus decomposed through the reusable study pipeline</p><div class="cine-tree-item active"><span>01. TCP Congestion Control</span><span style="font-size:10px; color:var(--lime); font-weight:700;">ACTIVE</span></div><div class="cine-tree-item"><span>02. Sliding Window Protocol</span><span style="font-size:10px; opacity:.6;">READY</span></div><div class="cine-tree-item"><span>03. BGP Path Vector Routing</span><span style="font-size:10px; opacity:.6;">READY</span></div><div class="cine-tree-item"><span>04. Subnetting &amp; CIDR Math</span><span style="font-size:10px; opacity:.6;">READY</span></div></div><div class="cine-panel-card cine-reveal cine-reveal-up" style="display:flex; flex-direction:column; justify-content:space-between;"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;"><span class="lr-kicker">Demo Unit · Interactive Lesson</span><span class="pill verified">Animated Lesson</span></div><h3 style="font-family:var(--disp); font-size:24px; margin:0 0 10px;">TCP AIMD &amp; Slow Start Dynamics</h3><p style="font-size:13.5px; color:var(--paper); line-height:1.6; margin-bottom:16px;">Additive Increase / Multiplicative Decrease congestion window pacing anchored directly to university lecture syllabi. Verified lexical grounding between generated notes and reference textbooks.</p><div style="padding:14px; background:rgba(0,0,0,.35); border-radius:12px; border:1px solid var(--line2); font-family:var(--mono); font-size:12px; color:var(--lime);">ALGORITHM: W(t + RTT) = W(t) + 1 &nbsp;|&nbsp; ON LOSS: W(t) = W(t) / 2</div></div><div class="cine-panel-card hl-blue cine-reveal cine-reveal-right"><div class="lr-top"><span class="lr-kicker" style="color:var(--cobalt)">Recall Engine</span><span class="pill in_progress">Active Mode</span></div><h4 style="font-size:17px; margin:6px 0 10px;">Vaathiyar Exam Mode</h4><p style="font-size:13px; color:var(--dim); line-height:1.5; margin-bottom:14px;">Instant Socratic quizzes, formula cheat-sheets, and step-by-step mathematical derivations.</p><div style="padding:12px; background:rgba(92,109,255,.08); border:1px solid rgba(92,109,255,.3); border-radius:10px; font-size:12px; color:var(--paper);"><strong style="color:var(--cobalt)">Verified syllabus fidelity</strong> anchored directly to course lecture notes.</div></div></div></div></div>
+<div class="cine-act" id="act2" data-act="2"><div class="cine-act-shell"><div class="chead cine-reveal cine-reveal-up"><span class="num">02</span><div><h2>Study Engine Architecture</h2><p>Subject-agnostic study architecture · Unit-by-unit visual lessons</p></div></div><div class="cine-study-grid"><div class="cine-panel-card hl-lime cine-reveal cine-reveal-left"><div class="lr-top"><span class="lr-kicker" style="color:var(--lime)">Subject-Agnostic Core</span><span class="pill lr-pill">Demo Subject</span></div><h3 style="margin-top:6px;">Computer Networks (Demo)</h3><p class="sub" style="margin-bottom:14px; font-size:12px;">Sample course syllabus decomposed through the reusable study pipeline</p><div class="cine-tree-item active"><span>01. TCP Congestion Control</span><span style="font-size:10px; color:var(--lime); font-weight:700;">ACTIVE</span></div><div class="cine-tree-item"><span>02. Sliding Window Protocol</span><span style="font-size:10px; opacity:.6;">READY</span></div><div class="cine-tree-item"><span>03. BGP Path Vector Routing</span><span style="font-size:10px; opacity:.6;">READY</span></div><div class="cine-tree-item"><span>04. Subnetting &amp; CIDR Math</span><span style="font-size:10px; opacity:.6;">READY</span></div></div><div class="cine-panel-card cine-reveal cine-reveal-up" style="display:flex; flex-direction:column; justify-content:space-between;"><div class="lr-top" style="margin-bottom:12px;"><span class="lr-kicker">Demo Unit · Interactive Lesson</span><span class="pill verified">Animated Lesson</span></div><h3 style="font-family:var(--disp); font-size:24px; margin:0 0 10px;">TCP AIMD &amp; Slow Start Dynamics</h3><p style="font-size:13.5px; color:var(--paper); line-height:1.6; margin-bottom:16px;">Additive Increase / Multiplicative Decrease congestion window pacing anchored directly to university lecture syllabi. Verified lexical grounding between generated notes and reference textbooks.</p><div style="padding:14px; background:rgba(0,0,0,.35); border-radius:12px; border:1px solid var(--line2); font-family:var(--mono); font-size:12px; color:var(--lime); overflow-wrap:anywhere;">ALGORITHM: W(t + RTT) = W(t) + 1 &nbsp;|&nbsp; ON LOSS: W(t) = W(t) / 2</div></div><div class="cine-panel-card hl-blue cine-reveal cine-reveal-right"><div class="lr-top"><span class="lr-kicker" style="color:var(--cobalt)">Recall Engine</span><span class="pill in_progress">Active Mode</span></div><h4 style="font-size:17px; margin:6px 0 10px;">Vaathiyar Exam Mode</h4><p style="font-size:13px; color:var(--dim); line-height:1.5; margin-bottom:14px;">Instant Socratic quizzes, formula cheat-sheets, and step-by-step mathematical derivations.</p><div style="padding:12px; background:rgba(92,109,255,.08); border:1px solid rgba(92,109,255,.3); border-radius:10px; font-size:12px; color:var(--paper);"><strong style="color:var(--cobalt)">Verified syllabus fidelity</strong> anchored directly to course lecture notes.</div></div></div></div></div>
 
 <!-- ACT 3: AURA AI TUTOR (Real Context-Grounded Dialogue) -->
 <div class="cine-act" id="act3" data-act="3"><div class="cine-act-shell"><div class="chead cine-reveal cine-reveal-up"><span class="num">03</span><div><h2>AURA AI Tutor</h2><p>Syllabus-grounded conversational intelligence · Real-time visual recipes</p></div></div><div class="cine-tutor-grid"><div class="cine-panel-card hl-cyan cine-reveal cine-reveal-left"><div class="lr-top"><span class="lr-kicker" style="color:var(--cyan)">AURA Conversational Interface</span><span class="pill lr-pill">Demo Session: Networks Unit 04</span></div><div class="cine-chat-bubble cine-chat-user">How does BBR congestion control differ from TCP Cubic?</div><div class="cine-chat-bubble cine-chat-tutor"><div class="t-tag"><span class="ch-dot" style="background:var(--cyan); box-shadow:0 0 8px var(--cyan);"></span><span>AURA Tutor Response</span></div><p style="margin:0; font-size:13.5px; line-height:1.6;">TCP Cubic throttles window size only after packet loss buffers overflow. BBR model-bases delivery rate: it continuously estimates bottleneck bandwidth and minimum round-trip time, preventing bufferbloat.</p></div></div><div class="cine-panel-card hl-lime cine-reveal cine-reveal-right"><div class="lr-top"><span class="lr-kicker" style="color:var(--lime)">Visual Recipe Guard</span><span class="pill verified">Procedural SVG</span></div><h4 style="font-size:18px; margin:8px 0 10px;">BBR vs Cubic Phase Space</h4><p style="font-size:13px; color:var(--dim); line-height:1.6; margin-bottom:14px;">Dynamic animated state-machine diagrams generated alongside text explanations to anchor visual memory.</p><div style="padding:12px; background:rgba(200,255,61,.06); border:1px solid rgba(200,255,61,.25); border-radius:10px; font-size:12px; color:var(--paper);"><strong style="color:var(--lime)">Syllabus-constrained:</strong> Diagram recipes strictly map to verified syllabus concepts.</div></div></div></div></div>

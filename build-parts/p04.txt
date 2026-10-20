@@ -52,6 +52,16 @@ body[data-style="glass"] .st-trig-cur{
   background:rgba(56,189,248,.25);
   color:#bae6fd;
 }
+body[data-style="glass"] .mbtn{
+  background:rgba(255,255,255,.08);
+  border-color:rgba(186,230,253,.38);
+  color:#eef6ff;
+}
+body[data-style="glass"] .mpanel{
+  background:rgba(6,15,34,.96);
+  border-color:rgba(186,230,253,.32);
+  box-shadow:0 30px 80px rgba(0,0,0,.75);
+}
 
 /* Spatial Floating Window Hero Composition */
 body[data-style="glass"] .hero-layout{
@@ -235,6 +245,36 @@ body[data-style="brutalist"] .live{
   color:#0d0d0d;
   border:2px solid #0d0d0d;
   border-radius:0;
+}
+body[data-style="brutalist"] .style-trigger .st-cube-icon .fc{
+  background:#ffe600;
+  border-color:#0d0d0d;
+}
+body[data-style="brutalist"] .mbtn{
+  background:#ffe600;
+  color:#0d0d0d;
+  border:2.5px solid #0d0d0d;
+  border-radius:0;
+  box-shadow:3px 3px 0 #0d0d0d;
+}
+body[data-style="brutalist"] .mbtn .bars,
+body[data-style="brutalist"] .mbtn .bars::before,
+body[data-style="brutalist"] .mbtn .bars::after{
+  background:#0d0d0d;
+}
+body[data-style="brutalist"] .mpanel{
+  background:#ffffff;
+  border:3.5px solid #0d0d0d;
+  border-radius:0;
+  box-shadow:10px 10px 0 #0d0d0d;
+}
+body[data-style="brutalist"] .mlinks a{
+  border-radius:0;
+}
+body[data-style="brutalist"] .mlinks a:hover,
+body[data-style="brutalist"] .mlinks a.act{
+  background:#ffe600;
+  color:#0d0d0d;
 }
 
 /* Neo-Brutalist Hero: Asymmetric Poster Compartments */

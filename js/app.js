@@ -264,6 +264,7 @@ function header(){
       ${navItem('landing','Home')}
       ${navItem('workspace','Workspace')}
       ${navItem('formulas','Formulas')}
+      ${navItem('library','📚 Library')}
     </nav>
   </div></header>`;
 }

@@ -42,3 +42,17 @@ pre,code,.code-block,.ai-code,.mono,.formula-math,.ai-step-math{font-size:14px}
 
 /* Keep the light-mode text crisp now that sizes grew. */
 body[data-mode="light"]{color:var(--text)}
+
+@media(max-width:640px){
+  .brand{font-size:15.5px!important}
+  .logo-wrap .brand-logo-img{width:24px!important;height:24px!important}
+  .h-inner{padding:0 12px!important;gap:6px!important}
+  .h-right{gap:5px!important}
+}
+@media(max-width:359px){
+  .brand{font-size:14px!important}
+  .h-inner{padding:0 10px!important;gap:4px!important}
+  .h-right{gap:4px!important}
+  .h-right #themeBtn,.h-right #themeOpen,.h-right .acct-btn,.mobile-menu-toggle{width:31px!important;height:31px!important;min-width:31px!important;flex:0 0 31px!important}
+  .h-right .btn-primary[data-open="upload"]{width:33px!important;height:31px!important;min-width:33px!important;flex:0 0 33px!important}
+}

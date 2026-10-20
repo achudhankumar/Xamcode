@@ -348,6 +348,11 @@ body.bq-ready #bq-cursor{opacity:.9}
 }
 #authScreen .auth-social-btn{ border-radius: 999px !important }
 #authScreen .auth-guest{ border-radius: 999px !important }
+#authScreen{ overflow-x: hidden !important }
+
+@media (max-width: 760px){
+  #bq-menu-btn{ display: none !important }
+}
 /* Mobile: let the display headline breathe. */
 @media (max-width: 900px){
   #authScreen .auth-headline{ font-size: clamp(30px, 8vw, 44px) !important }
