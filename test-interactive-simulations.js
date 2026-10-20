@@ -92,6 +92,15 @@ ok(playerHtml.includes('data-sim-action="reset"'), 'card contains reset button')
 ok(playerHtml.includes('data-sim-speed="2"'), 'card contains speed buttons');
 ok(playerHtml.includes('Complexity & Mechanics'), 'card contains complexity analysis');
 
+const bSvgMarkup = sim.renderBinarySearchSvg(bFinal);
+ok(typeof bSvgMarkup === 'string' && bSvgMarkup.includes('<svg') && bSvgMarkup.includes('</svg>'), 'renderBinarySearchSvg generates valid SVG markup');
+ok(bSvgMarkup.includes('FOUND'), 'Binary search SVG indicates found target');
+
+const bPlayerHtml = sim.renderBinarySearchPlayerHtml('sim-test-bs', 1, bSteps.length, bSteps[1], 1, false);
+ok(typeof bPlayerHtml === 'string' && bPlayerHtml.includes('interactive-simulation-card'), 'renderBinarySearchPlayerHtml generates card markup');
+ok(bPlayerHtml.includes('Binary Search Algorithm Walkthrough'), 'BS card contains correct title');
+ok(bPlayerHtml.includes('data-sim-action="play"'), 'BS card contains play control button');
+
 console.log('\n--- ALGORITHM DETECTION ---');
 
 ok(sim.detectAlgorithmType('Understanding Bubble Sort in Java') === 'bubble-sort', 'detects bubble-sort in title');

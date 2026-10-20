@@ -285,6 +285,18 @@
     { line: 7, text: 'end procedure' }
   ];
 
+  const BINARY_SEARCH_CODE = [
+    { line: 1, text: 'procedure binarySearch(A : sorted list, target : item)' },
+    { line: 2, text: '  low := 0; high := length(A) - 1' },
+    { line: 3, text: '  while low <= high do' },
+    { line: 4, text: '    mid := floor((low + high) / 2)' },
+    { line: 5, text: '    if A[mid] = target then return mid  // Found!' },
+    { line: 6, text: '    else if A[mid] < target then low := mid + 1' },
+    { line: 7, text: '    else high := mid - 1' },
+    { line: 8, text: '  return -1  // Target not in list' },
+    { line: 9, text: 'end procedure' }
+  ];
+
   /* ============================================================
      4. SVG RENDERING HELPERS FOR BUBBLE SORT
      ============================================================ */
@@ -446,6 +458,143 @@
   }
 
   /* ============================================================
+     5B. BINARY SEARCH RENDERERS (SVG + HTML WIDGET)
+     ============================================================ */
+  function renderBinarySearchSvg(step){
+    const arr = step.array || [2, 4, 7, 10, 13, 18, 23, 29];
+    const target = step.target !== undefined ? step.target : 18;
+    const svgWidth = 560;
+    const svgHeight = 220;
+    const barWidth = 48;
+    const barGap = 16;
+    const totalBarsWidth = arr.length * barWidth + (arr.length - 1) * barGap;
+    const startX = (svgWidth - totalBarsWidth) / 2;
+    const baseLineY = 145;
+
+    let bars = '';
+    arr.forEach((val, i) => {
+      const x = startX + i * (barWidth + barGap);
+      const y = baseLineY - 45;
+      const isMid = step.mid === i;
+      const isFound = step.found && step.foundIndex === i;
+      const isEliminated = step.eliminated && step.eliminated[i];
+      const isLow = step.low === i;
+      const isHigh = step.high === i;
+
+      let strokeColor = '#38bdf8';
+      let fillColor = 'rgba(56, 189, 248, 0.15)';
+      let badge = '';
+
+      if (isFound) {
+        strokeColor = '#10b981';
+        fillColor = 'rgba(16, 185, 129, 0.35)';
+        badge = '✓ FOUND';
+      } else if (isMid) {
+        strokeColor = '#f59e0b';
+        fillColor = 'rgba(245, 158, 11, 0.3)';
+        badge = 'MID';
+      } else if (isEliminated) {
+        strokeColor = '#334155';
+        fillColor = 'rgba(15, 23, 42, 0.4)';
+      }
+
+      let pointerText = '';
+      if (isLow && isHigh) pointerText = 'L=H';
+      else if (isLow) pointerText = 'LOW';
+      else if (isHigh) pointerText = 'HIGH';
+
+      bars += `
+        <g class="bs-bar-group" opacity="${isEliminated ? '0.35' : '1'}">
+          ${badge ? `<text x="${x + barWidth/2}" y="${y - 10}" text-anchor="middle" fill="${strokeColor}" font-size="10" font-weight="bold" font-family="Geist Mono, monospace">${badge}</text>` : ''}
+          <rect x="${x}" y="${y}" width="${barWidth}" height="55" rx="8" fill="${fillColor}" stroke="${strokeColor}" stroke-width="${isMid || isFound ? '2.5' : '1.5'}" style="transition:all 0.25s ease;" />
+          <text x="${x + barWidth/2}" y="${y + 34}" text-anchor="middle" fill="#ffffff" font-size="16" font-weight="800" font-family="Geist Mono, monospace">${val}</text>
+          <text x="${x + barWidth/2}" y="${y + 74}" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="Geist Mono, monospace">idx ${i}</text>
+          ${pointerText ? `<text x="${x + barWidth/2}" y="${y + 90}" text-anchor="middle" fill="${isLow ? '#38bdf8' : '#f43f5e'}" font-size="10" font-weight="bold" font-family="Geist Mono, monospace">▲ ${pointerText}</text>` : ''}
+        </g>
+      `;
+    });
+
+    return `
+      <svg class="simulation-svg" viewBox="0 0 ${svgWidth} ${svgHeight}" style="width:100%;height:auto;max-height:240px;" xmlns="http://www.w3.org/2000/svg">
+        <text x="24" y="24" fill="#94a3b8" font-size="12" font-family="Geist Mono, monospace">Target: <tspan fill="#38bdf8" font-weight="bold">${target}</tspan></text>
+        <text x="${svgWidth - 24}" y="24" text-anchor="end" fill="#94a3b8" font-size="12" font-family="Geist Mono, monospace">Window: <tspan fill="#f59e0b" font-weight="bold">[${step.low >= 0 ? step.low : '—'}..${step.high >= 0 ? step.high : '—'}]</tspan></text>
+        <line x1="20" y1="${baseLineY + 12}" x2="${svgWidth - 20}" y2="${baseLineY + 12}" stroke="#334155" stroke-width="1.5" stroke-dasharray="4 4" />
+        ${bars}
+      </svg>
+    `;
+  }
+
+  function renderBinarySearchPlayerHtml(simId, currentStep, totalSteps, stepObj, speedMultiplier, isPlaying){
+    const svg = renderBinarySearchSvg(stepObj);
+    const activeLine = stepObj.found ? 5 : stepObj.mid >= 0 ? 4 : 2;
+
+    const pseudocodeHtml = BINARY_SEARCH_CODE.map(c => {
+      const isCurrent = c.line === activeLine;
+      return `<div class="bs-code-line ${isCurrent ? 'active' : ''}" style="${isCurrent ? 'background:rgba(56,189,248,0.2);color:#38bdf8;font-weight:700;border-left:3px solid #38bdf8;padding-left:8px;' : 'padding-left:11px;color:#94a3b8;'}font-family:Geist Mono,monospace;font-size:12px;line-height:1.7;">${c.text}</div>`;
+    }).join('');
+
+    return `
+      <div class="interactive-simulation-card" id="${simId}" data-sim-type="binary-search">
+        <div class="sim-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;border-bottom:1px solid #1e293b;padding-bottom:10px;">
+          <div>
+            <span class="panel-tag" style="color:#38bdf8;font-size:11px;font-weight:700;letter-spacing:1px;">INTERACTIVE VISUALIZATION · ALGORITHM</span>
+            <h3 style="margin:4px 0 0 0;font-size:19px;color:#f8fafc;">Binary Search Algorithm Walkthrough</h3>
+          </div>
+          <div class="sim-telemetry" style="display:flex;gap:16px;font-family:Geist Mono,monospace;font-size:12px;">
+            <span style="background:rgba(56,189,248,0.15);color:#38bdf8;padding:4px 8px;border-radius:6px;border:1px solid rgba(56,189,248,0.3);">
+              Target: <b>${stepObj.target}</b>
+            </span>
+            <span style="background:rgba(245,158,11,0.15);color:#f59e0b;padding:4px 8px;border-radius:6px;border:1px solid rgba(245,158,11,0.3);">
+              Mid Index: <b>${stepObj.mid >= 0 ? stepObj.mid : '—'}</b>
+            </span>
+            <span style="background:rgba(34,197,94,0.15);color:#22c55e;padding:4px 8px;border-radius:6px;border:1px solid rgba(34,197,94,0.3);">
+              Status: <b>${stepObj.found ? 'FOUND ✓' : 'SEARCHING'}</b>
+            </span>
+          </div>
+        </div>
+
+        <div class="sim-stage-container" style="background:#090d16;border:1px solid #1e293b;border-radius:12px;padding:16px;margin-bottom:14px;text-align:center;">
+          ${svg}
+          <div class="sim-narration-box" style="margin-top:12px;padding:10px 14px;background:rgba(30,41,59,0.7);border-radius:8px;border-left:4px solid #38bdf8;font-size:13px;color:#f1f5f9;text-align:left;">
+            <b>Step ${currentStep + 1} of ${totalSteps}:</b> ${stepObj.description}
+          </div>
+        </div>
+
+        <div class="sim-controls-panel" style="display:flex;justify-content:space-between;align-items:center;background:#0c1222;border:1px solid #1e293b;border-radius:10px;padding:12px 16px;margin-bottom:14px;">
+          <div class="sim-btn-group" style="display:flex;gap:8px;">
+            <button type="button" class="btn-sm" data-sim-action="reset" style="background:#1e293b;color:#f8fafc;border:1px solid #334155;padding:6px 14px;border-radius:6px;cursor:pointer;font-weight:600;">⏮ Reset</button>
+            <button type="button" class="btn-sm" data-sim-action="prev" ${currentStep === 0 ? 'disabled' : ''} style="background:#1e293b;color:#f8fafc;border:1px solid #334155;padding:6px 14px;border-radius:6px;cursor:${currentStep === 0 ? 'not-allowed' : 'pointer'};opacity:${currentStep === 0 ? 0.5 : 1};font-weight:600;">◀ Prev</button>
+            <button type="button" class="btn-sm" data-sim-action="play" style="background:#0284c7;color:#ffffff;border:none;padding:6px 18px;border-radius:6px;cursor:pointer;font-weight:700;">${isPlaying ? '⏸ Pause' : '▶ Play'}</button>
+            <button type="button" class="btn-sm" data-sim-action="next" ${currentStep >= totalSteps - 1 ? 'disabled' : ''} style="background:#1e293b;color:#f8fafc;border:1px solid #334155;padding:6px 14px;border-radius:6px;cursor:${currentStep >= totalSteps - 1 ? 'not-allowed' : 'pointer'};opacity:${currentStep >= totalSteps - 1 ? 0.5 : 1};font-weight:600;">Next ▶</button>
+          </div>
+          <div class="sim-speed-group" style="display:flex;align-items:center;gap:6px;font-size:12px;color:#94a3b8;">
+            <span>Speed:</span>
+            <button type="button" class="btn-xs ${speedMultiplier === 0.5 ? 'active' : ''}" data-sim-speed="0.5" style="background:${speedMultiplier === 0.5 ? '#0284c7' : '#1e293b'};color:#fff;border:none;padding:3px 8px;border-radius:4px;cursor:pointer;">0.5x</button>
+            <button type="button" class="btn-xs ${speedMultiplier === 1 ? 'active' : ''}" data-sim-speed="1" style="background:${speedMultiplier === 1 ? '#0284c7' : '#1e293b'};color:#fff;border:none;padding:3px 8px;border-radius:4px;cursor:pointer;">1x</button>
+            <button type="button" class="btn-xs ${speedMultiplier === 2 ? 'active' : ''}" data-sim-speed="2" style="background:${speedMultiplier === 2 ? '#0284c7' : '#1e293b'};color:#fff;border:none;padding:3px 8px;border-radius:4px;cursor:pointer;">2x</button>
+          </div>
+        </div>
+
+        <div class="sim-details-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+          <div class="sim-code-box" style="background:#090d16;border:1px solid #1e293b;border-radius:10px;padding:12px;">
+            <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px;">Execution Pseudocode</div>
+            ${pseudocodeHtml}
+          </div>
+          <div class="sim-analysis-box" style="background:#090d16;border:1px solid #1e293b;border-radius:10px;padding:12px;">
+            <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px;">Complexity & Mechanics</div>
+            <div style="font-size:12.5px;color:#cbd5e1;line-height:1.6;">
+              <p style="margin:0 0 6px 0;"><b>Best Case:</b> <span style="color:#22c55e;font-family:Geist Mono,monospace;">O(1)</span> (Target found at initial midpoint).</p>
+              <p style="margin:0 0 6px 0;"><b>Worst / Average Case:</b> <span style="color:#38bdf8;font-family:Geist Mono,monospace;">O(log n)</span> (Search space halved each step).</p>
+              <p style="margin:0 0 6px 0;"><b>Space Complexity:</b> <span style="color:#22c55e;font-family:Geist Mono,monospace;">O(1)</span> auxiliary memory.</p>
+              <p style="margin:0;color:#94a3b8;font-size:11.5px;"><b>Key Invariant:</b> Monotonically ordered input list.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  /* ============================================================
      6. DETECTOR & MANAGER
      ============================================================ */
   function detectAlgorithmType(text){
@@ -462,8 +611,11 @@
     generateBinarySearchSteps,
     renderBubbleSortSvg,
     renderBubbleSortPlayerHtml,
+    renderBinarySearchSvg,
+    renderBinarySearchPlayerHtml,
     detectAlgorithmType,
-    BUBBLE_SORT_CODE
+    BUBBLE_SORT_CODE,
+    BINARY_SEARCH_CODE
   };
 });
 

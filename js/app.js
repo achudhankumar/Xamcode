@@ -1193,6 +1193,14 @@ function stopAIVisualAutoplay(){
   state.aiVisualPlaying=false;
 }
 
+function aiConceptDone(study, conceptIndex){
+  if(!study||!Array.isArray(study.questions)) return false;
+  const qs=study.questions.map((question,index)=>({question,index}))
+    .filter(({question,index})=>(question.conceptIndex??index%study.concepts.length)===conceptIndex);
+  if(!qs.length) return false;
+  return qs.every(({question,index})=>state.aiQuizAnswers[index]===question.answerIndex);
+}
+
 function validateAIStudyForDisplay(study){
   if(!study||!Array.isArray(study.units)||!Array.isArray(study.concepts)||
      !Array.isArray(study.questions)||!Array.isArray(study.flashcards)||
@@ -1299,24 +1307,30 @@ function aiStudyView(){
   const page=state.aiPage||{type:'plan'};
   const locationByConcept=new Map();
   study.units.forEach((unit,unitIndex)=>unit.topics.forEach((topic,topicIndex)=>{
-    topic.conceptIndices.forEach(conceptIndex=>locationByConcept.set(conceptIndex,{unitIndex,topicIndex}));
+    (topic.conceptIndices||[]).forEach(conceptIndex=>locationByConcept.set(conceptIndex,{unitIndex,topicIndex}));
   }));
   const relatedQuestions=conceptIndex=>study.questions.map((question,index)=>({question,index}))
     .filter(({question,index})=>(question.conceptIndex??index%study.concepts.length)===conceptIndex);
   let pageTitle=study.title;
   let content='';
 
+  const unitStates=Array.isArray(study.unitStates)?study.unitStates:[];
+  const pending=Array.isArray(study.pendingUnits)?study.pendingUnits:[];
+  const failed=unitStates.filter(s=>s.status==='failed');
+  const building=unitStates.find(s=>s.status==='building');
+
+  const activeConcept=page.type==='concept'?page.conceptIndex:-1;
+  const activeUnit=page.type==='unit'?page.unitIndex:(page.type==='topic'?page.unitIndex:(activeConcept>=0?locationByConcept.get(activeConcept)?.unitIndex:-1));
+  const activeTopic=page.type==='topic'?page.topicIndex:(activeConcept>=0?locationByConcept.get(activeConcept)?.topicIndex:-1);
+
   if(page.type==='plan'){
     const lessonCount=study.concepts.length;
     const firstLocation=study.units.find((unit)=>unit.topics.some(topic=>topic.conceptIndices.length));
     const firstTopic=firstLocation?.topics.find(topic=>topic.conceptIndices.length);
     const firstConcept=firstTopic?.conceptIndices[0]??0;
-    /* Chunked builds surface their live ledger: which unit is being
-       written now, what is still queued, and anything that failed. */
-    const unitStates=Array.isArray(study.unitStates)?study.unitStates:[];
-    const pending=Array.isArray(study.pendingUnits)?study.pendingUnits:[];
-    const failed=unitStates.filter(s=>s.status==='failed');
-    const building=unitStates.find(s=>s.status==='building');
+    const totalQuestions=study.questions.length;
+    const totalVisuals=study.concepts.filter(c=>c.visualization&&c.visualization.steps&&c.visualization.steps.length).length;
+
     let chunkStrip='';
     if(study.chunked&&pending.length){
       const bits=[];
@@ -1326,39 +1340,99 @@ function aiStudyView(){
       if(state.aiChunkNote) chunkStrip+=`<div class="ai-study-notice" role="alert">${escapeHtml(state.aiChunkNote)}</div>`;
       if(failed.length) chunkStrip+=`<div class="ai-study-notice" role="alert">⚠️ Unit${failed.length===1?'':'s'} ${failed.map(s=>s.index+1).join(', ')} could not be prepared. The rest of the study works normally.</div>`;
     }
+
     content=`<section class="ai-plan-hero">
-      <div><div class="panel-tag">YOUR PERSONAL STUDY PLAN · ${escapeHtml(study.subject)}</div><h1>${escapeHtml(study.title)}</h1><p>${escapeHtml(study.summary)}</p></div>
-      <div class="ai-plan-stats"><div><strong>${study.units.length}</strong><span>UNITS</span></div><div><strong>${lessonCount}</strong><span>LESSONS</span></div><div><strong>${study.questions.length}</strong><span>QUESTIONS</span></div></div>
+      <div>
+        <div class="panel-tag">YOUR PERSONAL STUDY PLAN · ${escapeHtml(study.subject)}</div>
+        <h1>${escapeHtml(study.title)}</h1>
+        <p class="ai-plan-summary">${escapeHtml(study.summary)}</p>
+      </div>
+      <div class="ai-plan-stats">
+        <div><strong>${study.units.length}</strong><span>UNITS</span></div>
+        <div><strong>${lessonCount}</strong><span>LESSONS</span></div>
+        <div><strong>${totalQuestions}</strong><span>QUESTIONS</span></div>
+        <div><strong>${totalVisuals}</strong><span>VISUALS</span></div>
+      </div>
       ${aiStudyPageButton('concept','Start learning', { 'concept-index':firstConcept },'ai-primary-link')}
     </section>${chunkStrip}
-    <div class="ai-plan-heading"><div><div class="panel-tag">THE LEARNING PATH</div><h2>Study plan</h2></div><p>Work through each unit in order. Every topic opens as its own lesson with explanations, visuals and practice.</p></div>
-    <div class="ai-unit-list">${study.units.map((unit,unitIndex)=>{
-      const st=unitStates[unitIndex];
-      const locked=unit.locked||(st&&st.status!=='ready');
-      if(locked){
-        const status=(st&&st.status)||'locked';
-        const line=status==='building'?'⏳ Being prepared in the background right now…'
-          :status==='failed'?'⚠️ This unit could not be prepared. The rest of the study works normally.'
-          :'🔒 Queued — unlocks automatically while you study.';
-        return `<article class="ai-unit-card ai-unit-card-locked">
-          <div class="ai-unit-card-heading"><span class="ai-unit-number">${String(unitIndex+1).padStart(2,'0')}</span><div><div class="panel-tag">UNIT ${String(unitIndex+1).padStart(2,'0')} · ${status==='building'?'BUILDING':status==='failed'?'UNAVAILABLE':'LOCKED'}</div><h3>${escapeHtml(unit.title)}</h3><p>${escapeHtml(unit.overview)}</p></div></div>
-          <div class="ai-unit-lock" role="status">${line}</div>
-        </article>`;
-      }
-      return `<article class="ai-unit-card">
-      <div class="ai-unit-card-heading"><span class="ai-unit-number">${String(unitIndex+1).padStart(2,'0')}</span><div><div class="panel-tag">UNIT ${String(unitIndex+1).padStart(2,'0')}</div><h3>${escapeHtml(unit.title)}</h3><p>${escapeHtml(unit.overview)}</p></div>${aiStudyPageButton('unit','Open unit',{ 'unit-index':unitIndex },'ai-text-link')}</div>
-      <div class="ai-unit-goals"><span>YOU WILL LEARN</span>${unit.learningGoals.map(goal=>`<span class="ai-goal-chip">${escapeHtml(goal)}</span>`).join('')}</div>
-      <div class="ai-topic-list">${unit.topics.map((topic,topicIndex)=>`<section class="ai-topic-row">
-        ${aiStudyPageButton('topic',`<span class="ai-topic-arrow" aria-hidden="true">↗</span><span class="ai-topic-copy"><b>${escapeHtml(topic.title)}</b><span>${escapeHtml(topic.overview)}</span></span><span class="ai-topic-count">${topic.conceptIndices.length} ${topic.conceptIndices.length===1?'lesson':'lessons'}</span>`,{'unit-index':unitIndex,'topic-index':topicIndex},'ai-topic-link')}
-        ${topic.conceptIndices.map(conceptIndex=>aiStudyPageButton('concept',`<span class="ai-lesson-dot" aria-hidden="true"></span>${escapeHtml(study.concepts[conceptIndex].title)}<span class="ai-open-mark" aria-hidden="true">→</span>`,{'concept-index':conceptIndex},'ai-plan-lesson-link')).join('')}
-      </section>`).join('')}
-    </article>`;
-    }).join('')}</div>
-    <section class="ai-plan-tools"><div><div class="panel-tag">READY WHEN YOU ARE</div><h2>Practice, revise, or ask a question.</h2></div><div>${aiStudyPageButton('quiz',`Practice · ${study.questions.length} questions`,{},'ai-secondary-link')}${aiStudyPageButton('flashcards','Review flashcards',{},'ai-secondary-link')}${aiStudyPageButton('ask','Ask XAMCODE AI',{},'ai-secondary-link')}</div></section>`;
+
+    <div class="ai-plan-heading">
+      <div><div class="panel-tag">THE LEARNING PATH</div><h2>Study plan</h2></div>
+      <p>Work through each unit in order. Every topic opens as its own lesson with explanations, visuals and practice.</p>
+    </div>
+
+    <div class="ws-cards ai-unit-list">
+      ${study.units.map((unit,unitIndex)=>{
+        const uKey='ai-'+unitIndex;
+        const collapsed=state.collapsedUnits[uKey]===true;
+        const st=unitStates[unitIndex];
+        const locked=unit.locked||(st&&st.status!=='ready');
+        if(locked){
+          const status=(st&&st.status)||'locked';
+          const line=status==='building'?'⏳ Being prepared in the background right now…'
+            :status==='failed'?'⚠️ This unit could not be prepared. The rest of the study works normally.'
+            :'🔒 Queued — unlocks automatically while you study.';
+          return `<article class="ai-unit-card ai-unit-card-locked">
+            <div class="ai-unit-card-heading">
+              <span class="ai-unit-number">${String(unitIndex+1).padStart(2,'0')}</span>
+              <div>
+                <div class="panel-tag">UNIT ${String(unitIndex+1).padStart(2,'0')} · ${status==='building'?'BUILDING':status==='failed'?'UNAVAILABLE':'LOCKED'}</div>
+                <h3>${escapeHtml(unit.title)}</h3>
+                <p>${escapeHtml(unit.overview)}</p>
+              </div>
+            </div>
+            <div class="ai-unit-lock" role="status">${line}</div>
+          </article>`;
+        }
+
+        const unitConceptIndices=[];
+        unit.topics.forEach(t=>(t.conceptIndices||[]).forEach(ci=>unitConceptIndices.push(ci)));
+        const unitDoneCount=unitConceptIndices.filter(ci=>aiConceptDone(study,ci)).length;
+        const unitQCount=unitConceptIndices.reduce((s,ci)=>s+relatedQuestions(ci).length,0);
+
+        return `<div class="unit-block" style="margin-bottom:28px">
+          <h2 class="unit-heading">
+            <button type="button" class="unit-heading-toggle" data-toggle-unit="${uKey}" aria-expanded="${!collapsed}" aria-controls="cards-unit-${uKey}">
+              <span class="unit-chev" aria-hidden="true">${collapsed?'▸':'▾'}</span>
+              <span>UNIT ${String(unitIndex+1).padStart(2,'0')}: ${escapeHtml(unit.title)}</span>
+              <span class="unit-count">${unit.topics.length} topics · ${unitConceptIndices.length} lessons · ${unitQCount} Q · ${unitDoneCount}/${unitConceptIndices.length} done</span>
+            </button>
+          </h2>
+          <div class="unit-grid" id="cards-unit-${uKey}" ${collapsed?'style="display:none"':''}>
+            ${unitConceptIndices.map(conceptIndex=>{
+              const c=study.concepts[conceptIndex];
+              if(!c) return '';
+              const loc=locationByConcept.get(conceptIndex);
+              const topic=loc?study.units[loc.unitIndex]?.topics[loc.topicIndex]:null;
+              const done=aiConceptDone(study,conceptIndex);
+              const qCount=relatedQuestions(conceptIndex).length;
+              return `<button type="button" class="concept-card${done?' done':''}" data-ai-page="concept" data-concept-index="${conceptIndex}" aria-label="${escapeHtml(c.title)}${done?' — completed':''}">
+                <div class="cc-head"><span>${escapeHtml((topic?topic.title:'TOPIC').toUpperCase())}</span><span>VIS-${String(conceptIndex+1).padStart(3,'0')}</span></div>
+                <div class="cc-title">${done?'✓ ':''}${escapeHtml(c.title)}</div>
+                <p style="font-size:11.5px;color:var(--dim,#9aa38d);margin:4px 0 10px;line-height:1.45;text-align:left;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${escapeHtml(c.summary)}</p>
+                <div class="cc-foot"><span>🎬 Visual</span><span>❓ ${qCount} Q</span></div>
+              </button>`;
+            }).join('')}
+          </div>
+          <div style="margin-top:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            ${aiStudyPageButton('unit','Open unit overview',{ 'unit-index':unitIndex },'ai-text-link')}
+            <span style="font-size:11px;color:var(--muted,#6b7280);">Goals:</span>
+            ${unit.learningGoals.slice(0,3).map(goal=>`<span class="ai-goal-chip" style="font-size:10px;">${escapeHtml(goal)}</span>`).join('')}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+
+    <section class="ai-plan-tools">
+      <div><div class="panel-tag">READY WHEN YOU ARE</div><h2>Practice, revise, or ask a question.</h2></div>
+      <div>
+        ${aiStudyPageButton('quiz',`Practice · ${study.questions.length} questions`,{},'ai-secondary-link')}
+        ${aiStudyPageButton('flashcards','Review flashcards',{},'ai-secondary-link')}
+        ${aiStudyPageButton('ask','Ask AURA AI',{},'ai-secondary-link')}
+      </div>
+    </section>`;
   }else if(page.type==='unit'){
     const unit=study.units[page.unitIndex];
-    /* A locked unit has no topics yet; its card is not clickable, but a
-       stale breadcrumb must never render an empty unit page. */
     if(!unit||unit.locked){state.aiPage={type:'plan'};return aiStudyView();}
     pageTitle=unit.title;
     content=`<div class="ai-breadcrumbs">${aiStudyPageButton('plan',escapeHtml(study.title))}<span>/</span><span>Unit ${page.unitIndex+1}</span></div>
@@ -1382,6 +1456,7 @@ function aiStudyView(){
     const location=locationByConcept.get(conceptIndex);
     const unit=location?study.units[location.unitIndex]:null;
     const topic=location?unit.topics[location.topicIndex]:null;
+    const unitIndex=location?location.unitIndex:0;
     const questions=relatedQuestions(conceptIndex);
     const visualSteps=concept.visualization.steps;
     const visualStep=Math.min(state.aiVisualStep,visualSteps.length-1);
@@ -1389,7 +1464,12 @@ function aiStudyView(){
     const previous=conceptIndex>0?conceptIndex-1:null;
     const next=conceptIndex<study.concepts.length-1?conceptIndex+1:null;
     pageTitle=concept.title;
-    const isAlgo = window.XC && window.XC.simulations && window.XC.simulations.detectAlgorithmType(concept.title + ' ' + (concept.summary || '') + ' ' + (concept.explanation || ''));
+
+    const simAlgo = window.XC && window.XC.simulations ? window.XC.simulations.detectAlgorithmType(concept.title + ' ' + (concept.summary || '') + ' ' + (concept.explanation || '')) : null;
+    const isAlgo = !!simAlgo;
+    const auraType = window.XC && window.XC.auraVisuals && window.XC.auraVisuals.detect ? window.XC.auraVisuals.detect(concept.title + ' ' + (concept.summary || '') + ' ' + (concept.explanation || '')) : null;
+    const isAuraVisual = !!auraType;
+
     const lessonModes=[
       ['crash','Crash Lesson'],
       ...(isAlgo ? [['sim','🎮 Interactive Simulation']] : []),
@@ -1399,35 +1479,126 @@ function aiStudyView(){
     ];
     const conceptCards=study.flashcards.filter(card=>card.conceptIndex===conceptIndex);
     const currentConceptCard=conceptCards[state.aiLessonFlashIdx%conceptCards.length];
-    const simSteps = (window.XC && window.XC.simulations) ? window.XC.simulations.generateBubbleSortSteps() : [];
+
+    const simSteps = isAlgo && window.XC && window.XC.simulations ? (simAlgo === 'binary-search' ? window.XC.simulations.generateBinarySearchSteps() : window.XC.simulations.generateBubbleSortSteps()) : [];
     const currentSimStep = Math.min(state.simStep || 0, Math.max(0, simSteps.length - 1));
-    const simBanner = isAlgo ? `<div class="ai-study-notice" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;background:rgba(56,189,248,0.12);border:1px solid rgba(56,189,248,0.3);border-radius:10px;padding:10px 14px;"><span>🎮 <b>Interactive Simulation Available:</b> Step through the array, observe comparisons and swaps, and inspect time complexity.</span><button type="button" class="btn-primary" data-ai-mode="sim" style="font-size:12px;padding:5px 12px;cursor:pointer;">Launch Simulation →</button></div>` : '';
-    const lessonBody=state.aiLessonMode==='sim'
-      ? (window.XC && window.XC.simulations ? window.XC.simulations.renderBubbleSortPlayerHtml('ai-interactive-sim', currentSimStep, simSteps.length, simSteps[currentSimStep], state.simSpeed || 1, state.simPlaying || false) : '<p>Simulation loading…</p>')
-      : state.aiLessonMode==='crash'
-      ? `${simBanner}<section class="ai-visual-stage-card"><div class="ai-visual-stage-head"><div><div class="panel-tag">CRASH LESSON · SCENE ${visualStep+1}/${visualSteps.length}</div><h3>${escapeHtml(currentVisual.title)}</h3></div><span class="ai-visual-stage-id">${escapeHtml(concept.visualization.caption)}</span></div><figure class="ai-diagram-figure" data-layout="${escapeHtml(currentVisual.layout)}">${aiDiagramSvg(currentVisual,conceptIndex,visualStep,escapeHtml(concept.title))}<figcaption><span>SCENE ${String(visualStep+1).padStart(2,'0')} · ${escapeHtml(currentVisual.layout.toUpperCase())}</span><p>${escapeHtml(currentVisual.description)}</p></figcaption></figure>${topicImageSlot(conceptIndex)}<div class="ai-visual-step-track">${visualSteps.map((step,index)=>`<button type="button" class="ai-visual-step ${index===visualStep?'active':index<visualStep?'done':''}" data-ai-visual="${index}" aria-current="${index===visualStep?'step':'false'}"><span>${String(index+1).padStart(2,'0')}</span><b>${escapeHtml(step.title)}</b></button>`).join('')}</div><div class="ai-visual-controls"><button type="button" data-ai-visual-play>${state.aiVisualPlaying?'Pause lesson':'▶ Play lesson'}</button><span>${visualStep+1} of ${visualSteps.length} scenes</span><div><button type="button" data-ai-visual="${Math.max(0,visualStep-1)}" ${visualStep===0?'disabled':''}>← Previous</button><button type="button" data-ai-visual="${Math.min(visualSteps.length-1,visualStep+1)}" ${visualStep===visualSteps.length-1?'disabled':''}>Next scene →</button></div></div></section>`
-      :state.aiLessonMode==='compare'
-        ? `<section class="ai-detail-card ai-comparison-panel"><div class="panel-tag">SIDE-BY-SIDE COMPARISON</div><div class="ai-comparison-head"><h3>${escapeHtml(concept.comparison.firstLabel)}</h3><span>VS</span><h3>${escapeHtml(concept.comparison.secondLabel)}</h3></div><div class="ai-comparison-table"><div class="ai-comparison-row ai-comparison-labels"><span>ASPECT</span><b>${escapeHtml(concept.comparison.firstLabel)}</b><b>${escapeHtml(concept.comparison.secondLabel)}</b></div>${concept.comparison.rows.map(row=>`<div class="ai-comparison-row"><strong>${escapeHtml(row.aspect)}</strong><span>${escapeHtml(row.first)}</span><span>${escapeHtml(row.second)}</span></div>`).join('')}</div><p class="ai-comparison-takeaway"><b>KEY DIFFERENCE · </b>${escapeHtml(concept.comparison.takeaway)}</p></section>`
-        :state.aiLessonMode==='solve'
-          ? `<div class="ai-vaathiyar-panels"><section class="ai-detail-card"><div class="panel-tag">PROBLEM</div><h3>${escapeHtml(concept.workedExample.scenario)}</h3></section><section class="ai-detail-card"><div class="panel-tag">STEP-BY-STEP SOLUTION</div><ol class="ai-worked-steps">${concept.workedExample.steps.map(step=>`<li><b>${escapeHtml(step.label)} · ${escapeHtml(step.action)}</b><span>${escapeHtml(step.reasoning)}</span></li>`).join('')}</ol><p class="ai-worked-answer"><b>ANSWER · </b>${escapeHtml(concept.workedExample.answer)}</p></section></div>`
-          :state.aiLessonMode==='life'
-            ? `<div class="ai-mode-panels">${concept.realWorldExamples.map((example,index)=>`<article class="ai-mode-panel ai-mode-example"><span class="ai-mode-icon" aria-hidden="true">${String(index+1).padStart(2,'0')}</span><div class="panel-tag">REAL-LIFE CONNECTION</div><h3>${escapeHtml(example.title)}</h3><p>${escapeHtml(example.description)}</p></article>`).join('')}<article class="ai-mode-panel ai-mode-recall"><span class="ai-mode-icon" aria-hidden="true">⚡</span><div class="panel-tag">ONE-LINE REVISION</div><p>${escapeHtml(concept.quickRecall)}</p></article></div>`
-            :state.aiLessonMode==='history'
-              ? `<section class="ai-detail-card ai-history-panel"><div class="panel-tag">ORIGIN STORY · SOURCE-BASED</div><div class="ai-history-marker" aria-hidden="true">↗</div><p>${escapeHtml(concept.originStory)}</p><div class="ai-history-source">Grounded in the uploaded document</div></section>`
-              :state.aiLessonMode==='flash'
-                ? `<section class="ai-concept-flashcard-wrap" aria-label="Lesson flashcards"><div class="panel-tag">ACTIVE RECALL · ${state.aiLessonFlashIdx+1} OF ${conceptCards.length}</div><button type="button" class="ai-flashcard" data-ai-concept-flip aria-label="${state.aiLessonFlashFlipped?'Show question':'Reveal answer'}"><small>${state.aiLessonFlashFlipped?'ANSWER':'QUESTION'}</small><p>${escapeHtml(state.aiLessonFlashFlipped?currentConceptCard.back:currentConceptCard.front)}</p></button><div class="ai-flashcard-actions"><button type="button" data-ai-concept-flash="prev" aria-label="Previous lesson flashcard">← Previous</button><button type="button" data-ai-concept-flip>${state.aiLessonFlashFlipped?'Show question':'Reveal answer'}</button><button type="button" data-ai-concept-flash="next" aria-label="Next lesson flashcard">Next →</button></div></section>`
-                :state.aiLessonMode==='cheat'
-              ? aiCheatCodePanel(concept)
-            :state.aiLessonMode==='exam'
-                  ? `<div class="ai-exam-mode"><div class="ai-study-notice">Answer these questions to check your understanding of ${escapeHtml(concept.title)}.</div>${questions.map(({question,index},position)=>aiQuestionCard(question,index,position+1,questions.length)).join('')}</div>`
-                  : `<section class="ai-detail-card ai-depth-panel"><div class="panel-tag">CHOOSE YOUR EXPLANATION LEVEL</div><div class="ai-depth-tabs" role="tablist" aria-label="Explanation depth">${[['simple','Simple'],['everyday','Everyday'],['advanced','Advanced']].map(([level,label])=>`<button type="button" role="tab" aria-selected="${state.aiExplanationLevel===level}" class="${state.aiExplanationLevel===level?'active':''}" data-ai-explanation-level="${level}">${label}</button>`).join('')}</div><div class="ai-depth-copy"><div class="ai-depth-level">${state.aiExplanationLevel==='simple'?'START HERE':state.aiExplanationLevel==='everyday'?'CONNECT IT':'GO DEEPER'}</div><p>${escapeHtml(concept.explanationLevels[state.aiExplanationLevel])}</p></div></section>`;
-    content=`<div class="ai-breadcrumbs">${aiStudyPageButton('plan',escapeHtml(study.title))}<span>/</span>${unit?aiStudyPageButton('unit',escapeHtml(unit.title),{'unit-index':location.unitIndex}):''}${unit?'<span>/</span>':''}${topic?aiStudyPageButton('topic',escapeHtml(topic.title),{'unit-index':location.unitIndex,'topic-index':location.topicIndex}):''}<span>/</span><span>${escapeHtml(concept.title)}</span></div>
-      <div class="ai-learning-layout"><div class="ai-learning-main"><header class="ai-lesson-heading"><div class="panel-tag">LESSON ${String(conceptIndex+1).padStart(2,'0')} · ${escapeHtml(topic?.title||study.subject)}</div><h1>${escapeHtml(concept.title)}</h1><p>${escapeHtml(concept.summary)}</p></header>
-        <section class="ai-lesson-source"><article><div class="panel-tag">PDF EXCERPT · ${escapeHtml(concept.sourcePage)}</div><blockquote>${escapeHtml(concept.sourceExcerpt)}</blockquote></article><article><div class="panel-tag">KEY POINTS</div><ul class="ai-key-points">${concept.keyPoints.map(point=>`<li>${escapeHtml(point)}</li>`).join('')}</ul></article></section>
-        <div class="ai-lesson-mode-tabs" role="tablist" aria-label="Eight lesson teaching methods">${lessonModes.map(([mode,label])=>`<button type="button" role="tab" aria-selected="${state.aiLessonMode===mode}" class="${state.aiLessonMode===mode?'active':''}" data-ai-mode="${mode}">${label}</button>`).join('')}</div>
-        ${lessonBody}
-        <div class="ai-lesson-pagination">${previous!==null?aiStudyPageButton('concept','← Previous lesson',{'concept-index':previous},'ai-secondary-link'):`<span></span>`}<span>LESSON ${conceptIndex+1} OF ${study.concepts.length}</span>${next!==null?aiStudyPageButton('concept','Next lesson →',{'concept-index':next},'ai-primary-link'):aiStudyPageButton('plan','Back to study plan',{},'ai-primary-link')}</div>
-      </div><aside class="ai-lesson-practice"><div class="ai-practice-sticky"><div class="ai-practice-heading"><div><div class="panel-tag">CHECK YOUR UNDERSTANDING</div><h2>Practice</h2></div><span>${questions.length} Q</span></div>${questions.length?questions.map(({question,index},position)=>aiQuestionCard(question,index,position+1,questions.length)).join(''):'<p class="ai-empty-state">Practice questions for this lesson are being prepared.</p>'}${aiStudyPageButton('quiz','Open all practice questions →',{},'ai-text-link')}</div></aside></div>`;
+    const simPlayerHtml = isAlgo && window.XC && window.XC.simulations ? (simAlgo === 'binary-search' ? window.XC.simulations.renderBinarySearchPlayerHtml('ai-interactive-sim', currentSimStep, simSteps.length, simSteps[currentSimStep] || {}, state.simSpeed || 1, state.simPlaying || false) : window.XC.simulations.renderBubbleSortPlayerHtml('ai-interactive-sim', currentSimStep, simSteps.length, simSteps[currentSimStep] || {}, state.simSpeed || 1, state.simPlaying || false)) : '';
+
+    const simBanner = isAlgo ? `<div class="ai-study-notice" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;background:rgba(56,189,248,0.12);border:1px solid rgba(56,189,248,0.3);border-radius:10px;padding:10px 14px;"><span>🎮 <b>Interactive ${simAlgo === 'binary-search' ? 'Binary Search' : 'Bubble Sort'} Simulation:</b> Step through the algorithm, inspect comparisons and complexity in real-time.</span><button type="button" class="btn-primary" data-ai-mode="sim" style="font-size:12px;padding:5px 12px;cursor:pointer;">Launch Simulator →</button></div>` : '';
+
+    const auraBanner = isAuraVisual ? `<div class="ai-study-notice" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;background:rgba(45,212,191,0.12);border:1px solid rgba(45,212,191,0.3);border-radius:10px;padding:10px 14px;"><span>⚡ <b>Interactive ${auraType.toUpperCase()} Simulation Active:</b> Adjust physical variables in real-time to observe dynamic changes.</span></div>` : '';
+
+    let visualContent = '';
+    if(state.aiLessonMode==='sim' && isAlgo){
+      visualContent = simPlayerHtml;
+    } else if(isAuraVisual && state.aiLessonMode==='crash'){
+      visualContent = `${auraBanner}
+      <div class="panel" style="margin-bottom:14px">
+        <div class="visual-head"><span>DYNAMIC INTERACTIVE SIMULATION · ${auraType.toUpperCase()}</span><span>${escapeHtml(concept.visualization.caption || 'AURA DYNAMIC')}</span></div>
+        <div id="aiAuraMount" class="ai-aura-player-mount" data-aura-type="${auraType}" style="min-height:360px;background:rgba(8,12,20,0.85);border-radius:12px;overflow:hidden;padding:12px;display:flex;align-items:center;justify-content:center;"></div>
+        <div class="visual-cap" id="visualCap" style="margin-top:10px"><span class="cap-step">SIMULATION</span><b>${escapeHtml(concept.title)}</b> — Real-time reactive model with interactive physics sliders.</div>
+      </div>`;
+    } else if(state.aiLessonMode==='crash'){
+      visualContent = `${simBanner}
+      <div class="panel" style="margin-bottom:14px">
+        <div class="visual-head"><span>ANIMATED 2D VISUAL • STEP ${visualStep+1}/${visualSteps.length}</span><span>${escapeHtml(concept.visualization.caption || 'DYNAMIC')}</span></div>
+        <div class="visual-box">
+          <div class="visual-inner" id="mainVisual">
+            <figure class="ai-diagram-figure" data-layout="${escapeHtml(currentVisual.layout)}" style="margin:0;width:100%;display:flex;justify-content:center;">
+              ${aiDiagramSvg(currentVisual,conceptIndex,visualStep,escapeHtml(concept.title))}
+            </figure>
+          </div>
+          <div class="narration-bar show" id="narration">${escapeHtml(currentVisual.description)}</div>
+        </div>
+        <div class="visual-cap" id="visualCap"><span class="cap-step">STEP ${visualStep+1}/${visualSteps.length}</span><b>${escapeHtml(currentVisual.title)}</b> — ${escapeHtml(currentVisual.description)}</div>
+        <div class="step-controls">
+          <div class="step-dots">${visualSteps.map((s,i)=>`<button type="button" class="step-dot ${i===visualStep?'active':''}" data-ai-visual="${i}" aria-label="Show step ${i+1}: ${escapeHtml(s.title)}" aria-pressed="${i===visualStep}"></button>`).join('')}</div>
+          <button type="button" class="play-btn ${state.aiVisualPlaying?'':'paused'}" data-ai-visual-play>${state.aiVisualPlaying?'⏸ Pause':'▶ Play'}</button>
+        </div>
+        <div class="step-grid">${visualSteps.map((s,i)=>`<button type="button" class="step-card ${i===visualStep?'active':''}" data-ai-visual="${i}"><b>STEP ${i+1}</b><span>${escapeHtml(s.title)}</span></button>`).join('')}</div>
+      </div>
+      ${topicImageSlot(conceptIndex)}`;
+    } else if(state.aiLessonMode==='compare'){
+      visualContent = `<section class="ai-detail-card ai-comparison-panel"><div class="panel-tag">SIDE-BY-SIDE COMPARISON</div><div class="ai-comparison-head"><h3>${escapeHtml(concept.comparison.firstLabel)}</h3><span>VS</span><h3>${escapeHtml(concept.comparison.secondLabel)}</h3></div><div class="ai-comparison-table"><div class="ai-comparison-row ai-comparison-labels"><span>ASPECT</span><b>${escapeHtml(concept.comparison.firstLabel)}</b><b>${escapeHtml(concept.comparison.secondLabel)}</b></div>${concept.comparison.rows.map(row=>`<div class="ai-comparison-row"><strong>${escapeHtml(row.aspect)}</strong><span>${escapeHtml(row.first)}</span><span>${escapeHtml(row.second)}</span></div>`).join('')}</div><p class="ai-comparison-takeaway"><b>KEY DIFFERENCE · </b>${escapeHtml(concept.comparison.takeaway)}</p></section>`;
+    } else if(state.aiLessonMode==='solve'){
+      visualContent = `<div class="ai-vaathiyar-panels"><section class="ai-detail-card"><div class="panel-tag">PROBLEM</div><h3>${escapeHtml(concept.workedExample.scenario)}</h3></section><section class="ai-detail-card"><div class="panel-tag">STEP-BY-STEP SOLUTION</div><ol class="ai-worked-steps">${concept.workedExample.steps.map(step=>`<li><b>${escapeHtml(step.label)} · ${escapeHtml(step.action)}</b><span>${escapeHtml(step.reasoning)}</span></li>`).join('')}</ol><p class="ai-worked-answer"><b>ANSWER · </b>${escapeHtml(concept.workedExample.answer)}</p></section></div>`;
+    } else if(state.aiLessonMode==='life'){
+      visualContent = `<div class="ai-mode-panels">${concept.realWorldExamples.map((example,index)=>`<article class="ai-mode-panel ai-mode-example"><span class="ai-mode-icon" aria-hidden="true">${String(index+1).padStart(2,'0')}</span><div class="panel-tag">REAL-LIFE CONNECTION</div><h3>${escapeHtml(example.title)}</h3><p>${escapeHtml(example.description)}</p></article>`).join('')}<article class="ai-mode-panel ai-mode-recall"><span class="ai-mode-icon" aria-hidden="true">⚡</span><div class="panel-tag">ONE-LINE REVISION</div><p>${escapeHtml(concept.quickRecall)}</p></article></div>`;
+    } else if(state.aiLessonMode==='history'){
+      visualContent = `<section class="ai-detail-card ai-history-panel"><div class="panel-tag">ORIGIN STORY · SOURCE-BASED</div><div class="ai-history-marker" aria-hidden="true">↗</div><p>${escapeHtml(concept.originStory)}</p><div class="ai-history-source">Grounded in the uploaded document</div></section>`;
+    } else if(state.aiLessonMode==='flash'){
+      visualContent = `<section class="ai-concept-flashcard-wrap" aria-label="Lesson flashcards"><div class="panel-tag">ACTIVE RECALL · ${state.aiLessonFlashIdx+1} OF ${conceptCards.length}</div><button type="button" class="ai-flashcard" data-ai-concept-flip aria-label="${state.aiLessonFlashFlipped?'Show question':'Reveal answer'}"><small>${state.aiLessonFlashFlipped?'ANSWER':'QUESTION'}</small><p>${escapeHtml(state.aiLessonFlashFlipped?currentConceptCard.back:currentConceptCard.front)}</p></button><div class="ai-flashcard-actions"><button type="button" data-ai-concept-flash="prev" aria-label="Previous lesson flashcard">← Previous</button><button type="button" data-ai-concept-flip>${state.aiLessonFlashFlipped?'Show question':'Reveal answer'}</button><button type="button" data-ai-concept-flash="next" aria-label="Next lesson flashcard">Next →</button></div></section>`;
+    } else if(state.aiLessonMode==='cheat'){
+      visualContent = aiCheatCodePanel(concept);
+    } else if(state.aiLessonMode==='exam'){
+      visualContent = `<div class="ai-exam-mode"><div class="ai-study-notice">Answer these questions to check your understanding of ${escapeHtml(concept.title)}.</div>${questions.map(({question,index},position)=>aiQuestionCard(question,index,position+1,questions.length)).join('')}</div>`;
+    } else {
+      visualContent = `<section class="ai-detail-card ai-depth-panel"><div class="panel-tag">CHOOSE YOUR EXPLANATION LEVEL</div><div class="ai-depth-tabs" role="tablist" aria-label="Explanation depth">${[['simple','Simple'],['everyday','Everyday'],['advanced','Advanced']].map(([level,label])=>`<button type="button" role="tab" aria-selected="${state.aiExplanationLevel===level}" class="${state.aiExplanationLevel===level?'active':''}" data-ai-explanation-level="${level}">${label}</button>`).join('')}</div><div class="ai-depth-copy"><div class="ai-depth-level">${state.aiExplanationLevel==='simple'?'START HERE':state.aiExplanationLevel==='everyday'?'CONNECT IT':'GO DEEPER'}</div><p>${escapeHtml(concept.explanationLevels[state.aiExplanationLevel])}</p></div></section>`;
+    }
+
+    const attempted=Object.keys(state.aiQuizAnswers).filter(k=>questions.some(q=>q.index===Number(k))).length;
+    const correct=Object.entries(state.aiQuizAnswers).filter(([k,ans])=>{
+      const q=questions.find(item=>item.index===Number(k));
+      return q && q.question.answerIndex===ans;
+    }).length;
+    const scoreStr=attempted===0?'—':`${correct}/${attempted}`;
+    const pct=attempted?correct/attempted:0;
+    const scoreBadge=attempted===0?'—':pct>=0.8?'Strong':pct>=0.5?'Improving':'Needs review';
+    const scoreBadgeCls=pct>=0.8?'strong':pct>=0.5?'ok':'weak';
+
+    content=`
+    <div class="study-bar">
+      <button type="button" class="back-btn" data-ai-page="plan">← Back to study plan</button>
+      <span style="color:#1e2a44">/</span>
+      <span class="study-title">${escapeHtml(concept.title)} • UNIT ${unitIndex+1}</span>
+      <span class="badge" style="margin-left:auto">${isAlgo?'SIMULATION':isAuraVisual?'DYNAMIC 3D/2D':'DYNAMIC'} • VIS-${String(conceptIndex+1).padStart(3,'0')}</span>
+    </div>
+    <div class="study-grid">
+      <div style="display:flex;flex-direction:column;gap:14px;min-width:0">
+        <div class="panel">
+          <div class="panel-tag">UNIT ${String(unitIndex+1).padStart(2,'0')}: ${escapeHtml(unit?.title||'')} • ${escapeHtml(topic?.title||study.subject)}</div>
+          <h2>${escapeHtml(concept.title)}</h2>
+          <p class="desc">${escapeHtml(concept.explanation||concept.summary)}</p>
+          <div class="kp-grid">
+            <div class="kp"><div class="kp-tag">PDF EXCERPT</div><div class="kp-quote">"${escapeHtml(concept.sourceExcerpt)}"</div><div class="kp-tag accent" style="margin-top:8px">${escapeHtml(concept.sourcePage?'Page '+concept.sourcePage:'Document')}</div></div>
+            <div class="kp"><div class="kp-tag accent">KEY POINTS</div><ul>${concept.keyPoints.map(k=>`<li>${escapeHtml(k)}</li>`).join('')}</ul></div>
+          </div>
+        </div>
+
+        ${visualContent}
+
+        <div class="study-tabs" style="margin-top:8px">
+          <button type="button" class="study-tab ${state.aiLessonMode==='crash'?'active':''}" data-ai-mode="crash">📺 Visual</button>
+          ${isAlgo?`<button type="button" class="study-tab ${state.aiLessonMode==='sim'?'active':''}" data-ai-mode="sim">🎮 Simulator</button>`:''}
+          <button type="button" class="study-tab ${state.aiLessonMode==='cheat'?'active':''}" data-ai-mode="cheat">🎯 CheatCode</button>
+          <button type="button" class="study-tab ${state.aiLessonMode==='solve'?'active':''}" data-ai-mode="solve">🔧 Worked Example</button>
+          <button type="button" class="study-tab ${state.aiLessonMode==='compare'?'active':''}" data-ai-mode="compare">⚖️ Compare</button>
+          <button type="button" class="study-tab ${state.aiLessonMode==='life'?'active':''}" data-ai-mode="life">🌍 Real-Life</button>
+          <button type="button" class="study-tab ${state.aiLessonMode==='eli5'?'active':''}" data-ai-mode="eli5">🧠 ELI5</button>
+        </div>
+
+        <div class="ai-lesson-pagination">
+          ${previous!==null?aiStudyPageButton('concept','← Previous lesson',{'concept-index':previous},'ai-secondary-link'):'<span></span>'}
+          <span>LESSON ${conceptIndex+1} OF ${study.concepts.length}</span>
+          ${next!==null?aiStudyPageButton('concept','Next lesson →',{'concept-index':next},'ai-primary-link'):aiStudyPageButton('plan','Back to study plan',{},'ai-primary-link')}
+        </div>
+      </div>
+
+      <div style="min-width:0">
+        <div class="panel" style="margin-bottom:14px">
+          <div class="quiz-head"><span>VAATHIYAR MODE • ${questions.length} Qs</span><span>${attempted}/${questions.length} attempted</span></div>
+          <div class="score-bar" role="status" aria-live="polite">
+            <div class="score-row">
+              <span style="font-weight:600">Score: ${scoreStr}</span>
+              <span class="score-badge ${scoreBadgeCls}">${scoreBadge}</span>
+            </div>
+            <div class="progress"><div style="width:${questions.length?(correct/questions.length*100):0}%"></div></div>
+          </div>
+        </div>
+        ${questions.length?questions.map(({question,index},position)=>aiQuestionCard(question,index,position+1,questions.length)).join(''):'<p class="ai-empty-state">Practice questions for this lesson are being prepared.</p>'}
+        <div style="margin-top:14px;">${aiStudyPageButton('quiz','Open all practice questions →',{},'ai-text-link')}</div>
+      </div>
+    </div>`;
   }else if(page.type==='quiz'){
     const answered=Object.keys(state.aiQuizAnswers).length;
     const correct=Object.entries(state.aiQuizAnswers).filter(([index,answer])=>study.questions[Number(index)]?.answerIndex===answer).length;
@@ -1440,8 +1611,8 @@ function aiStudyView(){
     pageTitle='Flashcards';
     content=`<div class="ai-breadcrumbs">${aiStudyPageButton('plan',escapeHtml(study.title))}<span>/</span><span>Flashcards</span></div><section class="ai-page-hero"><div class="panel-tag">ACTIVE RECALL · ${cards.length} CARDS</div><h1>Review the key ideas.</h1><p>Try to recall the answer before revealing the back of each card.</p></section><section class="ai-flashcard-page" aria-label="AI-generated flashcards"><button type="button" class="ai-flashcard" data-ai-flip aria-label="${state.aiFlashFlipped?'Show question':'Reveal answer'}"><small>${state.aiFlashFlipped?'ANSWER':'QUESTION'} · ${index+1} / ${cards.length}</small><p>${escapeHtml(state.aiFlashFlipped?card.back:card.front)}</p></button><div class="ai-flashcard-actions"><button type="button" data-ai-flash="prev" aria-label="Previous flashcard">← Previous</button><button type="button" data-ai-flip>${state.aiFlashFlipped?'Show question':'Reveal answer'}</button><button type="button" data-ai-flash="next" aria-label="Next flashcard">Next →</button></div></section>`;
   }else if(page.type==='ask'){
-    pageTitle='Ask XAMCODE AI';
-    content=`<div class="ai-breadcrumbs">${aiStudyPageButton('plan',escapeHtml(study.title))}<span>/</span><span>Ask XAMCODE AI</span></div><section class="ai-page-hero"><div class="panel-tag">YOUR DOCUMENT, YOUR TUTOR</div><h1>What would you like to understand?</h1><p>Ask a follow-up question about ${escapeHtml(study.title)}. Answers use your generated study pack as context.</p></section><section class="ai-chat-panel" aria-label="Ask questions about your PDF">        <div class="ai-quick-prompts" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;"><button type="button" class="btn-ghost" data-quick-ask="Explain the most important concept in this course step by step" style="font-size:12px;padding:6px 12px;border-radius:6px;cursor:pointer;">💡 Step-by-step breakdown</button><button type="button" class="btn-ghost" data-quick-ask="Explain this course simply like I am 12 years old (ELI5)" style="font-size:12px;padding:6px 12px;border-radius:6px;cursor:pointer;">🧠 Simple ELI5 explanation</button><button type="button" class="btn-ghost" data-quick-ask="Give me the top 3 CheatCode memory tricks for this exam" style="font-size:12px;padding:6px 12px;border-radius:6px;cursor:pointer;">⚡ Exam CheatCodes</button><button type="button" class="btn-ghost" data-quick-ask="Test my understanding with a challenging conceptual question" style="font-size:12px;padding:6px 12px;border-radius:6px;cursor:pointer;">❓ Practice challenge</button></div>
+    pageTitle='Ask AURA AI';
+    content=`<div class="ai-breadcrumbs">${aiStudyPageButton('plan',escapeHtml(study.title))}<span>/</span><span>Ask AURA AI</span></div><section class="ai-page-hero"><div class="panel-tag">YOUR DOCUMENT, YOUR TUTOR</div><h1>What would you like to understand?</h1><p>Ask a follow-up question about ${escapeHtml(study.title)}. Answers use your generated study pack as context.</p></section><section class="ai-chat-panel" aria-label="Ask questions about your PDF"><div class="ai-quick-prompts" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;"><button type="button" class="btn-ghost" data-quick-ask="Explain the most important concept in this course step by step" style="font-size:12px;padding:6px 12px;border-radius:6px;cursor:pointer;">💡 Step-by-step breakdown</button><button type="button" class="btn-ghost" data-quick-ask="Explain this course simply like I am 12 years old (ELI5)" style="font-size:12px;padding:6px 12px;border-radius:6px;cursor:pointer;">🧠 Simple ELI5 explanation</button><button type="button" class="btn-ghost" data-quick-ask="Give me the top 3 CheatCode memory tricks for this exam" style="font-size:12px;padding:6px 12px;border-radius:6px;cursor:pointer;">⚡ Exam CheatCodes</button><button type="button" class="btn-ghost" data-quick-ask="Test my understanding with a challenging conceptual question" style="font-size:12px;padding:6px 12px;border-radius:6px;cursor:pointer;">❓ Practice challenge</button></div>
         <div class="ai-chat-messages" id="aiChatMessages" aria-live="polite">${state.aiMessages.length?state.aiMessages.map(message=>{
           const diagram=
             (message.diagram &&
@@ -1449,17 +1620,48 @@ function aiStudyView(){
             || (message.visual_type && window.XC && (window.XC.auraVisuals||window.XC).VISUALS && message.visual_type in (window.XC&&(window.XC.auraVisuals||window.XC).VISUALS)
               ? `<div class="ai-chat-visual" data-visual-type="${escapeHtml(String(message.visual_type))}" data-visual-params="${escapeHtml(JSON.stringify(message.params||{}))}" data-visual-caption="${escapeHtml(String(message.svg_instruction||''))}"></div>`
               : '');
-          return `<article class="ai-chat-message" data-role="${message.role}"><small>${message.role==='user'?'YOU':'XAMCODE AI'}</small><div class="ai-chat-text">${escapeHtml(message.text)}</div>${diagram}</article>`;
-        }).join(''):'<div class="ai-empty-state">Ask about a concept, request another explanation, or check your understanding.</div>'}${state.aiChatBusy?'<div class="ai-chat-message" role="status"><small>XAMCODE AI</small>Thinking about your study…</div>':''}</div><form class="ai-chat-form" id="aiChatForm"><input name="question" type="text" maxlength="1200" placeholder="Ask a question about this PDF…" aria-label="Ask a question about this PDF" required ${state.aiChatBusy?'disabled':''}><button type="submit" ${state.aiChatBusy?'disabled':''}>Ask</button></form><div class="ai-study-notice">If the PDF does not provide enough detail, XAMCODE AI will say so.</div></section>`;
+          return `<article class="ai-chat-message" data-role="${message.role}"><small>${message.role==='user'?'YOU':'AURA AI'}</small><div class="ai-chat-text">${escapeHtml(message.text)}</div>${diagram}</article>`;
+        }).join(''):'<div class="ai-empty-state">Ask about a concept, request another explanation, or check your understanding.</div>'}${state.aiChatBusy?'<div class="ai-chat-message" role="status"><small>AURA AI</small>Thinking about your study…</div>':''}</div><form class="ai-chat-form" id="aiChatForm"><input name="question" type="text" maxlength="1200" placeholder="Ask a question about this PDF…" aria-label="Ask a question about this PDF" required ${state.aiChatBusy?'disabled':''}><button type="submit" ${state.aiChatBusy?'disabled':''}>Ask</button></form><div class="ai-study-notice">If the PDF does not provide enough detail, AURA AI will say so.</div></section>`;
   }else{
     pageTitle='Formulas';
     content=`<div class="ai-breadcrumbs">${aiStudyPageButton('plan',escapeHtml(study.title))}<span>/</span><span>Formulas</span></div><section class="ai-page-hero"><div class="panel-tag">REFERENCE · ${study.formulas.length} ITEMS</div><h1>Formulas from your PDF.</h1><p>Key expressions identified in your document, with a plain-language explanation.</p></section>${study.formulas.length?`<div class="ai-formula-grid">${study.formulas.map(formula=>`<article class="ai-formula-card ai-detail-card"><h3>${escapeHtml(formula.name)}</h3><code>${escapeHtml(formula.expression)}</code><p>${escapeHtml(formula.meaning)}</p></article>`).join('')}</div>`:'<section class="ai-detail-card"><p>No formulas were identified in this document.</p></section>'}`;
   }
 
-  const activeConcept=page.type==='concept'?page.conceptIndex:-1;
-  const activeUnit=page.type==='unit'?page.unitIndex:(page.type==='topic'?page.unitIndex:(activeConcept>=0?locationByConcept.get(activeConcept)?.unitIndex:-1));
-  const activeTopic=page.type==='topic'?page.topicIndex:(activeConcept>=0?locationByConcept.get(activeConcept)?.topicIndex:-1);
-  const outline=`<aside class="ai-course-outline"><div class="ai-outline-heading"><div class="panel-tag">YOUR COURSE</div><strong>Study plan</strong></div>${aiStudyPageButton('plan','<span aria-hidden="true">⌂</span> Course overview',{},`ai-outline-plan ${page.type==='plan'?'active':''}`)}<div class="ai-outline-tree">${study.units.map((unit,unitIndex)=>`<section class="ai-outline-unit"><div class="ai-outline-unit-head">${aiStudyPageButton('unit',`<span class="ai-outline-index">${String(unitIndex+1).padStart(2,'0')}</span><span>${escapeHtml(unit.title)}</span>`,{'unit-index':unitIndex},`ai-outline-unit-link ${activeUnit===unitIndex&&page.type==='unit'?'active':''}`)}</div>${unit.topics.map((topic,topicIndex)=>`<div class="ai-outline-topic">${aiStudyPageButton('topic',escapeHtml(topic.title),{'unit-index':unitIndex,'topic-index':topicIndex},`ai-outline-topic-link ${activeUnit===unitIndex&&activeTopic===topicIndex&&page.type==='topic'?'active':''}`)}${topic.conceptIndices.map(conceptIndex=>aiStudyPageButton('concept',escapeHtml(study.concepts[conceptIndex].title),{'concept-index':conceptIndex},`ai-outline-lesson-link ${activeConcept===conceptIndex?'active':''}`)).join('')}</div>`).join('')}</section>`).join('')}</div><div class="ai-outline-tools">${aiStudyPageButton('quiz','Practice',{},page.type==='quiz'?'active':'')}${aiStudyPageButton('flashcards','Flashcards',{},page.type==='flashcards'?'active':'')}${aiStudyPageButton('formulas','Formulas',{},page.type==='formulas'?'active':'')}${aiStudyPageButton('ask','Ask XAMCODE AI',{},page.type==='ask'?'active':'')}</div></aside>`;
+  const outline=`<aside class="tree">
+    <div class="tree-title">TOPIC TREE</div>
+    ${study.units.map((unit,unitIndex)=>{
+      const uKey='ai-'+unitIndex;
+      const collapsed=state.collapsedUnits[uKey]===true;
+      const st=unitStates[unitIndex];
+      const locked=unit.locked||(st&&st.status!=='ready');
+      const unitConceptIndices=[];
+      unit.topics.forEach(t=>(t.conceptIndices||[]).forEach(ci=>unitConceptIndices.push(ci)));
+      return `
+      <div class="tree-item">
+        <button type="button" class="tree-btn ${collapsed?'':'active'}${locked?' tree-locked':''}" data-toggle-unit="${uKey}" aria-expanded="${!collapsed}" aria-controls="tree-unit-${uKey}">
+          <span class="caret">${locked?'🔒':(collapsed?'▸':'▾')}</span>
+          <span>UNIT ${String(unitIndex+1).padStart(2,'0')}: ${escapeHtml(unit.title)}</span>
+        </button>
+        <div class="tree-sub" id="tree-unit-${uKey}" ${collapsed?'style="display:none"':''}>
+          ${unitConceptIndices.map(conceptIndex=>{
+            const concept=study.concepts[conceptIndex];
+            if(!concept) return '';
+            const done=aiConceptDone(study,conceptIndex);
+            const isActive=activeConcept===conceptIndex;
+            return `<button type="button" class="tree-sub-btn${done?' done':''}${isActive?' active':''}" data-ai-page="concept" data-concept-index="${conceptIndex}">${done?'✓ ':''}${escapeHtml(concept.title)}</button>`;
+          }).join('')}
+        </div>
+      </div>`;
+    }).join('')}
+    <div class="ai-outline-tools" style="margin-top:14px;padding-top:10px;border-top:1px solid var(--line,rgba(255,255,255,.08));display:grid;gap:2px;">
+      ${aiStudyPageButton('plan','<span aria-hidden="true">⌂</span> Course Overview',{},`tree-sub-btn ${page.type==='plan'?'active':''}`)}
+      ${aiStudyPageButton('quiz',`Practice · ${study.questions.length} Q`,{},`tree-sub-btn ${page.type==='quiz'?'active':''}`)}
+      ${aiStudyPageButton('flashcards','Flashcards',{},`tree-sub-btn ${page.type==='flashcards'?'active':''}`)}
+      ${study.formulas&&study.formulas.length?aiStudyPageButton('formulas',`Formulas (${study.formulas.length})`,{}, `tree-sub-btn ${page.type==='formulas'?'active':''}`):''}
+      ${aiStudyPageButton('ask','Ask AURA AI',{},`tree-sub-btn ${page.type==='ask'?'active':''}`)}
+    </div>
+  </aside>`;
+
   return header()+`<main class="ai-study-shell">
     <div class="ai-study-top"><button type="button" class="back-btn" data-nav="landing">← Home</button><span class="ai-study-subject">${escapeHtml(study.subject)}</span><span class="ai-study-top-title">${escapeHtml(pageTitle)}</span><button type="button" class="btn-primary" data-open="upload">Analyze another PDF</button></div>
     <div class="ai-study-workspace">${outline}<section class="ai-study-page" aria-label="${escapeHtml(pageTitle)}">${content}<footer class="ai-study-disclaimer">Generated from your uploaded PDF. AI can make mistakes—check important facts against the original document. This study clears when you refresh.</footer></section></div>
@@ -2283,6 +2485,19 @@ function render(){
      Mermaid cannot load. Fire and forget: rendering must never block. */
   hydrateAiMermaid(app);
   refreshPlayBtn();
+  const auraMount = app.querySelector('#aiAuraMount[data-aura-type]');
+  if(auraMount && window.XC && window.XC.auraVisuals && typeof window.XC.auraVisuals.createPlayer === 'function'){
+    const aType = auraMount.dataset.auraType;
+    if(window._activeAiAuraPlayer){
+      try { window._activeAiAuraPlayer.destroy(); } catch(e){}
+      window._activeAiAuraPlayer = null;
+    }
+    const aPlayer = window.XC.auraVisuals.createPlayer(aType, {});
+    if(aPlayer && aPlayer.el){
+      auraMount.appendChild(aPlayer.el);
+      window._activeAiAuraPlayer = aPlayer;
+    }
+  }
   if(state.view==='landing'){
     if(typeof window.XC!=='undefined' && window.XC.trailerShowcase){
       window.XC.trailerShowcase.init();
@@ -2532,7 +2747,9 @@ document.addEventListener('click', async (e)=>{
   const simAction = e.target.closest('[data-sim-action]');
   if(simAction){
     const action = simAction.dataset.simAction;
-    const simSteps = window.XC && window.XC.simulations ? window.XC.simulations.generateBubbleSortSteps() : [];
+    const conceptObj = state.aiStudy?.concepts[state.aiPage?.conceptIndex];
+    const simAlgoType = conceptObj && window.XC?.simulations ? window.XC.simulations.detectAlgorithmType(conceptObj.title + ' ' + (conceptObj.summary || '') + ' ' + (conceptObj.explanation || '')) : 'bubble-sort';
+    const simSteps = window.XC && window.XC.simulations ? (simAlgoType === 'binary-search' ? window.XC.simulations.generateBinarySearchSteps() : window.XC.simulations.generateBubbleSortSteps()) : [];
     const total = simSteps.length || 1;
     if(action === 'play'){
       if(state.simPlaying) stopSimAutoplay();
@@ -2561,7 +2778,9 @@ document.addEventListener('click', async (e)=>{
   if(simSpeed){
     state.simSpeed = parseFloat(simSpeed.dataset.simSpeed) || 1;
     if(state.simPlaying){
-      const simSteps = window.XC && window.XC.simulations ? window.XC.simulations.generateBubbleSortSteps() : [];
+      const conceptObj = state.aiStudy?.concepts[state.aiPage?.conceptIndex];
+    const simAlgoType = conceptObj && window.XC?.simulations ? window.XC.simulations.detectAlgorithmType(conceptObj.title + ' ' + (conceptObj.summary || '') + ' ' + (conceptObj.explanation || '')) : 'bubble-sort';
+    const simSteps = window.XC && window.XC.simulations ? (simAlgoType === 'binary-search' ? window.XC.simulations.generateBinarySearchSteps() : window.XC.simulations.generateBubbleSortSteps()) : [];
       startSimAutoplay(simSteps.length || 1);
     }
     render();
