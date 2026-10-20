@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>XamCode AI — Building in Public</title><meta name="description" content="Verified development progress, roadmap, changelog, ideas, chat, countdown and waitlist for XamCode AI."><link rel="icon" type="image/x-icon" href="/assets/favicon.ico"><link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon.png"><link rel="icon" type="image/png" sizes="192x192" href="/assets/favicon-192.png"><link rel="icon" type="image/png" sizes="512x512" href="/assets/favicon-512.png"><link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Fredoka:wght@600;700&family=Syne:wght@600;700;800&family=Space+Grotesk:wght@300;400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"><noscript><style>.reveal{opacity:1!important;transform:none!important}.mbtn{display:none}</style></noscript><style id="bip-css">
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>XamCode AI — Building in Public</title><meta name="description" content="Verified development progress, roadmap, changelog, ideas, chat, countdown and waitlist for XamCode AI."><link rel="icon" type="image/x-icon" href="/assets/favicon.ico"><link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon.png"><link rel="icon" type="image/png" sizes="192x192" href="/assets/favicon-192.png"><link rel="icon" type="image/png" sizes="512x512" href="/assets/favicon-512.png"><link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Fredoka:wght@600;700&family=Syne:wght@600;700;800&family=Space+Grotesk:wght@300;400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"><noscript><style>.reveal,.cine-reveal,.chead .num{opacity:1!important;transform:none!important}.mbtn{display:none}</style></noscript><style id="bip-css">
 /* ---------- DESIGN TOKENS (missing in the redesign commit) ---------- */
 /* All 17 tokens below are referenced by var() throughout this stylesheet.
    Anchored to colors already hardcoded in this file (dock rgba(6,8,3),
@@ -1475,6 +1475,256 @@ body.js-cine .lr-grid.in-view .lr-card:nth-child(4){animation:cellIn .55s cubic-
   line-height:1.45;
 }
 
+/* === PHASE 2/4/5 CINEMATIC & ADMIN EXTENSIONS === */
+/* Top-of-viewport minimal scroll progress indicator (Desktop + Mobile) */
+.scroll-prog-rail{
+  position:fixed;
+  top:0;
+  left:0;
+  right:0;
+  height:3px;
+  z-index:250;
+  pointer-events:none;
+  background:rgba(255,255,255,.04);
+  overflow:hidden;
+}
+.scroll-prog-bar{
+  width:100%;
+  height:100%;
+  transform-origin:0 50%;
+  transform:scaleX(0);
+  background:linear-gradient(90deg,#FF6B35 0%,#8B5CF6 52%,var(--lime) 100%);
+  box-shadow:0 0 12px rgba(255,107,53,.55),0 0 18px rgba(139,92,246,.45);
+  will-change:transform;
+}
+body[data-style="bubblegum"] .scroll-prog-rail{background:rgba(230,46,122,.08)}
+body[data-style="bubblegum"] .scroll-prog-bar{background:linear-gradient(90deg,#e62e7a 0%,#8B5CF6 50%,#0284c7 100%);box-shadow:none}
+body[data-style="glass"] .scroll-prog-bar{background:linear-gradient(90deg,#38bdf8 0%,#8B5CF6 55%,#FF6B35 100%)}
+body[data-style="brutalist"] .scroll-prog-rail{height:5px;background:#f4f0e6;border-bottom:2px solid #0d0d0d}
+body[data-style="brutalist"] .scroll-prog-bar{background:#FF6B35;box-shadow:none}
+body[data-style="minimal"] .scroll-prog-rail{height:2px;background:rgba(24,24,22,.06)}
+body[data-style="minimal"] .scroll-prog-bar{background:linear-gradient(90deg,#b4532a 0%,#23533d 100%);box-shadow:none}
+
+/* Act Number Badge Typography & Scroll Entrance Animation (ACT 01 .. ACT 06) */
+.chead .num{
+  position:relative;
+  overflow:hidden;
+  transition:transform .65s cubic-bezier(.16,1,.3,1),opacity .65s cubic-bezier(.16,1,.3,1),box-shadow .65s ease,border-color .45s ease;
+}
+.chead .num .act-kicker{
+  font-family:var(--mono);
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  opacity:.86;
+  margin-right:2px;
+}
+body.js-cine .chead .num{
+  opacity:0;
+  transform:translate3d(-16px,8px,0) scale(.9);
+}
+body.js-cine .chead.in-view .num,
+body.js-cine .cine-act.act-entered .chead .num{
+  opacity:1;
+  transform:translate3d(0,0,0) scale(1);
+}
+#act1 .chead .num::before,#act4 .chead .num::before,#act6 .chead .num::before{
+  background:#FF6B35;
+  box-shadow:0 0 10px rgba(255,107,53,.75);
+}
+#act2 .chead .num::before,#act3 .chead .num::before,#act5 .chead .num::before{
+  background:#8B5CF6;
+  box-shadow:0 0 10px rgba(139,92,246,.75);
+}
+body[data-style="vibe"] #act1.act-entered .chead .num,
+body[data-style="vibe"] #act4.act-entered .chead .num,
+body[data-style="vibe"] #act6.act-entered .chead .num{
+  box-shadow:0 0 22px -4px rgba(255,107,53,.42),0 0 0 1px rgba(255,107,53,.35);
+}
+body[data-style="vibe"] #act2.act-entered .chead .num,
+body[data-style="vibe"] #act3.act-entered .chead .num,
+body[data-style="vibe"] #act5.act-entered .chead .num{
+  box-shadow:0 0 22px -4px rgba(139,92,246,.45),0 0 0 1px rgba(139,92,246,.38);
+}
+
+/* Staggered Card & Pipeline Entrances */
+body.js-cine .pipeline-3d-strip.in-view .pipe-node:nth-child(1){animation:cellIn .55s cubic-bezier(.16,1,.3,1) .04s both}
+body.js-cine .pipeline-3d-strip.in-view .pipe-node:nth-child(2){animation:cellIn .55s cubic-bezier(.16,1,.3,1) .12s both}
+body.js-cine .pipeline-3d-strip.in-view .pipe-node:nth-child(3){animation:cellIn .55s cubic-bezier(.16,1,.3,1) .20s both}
+body.js-cine .pipeline-3d-strip.in-view .pipe-node:nth-child(4){animation:cellIn .55s cubic-bezier(.16,1,.3,1) .28s both}
+body.js-cine #act4 .in-view .rmtl .rm:nth-child(1){animation:cellIn .5s cubic-bezier(.16,1,.3,1) .04s both}
+body.js-cine #act4 .in-view .rmtl .rm:nth-child(2){animation:cellIn .5s cubic-bezier(.16,1,.3,1) .10s both}
+body.js-cine #act4 .in-view .rmtl .rm:nth-child(3){animation:cellIn .5s cubic-bezier(.16,1,.3,1) .16s both}
+body.js-cine #act4 .in-view .rmtl .rm:nth-child(4){animation:cellIn .5s cubic-bezier(.16,1,.3,1) .22s both}
+body.js-cine #act4 .in-view .rmtl .rm:nth-child(5){animation:cellIn .5s cubic-bezier(.16,1,.3,1) .28s both}
+body.js-cine #act4 .in-view .rmtl .rm:nth-child(6){animation:cellIn .5s cubic-bezier(.16,1,.3,1) .34s both}
+
+/* Interactive Idea Comments Drawer */
+.idea-comments-box{
+  margin-top:14px;
+  padding-top:12px;
+  border-top:1px dashed var(--line);
+}
+.idea-cmt-list{
+  list-style:none;
+  margin:0 0 12px;
+  padding:0;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.idea-cmt-item{
+  padding:10px 12px;
+  border-radius:10px;
+  background:rgba(255,255,255,.03);
+  border:1px solid var(--line2);
+  font-size:12.5px;
+}
+.idea-cmt-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:8px;
+  margin-bottom:4px;
+  font-family:var(--mono);
+  font-size:10.5px;
+  color:var(--mut);
+}
+.idea-cmt-head strong{
+  color:var(--lime);
+  font-size:11px;
+}
+.idea-cmt-form{
+  display:grid;
+  grid-template-columns:140px minmax(0,1fr) auto;
+  gap:8px;
+  align-items:center;
+}
+.idea-cmt-form input{
+  box-sizing:border-box;
+  width:100%;
+  padding:8px 11px;
+  border-radius:9px;
+  border:1px solid var(--line);
+  background:rgba(6,8,3,.7);
+  color:var(--paper);
+  font-family:var(--mono);
+  font-size:12px;
+}
+body[data-style="bubblegum"] .idea-cmt-form input,
+body[data-style="minimal"] .idea-cmt-form input,
+body[data-style="brutalist"] .idea-cmt-form input{
+  background:#ffffff;
+  color:#181816;
+  border-color:rgba(24,24,22,.22);
+}
+@media (max-width:640px){
+  .idea-cmt-form{grid-template-columns:1fr}
+}
+
+/* Maintainer Review & Moderation Console (#admin / /build/admin) */
+.adm-shell{
+  display:flex;
+  flex-direction:column;
+  gap:20px;
+}
+.adm-auth-bar{
+  display:flex;
+  flex-wrap:wrap;
+  gap:12px;
+  align-items:flex-end;
+}
+.adm-auth-field{
+  flex:1;
+  min-width:220px;
+}
+.adm-auth-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  align-items:center;
+}
+.adm-auth-actions .btn{
+  margin-top:0;
+}
+.adm-stats{
+  display:grid;
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  gap:12px;
+}
+.adm-grid{
+  display:grid;
+  grid-template-columns:1.15fr .85fr;
+  gap:20px;
+  align-items:start;
+}
+.adm-list{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  max-height:520px;
+  overflow-y:auto;
+  padding-right:4px;
+}
+.adm-item{
+  padding:14px 16px;
+  border-radius:14px;
+  border:1px solid var(--line);
+  background:rgba(0,0,0,.22);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+body[data-style="bubblegum"] .adm-item,
+body[data-style="minimal"] .adm-item,
+body[data-style="brutalist"] .adm-item{
+  background:rgba(24,24,22,.03);
+}
+.adm-item-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.adm-item-meta{
+  font-family:var(--mono);
+  font-size:10.5px;
+  color:var(--dim);
+}
+.adm-controls{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  align-items:center;
+  margin-top:4px;
+}
+.adm-select{
+  padding:7px 11px;
+  border-radius:9px;
+  border:1px solid var(--line);
+  background:rgba(6,8,3,.85);
+  color:var(--paper);
+  font-family:var(--mono);
+  font-size:11.5px;
+}
+body[data-style="bubblegum"] .adm-select,
+body[data-style="minimal"] .adm-select,
+body[data-style="brutalist"] .adm-select{
+  background:#ffffff;
+  color:#181816;
+  border-color:rgba(24,24,22,.25);
+}
+@media (max-width:960px){
+  .adm-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .adm-grid{grid-template-columns:1fr}
+}
+@media (max-width:560px){
+  .adm-auth-bar{flex-direction:column;align-items:stretch}
+  .adm-auth-field{min-width:0}
+}
+
 /* ==========================================================================
    STYLE 1: VIBE CODING STUDIO (body[data-style="vibe"])
    ========================================================================== */
@@ -2671,14 +2921,22 @@ body[data-style="minimal"] .cine-hud{
   .poly-3d,.poly-core,.st-cube-icon{
     animation:none !important;
   }
-  .scene-3d-root,.mini-3d-obj,.pipe-node{
+  .scene-3d-root,.mini-3d-obj,.pipe-node,.chead .num{
     transition:none !important;
+    opacity:1 !important;
+    transform:none !important;
+  }
+  body.js-cine .pipeline-3d-strip.in-view .pipe-node,
+  body.js-cine #act4 .in-view .rmtl .rm{
+    animation:none !important;
+    opacity:1 !important;
+    transform:none !important;
   }
 }
 </style></head><body data-style="vibe">
 <div class="bg grid" aria-hidden="true"></div><div class="bg glow" aria-hidden="true"></div>
 <a class="skip" href="#main">Skip to content</a>
-<header class="dock"><a class="dock-brand" href="/build"><span class="logo-mark" aria-hidden="true">X</span><span>XamCode AI</span><span class="dock-sub">/ living build log</span></a><nav class="docknav" aria-label="Sections"><a href="#progress" data-sec="progress">Overview</a><a href="#roadmap" data-sec="roadmap">Roadmap</a><a href="#activity" data-sec="activity">Readiness</a><a href="#ideas" data-sec="ideas">Ideas</a><a href="#chat" data-sec="chat">Community</a><a href="#launch" data-sec="launch">Launch</a><a href="#waitlist" data-sec="waitlist">Waitlist</a></nav><button class="style-trigger" id="styleBtn" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="styleModal" aria-label="Experience style selector"><span class="st-cube-icon" aria-hidden="true"><span class="fc f1"></span><span class="fc f2"></span><span class="fc f3"></span></span><span class="st-trig-lbl">Experience</span><span class="st-trig-cur" id="styleCurrentBadge">Vibe Studio</span></button><span class="live" id="liveBadge" role="status">setup mode</span><button class="mbtn" id="menuBtn" aria-expanded="false" aria-controls="menuOverlay"><span class="bars" aria-hidden="true"></span><span id="menuBtnLabel">MENU</span></button></header>
+<div class="scroll-prog-rail" id="scrollProgRail" aria-hidden="true"><div class="scroll-prog-bar" id="scrollProgBar"></div></div><header class="dock"><a class="dock-brand" href="/build"><span class="logo-mark" aria-hidden="true">X</span><span>XamCode AI</span><span class="dock-sub">/ living build log</span></a><nav class="docknav" aria-label="Sections"><a href="#progress" data-sec="progress">Overview</a><a href="#roadmap" data-sec="roadmap">Roadmap</a><a href="#activity" data-sec="activity">Readiness</a><a href="#ideas" data-sec="ideas">Ideas</a><a href="#chat" data-sec="chat">Community</a><a href="#launch" data-sec="launch">Launch</a><a href="#waitlist" data-sec="waitlist">Waitlist</a></nav><button class="style-trigger" id="styleBtn" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="styleModal" aria-label="Experience style selector"><span class="st-cube-icon" aria-hidden="true"><span class="fc f1"></span><span class="fc f2"></span><span class="fc f3"></span></span><span class="st-trig-lbl">Experience</span><span class="st-trig-cur" id="styleCurrentBadge">Vibe Studio</span></button><span class="live" id="liveBadge" role="status">setup mode</span><button class="mbtn" id="menuBtn" aria-expanded="false" aria-controls="menuOverlay"><span class="bars" aria-hidden="true"></span><span id="menuBtnLabel">MENU</span></button></header>
 <div class="veil" id="menuVeil" aria-hidden="true"></div>
 <div class="menu" id="menuOverlay" aria-hidden="true"><div class="mpanel" role="dialog" aria-modal="true" aria-label="Site sections"><div class="mgrid"><nav class="mlinks" aria-label="Sections"><a href="#progress" data-sec="progress"><small>01</small>Current state</a><a href="#roadmap" data-sec="roadmap"><small>02</small>Roadmap</a><a href="#activity" data-sec="activity"><small>03</small>Launch readiness</a><a href="#ideas" data-sec="ideas"><small>04</small>Ideas</a><a href="#chat" data-sec="chat"><small>05</small>Community</a><a href="#launch" data-sec="launch"><small>06</small>Launch</a><a href="#waitlist" data-sec="waitlist"><small>07</small>Waitlist</a><a href="#guidelines" data-sec="guidelines"><small>§</small>Guidelines</a></nav><div class="mside"><div class="rl"><span>FEED</span><span id="menuFeedState">checking</span></div><div class="rl"><span>READINESS</span><span id="menuReadiness">—</span></div><div class="rl"><span>STORAGE</span><span id="menuStorage">—</span></div><div class="rl"><span>EXPERIENCE</span><span id="menuStyleState">Vibe Studio</span></div><p class="hint">Verified milestones only. Unknown states stay unknown.</p></div></div></div></div>
 
@@ -2806,14 +3064,15 @@ body[data-style="minimal"] .cine-hud{
 </div> <!-- #cineCamera -->
 </div> <!-- #cineViewport -->
 </div> <!-- #cineTrack -->
-<section class="chapter" id="ideas" aria-labelledby="h-ideas"><div class="chead"><span class="num">04</span><div><h2 id="h-ideas">Open ideas</h2><p>suggestions welcome — they never auto-commit to the roadmap</p></div></div><div class="split"><div id="ideaList"><p class="sub">No ideas yet — be the first.</p></div><div><form class="panel" id="ideaForm"><h3>Suggest a feature</h3><label for="ideaTitle">Title (min 4 characters)</label><input id="ideaTitle" name="title" maxlength="120" required autocomplete="off"><label for="ideaDesc">Description (min 10 characters)</label><textarea id="ideaDesc" name="description" maxlength="2000" required></textarea><p class="hint">Be specific. Ideas start as <span class="kbd">submitted</span>; maintainers triage them.</p><button class="btn primary" type="submit" id="ideaBtn">Submit idea</button><p class="fmsg" id="ideaMsg" role="status" aria-live="polite"></p></form></div></div></section>
-<section class="chapter" id="chat" aria-labelledby="h-chat"><div class="chead"><span class="num">05</span><div><h2 id="h-chat">The community</h2><p>realtime discussion — be kind, no spam</p></div></div><div class="split"><div class="panel"><ul class="feed" id="chatList" aria-live="off"><li class="sub">No messages yet — say hello.</li></ul></div><div><form class="panel" id="chatForm"><h3>Join the discussion</h3><label for="chatNick">Display name</label><input id="chatNick" name="nickname" maxlength="40" autocomplete="nickname" placeholder="Visitor"><label for="chatText">Message (max 1000 characters)</label><textarea id="chatText" name="text" maxlength="1000" required></textarea><p class="hint">Messages are public. Never post secrets. Chat can never change development status.</p><button class="btn primary" type="submit" id="chatBtn">Send message</button><p class="fmsg" id="chatMsg" role="status" aria-live="polite"></p></form></div></div></section>
-<section class="chapter" id="launch" aria-labelledby="h-launch"><div class="chead"><span class="num">06</span><div><h2 id="h-launch">Launch countdown</h2><p>readiness first — a date only when it is real</p></div></div><div class="reveal"><div class="panel"><div class="big" id="launchState">—</div><p class="sub" id="launchNote"></p><div class="count" id="countCells" hidden><div class="cell"><div class="n" id="cdD">—</div><div class="l">days</div></div><div class="cell"><div class="n" id="cdH">—</div><div class="l">hours</div></div><div class="cell"><div class="n" id="cdM">—</div><div class="l">minutes</div></div><div class="cell"><div class="n" id="cdS">—</div><div class="l">seconds</div></div></div><p class="hint" id="launchKind"></p></div></div><div class="reveal" style="margin-top:18px"><div class="panel" id="estPanel" aria-labelledby="estKicker"><div class="lr-top"><span class="lr-kicker" id="estKicker">Deterministic effort model</span><span class="pill lr-pill" id="estStage">loading…</span></div><p class="sub" id="estNote">Fetching the live estimate…</p><div class="count" id="estCells" hidden role="timer" aria-label="Time remaining until the model-projected launch date"><div class="cell"><div class="n" id="ecdD">—</div><div class="l">days</div></div><div class="cell"><div class="n" id="ecdH">—</div><div class="l">hours</div></div><div class="cell"><div class="n" id="ecdM">—</div><div class="l">minutes</div></div><div class="cell"><div class="n" id="ecdS">—</div><div class="l">seconds</div></div></div><p class="mono" id="estTarget">projected date —</p><div class="sgrid"><div class="scell"><span class="lb">Remaining effort</span><span class="vl" id="estHours">—</span><span class="at2">open tasks + bugs + blockers</span></div><div class="scell"><span class="lb">Velocity</span><span class="vl" id="estVel">—</span><span class="at2">hours per working day</span></div><div class="scell"><span class="lb">Confidence</span><span class="vl" id="estConf">—</span><span class="at2">calibrated from completed work</span></div><div class="scell"><span class="lb">Tasks done</span><span class="vl" id="estCounts">—</span><span class="at2" id="estCountsAt">tasks · bugs · blockers</span></div></div><details class="est-model" id="estModel"><summary>How this estimate works</summary><div class="em-body"><p>Remaining effort = open roadmap tasks (seeded from <code>docs/REMAINING-ROADMAP.md</code>) + open bug repair effort by severity (critical 16h · high 8h · medium 4h · low 2h) + unresolved blockers — with blockers that overlap an open bug deduplicated, so the same work is never counted twice.</p><p>The projected date is <em>remaining effort ÷ velocity</em> expressed in calendar days. No date is hardcoded anywhere: the target comes from the server on every refresh, and only the seconds between refreshes are interpolated locally. Commits and CI runs never verify milestones and never move this number. It is a model projection, not a promise.</p></div></details></div></div><div class="reveal" style="margin-top:18px"><div class="panel trailer-panel teaser-panel" id="trailerPanel" aria-labelledby="trailerHeading"><div class="lr-top"><span class="lr-kicker" id="trailerKicker">Cinematic Showcase</span><span class="pill lr-pill teaser-status-pill" id="trailerStatus"><span class="teaser-pulse-dot" aria-hidden="true"></span>TRAILER IN PRODUCTION</span></div><div class="teaser-card" id="trailerTeaserCard"><span class="teaser-corner tl" aria-hidden="true"></span><span class="teaser-corner tr" aria-hidden="true"></span><span class="teaser-corner bl" aria-hidden="true"></span><span class="teaser-corner br" aria-hidden="true"></span><div class="teaser-sprockets top" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div><div class="teaser-body"><div class="teaser-badge" aria-hidden="true"><svg class="teaser-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.5"></rect><line x1="7" y1="2" x2="7" y2="22"></line><line x1="17" y1="2" x2="17" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line><line x1="2" y1="7" x2="7" y2="7"></line><line x1="2" y1="17" x2="7" y2="17"></line><line x1="17" y1="17" x2="22" y2="17"></line><line x1="17" y1="7" x2="22" y2="7"></line></svg><span class="teaser-tag">PRODUCTION REEL</span></div><h3 class="teaser-headline" id="trailerHeading">YOUR VISUAL TRAILER<br>IS BEING COOKED.</h3><p class="teaser-copy">Something cinematic is in the making. We're crafting the Xamcode experience into a visual story. Stay tuned for the reveal.</p></div><div class="teaser-sprockets bottom" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div><div class="teaser-shimmer" aria-hidden="true"></div></div></div></div></section>
-<section class="chapter" id="waitlist" aria-labelledby="h-wait"><div class="chead"><span class="num">07</span><div><h2 id="h-wait">Follow the experiment</h2><p>one email, one seat — we never publish addresses</p></div></div><div class="split"><form class="panel" id="waitForm"><label for="waitEmail">Email address</label><input id="waitEmail" name="email" type="email" required autocomplete="email" maxlength="254"><label for="waitNick">Display name (optional)</label><input id="waitNick" name="nickname" maxlength="40" autocomplete="nickname"><label class="consent" for="waitConsent"><input type="checkbox" id="waitConsent" required><span>I agree to be contacted about the XamCode AI launch. No marketing without consent.</span></label><button class="btn primary" type="submit" id="waitBtn">Join the waitlist</button><p class="fmsg" id="waitMsg" role="status" aria-live="polite"></p></form><div class="panel"><h3>Why join?</h3><p class="sub">Early testers get the first beta invites. <span id="waitCount">—</span> already waiting.</p><p class="hint">Emails stay private. The count is the only public number.</p></div></div></section>
-<section class="chapter" id="guidelines" aria-labelledby="h-guide"><div class="chead"><span class="num">§</span><div><h2 id="h-guide">Privacy and guidelines</h2><p>the short version</p></div></div><div class="guide"><ul><li>Be kind. No harassment, hate, spam, or promotions.</li><li>Never post secrets. The server redacts secret-looking text automatically.</li><li>Chat and ideas are discussion only — they cannot change development status.</li><li>Reports: use the <span class="kbd">Report</span> button on any message or idea.</li><li>Waitlist emails are stored securely and never published.</li><li>Progress comes from verified milestones only. Unknown stays unknown.</li><li>Full policies: <a href="/privacy-policy">Privacy Policy</a> · <a href="/terms-of-service">Terms</a> · <a href="/accessibility-statement">Accessibility</a></li></ul></div></section>
-<section class="closing"><div class="ck">Final transmission · the system keeps forming</div><h2 class="ct">The system is still forming.<span class="thin">Follow the build.</span></h2><p class="csub2">Public record of XamCode AI development. Nothing simulated. Verified milestones, real CI signal, community ideas and chat.</p><div class="cacts"><a class="xcta pri" href="#waitlist">Join the waitlist <span class="ar" aria-hidden="true">↗</span></a><a class="xcta gho" href="#roadmap">View the roadmap <span class="ar" aria-hidden="true">→</span></a><a class="xcta gho" href="#ideas">Browse open ideas <span class="ar" aria-hidden="true">→</span></a></div></section>
+<section class="chapter" id="ideas" aria-labelledby="h-ideas"><div class="chead cine-reveal cine-reveal-up"><span class="num">04</span><div><h2 id="h-ideas">Open ideas</h2><p>suggestions welcome — they never auto-commit to the roadmap</p></div></div><div class="split cine-reveal cine-reveal-up"><div id="ideaList"><p class="sub">No ideas yet — be the first.</p></div><div><form class="panel" id="ideaForm"><h3>Suggest a feature</h3><label for="ideaTitle">Title (min 4 characters)</label><input id="ideaTitle" name="title" maxlength="120" required autocomplete="off"><label for="ideaDesc">Description (min 10 characters)</label><textarea id="ideaDesc" name="description" maxlength="2000" required></textarea><p class="hint">Be specific. Ideas start as <span class="kbd">submitted</span>; maintainers triage them.</p><button class="btn primary" type="submit" id="ideaBtn">Submit idea</button><p class="fmsg" id="ideaMsg" role="status" aria-live="polite"></p></form></div></div></section>
+<section class="chapter" id="chat" aria-labelledby="h-chat"><div class="chead cine-reveal cine-reveal-up"><span class="num">05</span><div><h2 id="h-chat">The community</h2><p>realtime discussion — be kind, no spam</p></div></div><div class="split cine-reveal cine-reveal-up"><div class="panel"><ul class="feed" id="chatList" aria-live="off"><li class="sub">No messages yet — say hello.</li></ul></div><div><form class="panel" id="chatForm"><h3>Join the discussion</h3><label for="chatNick">Display name</label><input id="chatNick" name="nickname" maxlength="40" autocomplete="nickname" placeholder="Visitor"><label for="chatText">Message (max 1000 characters)</label><textarea id="chatText" name="text" maxlength="1000" required></textarea><p class="hint">Messages are public. Never post secrets. Chat can never change development status.</p><button class="btn primary" type="submit" id="chatBtn">Send message</button><p class="fmsg" id="chatMsg" role="status" aria-live="polite"></p></form></div></div></section>
+<section class="chapter" id="launch" aria-labelledby="h-launch"><div class="chead cine-reveal cine-reveal-up"><span class="num">06</span><div><h2 id="h-launch">Launch countdown</h2><p>readiness first — a date only when it is real</p></div></div><div class="reveal"><div class="panel"><div class="big" id="launchState">—</div><p class="sub" id="launchNote"></p><div class="count" id="countCells" hidden><div class="cell"><div class="n" id="cdD">—</div><div class="l">days</div></div><div class="cell"><div class="n" id="cdH">—</div><div class="l">hours</div></div><div class="cell"><div class="n" id="cdM">—</div><div class="l">minutes</div></div><div class="cell"><div class="n" id="cdS">—</div><div class="l">seconds</div></div></div><p class="hint" id="launchKind"></p></div></div><div class="reveal" style="margin-top:18px"><div class="panel" id="estPanel" aria-labelledby="estKicker"><div class="lr-top"><span class="lr-kicker" id="estKicker">Deterministic effort model</span><span class="pill lr-pill" id="estStage">loading…</span></div><p class="sub" id="estNote">Fetching the live estimate…</p><div class="count" id="estCells" hidden role="timer" aria-label="Time remaining until the model-projected launch date"><div class="cell"><div class="n" id="ecdD">—</div><div class="l">days</div></div><div class="cell"><div class="n" id="ecdH">—</div><div class="l">hours</div></div><div class="cell"><div class="n" id="ecdM">—</div><div class="l">minutes</div></div><div class="cell"><div class="n" id="ecdS">—</div><div class="l">seconds</div></div></div><p class="mono" id="estTarget">projected date —</p><div class="sgrid"><div class="scell"><span class="lb">Remaining effort</span><span class="vl" id="estHours">—</span><span class="at2">open tasks + bugs + blockers</span></div><div class="scell"><span class="lb">Velocity</span><span class="vl" id="estVel">—</span><span class="at2">hours per working day</span></div><div class="scell"><span class="lb">Confidence</span><span class="vl" id="estConf">—</span><span class="at2">calibrated from completed work</span></div><div class="scell"><span class="lb">Tasks done</span><span class="vl" id="estCounts">—</span><span class="at2" id="estCountsAt">tasks · bugs · blockers</span></div></div><details class="est-model" id="estModel"><summary>How this estimate works</summary><div class="em-body"><p>Remaining effort = open roadmap tasks (seeded from <code>docs/REMAINING-ROADMAP.md</code>) + open bug repair effort by severity (critical 16h · high 8h · medium 4h · low 2h) + unresolved blockers — with blockers that overlap an open bug deduplicated, so the same work is never counted twice.</p><p>The projected date is <em>remaining effort ÷ velocity</em> expressed in calendar days. No date is hardcoded anywhere: the target comes from the server on every refresh, and only the seconds between refreshes are interpolated locally. Commits and CI runs never verify milestones and never move this number. It is a model projection, not a promise.</p></div></details></div></div><div class="reveal" style="margin-top:18px"><div class="panel trailer-panel teaser-panel" id="trailerPanel" aria-labelledby="trailerHeading"><div class="lr-top"><span class="lr-kicker" id="trailerKicker">Cinematic Showcase</span><span class="pill lr-pill teaser-status-pill" id="trailerStatus"><span class="teaser-pulse-dot" aria-hidden="true"></span>TRAILER IN PRODUCTION</span></div><div class="teaser-card" id="trailerTeaserCard"><span class="teaser-corner tl" aria-hidden="true"></span><span class="teaser-corner tr" aria-hidden="true"></span><span class="teaser-corner bl" aria-hidden="true"></span><span class="teaser-corner br" aria-hidden="true"></span><div class="teaser-sprockets top" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div><div class="teaser-body"><div class="teaser-badge" aria-hidden="true"><svg class="teaser-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.5"></rect><line x1="7" y1="2" x2="7" y2="22"></line><line x1="17" y1="2" x2="17" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line><line x1="2" y1="7" x2="7" y2="7"></line><line x1="2" y1="17" x2="7" y2="17"></line><line x1="17" y1="17" x2="22" y2="17"></line><line x1="17" y1="7" x2="22" y2="7"></line></svg><span class="teaser-tag">PRODUCTION REEL</span></div><h3 class="teaser-headline" id="trailerHeading">YOUR VISUAL TRAILER<br>IS BEING COOKED.</h3><p class="teaser-copy">Something cinematic is in the making. We're crafting the Xamcode experience into a visual story. Stay tuned for the reveal.</p></div><div class="teaser-sprockets bottom" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div><div class="teaser-shimmer" aria-hidden="true"></div></div></div></div></section>
+<section class="chapter" id="waitlist" aria-labelledby="h-wait"><div class="chead cine-reveal cine-reveal-up"><span class="num">07</span><div><h2 id="h-wait">Follow the experiment</h2><p>one email, one seat — we never publish addresses</p></div></div><div class="split cine-reveal cine-reveal-up"><form class="panel" id="waitForm"><label for="waitEmail">Email address</label><input id="waitEmail" name="email" type="email" required autocomplete="email" maxlength="254"><label for="waitNick">Display name (optional)</label><input id="waitNick" name="nickname" maxlength="40" autocomplete="nickname"><label class="consent" for="waitConsent"><input type="checkbox" id="waitConsent" required><span>I agree to be contacted about the XamCode AI launch. No marketing without consent.</span></label><button class="btn primary" type="submit" id="waitBtn">Join the waitlist</button><p class="fmsg" id="waitMsg" role="status" aria-live="polite"></p></form><div class="panel"><h3>Why join?</h3><p class="sub">Early testers get the first beta invites. <span id="waitCount">—</span> already waiting.</p><p class="hint">Emails stay private. The count is the only public number.</p></div></div></section>
+<section class="chapter" id="guidelines" aria-labelledby="h-guide"><div class="chead cine-reveal cine-reveal-up"><span class="num">§</span><div><h2 id="h-guide">Privacy and guidelines</h2><p>the short version</p></div></div><div class="guide cine-reveal cine-reveal-up"><ul><li>Be kind. No harassment, hate, spam, or promotions.</li><li>Never post secrets. The server redacts secret-looking text automatically.</li><li>Chat and ideas are discussion only — they cannot change development status.</li><li>Reports: use the <span class="kbd">Report</span> button on any message or idea.</li><li>Waitlist emails are stored securely and never published.</li><li>Progress comes from verified milestones only. Unknown stays unknown.</li><li>Full policies: <a href="/privacy-policy">Privacy Policy</a> · <a href="/terms-of-service">Terms</a> · <a href="/accessibility-statement">Accessibility</a></li></ul></div></section>
+<section class="chapter" id="admin" aria-labelledby="h-admin"><div class="chead cine-reveal cine-reveal-up"><span class="num">ADM</span><div><h2 id="h-admin">Maintainer review &amp; moderation</h2><p>server-authorized console — requires BIP_ADMIN_TOKEN verified on every request</p></div></div><div class="adm-shell cine-reveal cine-reveal-up"><form class="panel adm-auth-bar" id="adminAuthForm" autocomplete="off"><div class="adm-auth-field"><label for="adminTokenInput">Maintainer Admin Token (Bearer)</label><input id="adminTokenInput" name="adminToken" type="password" placeholder="Paste BIP_ADMIN_TOKEN to unlock review queue" autocomplete="off" required></div><div class="adm-auth-actions"><button class="btn primary" type="submit" id="adminLoadBtn">Verify &amp; load queue</button><button class="btn ghost" type="button" id="adminRefreshBtn" hidden>Refresh</button><button class="btn ghost" type="button" id="adminExportCsvBtn" hidden>Export waitlist CSV</button><button class="btn ghost" type="button" id="adminClearBtn" hidden>Lock console</button></div><p class="fmsg" id="adminAuthMsg" role="status" aria-live="polite" style="width:100%;margin-top:6px"></p></form><div id="adminWorkspace" hidden><div class="adm-stats"><div class="scell"><span class="lb">Submitted Ideas</span><span class="vl" id="admCountIdeas">0</span><span class="at2">feature suggestions</span></div><div class="scell"><span class="lb">Open Reports</span><span class="vl" id="admCountReports">0</span><span class="at2">moderation queue</span></div><div class="scell"><span class="lb">Chat Messages</span><span class="vl" id="admCountChat">0</span><span class="at2">public discussion</span></div><div class="scell"><span class="lb">Idea Comments</span><span class="vl" id="admCountComments">0</span><span class="at2">thread replies</span></div><div class="scell"><span class="lb">Waitlist</span><span class="vl" id="admCountWaitlist">0</span><span class="at2">consented signups</span></div></div><div class="adm-grid" style="margin-top:20px"><div class="panel"><h3>Suggestions &amp; Ideas Triage</h3><p class="sub" style="margin-bottom:14px">Review user-submitted ideas and update their official lifecycle status.</p><div class="adm-list" id="adminIdeasList"><p class="sub">No ideas loaded.</p></div></div><div style="display:flex;flex-direction:column;gap:20px"><div class="panel"><h3>Abuse Reports Queue</h3><p class="sub" style="margin-bottom:14px">Open community reports awaiting maintainer resolution.</p><div class="adm-list" id="adminReportsList"><p class="sub">No open reports.</p></div></div><div class="panel"><h3>Community Moderation (Chat &amp; Replies)</h3><p class="sub" style="margin-bottom:14px">Remove spam or rule-violating messages from public view.</p><div class="adm-list" id="adminModList"><p class="sub">No messages loaded.</p></div></div></div></div></div></div></section>
+<section class="closing cine-reveal cine-reveal-up"><div class="ck">Final transmission · the system keeps forming</div><h2 class="ct">The system is still forming.<span class="thin">Follow the build.</span></h2><p class="csub2">Public record of XamCode AI development. Nothing simulated. Verified milestones, real CI signal, community ideas and chat.</p><div class="cacts"><a class="xcta pri" href="#waitlist">Join the waitlist <span class="ar" aria-hidden="true">↗</span></a><a class="xcta gho" href="#roadmap">View the roadmap <span class="ar" aria-hidden="true">→</span></a><a class="xcta gho" href="#ideas">Browse open ideas <span class="ar" aria-hidden="true">→</span></a></div></section>
 </div></main>
-<footer class="colophon"><div class="wrap"><div class="footer-brand"><a href="/" class="footer-logo-link" aria-label="XamCode AI home"><div class="footer-logo-wrap"><img src="/assets/xamcode-metallic-x.png" alt="XamCode AI" class="footer-logo-img" width="76" height="76" loading="lazy" decoding="async"></div></a><div class="footer-brand-info"><div class="footer-brand-name">XAMCODE <span class="footer-brand-pill">AI</span></div><p class="footer-brand-sub">Autonomous AI Study Architect · Real-time public development record</p></div></div><p class="fmark" aria-hidden="true">XAMCODE</p><nav class="fnav" aria-label="Footer sections"><a href="#progress">Overview</a><a href="#roadmap">Roadmap</a><a href="#activity">Readiness</a><a href="#ideas">Ideas</a><a href="#chat">Community</a><a href="#launch">Launch</a><a href="#waitlist">Waitlist</a><a href="#guidelines">Guidelines</a></nav><div class="frow"><div>XamCode AI — built in public. Build feed: <a href="/build">/build</a> · API: <span class="kbd">/api/bip/summary</span></div><div>Progress = verified milestone weights / total weights x 100. Nothing here is fabricated sample data.</div></div><div class="frow"><div><a href="/privacy-policy">Privacy Policy</a> · <a href="/terms-of-service">Terms of Service</a> · <a href="/accessibility-statement">Accessibility Statement</a></div><div>honest states only · <span id="launchKind2">unknown stays unknown</span></div></div></div></footer>
+<footer class="colophon"><div class="wrap"><div class="footer-brand"><a href="/" class="footer-logo-link" aria-label="XamCode AI home"><div class="footer-logo-wrap"><img src="/assets/xamcode-metallic-x.png" alt="XamCode AI" class="footer-logo-img" width="76" height="76" loading="lazy" decoding="async"></div></a><div class="footer-brand-info"><div class="footer-brand-name">XAMCODE <span class="footer-brand-pill">AI</span></div><p class="footer-brand-sub">Autonomous AI Study Architect · Real-time public development record</p></div></div><p class="fmark" aria-hidden="true">XAMCODE</p><nav class="fnav" aria-label="Footer sections"><a href="#progress">Overview</a><a href="#roadmap">Roadmap</a><a href="#activity">Readiness</a><a href="#ideas">Ideas</a><a href="#chat">Community</a><a href="#launch">Launch</a><a href="#waitlist">Waitlist</a><a href="#guidelines">Guidelines</a><a href="/build/admin">Maintainer Review</a></nav><div class="frow"><div>XamCode AI — built in public. Build feed: <a href="/build">/build</a> · API: <span class="kbd">/api/bip/summary</span></div><div>Progress = verified milestone weights / total weights x 100. Nothing here is fabricated sample data.</div></div><div class="frow"><div><a href="/privacy-policy">Privacy Policy</a> · <a href="/terms-of-service">Terms of Service</a> · <a href="/accessibility-statement">Accessibility Statement</a></div><div>honest states only · <span id="launchKind2">unknown stays unknown</span></div></div></div></footer>
 <script>
 'use strict';
 (function(){
@@ -2926,12 +3185,78 @@ function rReadiness(s){
   set('lrUpdateBadge','public record');
 }
 function ri(items){
-
 var box=$('ideaList');if(!box)return;box.textContent='';items=items||[];if(!items.length){box.appendChild(el('p','sub','No ideas yet — be the first.'));return;}
-items.forEach(function(g){g=g||{};var d=el('div','idea');var t=el('div','t');t.appendChild(el('strong',null,g.title||'Untitled idea'));var s=el('span','pill',null);s.textContent=String(g.status||'submitted').replace(/_/g,' ');t.appendChild(s);d.appendChild(t);d.appendChild(el('p','c',g.description||''));
+items.forEach(function(g){g=g||{};var d=el('div','idea');var t=el('div','t');t.appendChild(el('strong',null,g.title||'Untitled idea'));var stStr=String(g.status||'submitted');var s=el('span','pill '+stStr,null);s.textContent=stStr.replace(/_/g,' ');t.appendChild(s);d.appendChild(t);d.appendChild(el('p','c',g.description||''));
 var row=el('div','vrow');var btn=el('button','vote-btn',null);btn.type='button';btn.textContent='▾ '+(g.votes||0)+(g.votedByMe?' · voted':'');btn.setAttribute('aria-pressed',g.votedByMe?'true':'false');btn.setAttribute('aria-label','Vote for '+(g.title||'idea'));
-(function(id,b){btn.addEventListener('click',function(){vote(id,b);});})(g.id,btn);row.appendChild(btn);row.appendChild(el('span','mono',(g.commentCount||0)+' comments'));
-var rep=el('button','vote-btn',null);rep.type='button';rep.textContent='Report';rep.setAttribute('aria-label','Report '+(g.title||'idea'));(function(id){rep.addEventListener('click',function(){report('idea',id);});})(g.id);row.appendChild(rep);d.appendChild(row);box.appendChild(d);});}
+(function(id,b){btn.addEventListener('click',function(){vote(id,b);});})(g.id,btn);row.appendChild(btn);
+var cbtn=el('button','vote-btn idea-cmt-toggle',null);cbtn.type='button';cbtn.textContent='💬 '+(g.commentCount||0)+' comments';cbtn.setAttribute('aria-expanded','false');cbtn.setAttribute('aria-label','View or add comments for '+(g.title||'idea'));
+row.appendChild(cbtn);
+var rep=el('button','vote-btn',null);rep.type='button';rep.textContent='Report';rep.setAttribute('aria-label','Report '+(g.title||'idea'));(function(id){rep.addEventListener('click',function(){report('idea',id);});})(g.id);row.appendChild(rep);d.appendChild(row);
+var cbox=el('div','idea-comments-box',null);cbox.hidden=true;d.appendChild(cbox);
+(function(id,cb,bx){cb.addEventListener('click',function(){toggleIdeaComments(id,cb,bx);});})(g.id,cbtn,cbox);
+box.appendChild(d);});}
+function toggleIdeaComments(ideaId,btn,box){
+  if(!box)return;
+  var open=box.hidden;
+  box.hidden=!open;
+  if(btn)btn.setAttribute('aria-expanded',open?'true':'false');
+  if(open)loadIdeaComments(ideaId,btn,box);
+}
+function loadIdeaComments(ideaId,btn,box){
+  if(!box)return;
+  box.textContent='';
+  box.appendChild(el('p','sub','Loading comments…'));
+  gt('/api/bip/ideas/'+encodeURIComponent(ideaId)+'/comments').then(function(r){
+    var list=(r&&r.comments)||[];
+    if(btn)btn.textContent='💬 '+list.length+' comments';
+    box.textContent='';
+    var ul=el('ul','idea-cmt-list');
+    if(!list.length){
+      var empty=el('li','sub','No comments yet — add the first reply below.');
+      ul.appendChild(empty);
+    }else{
+      list.forEach(function(c){
+        var li=el('li','idea-cmt-item');
+        var hd=el('div','idea-cmt-head');
+        hd.appendChild(el('strong',null,c.nickname||'Visitor'));
+        var right=el('div',null);
+        right.appendChild(el('span',null,fm(c.at)+' '));
+        var rbtn=el('button','vote-btn',null);
+        rbtn.type='button';
+        rbtn.style.padding='2px 8px';
+        rbtn.style.fontSize='10px';
+        rbtn.textContent='Report';
+        (function(cid){rbtn.addEventListener('click',function(){report('comment',cid);});})(c.id);
+        right.appendChild(rbtn);
+        hd.appendChild(right);
+        li.appendChild(hd);
+        li.appendChild(el('div',null,c.text||''));
+        ul.appendChild(li);
+      });
+    }
+    box.appendChild(ul);
+    var fmEl=el('form','idea-cmt-form');
+    var nickIn=el('input',null);nickIn.type='text';nickIn.maxLength=40;nickIn.placeholder='Name (optional)';
+    var txtIn=el('input',null);txtIn.type='text';txtIn.maxLength=1000;txtIn.required=true;txtIn.placeholder='Write a comment…';
+    var subBtn=el('button','btn primary','Reply');subBtn.type='submit';subBtn.style.minHeight='36px';subBtn.style.padding='0 14px';subBtn.style.marginTop='0';subBtn.style.fontSize='12px';
+    fmEl.appendChild(nickIn);fmEl.appendChild(txtIn);fmEl.appendChild(subBtn);
+    fmEl.addEventListener('submit',function(ev){
+      ev.preventDefault();
+      if(!txtIn.value||!txtIn.value.trim())return;
+      subBtn.disabled=true;
+      pt('/api/bip/ideas/'+encodeURIComponent(ideaId)+'/comments',{nickname:nickIn.value,text:txtIn.value}).then(function(){
+        txtIn.value='';
+        loadIdeaComments(ideaId,btn,box);
+      }).catch(function(e){
+        window.alert((e&&e.message)||'Could not post comment');
+      }).then(function(){subBtn.disabled=false;});
+    });
+    box.appendChild(fmEl);
+  }).catch(function(e){
+    box.textContent='';
+    box.appendChild(el('p','sub',(e&&e.message)||'Could not load comments.'));
+  });
+}
 function vote(id,btn){if(btn)btn.disabled=true;pt('/api/bip/ideas/'+encodeURIComponent(id)+'/vote',{}).then(function(){return ri2();}).catch(function(e){an('ideaMsg',(e&&e.message)||'Vote failed',false);}).then(function(){if(btn)btn.disabled=false;});}
 function report(k,id){var r=null;try{r=window.prompt('Report this '+k+' — what is wrong with it?','');}catch(e){return;}if(r==null)return;pt('/api/bip/reports',{kind:k,targetId:id,reason:r}).then(function(){window.alert('Thanks — a maintainer will review it.');}).catch(function(e){window.alert((e&&e.message)||'Report failed');});}
 function rc(list){var box=$('chatList');if(!box)return;box.textContent='';list=list||[];if(!list.length){box.appendChild(el('li','sub','No messages yet — say hello.'));return;}
@@ -3440,12 +3765,33 @@ var io2=new IntersectionObserver(function(es){es.forEach(function(en){if(en.isIn
 var ex=document.querySelectorAll('.reveal');for(var w=0;w<ex.length;w++)io2.observe(ex[w]);}catch(e){}}
 function trailer(){try{var v=$('buildTrailer'),b=$('trailerPlayBtn'),f=$('trailerFrame');if(!v||!f)return;function sync(){try{var act=(!v.paused&&!v.ended)||(v.currentTime>0&&!v.ended);f.setAttribute('data-playing',act?'true':'false');}catch(e){}}if(b){b.addEventListener('click',function(){try{f.setAttribute('data-playing','true');var p=v.play();if(p&&p.catch)p.catch(function(){sync();});}catch(e){}});}document.querySelectorAll('.bip-ch-btn').forEach(function(cb){cb.addEventListener('click',function(){var sec=parseFloat(cb.getAttribute('data-seek'));if(!isNaN(sec)){v.currentTime=sec;f.setAttribute('data-playing','true');var p=v.play();if(p&&p.catch)p.catch(function(){});}});});v.addEventListener('play',sync);v.addEventListener('pause',sync);v.addEventListener('seeked',sync);v.addEventListener('ended',sync);}catch(e){}}
 function cineScroll(){try{
-var track=$('cineTrack'),cam=$('cineCamera'),hud=$('cineHud');if(!track)return;
+var track=$('cineTrack'),cam=$('cineCamera'),hud=$('cineHud'),progBar=$('scrollProgBar');if(!track)return;
 var acts=[$('act1'),$('act2'),$('act3'),$('act4'),$('act5'),$('act6')].filter(Boolean);
 var actLabel=$('chActLabel'),actBar=$('chProgFill'),coords=$('chCoords');
 var actNames=['ACT 01 · CURRENT STATE','ACT 02 · STUDY ENGINE','ACT 03 · AURA AI TUTOR','ACT 04 · ROADMAP','ACT 05 · LAUNCH READINESS','ACT 06 · FINAL REVEAL'];
 
-var cineRevs=document.querySelectorAll('.cine-reveal');
+/* Enhance Act 01..06 badges & grid reveal classes dynamically */
+try{
+  for(var aIdx=0;aIdx<acts.length;aIdx++){
+    var numEl=acts[aIdx].querySelector&&acts[aIdx].querySelector('.chead .num');
+    if(numEl&&!numEl.querySelector('.act-kicker')){
+      var rawNum=(numEl.textContent||'').trim();
+      numEl.textContent='';
+      numEl.setAttribute('data-act-badge','ACT '+rawNum);
+      var kSpan=el('span','act-kicker','ACT');
+      numEl.appendChild(kSpan);
+      numEl.appendChild(document.createTextNode(rawNum));
+    }
+  }
+  var extraGrids=document.querySelectorAll?document.querySelectorAll('.pipeline-3d-strip, .cine-study-grid, .cine-tutor-grid, .cine-reveal-grid'):[];
+  for(var gIdx=0;gIdx<extraGrids.length;gIdx++){
+    if(!extraGrids[gIdx].classList.contains('cine-reveal')){
+      extraGrids[gIdx].classList.add('cine-reveal','cine-reveal-up');
+    }
+  }
+}catch(e){}
+
+var cineRevs=document.querySelectorAll?document.querySelectorAll('.cine-reveal'):[];
 var reduce=false;
 try{reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;}catch(e){}
 
@@ -3461,8 +3807,8 @@ if('IntersectionObserver' in window && !reduce){
         revIo.unobserve(en.target);
       }
     });
-  },{threshold:0.12, rootMargin:'0px 0px -40px 0px'});
-  cineRevs.forEach(function(r){revIo.observe(r);});
+  },{threshold:0.10, rootMargin:'0px 0px -36px 0px'});
+  for(var rIdx=0;rIdx<cineRevs.length;rIdx++){revIo.observe(cineRevs[rIdx]);}
 
   var actIo=new IntersectionObserver(function(entries){
     entries.forEach(function(en){
@@ -3471,72 +3817,97 @@ if('IntersectionObserver' in window && !reduce){
       }
     });
   },{threshold:0.05});
-  acts.forEach(function(a){actIo.observe(a);});
+  for(var ai=0;ai<acts.length;ai++){actIo.observe(acts[ai]);}
 }else{
-  cineRevs.forEach(function(r){r.classList.add('in-view');});
-  acts.forEach(function(a){a.classList.add('act-entered');});
+  for(var r2=0;r2<cineRevs.length;r2++){cineRevs[r2].classList.add('in-view');}
+  for(var a2=0;a2<acts.length;a2++){acts[a2].classList.add('act-entered');}
 }
 
-function onScroll(){try{
-  var winH=window.innerHeight||800;
-  var trackRect=track.getBoundingClientRect();
-  var trackH=track.offsetHeight||1;
-  var inTrack=trackRect.top<winH*0.75&&trackRect.bottom>winH*0.2;
-  if(hud){
-    if(inTrack&&window.innerWidth>900){
-      hud.classList.add('hud-visible');
+var scrollTicking=false;
+function updateScroll(){
+  scrollTicking=false;
+  try{
+    var winH=window.innerHeight||800;
+    var y=window.scrollY||window.pageYOffset||0;
+    var docH=Math.max(1,(document.documentElement&&document.documentElement.scrollHeight||winH)-winH);
+    var docProg=Math.max(0,Math.min(1,y/docH));
+    if(progBar&&progBar.style){
+      progBar.style.transform='scaleX('+docProg.toFixed(4)+')';
+    }
+
+    var trackRect=track.getBoundingClientRect();
+    var trackH=track.offsetHeight||1;
+    var inTrack=trackRect.top<winH*0.75&&trackRect.bottom>winH*0.2;
+    if(hud){
+      if(inTrack&&window.innerWidth>900){
+        hud.classList.add('hud-visible');
+      }else{
+        hud.classList.remove('hud-visible');
+      }
+    }
+
+    var progress=Math.max(0,Math.min(1,(-trackRect.top+winH*0.25)/trackH));
+    if(actBar)actBar.style.width=(progress*100).toFixed(1)+'%';
+
+    var curActIdx=0;
+    for(var i=0;i<acts.length;i++){
+      var r=acts[i].getBoundingClientRect();
+      if(r.top<=winH*0.55&&r.bottom>=winH*0.25){
+        curActIdx=i;
+      }
+    }
+    for(var k=0;k<acts.length;k++){
+      if(k===curActIdx){
+        acts[k].classList.add('act-active');
+      }else{
+        acts[k].classList.remove('act-active');
+      }
+    }
+    if(actLabel&&actNames[curActIdx])actLabel.textContent=actNames[curActIdx];
+    if(coords)coords.textContent='ACT: '+(curActIdx+1)+'/6 · '+(progress*100).toFixed(0)+'% SCROLL';
+
+    if(!reduce && window.innerWidth > 900){
+      var heroT = $('heroTitle');
+      var heroCv = $('heroCanvas');
+      var heroStage = $('hero3dStage');
+      var bgGlow = document.querySelector&&document.querySelector('.bg.glow') || (document.querySelector&&document.querySelector('.bg-glow'));
+      if(heroT && y < 1400){
+        heroT.style.transform = 'translate3d(0, -' + Math.min(50, (y * 0.09)).toFixed(1) + 'px, 0)';
+      }
+      if(heroCv && y < 1400){
+        heroCv.style.transform = 'translate3d(0, ' + Math.min(60, (y * 0.12)).toFixed(1) + 'px, 0)';
+      }
+      if(heroStage && y < 1400){
+        heroStage.style.transform = 'translate3d(0, -' + Math.min(34, (y * 0.06)).toFixed(1) + 'px, 0)';
+      }
+      if(bgGlow){
+        bgGlow.style.transform = 'translate3d(0, -' + (y * 0.025).toFixed(1) + 'px, 0)';
+      }
+      var act1Gauge = document.querySelector&&document.querySelector('#act1 .cw');
+      if(act1Gauge && trackRect.top < winH && trackRect.bottom > 0){
+        var gOffset = Math.max(-18, Math.min(18, (trackRect.top / winH) * 14));
+        act1Gauge.style.transform = 'translate3d(0, ' + gOffset.toFixed(1) + 'px, 0)';
+      }
+    }
+  }catch(x){}
+}
+
+function onScroll(){
+  if(!scrollTicking){
+    scrollTicking=true;
+    if(typeof requestAnimationFrame==='function'){
+      requestAnimationFrame(updateScroll);
     }else{
-      hud.classList.remove('hud-visible');
+      updateScroll();
     }
   }
-
-  var progress=Math.max(0,Math.min(1,(-trackRect.top+winH*0.25)/trackH));
-  if(actBar)actBar.style.width=(progress*100).toFixed(1)+'%';
-
-  var curActIdx=0;
-  for(var i=0;i<acts.length;i++){
-    var r=acts[i].getBoundingClientRect();
-    if(r.top<=winH*0.55&&r.bottom>=winH*0.25){
-      curActIdx=i;
-    }
-  }
-  for(var k=0;k<acts.length;k++){
-    if(k===curActIdx){
-      acts[k].classList.add('act-active');
-    }else{
-      acts[k].classList.remove('act-active');
-    }
-  }
-  if(actLabel&&actNames[curActIdx])actLabel.textContent=actNames[curActIdx];
-  if(coords)coords.textContent='ACT: '+(curActIdx+1)+'/6 · '+(progress*100).toFixed(0)+'% SCROLL';
-
-  if(!reduce && window.innerWidth > 900){
-    var y = window.scrollY || 0;
-    var heroT = $('heroTitle');
-    var heroCv = $('heroCanvas');
-    var bgGlow = document.querySelector('.bg.glow') || document.querySelector('.bg-glow');
-    if(heroT && y < 1400){
-      heroT.style.transform = 'translate3d(0, -' + Math.min(50, (y * 0.09)).toFixed(1) + 'px, 0)';
-    }
-    if(heroCv && y < 1400){
-      heroCv.style.transform = 'translate3d(0, ' + Math.min(60, (y * 0.12)).toFixed(1) + 'px, 0)';
-    }
-    if(bgGlow){
-      bgGlow.style.transform = 'translate3d(0, -' + (y * 0.025).toFixed(1) + 'px, 0)';
-    }
-    var act1Gauge = document.querySelector('#act1 .cw');
-    if(act1Gauge && trackRect.top < winH && trackRect.bottom > 0){
-      var gOffset = Math.max(-18, Math.min(18, (trackRect.top / winH) * 14));
-      act1Gauge.style.transform = 'translate3d(0, ' + gOffset.toFixed(1) + 'px, 0)';
-    }
-  }
-}catch(x){}}
+}
 
 window.addEventListener('scroll',onScroll,{passive:true});
 window.addEventListener('resize',onScroll,{passive:true});
-onScroll();
+updateScroll();
 
-var jumpLinks=document.querySelectorAll('.docknav a, .mlinks a');
+var jumpLinks=document.querySelectorAll?document.querySelectorAll('.docknav a, .mlinks a'):[];
 for(var j=0;j<jumpLinks.length;j++){
   jumpLinks[j].addEventListener('click',function(e){try{
     var href=this.getAttribute('href');if(!href||href[0]!=='#')return;
@@ -3550,7 +3921,275 @@ for(var j=0;j<jumpLinks.length;j++){
   }catch(err){}});
 }
 }catch(e){}}
-styleEngine();hero();menu();reveal();trailer();cineScroll();rAll();forms();stream();restRefreshBind();
+
+function adminConsole(){try{
+var form=$('adminAuthForm'),inp=$('adminTokenInput'),loadBtn=$('adminLoadBtn');
+var refBtn=$('adminRefreshBtn'),csvBtn=$('adminExportCsvBtn'),clrBtn=$('adminClearBtn');
+var msg=$('adminAuthMsg'),ws=$('adminWorkspace');
+if(!form||!inp||!ws)return;
+
+var TOKEN_KEY='xamcode_bip_admin_token';
+var activeToken='';
+var IDEA_STATES=['submitted','under_review','planned','in_development','completed','declined'];
+
+function setMsg(text,ok){
+  if(!msg)return;
+  msg.textContent=text||'';
+  msg.className='fmsg '+(ok?'ok':'err');
+}
+
+function admReq(method,urlPath,body){
+  var headers={Accept:'application/json',Authorization:'Bearer '+activeToken};
+  var opts={method:method,headers:headers};
+  if(body!==undefined){
+    headers['Content-Type']='application/json';
+    opts.body=JSON.stringify(body);
+  }
+  return fetch(urlPath,opts).then(function(r){
+    return r.json().then(function(j){
+      if(!r.ok)throw new Error((j&&j.error)||('Request failed ('+r.status+')'));
+      return j;
+    });
+  });
+}
+
+function renderIdeas(ideas){
+  var box=$('adminIdeasList');if(!box)return;
+  box.textContent='';
+  if(!ideas||!ideas.length){
+    box.appendChild(el('p','sub','No submitted suggestions yet.'));
+    return;
+  }
+  ideas.forEach(function(item){
+    var card=el('div','adm-item');
+    var top=el('div','adm-item-top');
+    top.appendChild(el('strong',null,item.title||'Untitled'));
+    var pill=el('span','pill '+(item.status||'submitted'),(item.status||'submitted').replace(/_/g,' '));
+    top.appendChild(pill);
+    card.appendChild(top);
+    card.appendChild(el('div','sub',item.description||''));
+    card.appendChild(el('div','adm-item-meta','ID: '+item.id+' · Votes: '+(item.votes||0)+' · Comments: '+(item.commentCount||0)+' · Author: '+(item.authorTag||'anon')+' · '+fm(item.createdAt)));
+    var ctrls=el('div','adm-controls');
+    var sel=el('select','adm-select');
+    sel.setAttribute('aria-label','Status for '+(item.title||'idea'));
+    IDEA_STATES.forEach(function(stName){
+      var opt=el('option',null,stName.replace(/_/g,' '));
+      opt.value=stName;
+      if(stName===item.status)opt.selected=true;
+      sel.appendChild(opt);
+    });
+    var saveBtn=el('button','btn primary','Update status');
+    saveBtn.type='button';
+    saveBtn.style.minHeight='34px';
+    saveBtn.style.padding='0 14px';
+    saveBtn.style.marginTop='0';
+    saveBtn.style.fontSize='11.5px';
+    (function(ideaId,selectEl,btnEl){
+      btnEl.addEventListener('click',function(){
+        btnEl.disabled=true;
+        admReq('PUT','/api/bip/admin/ideas/'+encodeURIComponent(ideaId)+'/status',{status:selectEl.value}).then(function(){
+          setMsg('Updated idea '+ideaId+' status to '+selectEl.value+'.',true);
+          loadOverview();
+          rs(function(){ri2();});
+        }).catch(function(e){
+          setMsg((e&&e.message)||'Status update failed.',false);
+        }).then(function(){btnEl.disabled=false;});
+      });
+    })(item.id,sel,saveBtn);
+    ctrls.appendChild(sel);
+    ctrls.appendChild(saveBtn);
+    card.appendChild(ctrls);
+    box.appendChild(card);
+  });
+}
+
+function renderReports(reports){
+  var box=$('adminReportsList');if(!box)return;
+  box.textContent='';
+  if(!reports||!reports.length){
+    box.appendChild(el('p','sub','Zero open abuse reports.'));
+    return;
+  }
+  reports.forEach(function(rep){
+    var card=el('div','adm-item');
+    var top=el('div','adm-item-top');
+    top.appendChild(el('strong',null,(rep.kind||'item').toUpperCase()+' · '+rep.targetId));
+    top.appendChild(el('span','pill needs_review',rep.status||'open'));
+    card.appendChild(top);
+    card.appendChild(el('div','sub','Reason: '+(rep.reason||'No reason given')));
+    card.appendChild(el('div','adm-item-meta','Report ID: '+rep.id+' · Reporter: '+(rep.reporterTag||'anon')+' · '+fm(rep.at)));
+    var ctrls=el('div','adm-controls');
+    function mkActBtn(label,action,hide,cls){
+      var b=el('button','btn '+cls,label);
+      b.type='button';b.style.minHeight='32px';b.style.padding='0 12px';b.style.marginTop='0';b.style.fontSize='11px';
+      b.addEventListener('click',function(){
+        b.disabled=true;
+        admReq('POST','/api/bip/admin/reports/'+encodeURIComponent(rep.id)+'/resolve',{action:action,hide:hide}).then(function(){
+          setMsg('Report '+rep.id+' '+action+'d.',true);
+          loadOverview();
+          rs(function(){rAll();});
+        }).catch(function(e){
+          setMsg((e&&e.message)||'Could not resolve report.',false);
+        }).then(function(){b.disabled=false;});
+      });
+      return b;
+    }
+    ctrls.appendChild(mkActBtn('Resolve & Hide Content','resolve',true,'primary'));
+    ctrls.appendChild(mkActBtn('Resolve (Keep)','resolve',false,'ghost'));
+    ctrls.appendChild(mkActBtn('Dismiss','dismiss',false,'ghost'));
+    card.appendChild(ctrls);
+    box.appendChild(card);
+  });
+}
+
+function renderModeration(chats,comments){
+  var box=$('adminModList');if(!box)return;
+  box.textContent='';
+  var hasAny=false;
+  (chats||[]).forEach(function(m){
+    hasAny=true;
+    var card=el('div','adm-item');
+    var top=el('div','adm-item-top');
+    top.appendChild(el('strong',null,'[CHAT] '+(m.nickname||'Visitor')));
+    var delBtn=el('button','btn ghost','Delete message');
+    delBtn.type='button';delBtn.style.minHeight='30px';delBtn.style.padding='0 10px';delBtn.style.marginTop='0';delBtn.style.fontSize='11px';
+    (function(mid,b){
+      b.addEventListener('click',function(){
+        b.disabled=true;
+        admReq('DELETE','/api/bip/admin/chat/'+encodeURIComponent(mid)).then(function(){
+          setMsg('Deleted chat message '+mid+'.',true);
+          loadOverview();
+          rs(function(){rcOnly();});
+        }).catch(function(e){
+          setMsg((e&&e.message)||'Delete failed.',false);
+        }).then(function(){b.disabled=false;});
+      });
+    })(m.id,delBtn);
+    top.appendChild(delBtn);
+    card.appendChild(top);
+    card.appendChild(el('div','sub',m.text||''));
+    card.appendChild(el('div','adm-item-meta','ID: '+m.id+' · Tag: '+(m.authorTag||'anon')+' · '+fm(m.at)));
+    box.appendChild(card);
+  });
+  (comments||[]).forEach(function(c){
+    hasAny=true;
+    var card=el('div','adm-item');
+    var top=el('div','adm-item-top');
+    top.appendChild(el('strong',null,'[COMMENT] '+(c.nickname||'Visitor')));
+    var delBtn=el('button','btn ghost','Delete reply');
+    delBtn.type='button';delBtn.style.minHeight='30px';delBtn.style.padding='0 10px';delBtn.style.marginTop='0';delBtn.style.fontSize='11px';
+    (function(cid,b){
+      b.addEventListener('click',function(){
+        b.disabled=true;
+        admReq('DELETE','/api/bip/admin/comments/'+encodeURIComponent(cid)).then(function(){
+          setMsg('Deleted comment '+cid+'.',true);
+          loadOverview();
+          rs(function(){ri2();});
+        }).catch(function(e){
+          setMsg((e&&e.message)||'Delete failed.',false);
+        }).then(function(){b.disabled=false;});
+      });
+    })(c.id,delBtn);
+    top.appendChild(delBtn);
+    card.appendChild(top);
+    card.appendChild(el('div','sub',c.text||''));
+    card.appendChild(el('div','adm-item-meta','ID: '+c.id+' · Idea: '+c.ideaId+' · '+fm(c.at)));
+    box.appendChild(card);
+  });
+  if(!hasAny){
+    box.appendChild(el('p','sub','No active public chat messages or idea comments.'));
+  }
+}
+
+function loadOverview(){
+  if(!activeToken){
+    setMsg('Enter your BIP_ADMIN_TOKEN first.',false);
+    return;
+  }
+  if(loadBtn)loadBtn.disabled=true;
+  admReq('GET','/api/bip/admin/overview').then(function(r){
+    try{if(typeof sessionStorage!=='undefined')sessionStorage.setItem(TOKEN_KEY,activeToken);}catch(e){}
+    ws.hidden=false;
+    if(refBtn)refBtn.hidden=false;
+    if(csvBtn)csvBtn.hidden=false;
+    if(clrBtn)clrBtn.hidden=false;
+    var c=r.counts||{};
+    st('admCountIdeas',String(c.ideas||0));
+    st('admCountReports',String(c.openReports||0));
+    st('admCountChat',String(c.chatMessages||0));
+    st('admCountComments',String(c.comments||0));
+    st('admCountWaitlist',String(c.waitlist||0));
+    renderIdeas(r.ideas||[]);
+    renderReports(r.reports||[]);
+    renderModeration(r.chatMessages||[],r.comments||[]);
+    setMsg('Server admin authorization verified. Review queue loaded.',true);
+  }).catch(function(e){
+    ws.hidden=true;
+    setMsg((e&&e.message)||'Admin authorization failed.',false);
+  }).then(function(){
+    if(loadBtn)loadBtn.disabled=false;
+  });
+}
+
+form.addEventListener('submit',function(e){
+  e.preventDefault();
+  activeToken=(inp.value||'').trim();
+  loadOverview();
+});
+if(refBtn){
+  refBtn.addEventListener('click',function(){loadOverview();});
+}
+if(clrBtn){
+  clrBtn.addEventListener('click',function(){
+    activeToken='';
+    inp.value='';
+    ws.hidden=true;
+    if(refBtn)refBtn.hidden=true;
+    if(csvBtn)csvBtn.hidden=true;
+    if(clrBtn)clrBtn.hidden=true;
+    try{if(typeof sessionStorage!=='undefined')sessionStorage.removeItem(TOKEN_KEY);}catch(e){}
+    setMsg('Admin console locked.',true);
+  });
+}
+if(csvBtn){
+  csvBtn.addEventListener('click',function(){
+    if(!activeToken)return;
+    fetch('/api/bip/admin/waitlist/export',{headers:{Authorization:'Bearer '+activeToken}}).then(function(r){
+      if(!r.ok)throw new Error('CSV export failed ('+r.status+')');
+      return r.text();
+    }).then(function(csvText){
+      var blob=new Blob([csvText],{type:'text/csv;charset=utf-8'});
+      var u=URL.createObjectURL(blob);
+      var a=el('a');a.href=u;a.download='bip-waitlist.csv';
+      document.body.appendChild(a);a.click();a.remove();
+      URL.revokeObjectURL(u);
+      setMsg('Downloaded waitlist CSV.',true);
+    }).catch(function(e){
+      setMsg((e&&e.message)||'Export failed.',false);
+    });
+  });
+}
+
+try{
+  var savedTok=typeof sessionStorage!=='undefined'&&sessionStorage.getItem(TOKEN_KEY);
+  if(savedTok){
+    activeToken=savedTok;
+    inp.value=savedTok;
+    loadOverview();
+  }
+}catch(e){}
+
+try{
+  if(typeof window!=='undefined'&&window.location&&(window.location.pathname.indexOf('/build/admin')===0||window.location.hash==='#admin')){
+    setTimeout(function(){
+      var admSec=$('admin');
+      if(admSec&&admSec.scrollIntoView)admSec.scrollIntoView({behavior:'smooth',block:'start'});
+      if(inp&&inp.focus)inp.focus();
+    },250);
+  }
+}catch(e){}
+}catch(e){}}
+styleEngine();hero();menu();reveal();trailer();cineScroll();adminConsole();rAll();forms();stream();restRefreshBind();
 })();
 </script>
 </body>

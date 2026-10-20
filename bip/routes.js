@@ -424,6 +424,9 @@ async function handleAdmin(req, res, p, requestId){
     if (body.__bodyError) return sendJson(res, 400, { error: body.__bodyError, code: 'BAD_JSON', requestId }, requestId);
     return admin.adminSetIdeaStatus(req, res, decodeURIComponent(m[1]), body, requestId);
   }
+  if (req.method === 'GET' && tail === 'overview'){
+    return admin.adminOverview(req, res, requestId);
+  }
   if (req.method === 'GET' && tail === 'reports'){
     return admin.adminListReports(req, res, requestId);
   }
@@ -436,6 +439,10 @@ async function handleAdmin(req, res, p, requestId){
   m = tail.match(/^chat\/([^/]+)$/);
   if (req.method === 'DELETE' && m){
     return admin.adminDeleteMessage(req, res, decodeURIComponent(m[1]), requestId);
+  }
+  m = tail.match(/^comments\/([^/]+)$/);
+  if (req.method === 'DELETE' && m){
+    return admin.adminDeleteComment(req, res, decodeURIComponent(m[1]), requestId);
   }
   if (req.method === 'GET' && tail === 'waitlist/export'){
     return admin.adminExportWaitlist(req, res, requestId);
@@ -478,7 +485,7 @@ async function handleBip(req, res, url, p, requestId){
     serveBuildPage(req, res, requestId);
     return true;
   }
-  if (p === '/build/' && req.method === 'GET'){
+  if ((p === '/build/' || p === '/build/admin' || p === '/build/admin/') && req.method === 'GET'){
     serveBuildPage(req, res, requestId);
     return true;
   }

@@ -1954,7 +1954,7 @@ const server = http.createServer(async (req, res) => {
     /* Build-in-Public platform: /build page + /api/bip/* routes.
        Mounted before the /api/ 404 so BIP APIs resolve; study-app
        routes above are untouched and keep priority. */
-    if (bipRoutes && (p === '/build' || p === '/build/' || p.startsWith('/api/bip/'))){
+    if (bipRoutes && (p === '/build' || p === '/build/' || p === '/build/admin' || p === '/build/admin/' || p.startsWith('/api/bip/'))){
       if (await bipRoutes.handleBip(req, res, url, p, requestId)) return;
     }
     if (p.startsWith('/api/')) return sendJson(res, 404, { error: 'Unknown API route.', requestId }, requestId);

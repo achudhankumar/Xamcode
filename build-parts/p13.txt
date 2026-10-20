@@ -405,12 +405,33 @@ var io2=new IntersectionObserver(function(es){es.forEach(function(en){if(en.isIn
 var ex=document.querySelectorAll('.reveal');for(var w=0;w<ex.length;w++)io2.observe(ex[w]);}catch(e){}}
 function trailer(){try{var v=$('buildTrailer'),b=$('trailerPlayBtn'),f=$('trailerFrame');if(!v||!f)return;function sync(){try{var act=(!v.paused&&!v.ended)||(v.currentTime>0&&!v.ended);f.setAttribute('data-playing',act?'true':'false');}catch(e){}}if(b){b.addEventListener('click',function(){try{f.setAttribute('data-playing','true');var p=v.play();if(p&&p.catch)p.catch(function(){sync();});}catch(e){}});}document.querySelectorAll('.bip-ch-btn').forEach(function(cb){cb.addEventListener('click',function(){var sec=parseFloat(cb.getAttribute('data-seek'));if(!isNaN(sec)){v.currentTime=sec;f.setAttribute('data-playing','true');var p=v.play();if(p&&p.catch)p.catch(function(){});}});});v.addEventListener('play',sync);v.addEventListener('pause',sync);v.addEventListener('seeked',sync);v.addEventListener('ended',sync);}catch(e){}}
 function cineScroll(){try{
-var track=$('cineTrack'),cam=$('cineCamera'),hud=$('cineHud');if(!track)return;
+var track=$('cineTrack'),cam=$('cineCamera'),hud=$('cineHud'),progBar=$('scrollProgBar');if(!track)return;
 var acts=[$('act1'),$('act2'),$('act3'),$('act4'),$('act5'),$('act6')].filter(Boolean);
 var actLabel=$('chActLabel'),actBar=$('chProgFill'),coords=$('chCoords');
 var actNames=['ACT 01 · CURRENT STATE','ACT 02 · STUDY ENGINE','ACT 03 · AURA AI TUTOR','ACT 04 · ROADMAP','ACT 05 · LAUNCH READINESS','ACT 06 · FINAL REVEAL'];
 
-var cineRevs=document.querySelectorAll('.cine-reveal');
+/* Enhance Act 01..06 badges & grid reveal classes dynamically */
+try{
+  for(var aIdx=0;aIdx<acts.length;aIdx++){
+    var numEl=acts[aIdx].querySelector&&acts[aIdx].querySelector('.chead .num');
+    if(numEl&&!numEl.querySelector('.act-kicker')){
+      var rawNum=(numEl.textContent||'').trim();
+      numEl.textContent='';
+      numEl.setAttribute('data-act-badge','ACT '+rawNum);
+      var kSpan=el('span','act-kicker','ACT');
+      numEl.appendChild(kSpan);
+      numEl.appendChild(document.createTextNode(rawNum));
+    }
+  }
+  var extraGrids=document.querySelectorAll?document.querySelectorAll('.pipeline-3d-strip, .cine-study-grid, .cine-tutor-grid, .cine-reveal-grid'):[];
+  for(var gIdx=0;gIdx<extraGrids.length;gIdx++){
+    if(!extraGrids[gIdx].classList.contains('cine-reveal')){
+      extraGrids[gIdx].classList.add('cine-reveal','cine-reveal-up');
+    }
+  }
+}catch(e){}
+
+var cineRevs=document.querySelectorAll?document.querySelectorAll('.cine-reveal'):[];
 var reduce=false;
 try{reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;}catch(e){}
 
@@ -426,8 +447,8 @@ if('IntersectionObserver' in window && !reduce){
         revIo.unobserve(en.target);
       }
     });
-  },{threshold:0.12, rootMargin:'0px 0px -40px 0px'});
-  cineRevs.forEach(function(r){revIo.observe(r);});
+  },{threshold:0.10, rootMargin:'0px 0px -36px 0px'});
+  for(var rIdx=0;rIdx<cineRevs.length;rIdx++){revIo.observe(cineRevs[rIdx]);}
 
   var actIo=new IntersectionObserver(function(entries){
     entries.forEach(function(en){
@@ -436,72 +457,97 @@ if('IntersectionObserver' in window && !reduce){
       }
     });
   },{threshold:0.05});
-  acts.forEach(function(a){actIo.observe(a);});
+  for(var ai=0;ai<acts.length;ai++){actIo.observe(acts[ai]);}
 }else{
-  cineRevs.forEach(function(r){r.classList.add('in-view');});
-  acts.forEach(function(a){a.classList.add('act-entered');});
+  for(var r2=0;r2<cineRevs.length;r2++){cineRevs[r2].classList.add('in-view');}
+  for(var a2=0;a2<acts.length;a2++){acts[a2].classList.add('act-entered');}
 }
 
-function onScroll(){try{
-  var winH=window.innerHeight||800;
-  var trackRect=track.getBoundingClientRect();
-  var trackH=track.offsetHeight||1;
-  var inTrack=trackRect.top<winH*0.75&&trackRect.bottom>winH*0.2;
-  if(hud){
-    if(inTrack&&window.innerWidth>900){
-      hud.classList.add('hud-visible');
+var scrollTicking=false;
+function updateScroll(){
+  scrollTicking=false;
+  try{
+    var winH=window.innerHeight||800;
+    var y=window.scrollY||window.pageYOffset||0;
+    var docH=Math.max(1,(document.documentElement&&document.documentElement.scrollHeight||winH)-winH);
+    var docProg=Math.max(0,Math.min(1,y/docH));
+    if(progBar&&progBar.style){
+      progBar.style.transform='scaleX('+docProg.toFixed(4)+')';
+    }
+
+    var trackRect=track.getBoundingClientRect();
+    var trackH=track.offsetHeight||1;
+    var inTrack=trackRect.top<winH*0.75&&trackRect.bottom>winH*0.2;
+    if(hud){
+      if(inTrack&&window.innerWidth>900){
+        hud.classList.add('hud-visible');
+      }else{
+        hud.classList.remove('hud-visible');
+      }
+    }
+
+    var progress=Math.max(0,Math.min(1,(-trackRect.top+winH*0.25)/trackH));
+    if(actBar)actBar.style.width=(progress*100).toFixed(1)+'%';
+
+    var curActIdx=0;
+    for(var i=0;i<acts.length;i++){
+      var r=acts[i].getBoundingClientRect();
+      if(r.top<=winH*0.55&&r.bottom>=winH*0.25){
+        curActIdx=i;
+      }
+    }
+    for(var k=0;k<acts.length;k++){
+      if(k===curActIdx){
+        acts[k].classList.add('act-active');
+      }else{
+        acts[k].classList.remove('act-active');
+      }
+    }
+    if(actLabel&&actNames[curActIdx])actLabel.textContent=actNames[curActIdx];
+    if(coords)coords.textContent='ACT: '+(curActIdx+1)+'/6 · '+(progress*100).toFixed(0)+'% SCROLL';
+
+    if(!reduce && window.innerWidth > 900){
+      var heroT = $('heroTitle');
+      var heroCv = $('heroCanvas');
+      var heroStage = $('hero3dStage');
+      var bgGlow = document.querySelector&&document.querySelector('.bg.glow') || (document.querySelector&&document.querySelector('.bg-glow'));
+      if(heroT && y < 1400){
+        heroT.style.transform = 'translate3d(0, -' + Math.min(50, (y * 0.09)).toFixed(1) + 'px, 0)';
+      }
+      if(heroCv && y < 1400){
+        heroCv.style.transform = 'translate3d(0, ' + Math.min(60, (y * 0.12)).toFixed(1) + 'px, 0)';
+      }
+      if(heroStage && y < 1400){
+        heroStage.style.transform = 'translate3d(0, -' + Math.min(34, (y * 0.06)).toFixed(1) + 'px, 0)';
+      }
+      if(bgGlow){
+        bgGlow.style.transform = 'translate3d(0, -' + (y * 0.025).toFixed(1) + 'px, 0)';
+      }
+      var act1Gauge = document.querySelector&&document.querySelector('#act1 .cw');
+      if(act1Gauge && trackRect.top < winH && trackRect.bottom > 0){
+        var gOffset = Math.max(-18, Math.min(18, (trackRect.top / winH) * 14));
+        act1Gauge.style.transform = 'translate3d(0, ' + gOffset.toFixed(1) + 'px, 0)';
+      }
+    }
+  }catch(x){}
+}
+
+function onScroll(){
+  if(!scrollTicking){
+    scrollTicking=true;
+    if(typeof requestAnimationFrame==='function'){
+      requestAnimationFrame(updateScroll);
     }else{
-      hud.classList.remove('hud-visible');
+      updateScroll();
     }
   }
-
-  var progress=Math.max(0,Math.min(1,(-trackRect.top+winH*0.25)/trackH));
-  if(actBar)actBar.style.width=(progress*100).toFixed(1)+'%';
-
-  var curActIdx=0;
-  for(var i=0;i<acts.length;i++){
-    var r=acts[i].getBoundingClientRect();
-    if(r.top<=winH*0.55&&r.bottom>=winH*0.25){
-      curActIdx=i;
-    }
-  }
-  for(var k=0;k<acts.length;k++){
-    if(k===curActIdx){
-      acts[k].classList.add('act-active');
-    }else{
-      acts[k].classList.remove('act-active');
-    }
-  }
-  if(actLabel&&actNames[curActIdx])actLabel.textContent=actNames[curActIdx];
-  if(coords)coords.textContent='ACT: '+(curActIdx+1)+'/6 · '+(progress*100).toFixed(0)+'% SCROLL';
-
-  if(!reduce && window.innerWidth > 900){
-    var y = window.scrollY || 0;
-    var heroT = $('heroTitle');
-    var heroCv = $('heroCanvas');
-    var bgGlow = document.querySelector('.bg.glow') || document.querySelector('.bg-glow');
-    if(heroT && y < 1400){
-      heroT.style.transform = 'translate3d(0, -' + Math.min(50, (y * 0.09)).toFixed(1) + 'px, 0)';
-    }
-    if(heroCv && y < 1400){
-      heroCv.style.transform = 'translate3d(0, ' + Math.min(60, (y * 0.12)).toFixed(1) + 'px, 0)';
-    }
-    if(bgGlow){
-      bgGlow.style.transform = 'translate3d(0, -' + (y * 0.025).toFixed(1) + 'px, 0)';
-    }
-    var act1Gauge = document.querySelector('#act1 .cw');
-    if(act1Gauge && trackRect.top < winH && trackRect.bottom > 0){
-      var gOffset = Math.max(-18, Math.min(18, (trackRect.top / winH) * 14));
-      act1Gauge.style.transform = 'translate3d(0, ' + gOffset.toFixed(1) + 'px, 0)';
-    }
-  }
-}catch(x){}}
+}
 
 window.addEventListener('scroll',onScroll,{passive:true});
 window.addEventListener('resize',onScroll,{passive:true});
-onScroll();
+updateScroll();
 
-var jumpLinks=document.querySelectorAll('.docknav a, .mlinks a');
+var jumpLinks=document.querySelectorAll?document.querySelectorAll('.docknav a, .mlinks a'):[];
 for(var j=0;j<jumpLinks.length;j++){
   jumpLinks[j].addEventListener('click',function(e){try{
     var href=this.getAttribute('href');if(!href||href[0]!=='#')return;
@@ -515,7 +561,275 @@ for(var j=0;j<jumpLinks.length;j++){
   }catch(err){}});
 }
 }catch(e){}}
-styleEngine();hero();menu();reveal();trailer();cineScroll();rAll();forms();stream();restRefreshBind();
+
+function adminConsole(){try{
+var form=$('adminAuthForm'),inp=$('adminTokenInput'),loadBtn=$('adminLoadBtn');
+var refBtn=$('adminRefreshBtn'),csvBtn=$('adminExportCsvBtn'),clrBtn=$('adminClearBtn');
+var msg=$('adminAuthMsg'),ws=$('adminWorkspace');
+if(!form||!inp||!ws)return;
+
+var TOKEN_KEY='xamcode_bip_admin_token';
+var activeToken='';
+var IDEA_STATES=['submitted','under_review','planned','in_development','completed','declined'];
+
+function setMsg(text,ok){
+  if(!msg)return;
+  msg.textContent=text||'';
+  msg.className='fmsg '+(ok?'ok':'err');
+}
+
+function admReq(method,urlPath,body){
+  var headers={Accept:'application/json',Authorization:'Bearer '+activeToken};
+  var opts={method:method,headers:headers};
+  if(body!==undefined){
+    headers['Content-Type']='application/json';
+    opts.body=JSON.stringify(body);
+  }
+  return fetch(urlPath,opts).then(function(r){
+    return r.json().then(function(j){
+      if(!r.ok)throw new Error((j&&j.error)||('Request failed ('+r.status+')'));
+      return j;
+    });
+  });
+}
+
+function renderIdeas(ideas){
+  var box=$('adminIdeasList');if(!box)return;
+  box.textContent='';
+  if(!ideas||!ideas.length){
+    box.appendChild(el('p','sub','No submitted suggestions yet.'));
+    return;
+  }
+  ideas.forEach(function(item){
+    var card=el('div','adm-item');
+    var top=el('div','adm-item-top');
+    top.appendChild(el('strong',null,item.title||'Untitled'));
+    var pill=el('span','pill '+(item.status||'submitted'),(item.status||'submitted').replace(/_/g,' '));
+    top.appendChild(pill);
+    card.appendChild(top);
+    card.appendChild(el('div','sub',item.description||''));
+    card.appendChild(el('div','adm-item-meta','ID: '+item.id+' · Votes: '+(item.votes||0)+' · Comments: '+(item.commentCount||0)+' · Author: '+(item.authorTag||'anon')+' · '+fm(item.createdAt)));
+    var ctrls=el('div','adm-controls');
+    var sel=el('select','adm-select');
+    sel.setAttribute('aria-label','Status for '+(item.title||'idea'));
+    IDEA_STATES.forEach(function(stName){
+      var opt=el('option',null,stName.replace(/_/g,' '));
+      opt.value=stName;
+      if(stName===item.status)opt.selected=true;
+      sel.appendChild(opt);
+    });
+    var saveBtn=el('button','btn primary','Update status');
+    saveBtn.type='button';
+    saveBtn.style.minHeight='34px';
+    saveBtn.style.padding='0 14px';
+    saveBtn.style.marginTop='0';
+    saveBtn.style.fontSize='11.5px';
+    (function(ideaId,selectEl,btnEl){
+      btnEl.addEventListener('click',function(){
+        btnEl.disabled=true;
+        admReq('PUT','/api/bip/admin/ideas/'+encodeURIComponent(ideaId)+'/status',{status:selectEl.value}).then(function(){
+          setMsg('Updated idea '+ideaId+' status to '+selectEl.value+'.',true);
+          loadOverview();
+          rs(function(){ri2();});
+        }).catch(function(e){
+          setMsg((e&&e.message)||'Status update failed.',false);
+        }).then(function(){btnEl.disabled=false;});
+      });
+    })(item.id,sel,saveBtn);
+    ctrls.appendChild(sel);
+    ctrls.appendChild(saveBtn);
+    card.appendChild(ctrls);
+    box.appendChild(card);
+  });
+}
+
+function renderReports(reports){
+  var box=$('adminReportsList');if(!box)return;
+  box.textContent='';
+  if(!reports||!reports.length){
+    box.appendChild(el('p','sub','Zero open abuse reports.'));
+    return;
+  }
+  reports.forEach(function(rep){
+    var card=el('div','adm-item');
+    var top=el('div','adm-item-top');
+    top.appendChild(el('strong',null,(rep.kind||'item').toUpperCase()+' · '+rep.targetId));
+    top.appendChild(el('span','pill needs_review',rep.status||'open'));
+    card.appendChild(top);
+    card.appendChild(el('div','sub','Reason: '+(rep.reason||'No reason given')));
+    card.appendChild(el('div','adm-item-meta','Report ID: '+rep.id+' · Reporter: '+(rep.reporterTag||'anon')+' · '+fm(rep.at)));
+    var ctrls=el('div','adm-controls');
+    function mkActBtn(label,action,hide,cls){
+      var b=el('button','btn '+cls,label);
+      b.type='button';b.style.minHeight='32px';b.style.padding='0 12px';b.style.marginTop='0';b.style.fontSize='11px';
+      b.addEventListener('click',function(){
+        b.disabled=true;
+        admReq('POST','/api/bip/admin/reports/'+encodeURIComponent(rep.id)+'/resolve',{action:action,hide:hide}).then(function(){
+          setMsg('Report '+rep.id+' '+action+'d.',true);
+          loadOverview();
+          rs(function(){rAll();});
+        }).catch(function(e){
+          setMsg((e&&e.message)||'Could not resolve report.',false);
+        }).then(function(){b.disabled=false;});
+      });
+      return b;
+    }
+    ctrls.appendChild(mkActBtn('Resolve & Hide Content','resolve',true,'primary'));
+    ctrls.appendChild(mkActBtn('Resolve (Keep)','resolve',false,'ghost'));
+    ctrls.appendChild(mkActBtn('Dismiss','dismiss',false,'ghost'));
+    card.appendChild(ctrls);
+    box.appendChild(card);
+  });
+}
+
+function renderModeration(chats,comments){
+  var box=$('adminModList');if(!box)return;
+  box.textContent='';
+  var hasAny=false;
+  (chats||[]).forEach(function(m){
+    hasAny=true;
+    var card=el('div','adm-item');
+    var top=el('div','adm-item-top');
+    top.appendChild(el('strong',null,'[CHAT] '+(m.nickname||'Visitor')));
+    var delBtn=el('button','btn ghost','Delete message');
+    delBtn.type='button';delBtn.style.minHeight='30px';delBtn.style.padding='0 10px';delBtn.style.marginTop='0';delBtn.style.fontSize='11px';
+    (function(mid,b){
+      b.addEventListener('click',function(){
+        b.disabled=true;
+        admReq('DELETE','/api/bip/admin/chat/'+encodeURIComponent(mid)).then(function(){
+          setMsg('Deleted chat message '+mid+'.',true);
+          loadOverview();
+          rs(function(){rcOnly();});
+        }).catch(function(e){
+          setMsg((e&&e.message)||'Delete failed.',false);
+        }).then(function(){b.disabled=false;});
+      });
+    })(m.id,delBtn);
+    top.appendChild(delBtn);
+    card.appendChild(top);
+    card.appendChild(el('div','sub',m.text||''));
+    card.appendChild(el('div','adm-item-meta','ID: '+m.id+' · Tag: '+(m.authorTag||'anon')+' · '+fm(m.at)));
+    box.appendChild(card);
+  });
+  (comments||[]).forEach(function(c){
+    hasAny=true;
+    var card=el('div','adm-item');
+    var top=el('div','adm-item-top');
+    top.appendChild(el('strong',null,'[COMMENT] '+(c.nickname||'Visitor')));
+    var delBtn=el('button','btn ghost','Delete reply');
+    delBtn.type='button';delBtn.style.minHeight='30px';delBtn.style.padding='0 10px';delBtn.style.marginTop='0';delBtn.style.fontSize='11px';
+    (function(cid,b){
+      b.addEventListener('click',function(){
+        b.disabled=true;
+        admReq('DELETE','/api/bip/admin/comments/'+encodeURIComponent(cid)).then(function(){
+          setMsg('Deleted comment '+cid+'.',true);
+          loadOverview();
+          rs(function(){ri2();});
+        }).catch(function(e){
+          setMsg((e&&e.message)||'Delete failed.',false);
+        }).then(function(){b.disabled=false;});
+      });
+    })(c.id,delBtn);
+    top.appendChild(delBtn);
+    card.appendChild(top);
+    card.appendChild(el('div','sub',c.text||''));
+    card.appendChild(el('div','adm-item-meta','ID: '+c.id+' · Idea: '+c.ideaId+' · '+fm(c.at)));
+    box.appendChild(card);
+  });
+  if(!hasAny){
+    box.appendChild(el('p','sub','No active public chat messages or idea comments.'));
+  }
+}
+
+function loadOverview(){
+  if(!activeToken){
+    setMsg('Enter your BIP_ADMIN_TOKEN first.',false);
+    return;
+  }
+  if(loadBtn)loadBtn.disabled=true;
+  admReq('GET','/api/bip/admin/overview').then(function(r){
+    try{if(typeof sessionStorage!=='undefined')sessionStorage.setItem(TOKEN_KEY,activeToken);}catch(e){}
+    ws.hidden=false;
+    if(refBtn)refBtn.hidden=false;
+    if(csvBtn)csvBtn.hidden=false;
+    if(clrBtn)clrBtn.hidden=false;
+    var c=r.counts||{};
+    st('admCountIdeas',String(c.ideas||0));
+    st('admCountReports',String(c.openReports||0));
+    st('admCountChat',String(c.chatMessages||0));
+    st('admCountComments',String(c.comments||0));
+    st('admCountWaitlist',String(c.waitlist||0));
+    renderIdeas(r.ideas||[]);
+    renderReports(r.reports||[]);
+    renderModeration(r.chatMessages||[],r.comments||[]);
+    setMsg('Server admin authorization verified. Review queue loaded.',true);
+  }).catch(function(e){
+    ws.hidden=true;
+    setMsg((e&&e.message)||'Admin authorization failed.',false);
+  }).then(function(){
+    if(loadBtn)loadBtn.disabled=false;
+  });
+}
+
+form.addEventListener('submit',function(e){
+  e.preventDefault();
+  activeToken=(inp.value||'').trim();
+  loadOverview();
+});
+if(refBtn){
+  refBtn.addEventListener('click',function(){loadOverview();});
+}
+if(clrBtn){
+  clrBtn.addEventListener('click',function(){
+    activeToken='';
+    inp.value='';
+    ws.hidden=true;
+    if(refBtn)refBtn.hidden=true;
+    if(csvBtn)csvBtn.hidden=true;
+    if(clrBtn)clrBtn.hidden=true;
+    try{if(typeof sessionStorage!=='undefined')sessionStorage.removeItem(TOKEN_KEY);}catch(e){}
+    setMsg('Admin console locked.',true);
+  });
+}
+if(csvBtn){
+  csvBtn.addEventListener('click',function(){
+    if(!activeToken)return;
+    fetch('/api/bip/admin/waitlist/export',{headers:{Authorization:'Bearer '+activeToken}}).then(function(r){
+      if(!r.ok)throw new Error('CSV export failed ('+r.status+')');
+      return r.text();
+    }).then(function(csvText){
+      var blob=new Blob([csvText],{type:'text/csv;charset=utf-8'});
+      var u=URL.createObjectURL(blob);
+      var a=el('a');a.href=u;a.download='bip-waitlist.csv';
+      document.body.appendChild(a);a.click();a.remove();
+      URL.revokeObjectURL(u);
+      setMsg('Downloaded waitlist CSV.',true);
+    }).catch(function(e){
+      setMsg((e&&e.message)||'Export failed.',false);
+    });
+  });
+}
+
+try{
+  var savedTok=typeof sessionStorage!=='undefined'&&sessionStorage.getItem(TOKEN_KEY);
+  if(savedTok){
+    activeToken=savedTok;
+    inp.value=savedTok;
+    loadOverview();
+  }
+}catch(e){}
+
+try{
+  if(typeof window!=='undefined'&&window.location&&(window.location.pathname.indexOf('/build/admin')===0||window.location.hash==='#admin')){
+    setTimeout(function(){
+      var admSec=$('admin');
+      if(admSec&&admSec.scrollIntoView)admSec.scrollIntoView({behavior:'smooth',block:'start'});
+      if(inp&&inp.focus)inp.focus();
+    },250);
+  }
+}catch(e){}
+}catch(e){}}
+styleEngine();hero();menu();reveal();trailer();cineScroll();adminConsole();rAll();forms();stream();restRefreshBind();
 })();
 </script>
 </body>

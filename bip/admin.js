@@ -213,6 +213,60 @@ function adminDeleteMessage(req, res, id, requestId){
   return sendJson(res, 200, { deleted: true, id, requestId }, requestId);
 }
 
+function adminDeleteComment(req, res, id, requestId){
+  const d = store.ensureLoaded();
+  const c = d.ideaComments.find(x => x.id === id);
+  if (!c) return sendJson(res, 404, { error: 'Unknown comment.', code: 'NOT_FOUND', requestId }, requestId);
+  c.deleted = true;
+  store.persist();
+  return sendJson(res, 200, { deleted: true, id, requestId }, requestId);
+}
+
+function adminOverview(req, res, requestId){
+  const d = store.ensureLoaded();
+  const ideas = d.ideas.slice().reverse().map(i => ({
+    id: i.id,
+    title: i.title,
+    description: i.description,
+    status: i.status,
+    votes: i.votes || 0,
+    authorTag: i.authorTag || '',
+    createdAt: i.createdAt,
+    updatedAt: i.updatedAt,
+    commentCount: d.ideaComments.filter(c => c.ideaId === i.id && !c.deleted).length
+  }));
+  const reports = d.reports.filter(r => r.status === 'open').slice(-100).reverse();
+  const chatMessages = d.chatMessages.filter(m => !m.deleted).slice(-50).reverse().map(m => ({
+    id: m.id,
+    nickname: m.nickname,
+    text: m.text,
+    at: m.at,
+    authorTag: m.authorTag || ''
+  }));
+  const comments = d.ideaComments.filter(c => !c.deleted).slice(-50).reverse().map(c => ({
+    id: c.id,
+    ideaId: c.ideaId,
+    nickname: c.nickname,
+    text: c.text,
+    at: c.at,
+    authorTag: c.authorTag || ''
+  }));
+  return sendJson(res, 200, {
+    ideas,
+    reports,
+    chatMessages,
+    comments,
+    counts: {
+      ideas: d.ideas.length,
+      openReports: d.reports.filter(r => r.status === 'open').length,
+      chatMessages: d.chatMessages.filter(m => !m.deleted).length,
+      comments: d.ideaComments.filter(c => !c.deleted).length,
+      waitlist: d.waitlist.length
+    },
+    requestId
+  }, requestId);
+}
+
 /* ---------- estimate (deterministic effort model) ---------- */
 
 function adminSetTaskEstimate(req, res, key, body, requestId){
@@ -285,6 +339,6 @@ module.exports = {
   adminSetLaunch, publicLaunch, readinessLabel,
   adminSetRoadmap, adminSetIdeaStatus,
   adminListReports, adminResolveReport,
-  adminDeleteMessage, adminExportWaitlist,
+  adminDeleteMessage, adminDeleteComment, adminOverview, adminExportWaitlist,
   adminSetTaskEstimate, adminSetTaskStatus, adminSetBug, adminSetBlocker, adminSetVelocity
 };

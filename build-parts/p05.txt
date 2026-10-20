@@ -370,8 +370,16 @@ body[data-style="minimal"] .cine-hud{
   .poly-3d,.poly-core,.st-cube-icon{
     animation:none !important;
   }
-  .scene-3d-root,.mini-3d-obj,.pipe-node{
+  .scene-3d-root,.mini-3d-obj,.pipe-node,.chead .num{
     transition:none !important;
+    opacity:1 !important;
+    transform:none !important;
+  }
+  body.js-cine .pipeline-3d-strip.in-view .pipe-node,
+  body.js-cine #act4 .in-view .rmtl .rm{
+    animation:none !important;
+    opacity:1 !important;
+    transform:none !important;
   }
 }
 </style></head><body data-style="vibe">
