@@ -212,3 +212,12 @@ body[data-mode="light"] .study-bar{background:rgba(255,255,255,.5)}
   .study-grid{padding:12px 14px 44px}
   .study-bar{padding:0 14px;overflow-x:auto}
 }
+/* ---------- Interactive Visual Simulation Hub & Aura Prompts ---------- */
+.pv-tabs{display:inline-flex;gap:4px;background:rgba(255,255,255,.08);padding:3px;border-radius:8px}
+.pv-tab{border:none;background:transparent;color:var(--muted,#9aa38d);padding:5px 9px;font-size:10.5px;font-family:inherit;font-weight:600;border-radius:6px;cursor:pointer;transition:all .15s ease}
+.pv-tab:hover{color:var(--text,#fff);background:rgba(255,255,255,.12)}
+.pv-tab.active{color:#061016;background:var(--accent,#2dd4bf);font-weight:700}
+.aura-prompt-card{cursor:pointer;border:1px solid rgba(255,255,255,.12);padding:18px;border-radius:14px;background:rgba(18,24,38,.75);transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease}
+.aura-prompt-card:hover{transform:translateY(-3px);border-color:var(--accent,#2dd4bf)!important;box-shadow:0 8px 24px -6px rgba(45,212,191,.25)}
+.sample-curriculum-card{cursor:pointer;border:1px solid rgba(255,255,255,.12);padding:20px;border-radius:16px;background:rgba(18,24,38,.7);transition:all .2s ease}
+.sample-curriculum-card:hover{transform:translateY(-2px);border-color:var(--accent,#2dd4bf);background:rgba(24,32,50,.85)}

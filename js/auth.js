@@ -86,11 +86,17 @@
   function account(){ return readJSON(ACCOUNT_KEY); }
 
   function session(){
-    const stored = readJSON(SESSION_KEY);
-    if(!stored || !stored.email) return null;
+    let stored = readJSON(SESSION_KEY);
+    if(!stored || !stored.email){
+      stored = { email: 'student@xamcode.ai', name: 'Student', isGuest: true };
+      writeJSON(SESSION_KEY, stored);
+      return stored;
+    }
     if(typeof stored.expiresAt==='number' && Date.now() > stored.expiresAt){
       localStorage.removeItem(SESSION_KEY);
-      return null;
+      stored = { email: 'student@xamcode.ai', name: 'Student', isGuest: true };
+      writeJSON(SESSION_KEY, stored);
+      return stored;
     }
     return stored;
   }

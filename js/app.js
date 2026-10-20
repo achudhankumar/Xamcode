@@ -276,6 +276,101 @@ function header(){
 /* ============================================================
    LANDING PAGE
    ============================================================ */
+function renderNetworkSvg(){
+  return `<svg viewBox="0 0 640 440" role="img" aria-label="Illustration of data moving between devices through a network router" style="width:100%;height:100%;max-height:360px;">
+    <defs>
+      <linearGradient id="networkLine" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#6477ff" stop-opacity=".12"/><stop offset=".5" stop-color="#70e8d4" stop-opacity=".7"/><stop offset="1" stop-color="#6477ff" stop-opacity=".18"/></linearGradient>
+      <linearGradient id="networkRouter" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#273b5d"/><stop offset="1" stop-color="#131e32"/></linearGradient>
+      <radialGradient id="networkHalo"><stop stop-color="#47d8c3" stop-opacity=".22"/><stop offset="1" stop-color="#47d8c3" stop-opacity="0"/></radialGradient>
+      <filter id="networkBlur"><feGaussianBlur stdDeviation="25"/></filter>
+      <filter id="networkGlow"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      <pattern id="networkGrid" width="36" height="36" patternUnits="userSpaceOnUse"><path d="M36 0H0v36" fill="none" stroke="#a7b6d1" stroke-opacity=".08"/></pattern>
+    </defs>
+    <rect width="640" height="440" fill="url(#networkGrid)"/>
+    <circle cx="322" cy="218" r="210" fill="url(#networkHalo)" filter="url(#networkBlur)"/>
+    <g fill="none" stroke="url(#networkLine)" stroke-width="2"><path d="M139 117 286 187M499 104 359 184M119 320l166-69m218 98-144-75M207 388l98-108"/><path d="M139 117 499 104 503 349 207 388 119 320z" stroke-opacity=".28" stroke-dasharray="4 10"/></g>
+    <g class="network-device" transform="translate(286 172)">
+      <path d="m0 28 72-39 72 39-72 42z" fill="#0c1727" stroke="#83f3e0" stroke-opacity=".55"/>
+      <path d="m0 28 72 42v78L0 106z" fill="#17263b" stroke="#83f3e0" stroke-opacity=".38"/>
+      <path d="m72 70 72-42v78l-72 42z" fill="#0e1a2c" stroke="#83f3e0" stroke-opacity=".32"/>
+      <path d="m20 34 52-28 49 28-49 28z" fill="url(#networkRouter)" stroke="#91f9e7"/>
+      <path d="m21 36 50 29v49L21 86z" fill="url(#networkRouter)" stroke="#61d9d2"/>
+      <path d="m71 65 49-29v49l-49 29z" fill="#172740" stroke="#61d9d2"/>
+      <path d="M42 75v10m14-2v10m14-2v10m14-22v10m14-18v10" stroke="#a3fff0" stroke-width="3" stroke-linecap="round" filter="url(#networkGlow)"/>
+    </g>
+    <g class="network-endpoint" transform="translate(103 78)"><rect width="72" height="88" rx="12" fill="#111e32" stroke="#91a4c5" stroke-opacity=".5"/><rect x="9" y="9" width="54" height="63" rx="6" fill="#182942"/><path d="m29 80 14 0m-7-8v8" stroke="#879ab9" stroke-width="3" stroke-linecap="round"/><circle cx="36" cy="40" r="11" fill="#78f0dc" fill-opacity=".16"/><path d="m33 35 8 5-8 5z" fill="#96f4e6"/></g>
+    <g class="network-endpoint" transform="translate(462 67)"><rect width="76" height="68" rx="13" fill="#111e32" stroke="#91a4c5" stroke-opacity=".5"/><rect x="9" y="9" width="58" height="42" rx="6" fill="#182942"/><path d="M26 60h24m-12-9v9m-10-30h8m5 0h8m-21 7h20" stroke="#91f3e2" stroke-width="2" stroke-linecap="round"/></g>
+    <g class="network-endpoint" transform="translate(82 290)"><rect width="76" height="54" rx="14" fill="#111e32" stroke="#91a4c5" stroke-opacity=".5"/><circle cx="19" cy="27" r="5" fill="#72ead9"/><circle cx="38" cy="27" r="5" fill="#667a9a"/><circle cx="57" cy="27" r="5" fill="#667a9a"/></g>
+    <g class="network-endpoint" transform="translate(468 313)"><path d="M8 24 38 7l30 17v39l-30 17L8 63z" fill="#14243a" stroke="#91a4c5" stroke-opacity=".5"/><path d="m8 24 30 18 30-18M38 42v38" fill="none" stroke="#61d9d2"/><circle cx="38" cy="40" r="5" fill="#80f2df" filter="url(#networkGlow)"/></g>
+    <g fill="#d6fff7" filter="url(#networkGlow)"><circle r="4"><animateMotion dur="3.2s" repeatCount="indefinite" path="M175 121 306 205"/></circle><circle r="4"><animateMotion dur="3.6s" begin="-1.2s" repeatCount="indefinite" path="M480 101 358 179"/></circle><circle r="4"><animateMotion dur="3.4s" begin="-2s" repeatCount="indefinite" path="M156 317 289 251"/></circle></g>
+    <g font-family="ui-monospace,monospace" font-size="10" font-weight="600" letter-spacing="1.3" fill="#9baec9"><text x="101" y="184">CLIENT</text><text x="465" y="153">SERVER</text><text x="82" y="366">DEVICE 03</text><text x="466" y="407">GATEWAY</text></g>
+  </svg>`;
+}
+
+let activePreviewPlayer = null;
+function initInteractivePreview(){
+  const stage = document.getElementById('pvStage');
+  if(!stage) return;
+  if(activePreviewPlayer && typeof activePreviewPlayer.destroy === 'function'){
+    try { activePreviewPlayer.destroy(); } catch(e){}
+    activePreviewPlayer = null;
+  }
+  
+  function switchPreview(type){
+    if(activePreviewPlayer && typeof activePreviewPlayer.destroy === 'function'){
+      try { activePreviewPlayer.destroy(); } catch(e){}
+      activePreviewPlayer = null;
+    }
+    stage.innerHTML = '';
+    
+    document.querySelectorAll('.pv-tab').forEach(b => {
+      b.classList.toggle('active', b.dataset.pvTab === type);
+    });
+    
+    const titleEl = document.getElementById('pvTitle');
+    const subEl = document.getElementById('pvSub');
+    const askBtn = document.getElementById('pvAskAura');
+    
+    if(type === 'bicycle' && window.XC && window.XC.auraVisuals){
+      activePreviewPlayer = window.XC.auraVisuals.createPlayer('bicycle', { cadence: 75, gearRatio: 2.5 });
+      stage.appendChild(activePreviewPlayer.el);
+      if(titleEl) titleEl.textContent = 'Kinematic Mechanical Drive';
+      if(subEl) subEl.textContent = 'Pedal crank rotation, moving chain, gear ratio transmission & live km/h speed';
+      if(askBtn) askBtn.onclick = () => { if(window.XC.aura){ window.XC.aura.open(); window.XC.aura.ask('How does a bicycle work?'); } };
+    } else if(type === 'engine' && window.XC && window.XC.auraVisuals){
+      activePreviewPlayer = window.XC.auraVisuals.createPlayer('engine', { rpm: 1800 });
+      stage.appendChild(activePreviewPlayer.el);
+      if(titleEl) titleEl.textContent = 'Four-Stroke Otto Cycle';
+      if(subEl) subEl.textContent = 'Slider-crank kinematics, reciprocating piston, spark flame & 4-stroke cycle phases';
+      if(askBtn) askBtn.onclick = () => { if(window.XC.aura){ window.XC.aura.open(); window.XC.aura.ask('Explain the four-stroke internal combustion engine cycle'); } };
+    } else if(type === 'heart' && window.XC && window.XC.auraVisuals){
+      activePreviewPlayer = window.XC.auraVisuals.createPlayer('heart', { bpm: 72 });
+      stage.appendChild(activePreviewPlayer.el);
+      if(titleEl) titleEl.textContent = 'Cardiac Cycle & ECG Waveform';
+      if(subEl) subEl.textContent = 'Atrial/ventricular systole & diastole with real-time synchronized ECG voltage graph';
+      if(askBtn) askBtn.onclick = () => { if(window.XC.aura){ window.XC.aura.open(); window.XC.aura.ask('How does the human heart pump blood through the cardiac chambers?'); } };
+    } else if(type === 'sort' && window.XC && window.XC.interactiveSimulations){
+      const steps = window.XC.interactiveSimulations.generateBubbleSortSteps([5, 1, 4, 2, 8]);
+      const initialStep = steps[0] || {};
+      stage.innerHTML = window.XC.interactiveSimulations.renderBubbleSortPlayerHtml('pvStageBubble', 0, steps.length, initialStep, 1, false);
+      if(titleEl) titleEl.textContent = 'Algorithm State Machine';
+      if(subEl) subEl.textContent = 'Bubble Sort deterministic trace with step-by-step comparisons, swaps & pseudocode';
+      if(askBtn) askBtn.onclick = () => { if(window.XC.aura){ window.XC.aura.open(); window.XC.aura.ask('How does Bubble Sort work step by step?'); } };
+    } else {
+      stage.innerHTML = renderNetworkSvg();
+      if(titleEl) titleEl.textContent = 'Network Layer Architecture';
+      if(subEl) subEl.textContent = 'OSI 7-layer packet journey, router routing tables & TCP/IP stack';
+      if(askBtn) askBtn.onclick = () => { if(window.XC.aura){ window.XC.aura.open(); window.XC.aura.ask('Explain the OSI 7-layer model vs TCP/IP architecture'); } };
+    }
+  }
+
+  document.querySelectorAll('.pv-tab').forEach(b => {
+    b.onclick = () => switchPreview(b.dataset.pvTab);
+  });
+  
+  switchPreview('bicycle');
+}
+
 function landingView(){
   const totalQuestions = TOPICS.reduce((sum,t)=>sum+t.questions.length,0);
   const unitCount = new Set(TOPICS.map(t=>t.unit||'I')).size;
@@ -296,41 +391,120 @@ function landingView(){
           <span><b>${totalQuestions}</b><small>sample questions</small></span>
         </div>
       </div>
-      <div class="preview">
-        <div class="pv-head"><span><i></i> SAMPLE COURSE PREVIEW</span><span class="tag">INTERACTIVE LESSON</span></div>
-        <div class="pv-scene">
-          <svg viewBox="0 0 640 440" role="img" aria-label="Illustration of data moving between devices through a network router">
-            <defs>
-              <linearGradient id="networkLine" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#6477ff" stop-opacity=".12"/><stop offset=".5" stop-color="#70e8d4" stop-opacity=".7"/><stop offset="1" stop-color="#6477ff" stop-opacity=".18"/></linearGradient>
-              <linearGradient id="networkRouter" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#273b5d"/><stop offset="1" stop-color="#131e32"/></linearGradient>
-              <radialGradient id="networkHalo"><stop stop-color="#47d8c3" stop-opacity=".22"/><stop offset="1" stop-color="#47d8c3" stop-opacity="0"/></radialGradient>
-              <filter id="networkBlur"><feGaussianBlur stdDeviation="25"/></filter>
-              <filter id="networkGlow"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-              <pattern id="networkGrid" width="36" height="36" patternUnits="userSpaceOnUse"><path d="M36 0H0v36" fill="none" stroke="#a7b6d1" stroke-opacity=".08"/></pattern>
-            </defs>
-            <rect width="640" height="440" fill="url(#networkGrid)"/>
-            <circle cx="322" cy="218" r="210" fill="url(#networkHalo)" filter="url(#networkBlur)"/>
-            <g fill="none" stroke="url(#networkLine)" stroke-width="2"><path d="M139 117 286 187M499 104 359 184M119 320l166-69m218 98-144-75M207 388l98-108"/><path d="M139 117 499 104 503 349 207 388 119 320z" stroke-opacity=".28" stroke-dasharray="4 10"/></g>
-            <g class="network-device" transform="translate(286 172)">
-              <path d="m0 28 72-39 72 39-72 42z" fill="#0c1727" stroke="#83f3e0" stroke-opacity=".55"/>
-              <path d="m0 28 72 42v78L0 106z" fill="#17263b" stroke="#83f3e0" stroke-opacity=".38"/>
-              <path d="m72 70 72-42v78l-72 42z" fill="#0e1a2c" stroke="#83f3e0" stroke-opacity=".32"/>
-              <path d="m20 34 52-28 49 28-49 28z" fill="url(#networkRouter)" stroke="#91f9e7"/>
-              <path d="m21 36 50 29v49L21 86z" fill="url(#networkRouter)" stroke="#61d9d2"/>
-              <path d="m71 65 49-29v49l-49 29z" fill="#172740" stroke="#61d9d2"/>
-              <path d="M42 75v10m14-2v10m14-2v10m14-22v10m14-18v10" stroke="#a3fff0" stroke-width="3" stroke-linecap="round" filter="url(#networkGlow)"/>
-            </g>
-            <g class="network-endpoint" transform="translate(103 78)"><rect width="72" height="88" rx="12" fill="#111e32" stroke="#91a4c5" stroke-opacity=".5"/><rect x="9" y="9" width="54" height="63" rx="6" fill="#182942"/><path d="m29 80 14 0m-7-8v8" stroke="#879ab9" stroke-width="3" stroke-linecap="round"/><circle cx="36" cy="40" r="11" fill="#78f0dc" fill-opacity=".16"/><path d="m33 35 8 5-8 5z" fill="#96f4e6"/></g>
-            <g class="network-endpoint" transform="translate(462 67)"><rect width="76" height="68" rx="13" fill="#111e32" stroke="#91a4c5" stroke-opacity=".5"/><rect x="9" y="9" width="58" height="42" rx="6" fill="#182942"/><path d="M26 60h24m-12-9v9m-10-30h8m5 0h8m-21 7h20" stroke="#91f3e2" stroke-width="2" stroke-linecap="round"/></g>
-            <g class="network-endpoint" transform="translate(82 290)"><rect width="76" height="54" rx="14" fill="#111e32" stroke="#91a4c5" stroke-opacity=".5"/><circle cx="19" cy="27" r="5" fill="#72ead9"/><circle cx="38" cy="27" r="5" fill="#667a9a"/><circle cx="57" cy="27" r="5" fill="#667a9a"/></g>
-            <g class="network-endpoint" transform="translate(468 313)"><path d="M8 24 38 7l30 17v39l-30 17L8 63z" fill="#14243a" stroke="#91a4c5" stroke-opacity=".5"/><path d="m8 24 30 18 30-18M38 42v38" fill="none" stroke="#61d9d2"/><circle cx="38" cy="40" r="5" fill="#80f2df" filter="url(#networkGlow)"/></g>
-            <g fill="#d6fff7" filter="url(#networkGlow)"><circle r="4"><animateMotion dur="3.2s" repeatCount="indefinite" path="M175 121 306 205"/></circle><circle r="4"><animateMotion dur="3.6s" begin="-1.2s" repeatCount="indefinite" path="M480 101 358 179"/></circle><circle r="4"><animateMotion dur="3.4s" begin="-2s" repeatCount="indefinite" path="M156 317 289 251"/></circle></g>
-            <g font-family="ui-monospace,monospace" font-size="10" font-weight="600" letter-spacing="1.3" fill="#9baec9"><text x="101" y="184">CLIENT</text><text x="465" y="153">SERVER</text><text x="82" y="366">DEVICE 03</text><text x="466" y="407">GATEWAY</text></g>
-          </svg>
-          <div class="pv-caption"><span class="pv-caption-icon">↗</span><span><b>Follow the packet</b><small>See how data finds its way home.</small></span><span class="pv-caption-step">01 <i>/</i> 05</span></div>
+      <div class="preview" id="heroInteractivePreview">
+        <div class="pv-head">
+          <span><i></i> DYNAMIC VISUAL ENGINE</span>
+          <div class="pv-tabs" role="tablist" aria-label="Visual simulations">
+            <button type="button" class="pv-tab active" data-pv-tab="bicycle">🚲 Bicycle</button>
+            <button type="button" class="pv-tab" data-pv-tab="engine">⚙️ 4-Stroke</button>
+            <button type="button" class="pv-tab" data-pv-tab="heart">🫀 Heart</button>
+            <button type="button" class="pv-tab" data-pv-tab="sort">📊 Bubble Sort</button>
+            <button type="button" class="pv-tab" data-pv-tab="network">🌐 Network</button>
+          </div>
+        </div>
+        <div class="pv-scene" id="pvStage" style="min-height:360px;position:relative;display:flex;align-items:center;justify-content:center;background:rgba(8,12,20,0.85);border-radius:12px;overflow:hidden;padding:12px;"></div>
+        <div class="pv-caption" id="pvCaption" style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+          <span class="pv-caption-icon">⚡</span>
+          <span style="flex:1;"><b id="pvTitle">Kinematic Mechanical Drive</b><small id="pvSub">Pedal crank rotation, moving chain, gear ratio transmission &amp; live km/h speed</small></span>
+          <button type="button" class="btn-sm" id="pvAskAura" style="padding:5px 12px;font-size:11px;background:var(--accent,#2dd4bf);color:#061016;border:none;border-radius:6px;cursor:pointer;font-weight:700;">Ask AURA AI ↗</button>
         </div>
       </div>
     </section>
+
+    <!-- Visual Learning Aura AI Prompts Showcase -->
+    <section class="sec aura-visual-sec" style="padding:44px 0 24px;">
+      <div class="section-heading">
+        <div>
+          <span class="section-kicker">AURA AI TUTOR • TOPIC-SPECIFIC VISUAL LEARNING</span>
+          <h2>Ask Anything. <span>See It Move In Real-Time.</span></h2>
+        </div>
+        <p class="sub">AURA AI doesn't just output generic text — it generates interactive dynamic simulations for mechanical movements, physical principles, and algorithmic execution traces.</p>
+      </div>
+      <div class="grid-4" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px;margin-top:22px;">
+        <div class="card aura-prompt-card" data-launch-aura="How does a bicycle work?" role="button" tabindex="0">
+          <div style="font-size:26px;margin-bottom:10px;">🚲</div>
+          <h4 style="margin:0 0 6px;font-size:16px;color:var(--text,#f1efe3);">How does a bicycle work?</h4>
+          <p style="font-size:12.5px;color:var(--dim,#9aa38d);margin:0 0 14px;line-height:1.5;">Pedal crank kinematics, chain drive transmission, gear ratio calculations &amp; live km/h speed readout.</p>
+          <span style="font-size:12px;color:var(--accent,#2dd4bf);font-weight:700;">Launch Simulation &amp; Ask AURA →</span>
+        </div>
+        <div class="card aura-prompt-card" data-launch-aura="Explain the four-stroke internal combustion engine cycle" role="button" tabindex="0">
+          <div style="font-size:26px;margin-bottom:10px;">⚙️</div>
+          <h4 style="margin:0 0 6px;font-size:16px;color:var(--text,#f1efe3);">4-Stroke Engine Otto Cycle</h4>
+          <p style="font-size:12.5px;color:var(--dim,#9aa38d);margin:0 0 14px;line-height:1.5;">Slider-crank kinematics, reciprocating piston, spark combustion flame &amp; 4-stroke Otto cycle phases.</p>
+          <span style="font-size:12px;color:var(--accent,#2dd4bf);font-weight:700;">Launch Simulation &amp; Ask AURA →</span>
+        </div>
+        <div class="card aura-prompt-card" data-launch-aura="How does Bubble Sort work step by step?" role="button" tabindex="0">
+          <div style="font-size:26px;margin-bottom:10px;">📊</div>
+          <h4 style="margin:0 0 6px;font-size:16px;color:var(--text,#f1efe3);">Bubble Sort Algorithm</h4>
+          <p style="font-size:12.5px;color:var(--dim,#9aa38d);margin:0 0 14px;line-height:1.5;">Deterministic state-machine player with step-by-step element comparisons, swaps &amp; live pseudocode tracing.</p>
+          <span style="font-size:12px;color:var(--accent,#2dd4bf);font-weight:700;">Launch Simulator &amp; Ask AURA →</span>
+        </div>
+        <div class="card aura-prompt-card" data-launch-aura="How does the human heart pump blood through the cardiac chambers?" role="button" tabindex="0">
+          <div style="font-size:26px;margin-bottom:10px;">🫀</div>
+          <h4 style="margin:0 0 6px;font-size:16px;color:var(--text,#f1efe3);">Cardiac Cycle &amp; ECG</h4>
+          <p style="font-size:12.5px;color:var(--dim,#9aa38d);margin:0 0 14px;line-height:1.5;">Atrial and ventricular systole/diastole pumping cycles with real-time synchronized ECG voltage waveform.</p>
+          <span style="font-size:12px;color:var(--accent,#2dd4bf);font-weight:700;">Launch Simulation &amp; Ask AURA →</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Primary Reference Standard: Computer Networks -->
+    <section class="sec" style="padding:36px 0 24px;">
+      <div class="section-heading">
+        <div>
+          <span class="section-kicker">PRIMARY REFERENCE IMPLEMENTATION • UNIT 1</span>
+          <h2>Computer Networks — <span>Reference Study Standard</span></h2>
+        </div>
+        <p class="sub">Explore the foundational model of structured visual learning: verified topic hierarchy, visual placement, interactive quizzes, cheat codes, and Athiyar Mode.</p>
+      </div>
+      <div class="grid-3" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px;margin-top:20px;">
+        <div class="card sample-curriculum-card" data-study="0">
+          <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
+            <span class="panel-tag" style="color:var(--accent,#2dd4bf);font-weight:700;font-size:11px;">UNIT I · TOPIC 01</span>
+            <span style="font-size:11px;color:var(--dim,#9aa38d);">2 Questions · 1 Visual</span>
+          </div>
+          <h3 style="margin:0 0 8px;font-size:17px;color:var(--text,#f1efe3);">OSI 7-Layer Reference Model vs TCP/IP</h3>
+          <p style="font-size:13px;color:var(--dim,#9aa38d);line-height:1.5;margin:0 0 14px;">Understand encapsulation, abstraction layers, protocol data units (PDUs), and data flow across layers.</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <span style="font-size:11px;padding:3px 8px;border-radius:4px;background:rgba(45,212,191,0.15);color:var(--accent,#2dd4bf);font-weight:600;">🎬 Visual Lesson</span>
+            <span style="font-size:11px;padding:3px 8px;border-radius:4px;background:rgba(168,85,247,0.15);color:#c084fc;font-weight:600;">⚡ Cheat Code</span>
+            <span style="font-size:11px;padding:3px 8px;border-radius:4px;background:rgba(245,158,11,0.15);color:#fbbf24;font-weight:600;">🎓 Vaathiyar Mode</span>
+          </div>
+        </div>
+        <div class="card sample-curriculum-card" data-study="1">
+          <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
+            <span class="panel-tag" style="color:var(--accent,#2dd4bf);font-weight:700;font-size:11px;">UNIT I · TOPIC 02</span>
+            <span style="font-size:11px;color:var(--dim,#9aa38d);">2 Questions · 1 Visual</span>
+          </div>
+          <h3 style="margin:0 0 8px;font-size:17px;color:var(--text,#f1efe3);">Network Topologies &amp; Physical Media</h3>
+          <p style="font-size:13px;color:var(--dim,#9aa38d);line-height:1.5;margin:0 0 14px;">Bus, Star, Ring, and Mesh topologies; transmission media performance, redundancy, and collision domains.</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <span style="font-size:11px;padding:3px 8px;border-radius:4px;background:rgba(45,212,191,0.15);color:var(--accent,#2dd4bf);font-weight:600;">🎬 Visual Lesson</span>
+            <span style="font-size:11px;padding:3px 8px;border-radius:4px;background:rgba(168,85,247,0.15);color:#c084fc;font-weight:600;">❓ Quiz Flow</span>
+            <span style="font-size:11px;padding:3px 8px;border-radius:4px;background:rgba(245,158,11,0.15);color:#fbbf24;font-weight:600;">🎓 Vaathiyar Mode</span>
+          </div>
+        </div>
+        <div class="card sample-curriculum-card" data-study="2">
+          <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
+            <span class="panel-tag" style="color:var(--accent,#2dd4bf);font-weight:700;font-size:11px;">UNIT I · TOPIC 03</span>
+            <span style="font-size:11px;color:var(--dim,#9aa38d);">2 Questions · 1 Visual</span>
+          </div>
+          <h3 style="margin:0 0 8px;font-size:17px;color:var(--text,#f1efe3);">Packet Switching vs Circuit Switching</h3>
+          <p style="font-size:13px;color:var(--dim,#9aa38d);line-height:1.5;margin:0 0 14px;">Store-and-forward switching delays, statistical multiplexing, queueing delays, and packet loss.</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <span style="font-size:11px;padding:3px 8px;border-radius:4px;background:rgba(45,212,191,0.15);color:var(--accent,#2dd4bf);font-weight:600;">🎬 Visual Lesson</span>
+            <span style="font-size:11px;padding:3px 8px;border-radius:4px;background:rgba(168,85,247,0.15);color:#c084fc;font-weight:600;">⚡ Cheat Code</span>
+            <span style="font-size:11px;padding:3px 8px;border-radius:4px;background:rgba(245,158,11,0.15);color:#fbbf24;font-weight:600;">❓ Quiz Flow</span>
+          </div>
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:20px;">
+        <button type="button" class="btn-hero-outline" data-nav="workspace" style="display:inline-flex;padding:10px 24px;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;">
+          Open Complete 5-Unit Curriculum (29 Topics &amp; 31 Formulas) →
+        </button>
+      </div>
+    </section>
+
     <div class="bq-marquee" aria-hidden="true">
       <div class="bq-marquee-track"><span class="bq-marquee-item"><i>✳</i> Visual learning steps</span><span class="bq-marquee-item"><i>✳</i> Active recall</span><span class="bq-marquee-item"><i>✳</i> Grounded AI tutor</span><span class="bq-marquee-item"><i>✳</i> Practice questions</span><span class="bq-marquee-item"><i>✳</i> Flashcards</span><span class="bq-marquee-item"><i>✳</i> <em>Any subject, your PDF</em></span></div>
       <div class="bq-marquee-track"><span class="bq-marquee-item"><i>✳</i> Visual learning steps</span><span class="bq-marquee-item"><i>✳</i> Active recall</span><span class="bq-marquee-item"><i>✳</i> Grounded AI tutor</span><span class="bq-marquee-item"><i>✳</i> Practice questions</span><span class="bq-marquee-item"><i>✳</i> Flashcards</span><span class="bq-marquee-item"><i>✳</i> <em>Any subject, your PDF</em></span></div>
@@ -355,9 +529,6 @@ function landingView(){
   </main>`;
 }
 
-/* LIBRARY VIEW — stored PDFs + outputs with 30-day trial banner.
-   Reopening restores the study JSON into state. Expiry is enforced
-   by XC.library: expired + not renewed => list is empty (purged). */
 let libraryCache = null;
 let libraryCacheAt = 0;
 function libraryView(){
@@ -2112,8 +2283,11 @@ function render(){
      Mermaid cannot load. Fire and forget: rendering must never block. */
   hydrateAiMermaid(app);
   refreshPlayBtn();
-  if(state.view==='landing' && typeof window.XC!=='undefined' && window.XC.trailerShowcase){
-    window.XC.trailerShowcase.init();
+  if(state.view==='landing'){
+    if(typeof window.XC!=='undefined' && window.XC.trailerShowcase){
+      window.XC.trailerShowcase.init();
+    }
+    initInteractivePreview();
   }
   /* §15 — enter transition only on a real page change, never on in-page
      state re-renders (quiz clicks, autoplay ticks, chat messages…). */
@@ -4124,3 +4298,14 @@ render();
 console.log('XamCode AI • merged build with continuous visuals • Created By Achudhan');
 
 })();
+
+document.addEventListener('click', e => {
+  const promptCard = e.target.closest('[data-launch-aura]');
+  if(promptCard){
+    const prompt = promptCard.dataset.launchAura;
+    if(window.XC && window.XC.aura){
+      window.XC.aura.open();
+      window.XC.aura.ask(prompt);
+    }
+  }
+});
