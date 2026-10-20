@@ -1,2 +1,377 @@
 
+/* ==========================================================================
+   STYLE 5: SOFT MINIMAL STUDIO (body[data-style="minimal"])
+   ========================================================================== */
+body[data-style="minimal"]{
+  --paper:#181816;
+  --lime:#23533d;
+  --limeink:#faf8f5;
+  --inkink:#181816;
+  --disp:"Fraunces",Georgia,serif;
+  --mono:"Space Grotesk",system-ui,sans-serif;
+  --mut:#57534e;
+  --dim:#78716c;
+  --cobalt:#b4532a;
+  --line:rgba(24,24,22,.12);
+  --line2:rgba(24,24,22,.08);
+  --soft:rgba(35,83,61,.22);
+  --warn:#b45309;
+  --orange:#b4532a;
+  --violet:#57534e;
+  --bad:#b91c1c;
+  --cyan:#23533d;
+  --card:#ffffff;
+  background:#faf8f5;
+  color:#181816;
+}
+body[data-style="minimal"] .bg.grid{
+  background-image:linear-gradient(rgba(24,24,22,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(24,24,22,.035) 1px,transparent 1px);
+  background-size:96px 96px;
+}
+body[data-style="minimal"] .bg.glow{
+  background:
+    radial-gradient(900px 600px at 85% 8%,rgba(180,83,42,.07),transparent 65%),
+    radial-gradient(800px 550px at 12% 20%,rgba(35,83,61,.06),transparent 65%);
+}
+body[data-style="minimal"] .shade{
+  background:linear-gradient(180deg,rgba(250,248,245,.2) 0%,rgba(250,248,245,0) 40%,rgba(250,248,245,.88) 100%);
+}
+/* Minimal Architectural Dock */
+body[data-style="minimal"] .dock{
+  background:rgba(250,248,245,.92);
+  border:1px solid rgba(24,24,22,.12);
+  box-shadow:0 12px 32px -12px rgba(24,24,22,.08);
+  border-radius:14px;
+}
+body[data-style="minimal"] .logo-mark{
+  background:#181816;
+  color:#faf8f5;
+  border-radius:8px;
+}
+body[data-style="minimal"] .dock-sub{
+  background:#f2efe9;
+  color:#57534e;
+  border-color:rgba(24,24,22,.1);
+}
+body[data-style="minimal"] .docknav a{
+  color:#57534e;
+}
+body[data-style="minimal"] .docknav a:hover,
+body[data-style="minimal"] .docknav a.act{
+  color:#181816;
+  background:#f2efe9;
+  box-shadow:inset 0 -2px 0 #23533d;
+}
+body[data-style="minimal"] .style-trigger{
+  background:#181816;
+  color:#faf8f5;
+  border:1px solid #181816;
+  border-radius:10px;
+}
+body[data-style="minimal"] .st-trig-cur{
+  background:#b4532a;
+  color:#faf8f5;
+  border-radius:6px;
+}
+body[data-style="minimal"] .live{
+  background:#f2efe9;
+  color:#23533d;
+  border-color:rgba(35,83,61,.3);
+}
 
+/* Soft Minimal Hero: Editorial Monograph Spread */
+body[data-style="minimal"] .hero-layout{
+  grid-template-columns:1.25fr .75fr;
+  gap:48px;
+  border-top:1px solid rgba(24,24,22,.12);
+  border-bottom:1px solid rgba(24,24,22,.12);
+  padding:36px 0;
+}
+body[data-style="minimal"] .hero-in{
+  text-align:left;
+  padding:0;
+  margin:0;
+}
+body[data-style="minimal"] .kick{
+  background:#f2efe9;
+  color:#23533d;
+  border:1px solid rgba(24,24,22,.12);
+  border-radius:6px;
+}
+body[data-style="minimal"] .frag{
+  text-transform:none;
+  font-weight:600;
+  letter-spacing:-.025em;
+  line-height:1.02;
+}
+body[data-style="minimal"] .frag .hl{
+  color:#23533d;
+  font-style:italic;
+}
+body[data-style="minimal"] .frag .out{
+  color:#b4532a;
+  -webkit-text-stroke:0;
+  font-style:italic;
+}
+body[data-style="minimal"] .frag .k:nth-child(2) .out .w:last-child{
+  color:#b4532a;
+  -webkit-text-stroke:0;
+  filter:none;
+}
+body[data-style="minimal"] .lede,
+body[data-style="minimal"] .hp,
+body[data-style="minimal"] .hmeta{
+  margin-left:0;
+  margin-right:0;
+}
+body[data-style="minimal"] .crow{
+  justify-content:flex-start;
+}
+body[data-style="minimal"] .schip{
+  background:#f2efe9;
+  color:#b4532a;
+  border:1px solid rgba(180,83,42,.28);
+  box-shadow:none;
+  border-radius:6px;
+}
+body[data-style="minimal"] .hp{
+  background:#ffffff;
+  border:1px solid rgba(24,24,22,.12);
+  border-radius:12px;
+  box-shadow:0 12px 30px -16px rgba(24,24,22,.08);
+}
+
+/* 3D Architectural Sculpture in Soft Minimal Hero Stage */
+body[data-style="minimal"] .poly-face{
+  border-radius:8px;
+  background:linear-gradient(145deg,#ffffff 0%,#f2efe9 100%);
+  border:1px solid rgba(24,24,22,.18);
+  color:#181816;
+  box-shadow:0 18px 40px -16px rgba(24,24,22,.12);
+}
+body[data-style="minimal"] .pf-tag{color:#b4532a}
+body[data-style="minimal"] .core-face{
+  border-radius:50%;
+  background:#23533d;
+  border:1px solid #181816;
+  box-shadow:none;
+}
+body[data-style="minimal"] .orb-ring{
+  border:1px solid rgba(24,24,22,.24);
+}
+body[data-style="minimal"] .sat-3d{
+  background:#ffffff;
+  color:#181816;
+  border:1px solid rgba(24,24,22,.14);
+  border-radius:10px;
+  box-shadow:0 14px 32px -12px rgba(24,24,22,.1);
+}
+body[data-style="minimal"] .sat-3d .sat-k{
+  color:#b4532a !important;
+}
+
+/* Soft Minimal Surfaces & Editorial Hairline Grids */
+body[data-style="minimal"] .chead h2{
+  text-transform:none;
+  font-weight:600;
+  letter-spacing:-.02em;
+}
+body[data-style="minimal"] .chead .num{
+  background:#181816;
+  color:#faf8f5;
+  border-radius:6px;
+}
+body[data-style="minimal"] .chead .num::before{
+  background:#b4532a !important;
+  box-shadow:none !important;
+}
+body[data-style="minimal"] #act1 .pgrid,
+body[data-style="minimal"] #act1 .mcol,
+body[data-style="minimal"] #act1 .scell,
+body[data-style="minimal"] .cine-panel-card,
+body[data-style="minimal"] .pipe-node,
+body[data-style="minimal"] #act4 .rmtl .rm,
+body[data-style="minimal"] #act5 .lr-shell,
+body[data-style="minimal"] .cr-featured,
+body[data-style="minimal"] .cr-card,
+body[data-style="minimal"] .panel,
+body[data-style="minimal"] .guide,
+body[data-style="minimal"] .idea,
+body[data-style="minimal"] details.est-model{
+  background:#ffffff !important;
+  color:#181816 !important;
+  border:1px solid rgba(24,24,22,.11) !important;
+  border-radius:14px !important;
+  box-shadow:0 16px 40px -20px rgba(24,24,22,.07) !important;
+  backdrop-filter:none !important;
+}
+body[data-style="minimal"] #act1 .pstage,
+body[data-style="minimal"] #act1 .mile,
+body[data-style="minimal"] #act5 .lr-card,
+body[data-style="minimal"] #act5 .lr-update,
+body[data-style="minimal"] .cr-arch-flow,
+body[data-style="minimal"] .cine-tree-item{
+  background:#f6f4ef !important;
+  color:#181816 !important;
+  border:1px solid rgba(24,24,22,.09) !important;
+  border-radius:10px !important;
+  box-shadow:none !important;
+}
+body[data-style="minimal"] #act1 .mile .c,
+body[data-style="minimal"] #act4 .rmtl .rm .c,
+body[data-style="minimal"] .cr-featured p{
+  color:#57534e !important;
+}
+body[data-style="minimal"] .xcta,
+body[data-style="minimal"] .btn{
+  border-radius:10px;
+}
+body[data-style="minimal"] .xcta.pri,
+body[data-style="minimal"] .btn.primary{
+  background:#181816;
+  color:#faf8f5;
+  border-color:#181816;
+  box-shadow:none;
+}
+body[data-style="minimal"] .xcta.pri:hover,
+body[data-style="minimal"] .btn.primary:hover{
+  background:#23533d;
+  color:#faf8f5;
+  border-color:#23533d;
+}
+body[data-style="minimal"] .xcta.gho{
+  background:#ffffff;
+  color:#181816;
+  border-color:rgba(24,24,22,.2);
+}
+body[data-style="minimal"] .panel input:not([type=checkbox]),
+body[data-style="minimal"] .panel textarea{
+  background:#faf8f5;
+  border:1px solid rgba(24,24,22,.18);
+  border-radius:10px;
+  color:#181816;
+}
+body[data-style="minimal"] .teaser-card,
+body[data-style="minimal"] .footer-brand{
+  background:#f2efe9 !important;
+  color:#181816 !important;
+  border:1px solid rgba(24,24,22,.12) !important;
+  border-radius:16px !important;
+  box-shadow:none !important;
+}
+body[data-style="minimal"] .teaser-copy{
+  color:#57534e !important;
+}
+body[data-style="minimal"] .ct .thin,
+body[data-style="minimal"] .fmark{
+  -webkit-text-stroke:1px rgba(24,24,22,.25);
+}
+body[data-style="minimal"] .cine-hud{
+  background:rgba(250,248,245,.94);
+  color:#57534e;
+  border:1px solid rgba(24,24,22,.14);
+  box-shadow:0 12px 30px rgba(24,24,22,.08);
+}
+
+/* ==========================================================================
+   CROSS-STYLE RESPONSIVE & REDUCED-MOTION GUARANTEES
+   ========================================================================== */
+@media (max-width:1100px){
+  .style-grid{
+    grid-template-columns:repeat(3,minmax(0,1fr));
+  }
+  .pipeline-3d-strip{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+@media (max-width:960px){
+  .hero-layout,
+  body[data-style="vibe"] .hero-layout,
+  body[data-style="glass"] .hero-layout,
+  body[data-style="brutalist"] .hero-layout,
+  body[data-style="minimal"] .hero-layout{
+    grid-template-columns:1fr !important;
+    gap:24px;
+  }
+  body[data-style="brutalist"] .hero-in{
+    border-right:0;
+    border-bottom:3.5px solid #0d0d0d;
+    padding:24px 20px;
+  }
+  body[data-style="glass"] .hero-in{
+    padding:24px 20px;
+  }
+  .hero-3d-stage{
+    min-height:280px;
+    overflow:hidden;
+  }
+  .scene-3d-root{
+    transform:scale(.84) rotateX(-16deg) rotateY(28deg);
+  }
+  body[data-style="bubblegum"] .cine-study-grid{
+    grid-template-columns:1fr;
+  }
+  body[data-style="bubblegum"] .cine-study-grid > .cine-panel-card:nth-child(2){
+    transform:none;
+  }
+}
+@media (max-width:768px){
+  .style-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+  .st-trig-cur{
+    display:none;
+  }
+}
+@media (max-width:600px){
+  .style-modal{
+    padding:10px;
+  }
+  .style-dialog{
+    padding:18px 14px;
+    border-radius:20px;
+    max-height:calc(100svh - 20px);
+  }
+  .style-grid{
+    grid-template-columns:1fr;
+    gap:10px;
+  }
+  .st-card-vis{
+    height:68px;
+  }
+  .pipeline-3d-strip{
+    grid-template-columns:1fr;
+  }
+  .hero-3d-stage{
+    min-height:230px;
+  }
+  .scene-3d-root{
+    width:220px;
+    height:220px;
+    transform:scale(.74) rotateX(-14deg) rotateY(24deg);
+  }
+  .sat-3d.s1{left:-8px;top:-10px}
+  .sat-3d.s2{right:-8px;bottom:8px}
+  .sat-3d.s3{left:4px;bottom:-16px}
+  .style-trigger{
+    padding:6px 10px;
+    font-size:10px;
+  }
+}
+@media (max-width:400px){
+  .st-trig-lbl{
+    font-size:9.5px;
+  }
+  .live{
+    display:none;
+  }
+}
+@media (prefers-reduced-motion:reduce){
+  .poly-3d,.poly-core,.st-cube-icon{
+    animation:none !important;
+  }
+  .scene-3d-root,.mini-3d-obj,.pipe-node{
+    transition:none !important;
+  }
+}
+</style></head><body data-style="vibe">

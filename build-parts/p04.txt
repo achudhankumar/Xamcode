@@ -1,2 +1,463 @@
 
+/* ==========================================================================
+   STYLE 3: LIQUID GLASS 3D (body[data-style="glass"])
+   ========================================================================== */
+body[data-style="glass"]{
+  --paper:#eef6ff;
+  --lime:#38bdf8;
+  --limeink:#031124;
+  --inkink:#030914;
+  --disp:"Space Grotesk","Syne",sans-serif;
+  --mono:"JetBrains Mono",monospace;
+  --mut:#94b3d4;
+  --dim:#6788ab;
+  --cobalt:#818cf8;
+  --line:rgba(255,255,255,.22);
+  --line2:rgba(186,230,253,.16);
+  --soft:rgba(56,189,248,.38);
+  --warn:#fbbf24;
+  --orange:#38bdf8;
+  --violet:#c084fc;
+  --bad:#f87171;
+  --cyan:#2dd4bf;
+  --card:rgba(12,25,48,.48);
+  background:#030816;
+  color:#eef6ff;
+}
+body[data-style="glass"] .bg.grid{
+  background-image:linear-gradient(rgba(125,211,252,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(125,211,252,.06) 1px,transparent 1px);
+  background-size:72px 72px;
+}
+body[data-style="glass"] .bg.glow{
+  background:
+    radial-gradient(850px 520px at 18% 12%,rgba(56,189,248,.24),transparent 62%),
+    radial-gradient(780px 500px at 84% 18%,rgba(168,85,247,.22),transparent 62%),
+    radial-gradient(900px 600px at 50% 96%,rgba(45,212,191,.18),transparent 65%);
+}
+body[data-style="glass"] .shade{
+  background:linear-gradient(180deg,rgba(3,8,22,.15) 0%,rgba(3,8,22,0) 40%,rgba(3,8,22,.82) 100%);
+}
+/* Spatial Glass Dock */
+body[data-style="glass"] .dock{
+  background:linear-gradient(135deg,rgba(255,255,255,.14),rgba(255,255,255,.04));
+  border:1px solid rgba(255,255,255,.28);
+  box-shadow:0 20px 50px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.45);
+}
+body[data-style="glass"] .style-trigger{
+  background:linear-gradient(135deg,rgba(56,189,248,.24),rgba(168,85,247,.24));
+  border-color:rgba(186,230,253,.5);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 8px 20px rgba(14,165,233,.25);
+}
+body[data-style="glass"] .st-trig-cur{
+  background:rgba(56,189,248,.25);
+  color:#bae6fd;
+}
 
+/* Spatial Floating Window Hero Composition */
+body[data-style="glass"] .hero-layout{
+  grid-template-columns:1.1fr .9fr;
+  gap:32px;
+}
+body[data-style="glass"] .hero-in{
+  text-align:left;
+  padding:34px 36px;
+  border-radius:32px;
+  background:linear-gradient(145deg,rgba(255,255,255,.11) 0%,rgba(255,255,255,.02) 100%);
+  border:1px solid rgba(255,255,255,.24);
+  box-shadow:0 30px 80px rgba(0,0,0,.6),inset 0 1px 1px rgba(255,255,255,.42),inset 0 -1px 1px rgba(56,189,248,.2);
+}
+body[data-style="glass"] .lede,
+body[data-style="glass"] .hp,
+body[data-style="glass"] .hmeta{
+  margin-left:0;
+  margin-right:0;
+}
+body[data-style="glass"] .crow{
+  justify-content:flex-start;
+}
+body[data-style="glass"] .frag .out{
+  -webkit-text-stroke:2px #7dd3fc;
+  filter:drop-shadow(0 0 18px rgba(56,189,248,.35));
+}
+/* 3D Refracting Glass Prism Stage */
+body[data-style="glass"] .poly-face{
+  border-radius:22px;
+  background:linear-gradient(135deg,rgba(255,255,255,.24) 0%,rgba(56,189,248,.06) 55%,rgba(168,85,247,.12) 100%);
+  border:1px solid rgba(255,255,255,.48);
+  box-shadow:0 14px 36px rgba(14,165,233,.2),inset 0 1px 2px rgba(255,255,255,.65);
+  color:#e0f2fe;
+}
+body[data-style="glass"] .core-face{
+  border-radius:14px;
+  background:linear-gradient(135deg,rgba(56,189,248,.42),rgba(192,132,252,.38));
+  border:1px solid rgba(255,255,255,.75);
+  box-shadow:0 0 28px rgba(56,189,248,.5);
+}
+body[data-style="glass"] .orb-ring{
+  border:1px solid rgba(186,230,253,.42);
+  box-shadow:0 0 18px rgba(56,189,248,.22);
+}
+body[data-style="glass"] .sat-3d{
+  background:linear-gradient(135deg,rgba(255,255,255,.18),rgba(15,23,42,.58));
+  border:1px solid rgba(255,255,255,.38);
+  border-radius:18px;
+  box-shadow:0 20px 44px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.5);
+}
+
+/* Liquid Glass Surfaces across Sections (Controlled Blur on Desktop Only) */
+body[data-style="glass"] #act1 .pgrid,
+body[data-style="glass"] #act1 .mcol,
+body[data-style="glass"] #act1 .scell,
+body[data-style="glass"] .cine-panel-card,
+body[data-style="glass"] .pipe-node,
+body[data-style="glass"] #act4 .rmtl .rm,
+body[data-style="glass"] #act5 .lr-shell,
+body[data-style="glass"] .cr-featured,
+body[data-style="glass"] .cr-card,
+body[data-style="glass"] .panel,
+body[data-style="glass"] .guide,
+body[data-style="glass"] .idea{
+  background:linear-gradient(145deg,rgba(255,255,255,.10) 0%,rgba(15,28,54,.46) 100%) !important;
+  border:1px solid rgba(255,255,255,.22) !important;
+  border-radius:26px !important;
+  box-shadow:0 24px 60px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.35) !important;
+}
+@media (min-width:901px){
+  body[data-style="glass"] .hero-in,
+  body[data-style="glass"] .cine-panel-card,
+  body[data-style="glass"] .panel{
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+  }
+}
+body[data-style="glass"] #act1 .pstage,
+body[data-style="glass"] #act1 .mile,
+body[data-style="glass"] #act5 .lr-card,
+body[data-style="glass"] #act5 .lr-update,
+body[data-style="glass"] .cr-arch-flow,
+body[data-style="glass"] .cine-tree-item{
+  background:rgba(255,255,255,.05) !important;
+  border:1px solid rgba(186,230,253,.18) !important;
+  border-radius:18px !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.22) !important;
+}
+body[data-style="glass"] .xcta.pri,
+body[data-style="glass"] .btn.primary{
+  background:linear-gradient(135deg,#38bdf8,#818cf8);
+  color:#031124;
+  border:1px solid rgba(255,255,255,.6);
+  box-shadow:0 10px 28px rgba(56,189,248,.35),inset 0 1px 0 rgba(255,255,255,.75);
+}
+
+
+/* ==========================================================================
+   STYLE 4: NEO-BRUTALIST CREATIVE LAB (body[data-style="brutalist"])
+   ========================================================================== */
+body[data-style="brutalist"]{
+  --paper:#0d0d0d;
+  --lime:#ffe600;
+  --limeink:#0d0d0d;
+  --inkink:#0d0d0d;
+  --disp:"Syne",system-ui,sans-serif;
+  --mono:"JetBrains Mono",monospace;
+  --mut:#2e2e2c;
+  --dim:#4a4a46;
+  --cobalt:#2563eb;
+  --line:#0d0d0d;
+  --line2:#0d0d0d;
+  --soft:#0d0d0d;
+  --warn:#ff4d00;
+  --orange:#ff4d00;
+  --violet:#7c3aed;
+  --bad:#dc2626;
+  --cyan:#00d68f;
+  --card:#ffffff;
+  background:#f4f0e6;
+  color:#0d0d0d;
+}
+body[data-style="brutalist"] .bg.grid{
+  background-image:linear-gradient(rgba(13,13,13,.12) 1px,transparent 1px),linear-gradient(90deg,rgba(13,13,13,.12) 1px,transparent 1px);
+  background-size:48px 48px;
+}
+body[data-style="brutalist"] .bg.glow,
+body[data-style="brutalist"] .shade{
+  background:none !important;
+}
+/* Hard-Edged Brutalist Command Bar Dock */
+body[data-style="brutalist"] .dock{
+  background:#ffffff;
+  border:3px solid #0d0d0d;
+  border-radius:0;
+  box-shadow:6px 6px 0 #0d0d0d;
+  backdrop-filter:none;
+}
+body[data-style="brutalist"] .logo-mark{
+  border-radius:0;
+  background:#ffe600;
+  color:#0d0d0d;
+  border:2px solid #0d0d0d;
+}
+body[data-style="brutalist"] .dock-sub{
+  background:#0d0d0d;
+  color:#ffe600;
+  border-radius:0;
+  border:0;
+}
+body[data-style="brutalist"] .docknav a{
+  color:#0d0d0d;
+  border-radius:0;
+  font-weight:700;
+}
+body[data-style="brutalist"] .docknav a:hover,
+body[data-style="brutalist"] .docknav a.act{
+  background:#ffe600;
+  color:#0d0d0d;
+  box-shadow:inset 0 0 0 2px #0d0d0d;
+}
+body[data-style="brutalist"] .style-trigger{
+  background:#ff4d00;
+  color:#ffffff;
+  border:2.5px solid #0d0d0d;
+  border-radius:0;
+  box-shadow:4px 4px 0 #0d0d0d;
+}
+body[data-style="brutalist"] .style-trigger:hover{
+  transform:translate(2px,2px);
+  box-shadow:2px 2px 0 #0d0d0d;
+}
+body[data-style="brutalist"] .st-trig-cur{
+  background:#ffe600;
+  color:#0d0d0d;
+  border-radius:0;
+}
+body[data-style="brutalist"] .live{
+  background:#00e575;
+  color:#0d0d0d;
+  border:2px solid #0d0d0d;
+  border-radius:0;
+}
+
+/* Neo-Brutalist Hero: Asymmetric Poster Compartments */
+body[data-style="brutalist"] .hero-layout{
+  grid-template-columns:1.2fr .8fr;
+  gap:0;
+  border:3.5px solid #0d0d0d;
+  background:#ffffff;
+  box-shadow:10px 10px 0 #0d0d0d;
+}
+body[data-style="brutalist"] .hero-in{
+  text-align:left;
+  padding:36px 34px;
+  border-right:3.5px solid #0d0d0d;
+  margin:0;
+}
+body[data-style="brutalist"] .hero-3d-stage{
+  background:#ffe600;
+  background-image:radial-gradient(#0d0d0d 1.25px,transparent 1.25px);
+  background-size:16px 16px;
+  min-height:100%;
+  padding:28px;
+}
+body[data-style="brutalist"] .kick{
+  background:#0d0d0d;
+  color:#ffe600;
+  border:2px solid #0d0d0d;
+  border-radius:0;
+  box-shadow:4px 4px 0 #ff4d00;
+}
+body[data-style="brutalist"] .frag .hl{
+  background:#ffe600;
+  color:#0d0d0d;
+  padding:0 8px;
+  border:2.5px solid #0d0d0d;
+  box-shadow:4px 4px 0 #0d0d0d;
+}
+body[data-style="brutalist"] .frag .out{
+  color:#ff4d00;
+  -webkit-text-stroke:2px #0d0d0d;
+}
+body[data-style="brutalist"] .frag .k:nth-child(2) .out .w:last-child{
+  color:#2563eb;
+  -webkit-text-stroke:2px #0d0d0d;
+  filter:none;
+}
+body[data-style="brutalist"] .lede,
+body[data-style="brutalist"] .hp,
+body[data-style="brutalist"] .hmeta{
+  margin-left:0;
+  margin-right:0;
+}
+body[data-style="brutalist"] .crow{
+  justify-content:flex-start;
+}
+body[data-style="brutalist"] .schip{
+  background:#ff4d00;
+  color:#ffffff;
+  border:2.5px solid #0d0d0d;
+  border-radius:0;
+  box-shadow:4px 4px 0 #0d0d0d;
+}
+body[data-style="brutalist"] .hp{
+  background:#f4f0e6;
+  border:3px solid #0d0d0d;
+  border-radius:0;
+  box-shadow:5px 5px 0 #0d0d0d;
+}
+body[data-style="brutalist"] .hp .hp-val{
+  color:#0d0d0d;
+  background:#ffe600;
+  padding:2px 8px;
+  border:2px solid #0d0d0d;
+}
+
+/* 3D Extruded Brutalist Monument in Hero Stage */
+body[data-style="brutalist"] .poly-face{
+  border-radius:0;
+  border:3.5px solid #0d0d0d;
+  background:#ffffff;
+  color:#0d0d0d;
+  box-shadow:none;
+  font-weight:700;
+}
+body[data-style="brutalist"] .poly-face.pf-front{background:#ff4d00;color:#ffffff}
+body[data-style="brutalist"] .poly-face.pf-right{background:#00e575;color:#0d0d0d}
+body[data-style="brutalist"] .poly-face.pf-left{background:#2563eb;color:#ffffff}
+body[data-style="brutalist"] .poly-face.pf-top{background:#ffffff;color:#0d0d0d}
+body[data-style="brutalist"] .pf-tag{color:inherit;background:#0d0d0d;color:#ffe600;padding:2px 6px}
+body[data-style="brutalist"] .core-face{
+  border:3px solid #0d0d0d;
+  background:#0d0d0d;
+  box-shadow:none;
+}
+body[data-style="brutalist"] .orb-ring{
+  border-radius:0;
+  border:2.5px solid #0d0d0d;
+}
+body[data-style="brutalist"] .sat-3d{
+  background:#ffffff;
+  color:#0d0d0d;
+  border:3px solid #0d0d0d;
+  border-radius:0;
+  box-shadow:6px 6px 0 #0d0d0d;
+}
+body[data-style="brutalist"] .sat-3d .sat-k{
+  color:#ff4d00 !important;
+}
+
+/* Neo-Brutalist Buttons & Surfaces */
+body[data-style="brutalist"] .xcta,
+body[data-style="brutalist"] .btn,
+body[data-style="brutalist"] .slink,
+body[data-style="brutalist"] .vote-btn{
+  border-radius:0 !important;
+  border:3px solid #0d0d0d !important;
+  box-shadow:5px 5px 0 #0d0d0d !important;
+}
+body[data-style="brutalist"] .xcta.pri,
+body[data-style="brutalist"] .btn.primary{
+  background:#ffe600 !important;
+  color:#0d0d0d !important;
+}
+body[data-style="brutalist"] .xcta.gho{
+  background:#ffffff !important;
+  color:#0d0d0d !important;
+}
+body[data-style="brutalist"] .xcta:hover,
+body[data-style="brutalist"] .btn:hover,
+body[data-style="brutalist"] .slink:hover{
+  transform:translate(3px,3px) !important;
+  box-shadow:2px 2px 0 #0d0d0d !important;
+}
+body[data-style="brutalist"] #act1 .pgrid,
+body[data-style="brutalist"] #act1 .mcol,
+body[data-style="brutalist"] #act1 .scell,
+body[data-style="brutalist"] .cine-panel-card,
+body[data-style="brutalist"] .pipe-node,
+body[data-style="brutalist"] #act4 .rmtl .rm,
+body[data-style="brutalist"] #act5 .lr-shell,
+body[data-style="brutalist"] .cr-featured,
+body[data-style="brutalist"] .cr-card,
+body[data-style="brutalist"] .panel,
+body[data-style="brutalist"] .guide,
+body[data-style="brutalist"] .idea,
+body[data-style="brutalist"] details.est-model{
+  background:#ffffff !important;
+  color:#0d0d0d !important;
+  border:3px solid #0d0d0d !important;
+  border-radius:0 !important;
+  box-shadow:7px 7px 0 #0d0d0d !important;
+  backdrop-filter:none !important;
+}
+body[data-style="brutalist"] .cine-panel-card.hl-lime,
+body[data-style="brutalist"] .cr-featured{
+  background:#ffe600 !important;
+}
+body[data-style="brutalist"] .cine-panel-card.hl-blue{
+  background:#dbeafe !important;
+}
+body[data-style="brutalist"] .cine-panel-card.hl-cyan{
+  background:#d1fae5 !important;
+}
+body[data-style="brutalist"] #act1 .pstage,
+body[data-style="brutalist"] #act1 .mile,
+body[data-style="brutalist"] #act5 .lr-card,
+body[data-style="brutalist"] #act5 .lr-update,
+body[data-style="brutalist"] .cr-arch-flow,
+body[data-style="brutalist"] .cine-tree-item{
+  background:#f4f0e6 !important;
+  color:#0d0d0d !important;
+  border:2.5px solid #0d0d0d !important;
+  border-radius:0 !important;
+  box-shadow:4px 4px 0 #0d0d0d !important;
+}
+body[data-style="brutalist"] .chead .num{
+  border-radius:0;
+  background:#ff4d00;
+  color:#ffffff;
+  border:3px solid #0d0d0d;
+  box-shadow:4px 4px 0 #0d0d0d;
+}
+body[data-style="brutalist"] .pill,
+body[data-style="brutalist"] .chip{
+  border-radius:0 !important;
+  border:2px solid #0d0d0d !important;
+  background:#ffe600 !important;
+  color:#0d0d0d !important;
+  font-weight:700;
+}
+body[data-style="brutalist"] #act1 .mile .c,
+body[data-style="brutalist"] #act4 .rmtl .rm .c,
+body[data-style="brutalist"] .cr-featured p,
+body[data-style="brutalist"] .cr-flow-step span.lbl{
+  color:#0d0d0d !important;
+}
+body[data-style="brutalist"] .panel input:not([type=checkbox]),
+body[data-style="brutalist"] .panel textarea{
+  background:#f4f0e6;
+  border:2.5px solid #0d0d0d;
+  border-radius:0;
+  color:#0d0d0d;
+}
+body[data-style="brutalist"] .teaser-card,
+body[data-style="brutalist"] .footer-brand{
+  background:#ffe600 !important;
+  color:#0d0d0d !important;
+  border:3.5px solid #0d0d0d !important;
+  border-radius:0 !important;
+  box-shadow:8px 8px 0 #0d0d0d !important;
+}
+body[data-style="brutalist"] .teaser-copy{
+  color:#0d0d0d !important;
+}
+body[data-style="brutalist"] .ct .thin,
+body[data-style="brutalist"] .fmark{
+  -webkit-text-stroke:2px #0d0d0d;
+}
+body[data-style="brutalist"] .cine-hud{
+  background:#ffe600;
+  color:#0d0d0d;
+  border:3px solid #0d0d0d;
+  border-radius:0;
+  box-shadow:5px 5px 0 #0d0d0d;
+}
+body[data-style="brutalist"] .cine-hud .ch-left{color:#0d0d0d}

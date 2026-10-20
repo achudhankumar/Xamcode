@@ -1,6 +1,7 @@
 <script>
 'use strict';
 (function(){
+try{var _stSaved=typeof localStorage!=='undefined'&&localStorage.getItem('xamcode_bip_style');var _stValid={vibe:1,bubblegum:1,glass:1,brutalist:1,minimal:1};if(document&&document.body&&document.body.setAttribute){document.body.setAttribute('data-style',(_stSaved&&_stValid[_stSaved])?_stSaved:'vibe');}}catch(e){}
 var $=function(id){return document.getElementById(id);};
 function el(t,c,x){var n=document.createElement(t);if(c)n.className=c;if(x!=null)n.textContent=x;return n;}
 function fm(iso){try{return new Date(iso).toLocaleString();}catch(e){return iso||'';}}
