@@ -9,6 +9,11 @@
    with atomic writes behind a small collection-style API, so a real
    database driver can be swapped in later without touching callers.
 
+   The document now lives behind bip/storage.js: the same synchronous
+   API is preserved, but the backend can be the JSON file (default) or
+   durable Postgres (BIP_STORAGE=supabase) for hosts whose filesystem
+   is wiped on every redeploy. See bip/storage.js for the seam.
+
    Collections (see docs/BUILD-IN-PUBLIC.md for the full schema):
      milestones   — weighted progress items (verification/reversible)
      devEvents    — sanitized development events (idempotent)
@@ -26,113 +31,75 @@ const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
 
-const SCHEMA_VERSION = 1;
-const DATA_DIR = process.env.BIP_DATA_DIR || path.join(__dirname, '..', 'bip-data');
-const STORE_FILE = path.join(DATA_DIR, 'store.json');
+const storage = require('./storage');
 
-/* Bounded histories: the public site never needs the full archive,
-   and unbounded growth on a free host would be a denial-of-service
-   vector. Oldest rows are dropped past these caps. */
-const CAPS = {
-  devEvents: 500,
-  chatMessages: 500,
-  deliveries: 1000,
-  reports: 500
-};
+const SCHEMA_VERSION = storage.SCHEMA_VERSION;
+const CAPS = storage.CAPS;
+
+/* Legacy path accessors kept for compatibility (docs, tooling).
+   Resolved lazily so a test can point BIP_DATA_DIR at a scratch
+   directory after this module was required. */
+function DATA_DIR(){ return storage.dataDir(); }
+function STORE_FILE(){ return storage.storeFile(); }
 
 function emptyStore(){
-  return {
-    schemaVersion: SCHEMA_VERSION,
-    createdAt: new Date().toISOString(),
-    milestones: [],
-    devEvents: [],
-    chatMessages: [],
-    ideas: [],
-    ideaVotes: [],
-    ideaComments: [],
-    waitlist: [],
-    reports: [],
-    roadmapItems: [],
-    settings: {
-      phase: 'Building',
-      currentMilestoneId: null,
-      launch: { estimated: null, confirmed: null, note: '' },
-      build: { state: 'unknown', at: null, ref: null },
-      tests: { state: 'unknown', at: null, ref: null },
-      deploy: { state: 'unknown', at: null, ref: null },
-      blockers: []
-    },
-    deliveries: []
-  };
+  return storage.emptyStore();
 }
 
-let data = null;
+/* The live document. Callers get the SAME object every time, so a
+   synchronous mutation is immediately visible to every other module —
+   the legacy contract, unchanged.
 
+   In JSON mode the file is read lazily on first access. In durable
+   mode the document is filled by storage.hydrate(), which the server
+   awaits during boot; until then the in-memory document is empty but
+   fully shaped. */
 function ensureLoaded(){
-  if (data) return data;
-  try{
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-  }catch{}
-  try{
-    const raw = fs.readFileSync(STORE_FILE, 'utf8');
-    data = JSON.parse(raw);
-    if (!data || typeof data !== 'object' || Array.isArray(data)) data = emptyStore();
-    migrate(data);
-  }catch{
-    data = emptyStore();
-  }
-  // Guarantee every expected collection exists even on old/partial files.
-  const blank = emptyStore();
-  for (const k of Object.keys(blank)){
-    if (data[k] === undefined) data[k] = blank[k];
-  }
-  if (!data.settings || typeof data.settings !== 'object') data.settings = blank.settings;
-  for (const k of Object.keys(blank.settings)){
-    if (data.settings[k] === undefined) data.settings[k] = blank.settings[k];
-  }
-  return data;
+  return storage.document();
 }
 
 function migrate(d){
   /* Future schema upgrades go here: bump SCHEMA_VERSION and transform.
      v1 is the initial shape, so there is nothing to do yet. */
   if (!d.schemaVersion) d.schemaVersion = SCHEMA_VERSION;
+  return d;
 }
 
-/* Atomic write: temp file + rename so a crash mid-write cannot leave
-   a truncated store. Runs synchronously — write volume is low and the
-   server is single-threaded, which also makes read-modify-write
-   sequences race-free within a request. */
+/* Write-through. In JSON mode this writes the file synchronously
+   (legacy behaviour). In durable mode it queues the write; the route
+   layer awaits storage.flush() and answers 503 if the write failed. */
 function persist(){
-  if (!data) return;
-  try{
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-    const tmp = STORE_FILE + '.' + process.pid + '.tmp';
-    fs.writeFileSync(tmp, JSON.stringify(data), { mode: 0o600 });
-    fs.renameSync(tmp, STORE_FILE);
-  }catch(e){
-    console.error('BIP store write failed:', e && e.message);
-  }
+  storage.persist();
 }
 
 function id(prefix){
-  return (prefix || 'id') + '_' + crypto.randomBytes(8).toString('hex');
+  return storage.id(prefix);
 }
 
 function trimCollection(name, cap){
-  const d = ensureLoaded();
-  if (Array.isArray(d[name]) && d[name].length > cap){
-    d[name] = d[name].slice(d[name].length - cap);
-  }
+  storage.trimCollection(name, cap);
 }
 
 /* Test hook: drop the cached document so a test can point BIP_DATA_DIR
    at a temp directory and start fresh. */
 function reset(){
-  data = null;
+  storage.reset();
 }
 
 module.exports = {
-  SCHEMA_VERSION, CAPS, STORE_FILE,
-  ensureLoaded, persist, id, trimCollection, reset, emptyStore
+  SCHEMA_VERSION, CAPS,
+  /* Getters so the value always reflects the CURRENT BIP_DATA_DIR
+     (tests repoint it at runtime). */
+  get STORE_FILE(){ return STORE_FILE(); },
+  get DATA_DIR(){ return DATA_DIR(); },
+  ensureLoaded, persist, id, trimCollection, reset, emptyStore,
+  /* Durable-mode helpers used by the route layer. */
+  hydrate: storage.hydrate,
+  flush: storage.flush,
+  isDurable: storage.isDurable,
+  isHydrated: storage.isHydrated,
+  exportDocument: storage.exportDocument,
+  importDocument: storage.importDocument,
+  captureState: storage.captureState,
+  restoreState: storage.restoreState
 };

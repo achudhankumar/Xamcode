@@ -25,6 +25,12 @@ function sendJson(res, status, obj, requestId){
   }
   res.writeHead(status);
   res.end(body);
+  /* Return TRUE so route handlers can `return sendJson(...)` and the
+     dispatcher can tell "handled" from "not my route". The handlers
+     already follow this convention (denied/durableUnavailable return
+     true). Returning undefined would make the dispatcher fall through
+     and overwrite the response with a 404. */
+  return true;
 }
 
 /* ---------- Content-Security-Policy ----------

@@ -94,6 +94,83 @@ async function readJsonBody(req){
   }
 }
 
+/* ---------- durable write verification ----------
+   In durable mode a handler answers 200 as soon as it has mutated the
+   in-memory document; the database write happens right after. If that
+   write fails the client must NOT be told the write succeeded.
+   To keep every existing handler synchronous and unchanged, the
+   response is CAPTURED instead of being sent, the durable write is
+   flushed, and only then are the bytes released:
+     - write landed  -> the captured response is sent unchanged
+     - write failed  -> an honest 503 replaces it
+   Handlers that never persist (GETs) are unaffected apart from the
+   extra flush, which is a no-op when nothing is dirty. */
+function captureResponse(res){
+  const cap = { status: 200, headers: {}, body: null, ended: false, durable: false };
+  const origSetHeader = res.setHeader;
+  const origWriteHead = res.writeHead;
+  const origEnd = res.end;
+  res.setHeader = function(name, value){ cap.headers[name] = value; return res; };
+  res.writeHead = function(status, headers){
+    cap.status = status;
+    if (headers) for (const k of Object.keys(headers)) cap.headers[k] = headers[k];
+    return res;
+  };
+  res.end = function(chunk, enc, cb){ cap.body = chunk; cap.ended = true; return res; };
+  const handle = {
+    cap,
+    restore(){
+      res.setHeader = origSetHeader;
+      res.writeHead = origWriteHead;
+      res.end = origEnd;
+    }
+  };
+  /* A handler that already wrote straight to the database (e.g. the
+     durable import) marks itself durable, so a later flush failure is
+     not reported as "not stored". */
+  res.__bipCapture = handle;
+  return handle;
+}
+
+async function finishCaptured(res, requestId, captured, method){
+  const cap = captured.cap;
+  captured.restore();
+  if (!cap.ended) return;
+  let ok = true;
+  let detail;
+  try{
+    const flushed = await store.flush();
+    ok = !!flushed.ok;
+    detail = flushed.error && flushed.error.message;
+  }catch(e){
+    ok = false;
+    detail = e && e.message;
+  }
+  /* Only a MUTATION can be "not stored". A read that happens to run
+     while the database is down must not be reported as a failed
+     write; the read itself is served from the last known state. */
+  const isMutation = method && method !== 'GET' && method !== 'HEAD';
+  if (!ok && isMutation && !cap.durable && cap.status < 400){
+    /* The change was NOT stored. Say so instead of pretending. */
+    const body = JSON.stringify({
+      error: 'Durable Build-in-Public storage is unavailable. The change was not stored.',
+      code: 'DURABLE_STORAGE_UNAVAILABLE',
+      stored: false,
+      detail: detail || undefined,
+      requestId
+    });
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-store');
+    if (requestId) res.setHeader('X-Request-Id', requestId);
+    res.writeHead(503);
+    res.end(body);
+    return;
+  }
+  for (const k of Object.keys(cap.headers)) res.setHeader(k, cap.headers[k]);
+  res.writeHead(cap.status);
+  res.end(cap.body);
+}
+
 function serveBuildPage(req, res, requestId){
   const file = path.join(__dirname, '..', 'build.html');
   fs.readFile(file, (e, data) => {
@@ -447,6 +524,36 @@ async function handleAdmin(req, res, p, requestId){
   if (req.method === 'GET' && tail === 'waitlist/export'){
     return admin.adminExportWaitlist(req, res, requestId);
   }
+  /* Durable document export/import. The export reads the AUTHORITATIVE
+     stored state (Postgres in durable mode), not a stale in-memory copy.
+     The import only accepts known managed collections and is repeatable:
+     applying the same document twice converges on the same state. */
+  if (req.method === 'GET' && tail === 'document'){
+    let doc;
+    try{
+      doc = await store.exportDocument();
+    }catch(e){
+      return durableUnavailable(res, requestId, (e && e.message) || 'The document could not be exported.');
+    }
+    return sendJson(res, 200, { document: doc, requestId }, requestId);
+  }
+  if (req.method === 'POST' && tail === 'document'){
+    const body = await readJsonBody(req);
+    if (body.__bodyError) return sendJson(res, 400, { error: body.__bodyError, code: 'BAD_JSON', requestId }, requestId);
+    let out;
+    try{
+      out = await store.importDocument(body.document || body);
+    }catch(e){
+      const code = (e && e.code) || 'BAD_IMPORT';
+      if (code === 'DURABLE_STORAGE_UNAVAILABLE'){
+        return durableUnavailable(res, requestId, (e && e.message) || 'The document could not be imported.');
+      }
+      return sendJson(res, 400, { error: (e && e.message) || 'The import document was rejected.', code, requestId }, requestId);
+    }
+    /* The import already wrote through the durable backend. */
+    if (res.__bipCapture) res.__bipCapture.cap.durable = true;
+    return sendJson(res, 200, { imported: out.imported, durable: out.durable, at: out.at, requestId }, requestId);
+  }
   m = tail.match(/^estimate\/tasks\/([^/]+)$/);
   if ((req.method === 'PUT' || req.method === 'POST') && m){
     const body = await readJsonBody(req);
@@ -490,17 +597,45 @@ async function handleBip(req, res, url, p, requestId){
     return true;
   }
   if (!p.startsWith('/api/bip/')) return false;
-  const r1 = await handleBipApi(req, res, p, url, requestId);
-  if (r1) return true;
-  const r2 = await handleBipPosts(req, res, p, url, requestId);
-  if (r2) return true;
-  const r3 = await handleWebhook(req, res, p, requestId);
-  if (r3) return true;
-  const r4 = await handleIngest(req, res, p, requestId);
-  if (r4) return true;
-  const r5 = await handleAdmin(req, res, p, requestId);
-  if (r5) return true;
-  sendJson(res, 404, { error: 'Unknown Build-in-Public route.', code: 'NOT_FOUND', requestId }, requestId);
+  /* Durable mode: the document must be read from Postgres before any
+     route answers, otherwise the first request after a restart would
+     serve an empty board. A read failure is an honest 503 — never a
+     silent fallback to the ephemeral JSON file. */
+  if (store.isDurable() && !store.isHydrated()){
+    try{
+      await store.hydrate();
+    }catch(e){
+      return durableUnavailable(res, requestId, (e && e.message) || 'The durable document could not be read.');
+    }
+  }
+  /* The SSE stream writes directly to the socket, so it cannot be
+     captured. It is a read-only stream: nothing to flush. */
+  const streaming = (req.method === 'GET' && p === '/api/bip/stream');
+  const captured = streaming ? null : captureResponse(res);
+  try{
+    const r1 = await handleBipApi(req, res, p, url, requestId);
+    if (r1) return await finishHandled(res, requestId, captured, req.method);
+    const r2 = await handleBipPosts(req, res, p, url, requestId);
+    if (r2) return await finishHandled(res, requestId, captured, req.method);
+    const r3 = await handleWebhook(req, res, p, requestId);
+    if (r3) return await finishHandled(res, requestId, captured, req.method);
+    const r4 = await handleIngest(req, res, p, requestId);
+    if (r4) return await finishHandled(res, requestId, captured, req.method);
+    const r5 = await handleAdmin(req, res, p, requestId);
+    if (r5) return await finishHandled(res, requestId, captured, req.method);
+    sendJson(res, 404, { error: 'Unknown Build-in-Public route.', code: 'NOT_FOUND', requestId }, requestId);
+    return await finishHandled(res, requestId, captured, req.method);
+  }catch(e){
+    if (captured) captured.restore();
+    throw e;
+  }
+}
+
+/* Release the captured response, but only after the durable write
+   landed. A failed write becomes an honest 503. */
+async function finishHandled(res, requestId, captured, method){
+  if (!captured) return true;
+  await finishCaptured(res, requestId, captured, method);
   return true;
 }
 

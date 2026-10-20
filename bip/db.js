@@ -146,6 +146,48 @@ function rowToEvent(r){
   };
 }
 
+/* ---------- durable collections (document) API ----------
+   Every Build-in-Public collection that is NOT a dev event (milestones,
+   roadmap, chat, ideas, votes, comments, waitlist, reports, settings,
+   webhook delivery ids) lives in public.bip_collections as one JSON
+   document per collection, so the JSON import format and the live
+   format are the same document.
+
+   The dev-event feed keeps its own relational table (bip_events) and
+   the status board its own (bip_status); both are read from there. */
+
+/* Load every collection as one object: { milestones: [...], ... } */
+async function loadDocument(){
+  const res = await request('/rpc/bip_load_document', { method: 'POST', body: '{}' });
+  let out;
+  try{ out = await res.json(); }catch{ throw storageError('Durable storage returned a malformed document response.'); }
+  if (!out || typeof out !== 'object' || Array.isArray(out)) throw storageError('Durable storage returned an unexpected document response.');
+  return out;
+}
+
+/* Upsert the collections present in the payload. Other rows are left
+   untouched, so a partial save never destroys unrelated data. */
+async function saveDocument(collections){
+  const payload = Object.assign({}, collections || {});
+  const res = await request('/rpc/bip_save_document', { method: 'POST', body: JSON.stringify({ p_collections: payload }) });
+  const text = await res.text();
+  let out = null;
+  if (text && text.trim()){
+    try{ out = JSON.parse(text); }catch{ throw storageError('Durable storage returned a malformed save response.'); }
+  }
+  return { saved: Object.keys(payload).length, result: out };
+}
+
+/* Repeatable full import of a managed document. Importing the same
+   document twice converges on the same state (upsert, not append). */
+async function importDocument(doc){
+  const res = await request('/rpc/bip_import_document', { method: 'POST', body: JSON.stringify({ p_doc: doc || {} }) });
+  let out;
+  try{ out = await res.json(); }catch{ throw storageError('Durable storage returned a malformed import response.'); }
+  if (!out || typeof out.collections !== 'number') throw storageError('Durable storage returned an unexpected import response.');
+  return out;
+}
+
 /* Newest first, matching the JSON store's latestActivity() order. */
 async function fetchEvents(limit){
   const n = Math.max(1, Math.min(50, Number(limit) || 20));
@@ -170,5 +212,6 @@ async function fetchStatus(){
 }
 
 module.exports = {
-  isDurableMode, isConfigured, insertEvent, fetchEvents, fetchStatus
+  isDurableMode, isConfigured, insertEvent, fetchEvents, fetchStatus,
+  loadDocument, saveDocument, importDocument
 };

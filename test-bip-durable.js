@@ -41,6 +41,7 @@ function wait(ms){ return new Promise(r => setTimeout(r, ms)); }
 function createMockSupabase(){
   const rows = [];              // bip_events rows (insertion order)
   const statusRows = {};        // slot -> bip_status row
+  const collections = {};       // collection -> jsonb doc (bip_collections)
   const state = { fail: false, rpcCalls: 0 };
   function authed(req){
     return req.headers.apikey === SERVICE_KEY && req.headers.authorization === 'Bearer ' + SERVICE_KEY;
@@ -53,6 +54,26 @@ function createMockSupabase(){
       function json(code, obj){ res.writeHead(code, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(obj)); }
       if (!authed(req)) return json(401, { message: 'Invalid API key' });
       if (state.fail) return json(500, { message: 'injected database failure' });
+      /* ---- durable collections (document) RPCs ----
+         Mirrors supabase/migrations/20261020120000_bip_collections.sql:
+         load -> all collections merged, save/import -> upsert per key. */
+      if (req.method === 'POST' && url.pathname === '/rest/v1/rpc/bip_load_document'){
+        return json(200, Object.assign({}, collections));
+      }
+      if (req.method === 'POST' && url.pathname === '/rest/v1/rpc/bip_save_document'){
+        let p; try { p = JSON.parse(body); } catch (e) { return json(400, { message: 'bad json' }); }
+        const payload = p && p.p_collections ? p.p_collections : p;
+        for (const k of Object.keys(payload || {})) collections[k] = payload[k];
+        return json(200, null);
+      }
+      if (req.method === 'POST' && url.pathname === '/rest/v1/rpc/bip_import_document'){
+        let p; try { p = JSON.parse(body); } catch (e) { return json(400, { message: 'bad json' }); }
+        const payload = p && p.p_doc ? p.p_doc : p;
+        if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return json(400, { message: 'document must be a JSON object' });
+        let n = 0;
+        for (const k of Object.keys(payload)){ collections[k] = payload[k]; n++; }
+        return json(200, { collections: n, importedAt: new Date().toISOString() });
+      }
       if (req.method === 'POST' && url.pathname === '/rest/v1/rpc/bip_ingest_event'){
         state.rpcCalls++;
         let p; try { p = JSON.parse(body); } catch (e) { return json(400, { message: 'bad json' }); }
@@ -83,7 +104,7 @@ function createMockSupabase(){
       return json(404, { message: 'unknown mock route ' + url.pathname });
     });
   });
-  return { server, state, rows, statusRows };
+  return { server, state, rows, statusRows, collections };
 }
 
 function freshDir(prefix){
@@ -314,10 +335,19 @@ async function restartTests(){
 
   // The local JSON store must NOT mirror durable events: the read path
   // provably comes from the database, not a dual-written cache.
+  //
+  // In durable mode the local file is not written AT ALL (every managed
+  // collection lives in Postgres), so "no local store" is the strongest
+  // possible form of that guarantee. If a file happens to exist it must
+  // still carry zero dev events.
   const localStorePath = path.join(DATA2, 'store.json');
   let localDevEvents = null;
-  try { localDevEvents = JSON.parse(fs.readFileSync(localStorePath, 'utf8')).devEvents; } catch (e) {}
-  ok(Array.isArray(localDevEvents) && localDevEvents.length === 0, 'local store holds zero dev events (reads come from durable storage)');
+  if (fs.existsSync(localStorePath)){
+    let parsed = null;
+    try { parsed = JSON.parse(fs.readFileSync(localStorePath, 'utf8')); } catch (e) { parsed = null; }
+    localDevEvents = parsed ? parsed.devEvents : null;
+  }
+  ok(localDevEvents === null || (Array.isArray(localDevEvents) && localDevEvents.length === 0), 'local store holds zero dev events (reads come from durable storage)');
 
   // Credential leak scan over EVERY collected response body.
   const leaked = bodies.filter(b => b && b.indexOf(SERVICE_KEY) >= 0);
@@ -328,6 +358,111 @@ async function restartTests(){
 let mockRef = null;
 function mockRowsCount(){ return mockRef.rows.length; }
 
+
+/* ---------- Part D & E & F: Community, moderation, restart & failure handling ---------- */
+async function communityDurableTests(mock){
+  console.log('--- Part D: Community, suggestions, votes, comments, waitlist in durable mode ---');
+  await new Promise(res => { child.kill(); child.on('exit', res); });
+  await wait(500);
+  const DATA3 = freshDir('bip-durable-comm-');
+  const ADMIN_TOKEN = 'test-durable-admin-token-xyz-123';
+  const env = Object.assign({}, process.env, {
+    PORT: String(PORT), BIP_DATA_DIR: DATA3, HOST: '127.0.0.1',
+    BIP_STORAGE: 'supabase', SUPABASE_URL: MOCK_URL,
+    SUPABASE_SERVICE_ROLE_KEY: SERVICE_KEY, BIP_INGEST_TOKEN: INGEST_TOKEN,
+    BIP_ADMIN_TOKEN: ADMIN_TOKEN
+  });
+  delete env.GITHUB_WEBHOOK_SECRET;
+  child = spawn(process.execPath, ['server.js'], { cwd: __dirname, env, stdio: ['ignore', 'pipe', 'pipe'] });
+  await wait(2500);
+
+  let r = await req(PORT, 'POST', '/api/bip/chat', { nickname: 'Priya', text: 'Hello from durable Supabase test!' }, { 'Content-Type': 'application/json' });
+  bodies.push(r.body); let j = parse(r.body);
+  ok(r.status === 201 && j && j.message && j.message.text === 'Hello from durable Supabase test!', 'chat message posted via durable backend (201)');
+  const msgId = j && j.message && j.message.id;
+
+  r = await req(PORT, 'POST', '/api/bip/ideas', { title: 'Formula Derivation Sandbox', description: 'Interactive physics formula derivations with graphs.' }, { 'Content-Type': 'application/json' });
+  bodies.push(r.body); j = parse(r.body);
+  ok(r.status === 201 && j && j.idea && j.idea.title === 'Formula Derivation Sandbox', 'idea submitted via durable backend (201)');
+  const ideaId = j && j.idea && j.idea.id;
+
+  r = await req(PORT, 'POST', '/api/bip/ideas/' + encodeURIComponent(ideaId) + '/vote', {});
+  bodies.push(r.body); j = parse(r.body);
+  ok(r.status === 200 && j && j.votes === 1 && j.voted === true, 'idea vote registered and counted (votes=1)');
+
+  r = await req(PORT, 'POST', '/api/bip/ideas/' + encodeURIComponent(ideaId) + '/comments', { nickname: 'Karthik', text: 'Crucial for kinematics derivations!' }, { 'Content-Type': 'application/json' });
+  bodies.push(r.body); j = parse(r.body);
+  ok(r.status === 201 && j && j.comment && j.comment.text === 'Crucial for kinematics derivations!', 'comment added to idea via durable backend (201)');
+  const commentId = j && j.comment && j.comment.id;
+
+  r = await req(PORT, 'POST', '/api/bip/waitlist', { email: 'student.priya@college.edu', consent: true }, { 'Content-Type': 'application/json' });
+  bodies.push(r.body); j = parse(r.body);
+  ok(r.status === 201 && j && j.position >= 1, 'waitlist joined via durable backend (position >= 1)');
+
+  r = await req(PORT, 'POST', '/api/bip/reports', { kind: 'comment', targetId: commentId, reason: 'Test report moderation' }, { 'Content-Type': 'application/json' });
+  bodies.push(r.body); j = parse(r.body);
+  ok(r.status === 201 && j && (j.reportId || j.ok), 'abuse report filed via durable backend (201)');
+
+  const ADM_AUTH = { Authorization: 'Bearer ' + ADMIN_TOKEN };
+  r = await req(PORT, 'GET', '/api/bip/admin/overview', undefined, ADM_AUTH);
+  bodies.push(r.body); j = parse(r.body);
+  ok(r.status === 200 && j && j.counts && j.counts.ideas >= 1 && j.counts.chatMessages >= 1 && j.counts.comments >= 1, 'admin overview shows all community counts from durable backend');
+
+  r = await req(PORT, 'PUT', '/api/bip/admin/ideas/' + encodeURIComponent(ideaId) + '/status', { status: 'in_development', adminNote: 'Sprint 3 target' }, Object.assign({ 'Content-Type': 'application/json' }, ADM_AUTH));
+  bodies.push(r.body); j = parse(r.body);
+  ok(r.status === 200 && j && j.idea && j.idea.status === 'in_development', 'admin updated idea status to in_development');
+
+  r = await req(PORT, 'GET', '/api/bip/admin/waitlist/export', undefined, ADM_AUTH);
+  bodies.push(r.body);
+  ok(r.status === 200 && r.body.includes('student.priya@college.edu'), 'admin waitlist CSV export returns stored email');
+
+  console.log('--- Part E: Community data survives restart with WIPED local directory ---');
+  await new Promise(res => { child.kill(); child.on('exit', res); });
+  await wait(500);
+  try { fs.rmSync(DATA3, { recursive: true, force: true }); } catch (e) {}
+  child = spawn(process.execPath, ['server.js'], { cwd: __dirname, env, stdio: ['ignore', 'pipe', 'pipe'] });
+  await wait(2500);
+
+  r = await req(PORT, 'GET', '/api/bip/chat?limit=50'); bodies.push(r.body); j = parse(r.body);
+  ok(r.status === 200 && j && j.messages.some(m => m.id === msgId && m.text === 'Hello from durable Supabase test!'), 'chat message survived restart and wiped local directory');
+
+  r = await req(PORT, 'GET', '/api/bip/ideas?sort=new'); bodies.push(r.body); j = parse(r.body);
+  const foundIdea = j && j.ideas && j.ideas.find(i => i.id === ideaId);
+  ok(foundIdea && foundIdea.status === 'in_development' && foundIdea.votes === 1, 'idea survived restart with in_development status and 1 vote intact');
+
+  r = await req(PORT, 'GET', '/api/bip/ideas/' + encodeURIComponent(ideaId) + '/comments'); bodies.push(r.body); j = parse(r.body);
+  ok(j && j.comments && j.comments.some(c => c.id === commentId), 'idea comment survived restart and wiped local directory');
+
+  r = await req(PORT, 'GET', '/api/bip/waitlist/count'); bodies.push(r.body); j = parse(r.body);
+  ok(r.status === 200 && j && j.count >= 1, 'waitlist count survived restart and wiped local directory');
+
+  r = await req(PORT, 'GET', '/api/bip/admin/reports', undefined, ADM_AUTH); bodies.push(r.body); j = parse(r.body);
+  ok(r.status === 200 && j && j.reports && j.reports.some(rep => rep.targetId === commentId), 'abuse report survived restart and wiped local directory');
+
+  console.log('--- Part F: Storage outage during community mutation ---');
+  mock.state.fail = true;
+  r = await req(PORT, 'POST', '/api/bip/ideas', { title: 'Outage Temporary Idea', description: 'Should fail honestly during outage' }, { 'Content-Type': 'application/json' });
+  bodies.push(r.body);
+  ok(r.status === 503 && /DURABLE_STORAGE_UNAVAILABLE/.test(r.body), 'idea submission during outage -> 503 DURABLE_STORAGE_UNAVAILABLE');
+  mock.state.fail = false;
+
+  r = await req(PORT, 'GET', '/api/bip/ideas?sort=new'); bodies.push(r.body); j = parse(r.body);
+  const phantom = j && j.ideas && j.ideas.find(i => i.title === 'Outage Temporary Idea');
+  ok(!phantom, 'failed mutation was rolled back and not served (no split-brain or phantom records)');
+
+  console.log('--- Part G: Repeatable CLI migration (bip/migrate.js) ---');
+  const migrateMod = require('./bip/migrate');
+  ok(typeof migrateMod.mergeCollection === 'function', 'bip/migrate exposes mergeCollection helper');
+  const sampleIdeas = [{ id: 'idea_1', title: 'Idea 1', votes: 2 }];
+  const mergedOnce = migrateMod.mergeCollection('ideas', [], sampleIdeas);
+  ok(mergedOnce.length === 1 && mergedOnce[0].id === 'idea_1', 'migrate: initial merge populates records');
+  const mergedTwice = migrateMod.mergeCollection('ideas', mergedOnce, sampleIdeas);
+  ok(mergedTwice.length === 1, 'migrate: repeated merge creates zero duplicate records (idempotent)');
+  const sampleWl = [{ id: 'wl_1', emailHash: 'hash1', email: 'a@b.com' }];
+  const wlTwice = migrateMod.mergeCollection('waitlist', sampleWl, sampleWl);
+  ok(wlTwice.length === 1, 'migrate: waitlist repeated merge creates zero duplicates');
+}
+
 /* ---------- runner ---------- */
 (async () => {
   const mock = createMockSupabase();
@@ -337,6 +472,7 @@ function mockRowsCount(){ return mockRef.rows.length; }
     await unitTests(mock);
     await httpTests(mock);
     await restartTests();
+    await communityDurableTests(mock);
   } catch (e) {
     fail++;
     console.log('  FAIL suite error: ' + (e && e.message));

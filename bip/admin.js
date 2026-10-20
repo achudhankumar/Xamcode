@@ -331,6 +331,10 @@ function adminExportWaitlist(req, res, requestId){
     'X-Content-Type-Options': 'nosniff'
   });
   res.end('\ufeff' + lines.join('\r\n'));
+  /* Return TRUE: this handler writes the response itself (CSV, not JSON),
+     so it must still tell the dispatcher "handled". Returning undefined
+     made the dispatcher fall through and overwrite the CSV with a 404. */
+  return true;
 }
 
 module.exports = {
