@@ -67,12 +67,14 @@ body[data-theme="bubblegum"][data-mode="light"]{
 
 /* -------- DIGITAL (grid · wireframes · data streams) -------- */
 body[data-theme="digital"][data-mode="dark"]{
-  --bg:#07080a;--surface:#0d1117;--surface-strong:#151b24;
-  --text:#e8f0ff;--muted:#7a8ab0;
-  --accent:#5b8cff;--accent-2:#7dd3fc;--accent-3:#22d3ee;
-  --line:rgba(91,140,255,.18);--shadow:rgba(0,4,12,.6);
-  --aurora-1:#5b8cff;--aurora-2:#22d3ee;--aurora-3:#a78bfa;--aurora-opacity:.95;
-  --grain-alpha:.04;--grain-alpha-light:.03;
+  --bg:#07070B;--surface:#0B0B13;--surface-strong:#12121E;
+  --text:#f8fafc;--muted:#94a3b8;
+  --accent:#38BDF8;--accent-2:#D946EF;--accent-3:#10B981;
+  --line:rgba(255,255,255,.08);--shadow:rgba(0,0,0,.75);
+  --aurora-1:#38BDF8;--aurora-2:#D946EF;--aurora-3:#10B981;--aurora-opacity:.95;
+  --glass-border:1px solid rgba(255,255,255,.08);
+  --glass-blur:blur(24px);
+  --grain-alpha:.03;--grain-alpha-light:.02;
 }
 body[data-theme="digital"][data-mode="light"]{
   --bg:#f1f5ff;--surface:#ffffff;--surface-strong:#e4ebff;

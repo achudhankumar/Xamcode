@@ -346,7 +346,13 @@
   /* ---------------- 8. Bicycle Mechanics & Powertrain ---------------- */
   const bicycle = {
     label: 'Bicycle Powertrain & Mechanical Advantage',
-    defaults: { cadence: 60, gearRatio: 2.5 },
+    domain: 'Kinematics & Machine Dynamics',
+    components: [
+      { id: 'crankGroup', name: 'Pedals & Crankset', desc: 'Rider foot pedals connected to dual crank arms converting downward leg thrust into rotational driving torque.' },
+      { id: 'chain', name: 'Roller Chain Drive', desc: 'High-strength steel roller chain linking the front chainring with the rear cog cassette.' },
+      { id: 'wheels', name: 'Tensioned Spoke Wheels', desc: 'Pneumatic rubber tires on rim-spoke assemblies translating rotational axle velocity into linear travel.' }
+    ],
+    defaults: { cadence: 45, gearRatio: 2.5 },
     sliders: [
       { key: 'cadence', label: 'Cadence (Pedaling RPM)', min: 20, max: 120, step: 1, unit: ' RPM' },
       { key: 'gearRatio', label: 'Gear Ratio (Chainring / Sprocket)', min: 1.0, max: 4.5, step: 0.1, unit: 'x' }
@@ -361,6 +367,7 @@
       // Wheel groups
       const rG = svgEl('g', { transform:'translate(95, 160)' }, svg);
       const fG = svgEl('g', { transform:'translate(305, 160)' }, svg);
+      ctx.refs.wheels = rG;
 
       // Tires & Rims
       svgEl('circle', { cx:0, cy:0, r:48, stroke:'#0284c7', 'stroke-width':4, fill:'rgba(2,132,199,0.06)' }, rG);
@@ -395,6 +402,7 @@
       svgEl('line', { x1:95, y1:168, x2:195, y2:176, stroke:'#facc15', 'stroke-width':2, 'stroke-dasharray':'4 3' }, svg);
       ctx.refs.chainTop = svg.children[svg.children.length - 2];
       ctx.refs.chainBottom = svg.children[svg.children.length - 1];
+      ctx.refs.chain = ctx.refs.chainTop;
 
       // Front Chainring
       svgEl('circle', { cx:195, cy:160, r:18, stroke:'#facc15', 'stroke-width':2.5, fill:'rgba(250,204,21,0.2)' }, svg);
@@ -414,43 +422,54 @@
     },
     update(ctx, p, t){
       const r = ctx.refs;
-      const cadenceRps = (p.cadence || 60) / 60;
+      const cadenceRps = (p.cadence || 45) / 60;
       const crankAngle = (t * cadenceRps * 2 * Math.PI) % (2 * Math.PI);
       const wheelAngle = (crankAngle * (p.gearRatio || 2.5)) % (2 * Math.PI);
 
       // Rotate crank arm
       const cDeg = (crankAngle * 180 / Math.PI).toFixed(1);
-      r.crankGroup.setAttribute('transform', `translate(195, 160) rotate(${cDeg})`);
+      if (r.crankGroup) r.crankGroup.setAttribute('transform', 'translate(195, 160) rotate(' + cDeg + ')');
 
       // Rotate wheel spokes
-      for(let i=0; i<6; i++){
-        const baseAng = (i * Math.PI) / 3;
-        const curAng = baseAng + wheelAngle;
-        const x = (48 * Math.cos(curAng)).toFixed(1);
-        const y = (48 * Math.sin(curAng)).toFixed(1);
-        r.rSpokes[i].setAttribute('x2', x); r.rSpokes[i].setAttribute('y2', y);
-        r.fSpokes[i].setAttribute('x2', x); r.fSpokes[i].setAttribute('y2', y);
+      if (r.rSpokes && r.fSpokes) {
+        for(let i=0; i<6; i++){
+          const baseAng = (i * Math.PI) / 3;
+          const curAng = baseAng + wheelAngle;
+          const x = (48 * Math.cos(curAng)).toFixed(1);
+          const y = (48 * Math.sin(curAng)).toFixed(1);
+          if (r.rSpokes[i]) { r.rSpokes[i].setAttribute('x2', x); r.rSpokes[i].setAttribute('y2', y); }
+          if (r.fSpokes[i]) { r.fSpokes[i].setAttribute('x2', x); r.fSpokes[i].setAttribute('y2', y); }
+        }
       }
 
-      // Scroll ground line backwards to simulate forward velocity
-      const wheelCircumference = 2.12; // meters (standard 700c wheel)
-      const speedKmh = ((p.cadence || 60) * (p.gearRatio || 2.5) * wheelCircumference * 60) / 1000;
+      // Scroll ground line backwards
+      const wheelCircumference = 2.12;
+      const speedKmh = ((p.cadence || 45) * (p.gearRatio || 2.5) * wheelCircumference * 60) / 1000;
       const groundOffset = ((t * speedKmh * 8) % 20).toFixed(1);
-      r.ground.setAttribute('stroke-dashoffset', groundOffset);
-      r.chainTop.setAttribute('stroke-dashoffset', (-groundOffset * 1.5).toFixed(1));
-      r.chainBottom.setAttribute('stroke-dashoffset', (groundOffset * 1.5).toFixed(1));
+      if (r.ground) r.ground.setAttribute('stroke-dashoffset', groundOffset);
+      if (r.chainTop) r.chainTop.setAttribute('stroke-dashoffset', (-groundOffset * 1.5).toFixed(1));
+      if (r.chainBottom) r.chainBottom.setAttribute('stroke-dashoffset', (groundOffset * 1.5).toFixed(1));
 
-      r.speedText.textContent = `Speed: ${speedKmh.toFixed(1)} km/h  ·  Pedaling: ${p.cadence} RPM`;
-      r.ratioText.textContent = `Gear Ratio: ${(p.gearRatio||2.5).toFixed(1)}:1  ·  Crank Torque → Chain Tension → Wheel Rotation`;
+      if (r.speedText) r.speedText.textContent = 'Speed: ' + speedKmh.toFixed(1) + ' km/h  ·  Pedaling: ' + p.cadence + ' RPM';
+      if (r.ratioText) r.ratioText.textContent = 'Gear Ratio: ' + (p.gearRatio||2.5).toFixed(1) + ':1  ·  Crank Torque → Chain Tension → Wheel Rotation';
     }
   };
-
   /* ---------------- 9. 4-Stroke Engine Cycle ---------------- */
   const engine = {
     label: '4-Stroke Internal Combustion Engine',
-    defaults: { rpm: 1200 },
+    domain: 'Mechanical Engineering · Thermodynamics',
+    components: [
+      { id: 'piston', name: 'Piston Assembly', desc: 'Precision aluminum reciprocating crown converting combustion pressure into mechanical linear stroke force.' },
+      { id: 'spark', name: 'Spark Plug', desc: 'Ignition node generating high-voltage spark to ignite compressed stoichiometric air-fuel mixture.' },
+      { id: 'valvIn', name: 'Intake Valve', desc: 'Camshaft-actuated poppet valve opening during intake stroke to draw fresh fuel-air charge into cylinder.' },
+      { id: 'valvEx', name: 'Exhaust Valve', desc: 'High-temperature poppet valve opening during exhaust stroke to expel burned combustion byproducts.' },
+      { id: 'conRod', name: 'Connecting Rod', desc: 'High-tensile forged steel arm transmitting linear reciprocating piston force to the rotating crankshaft.' },
+      { id: 'crankPin', name: 'Crankshaft & Pin', desc: 'Counterbalanced rotating crank transforming reciprocating stroke into continuous rotary torque.' },
+      { id: 'chamber', name: 'Combustion Chamber', desc: 'Hermetic clearance volume enclosed between cylinder head and piston top where peak pressure develops.' }
+    ],
+    defaults: { rpm: 45 },
     sliders: [
-      { key: 'rpm', label: 'Engine Speed', min: 600, max: 3600, step: 100, unit: ' RPM' }
+      { key: 'rpm', label: 'Engine Speed', min: 15, max: 2400, step: 5, unit: ' RPM' }
     ],
     build(ctx, p){
       const svg = ctx.svg;
@@ -482,7 +501,8 @@
     },
     update(ctx, p, t){
       const r = ctx.refs;
-      const rps = (p.rpm || 1200) / 60;
+      const rpm = p.rpm || 45;
+      const rps = rpm / 60;
       const totalAngle = (t * rps * 2 * Math.PI) % (4 * Math.PI); // 4-stroke cycle = 720° (4pi)
       const crankAngle = totalAngle % (2 * Math.PI);
 
@@ -493,52 +513,73 @@
 
       // Piston slider-crank kinematics
       const pistonY = cY - Math.sqrt(rodL*rodL - Math.pow(cX - 200, 2)) - 19;
-      r.piston.setAttribute('y', (pistonY - 19).toFixed(1));
-      r.conRod.setAttribute('x1', '200');
-      r.conRod.setAttribute('y1', pistonY.toFixed(1));
-      r.conRod.setAttribute('x2', cX.toFixed(1));
-      r.conRod.setAttribute('y2', cY.toFixed(1));
-      r.crankPin.setAttribute('cx', cX.toFixed(1));
-      r.crankPin.setAttribute('cy', cY.toFixed(1));
-
-      // 4-Stroke Cycle States
-      let phase = '', col = '#38bdf8';
-      if(totalAngle < Math.PI){
-        phase = '1. INTAKE STROKE · Air-Fuel Mixture Drawn In';
-        col = '#38bdf8';
-        r.valvIn.setAttribute('y2', '52'); r.valvEx.setAttribute('y2', '45');
-        r.chamber.setAttribute('fill', 'rgba(56, 189, 248, 0.25)');
-        r.spark.setAttribute('r', '0');
-      } else if(totalAngle < 2 * Math.PI){
-        phase = '2. COMPRESSION STROKE · Mixture Compressed';
-        col = '#f59e0b';
-        r.valvIn.setAttribute('y2', '45'); r.valvEx.setAttribute('y2', '45');
-        r.chamber.setAttribute('fill', 'rgba(245, 158, 11, 0.25)');
-        r.spark.setAttribute('r', '0');
-      } else if(totalAngle < 3 * Math.PI){
-        phase = '3. POWER STROKE · Spark Ignites Combustion';
-        col = '#f43f5e';
-        r.valvIn.setAttribute('y2', '45'); r.valvEx.setAttribute('y2', '45');
-        r.chamber.setAttribute('fill', 'rgba(244, 63, 94, 0.55)');
-        r.spark.setAttribute('r', totalAngle < 2.3 * Math.PI ? '10' : '0');
-      } else {
-        phase = '4. EXHAUST STROKE · Burned Gases Expelled';
-        col = '#94a3b8';
-        r.valvIn.setAttribute('y2', '45'); r.valvEx.setAttribute('y2', '52');
-        r.chamber.setAttribute('fill', 'rgba(148, 163, 184, 0.2)');
-        r.spark.setAttribute('r', '0');
+      if (r.piston) r.piston.setAttribute('y', (pistonY - 19).toFixed(1));
+      if (r.conRod) {
+        r.conRod.setAttribute('x1', '200');
+        r.conRod.setAttribute('y1', pistonY.toFixed(1));
+        r.conRod.setAttribute('x2', cX.toFixed(1));
+        r.conRod.setAttribute('y2', cY.toFixed(1));
+      }
+      if (r.crankPin) {
+        r.crankPin.setAttribute('cx', cX.toFixed(1));
+        r.crankPin.setAttribute('cy', cY.toFixed(1));
       }
 
-      r.phaseLabel.textContent = phase;
-      r.phaseLabel.setAttribute('fill', col);
-      r.telemetry.textContent = `Engine: ${p.rpm} RPM  ·  Kinematic Cycle: 4-Stroke Otto Cycle`;
+      // 4-Stroke Cycle States
+      let phase = '', col = '#38bdf8', strokeNum = 1;
+      if(totalAngle < Math.PI){
+        phase = '1. INTAKE STROKE · Air-Fuel Mixture Drawn In (0° - 180°)';
+        col = '#38bdf8';
+        strokeNum = 1;
+        if (r.valvIn) r.valvIn.setAttribute('y2', '52');
+        if (r.valvEx) r.valvEx.setAttribute('y2', '45');
+        if (r.chamber) r.chamber.setAttribute('fill', 'rgba(56, 189, 248, 0.25)');
+        if (r.spark) r.spark.setAttribute('r', '0');
+      } else if(totalAngle < 2 * Math.PI){
+        phase = '2. COMPRESSION STROKE · Mixture Compressed (180° - 360°)';
+        col = '#f59e0b';
+        strokeNum = 2;
+        if (r.valvIn) r.valvIn.setAttribute('y2', '45');
+        if (r.valvEx) r.valvEx.setAttribute('y2', '45');
+        if (r.chamber) r.chamber.setAttribute('fill', 'rgba(245, 158, 11, 0.25)');
+        if (r.spark) r.spark.setAttribute('r', '0');
+      } else if(totalAngle < 3 * Math.PI){
+        phase = '3. POWER STROKE · Spark Ignites Combustion (360° - 540°)';
+        col = '#f43f5e';
+        strokeNum = 3;
+        if (r.valvIn) r.valvIn.setAttribute('y2', '45');
+        if (r.valvEx) r.valvEx.setAttribute('y2', '45');
+        if (r.chamber) r.chamber.setAttribute('fill', 'rgba(244, 63, 94, 0.55)');
+        if (r.spark) r.spark.setAttribute('r', totalAngle < 2.3 * Math.PI ? '10' : '0');
+      } else {
+        phase = '4. EXHAUST STROKE · Burned Gases Expelled (540° - 720°)';
+        col = '#94a3b8';
+        strokeNum = 4;
+        if (r.valvIn) r.valvIn.setAttribute('y2', '45');
+        if (r.valvEx) r.valvEx.setAttribute('y2', '52');
+        if (r.chamber) r.chamber.setAttribute('fill', 'rgba(148, 163, 184, 0.2)');
+        if (r.spark) r.spark.setAttribute('r', '0');
+      }
+
+      if (r.phaseLabel) {
+        r.phaseLabel.textContent = phase;
+        r.phaseLabel.setAttribute('fill', col);
+      }
+      if (r.telemetry) {
+        r.telemetry.textContent = 'Pacing: ' + rpm + ' RPM (Instructional 0.35x)  ·  Stroke: ' + strokeNum + '/4  ·  Otto Cycle';
+      }
     }
   };
-
   /* ---------------- 10. Heart & Cardiovascular Dynamics ---------------- */
   const heart = {
     label: 'Cardiovascular Circulatory System',
-    defaults: { bpm: 72 },
+    domain: 'Cardiovascular Physiology · Hemodynamics',
+    components: [
+      { id: 'chambers', name: 'Atrial Chambers (RA/LA)', desc: 'Upper collection chambers receiving venous deoxygenated blood and pulmonary oxygenated blood.' },
+      { id: 'ventricles', name: 'Ventricular Pumps (RV/LV)', desc: 'Thick muscular lower chambers generating systolic pressure to pump systemic & pulmonary circulation.' },
+      { id: 'ecg', name: 'Electrocardiogram (ECG)', desc: 'Electrical depolarization rhythm driving coordinated myocardial atrial and ventricular contraction.' }
+    ],
+    defaults: { bpm: 60 },
     sliders: [
       { key: 'bpm', label: 'Heart Rate', min: 40, max: 160, step: 1, unit: ' BPM' }
     ],
@@ -551,14 +592,16 @@
       ctx.refs.heartPath = svgEl('path', { d:'M 0 -35 C -45 -75 -90 -25 -65 30 C -45 70 0 95 0 95 C 0 95 45 70 65 30 C 90 -25 45 -75 0 -35 Z', fill:'rgba(244,63,94,0.3)', stroke:'#f43f5e', 'stroke-width':3 }, ctx.refs.heartG);
 
       // Chambers
-      svgEl('circle', { cx:-28, cy:-10, r:16, fill:'rgba(56,189,248,0.25)', stroke:'#38bdf8', 'stroke-width':1.5 }, ctx.refs.heartG);
-      svgEl('circle', { cx:28, cy:-10, r:16, fill:'rgba(244,63,94,0.25)', stroke:'#f43f5e', 'stroke-width':1.5 }, ctx.refs.heartG);
+      const ra = svgEl('circle', { cx:-28, cy:-10, r:16, fill:'rgba(56,189,248,0.25)', stroke:'#38bdf8', 'stroke-width':1.5 }, ctx.refs.heartG);
+      const la = svgEl('circle', { cx:28, cy:-10, r:16, fill:'rgba(244,63,94,0.25)', stroke:'#f43f5e', 'stroke-width':1.5 }, ctx.refs.heartG);
+      ctx.refs.chambers = ra;
       svgEl('text', { x:-28, y:-7, 'text-anchor':'middle', fill:'#38bdf8', 'font-size':9, 'font-weight':700 }, ctx.refs.heartG).textContent = 'RA';
       svgEl('text', { x:28, y:-7, 'text-anchor':'middle', fill:'#f43f5e', 'font-size':9, 'font-weight':700 }, ctx.refs.heartG).textContent = 'LA';
 
       // Ventricles
-      svgEl('circle', { cx:-20, cy:35, r:22, fill:'rgba(56,189,248,0.35)', stroke:'#38bdf8', 'stroke-width':1.5 }, ctx.refs.heartG);
-      svgEl('circle', { cx:20, cy:35, r:22, fill:'rgba(244,63,94,0.35)', stroke:'#f43f5e', 'stroke-width':1.5 }, ctx.refs.heartG);
+      const rv = svgEl('circle', { cx:-20, cy:35, r:22, fill:'rgba(56,189,248,0.35)', stroke:'#38bdf8', 'stroke-width':1.5 }, ctx.refs.heartG);
+      const lv = svgEl('circle', { cx:20, cy:35, r:22, fill:'rgba(244,63,94,0.35)', stroke:'#f43f5e', 'stroke-width':1.5 }, ctx.refs.heartG);
+      ctx.refs.ventricles = rv;
       svgEl('text', { x:-20, y:38, 'text-anchor':'middle', fill:'#38bdf8', 'font-size':10, 'font-weight':800 }, ctx.refs.heartG).textContent = 'RV';
       svgEl('text', { x:20, y:38, 'text-anchor':'middle', fill:'#f43f5e', 'font-size':10, 'font-weight':800 }, ctx.refs.heartG).textContent = 'LV';
 
@@ -570,20 +613,17 @@
     },
     update(ctx, p, t){
       const r = ctx.refs;
-      const bps = (p.bpm || 72) / 60;
-      const phase = (t * bps) % 1; // 0 to 1 cardiac cycle
+      const bps = (p.bpm || 60) / 60;
+      const phase = (t * bps) % 1;
 
-      // Dual-pulse heartbeat expansion (lub-dub)
       let scale = 1.0;
-      if(phase < 0.15) scale = 1.0 + 0.18 * Math.sin((phase / 0.15) * Math.PI); // Atrial systole
-      else if(phase > 0.25 && phase < 0.45) scale = 1.0 + 0.24 * Math.sin(((phase - 0.25) / 0.20) * Math.PI); // Ventricular systole
+      if(phase < 0.15) scale = 1.0 + 0.18 * Math.sin((phase / 0.15) * Math.PI);
+      else if(phase > 0.25 && phase < 0.45) scale = 1.0 + 0.24 * Math.sin(((phase - 0.25) / 0.20) * Math.PI);
 
-      r.heartG.setAttribute('transform', `translate(200, 110) scale(${scale.toFixed(3)})`);
-      r.status.textContent = `Pulse: ${p.bpm} BPM  ·  ${phase < 0.45 ? 'Systole (Pumping)' : 'Diastole (Refilling)'}`;
+      if (r.heartG) r.heartG.setAttribute('transform', 'translate(200, 110) scale(' + scale.toFixed(3) + ')');
+      if (r.status) r.status.textContent = 'Pulse: ' + p.bpm + ' BPM  ·  ' + (phase < 0.45 ? 'Systole (Pumping)' : 'Diastole (Refilling)');
     }
   };
-
-
   /* ---------------- 7. Generic (LLM-drawn) ---------------- */
   const generic = {
     label:'Illustration',
@@ -674,24 +714,33 @@
   }
 
   function createPlayer(mount, type, params, extra){
+    // Dual signature support: createPlayer('engine', params) OR createPlayer(domEl, 'engine', params)
+    if(typeof mount === 'string' && VISUALS[mount]){
+      extra = params;
+      params = type;
+      type = mount;
+      mount = (typeof document !== 'undefined' && document.createElement) ? document.createElement('div') : { appendChild: function(c){ if(!this.children) this.children=[]; this.children.push(c); return c; }, children:[] };
+    }
     const def = VISUALS[type];
     if(!def || !mount) return null;
     const p = Object.assign({}, def.defaults, params || {});
-    /* svg_instruction is a sibling of params (a caption), not a slider — keep
-       it available to build() for the generic visual without treating it as a
-       numeric parameter. */
     if(extra && typeof extra === 'object'){
       for(const k in extra){ if(p[k] === undefined) p[k] = extra[k]; }
     }
+
     let playing = true, raf = 0, t = 0, last = 0;
+    let speedMult = 0.5; // Pedagogical pacing: instructional slow-motion default
+    let isScrubbing = false;
 
     mount.innerHTML = '';
+    if(Array.isArray(mount.children)) mount.children.length = 0;
+
     const wrap = document.createElement('div');
     wrap.className = 'av-wrap';
     const card = document.createElement('div');
     card.className = 'av-card';
 
-    /* ---- title bar: icon + "Visual Explanation" + subtitle ---- */
+    /* ---- Title bar ---- */
     const bar = document.createElement('div');
     bar.className = 'av-bar';
     const title = document.createElement('div');
@@ -701,7 +750,7 @@
     const titleText = document.createElement('span');
     titleText.className = 'av-title-text';
     const head = document.createElement('span');
-    head.className = 'av-title-h'; head.textContent = 'Visual Explanation';
+    head.className = 'av-title-h'; head.textContent = 'Pedagogical Simulation';
     const sub = document.createElement('span');
     sub.className = 'av-title-sub'; sub.textContent = def.label;
     titleText.appendChild(head); titleText.appendChild(sub);
@@ -716,10 +765,217 @@
     controls.appendChild(playBtn); controls.appendChild(replayBtn);
     bar.appendChild(title); bar.appendChild(controls);
 
-    /* ---- the SVG canvas ---- */
-    const svg = svgEl('svg', { viewBox:'0 0 400 250', class:'av-svg', preserveAspectRatio:'xMidYMid meet', role:'img', 'aria-label':def.label });
+    /* ---- Canvas Container with Floating HUD ---- */
+    const canvasWrap = document.createElement('div');
+    canvasWrap.className = 'av-canvas-container';
+    canvasWrap.style.position = 'relative';
 
-    /* ---- optional sliders (instant reaction, even when paused) ---- */
+    const hud = document.createElement('div');
+    hud.className = 'av-hud';
+
+    const domainPill = document.createElement('div');
+    domainPill.className = 'av-hud-pill';
+    domainPill.textContent = def.domain || 'Interactive Physics';
+
+    const hudRight = document.createElement('div');
+    hudRight.style.display = 'flex';
+    hudRight.style.alignItems = 'center';
+    hudRight.style.gap = '8px';
+    hudRight.style.pointerEvents = 'auto';
+
+    const fpsBadge = document.createElement('span');
+    fpsBadge.className = 'av-fps-badge';
+    fpsBadge.innerHTML = '<span class="av-fps-dot"></span>60 FPS';
+
+    const speedGroup = document.createElement('div');
+    speedGroup.className = 'av-speed-controls';
+
+    const speedBtns = [];
+    const speedDefs = [
+      { label: '0.1x', val: 0.1 },
+      { label: '0.25x', val: 0.25 },
+      { label: '0.5x', val: 0.5 },
+      { label: '1.0x', val: 1.0 },
+      { label: 'Step ⏭', val: 'step' }
+    ];
+
+    speedDefs.forEach(s => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'av-speed-btn' + (s.val === speedMult ? ' active' : '');
+      btn.textContent = s.label;
+      btn.title = s.val === 'step' ? 'Advance single cycle stroke' : ('Playback speed ' + s.label);
+      btn.addEventListener('click', (e) => {
+        if(e && e.stopPropagation) e.stopPropagation();
+        if(s.val === 'step'){
+          setPlaying(false);
+          t += 0.35;
+          def.update(ctx, p, t);
+          syncScrubber();
+          return;
+        }
+        speedMult = s.val;
+        speedBtns.forEach(b => {
+          if(b.classList && b.classList.remove) b.classList.remove('active');
+          else if(b.className) b.className = b.className.replace(/\bactive\b/g, '').trim();
+        });
+        if(btn.classList && btn.classList.add) btn.classList.add('active');
+        else btn.className += ' active';
+        if(!playing) setPlaying(true);
+      });
+      speedBtns.push(btn);
+      speedGroup.appendChild(btn);
+    });
+
+    hudRight.appendChild(fpsBadge);
+    hudRight.appendChild(speedGroup);
+    hud.appendChild(domainPill);
+    hud.appendChild(hudRight);
+
+    /* ---- The SVG canvas ---- */
+    const svg = svgEl('svg', { viewBox:'0 0 400 250', class:'av-svg', preserveAspectRatio:'xMidYMid meet', role:'img', 'aria-label':def.label });
+    canvasWrap.appendChild(hud);
+    canvasWrap.appendChild(svg);
+
+    /* ---- Timeline Scrubber ---- */
+    const scrubberRow = document.createElement('div');
+    scrubberRow.className = 'av-scrubber-row';
+
+    const scrubLabel = document.createElement('span');
+    scrubLabel.className = 'av-scrubber-label';
+    scrubLabel.textContent = 'Stroke Scrubber';
+
+    const scrubInput = document.createElement('input');
+    scrubInput.type = 'range';
+    scrubInput.className = 'av-scrubber-slider';
+    scrubInput.min = '0';
+    scrubInput.max = '100';
+    scrubInput.value = '0';
+    scrubInput.setAttribute('aria-label', 'Simulation cycle scrubber');
+
+    const scrubVal = document.createElement('span');
+    scrubVal.className = 'av-scrubber-val';
+    scrubVal.textContent = '0%';
+
+    scrubInput.addEventListener('mousedown', () => { isScrubbing = true; setPlaying(false); });
+    scrubInput.addEventListener('touchstart', () => { isScrubbing = true; setPlaying(false); });
+    scrubInput.addEventListener('input', () => {
+      const pct = parseFloat(scrubInput.value) || 0;
+      scrubVal.textContent = Math.round(pct) + '%';
+      const period = p.rpm ? (120 / p.rpm) : (p.cadence ? (120 / p.cadence) : 3.0);
+      t = (pct / 100) * period;
+      def.update(ctx, p, t);
+    });
+    const stopScrub = () => { isScrubbing = false; };
+    scrubInput.addEventListener('mouseup', stopScrub);
+    scrubInput.addEventListener('touchend', stopScrub);
+
+    scrubberRow.appendChild(scrubLabel);
+    scrubberRow.appendChild(scrubInput);
+    scrubberRow.appendChild(scrubVal);
+
+    function syncScrubber(){
+      if(isScrubbing) return;
+      const period = p.rpm ? (120 / p.rpm) : (p.cadence ? (120 / p.cadence) : 3.0);
+      const pct = ((t % period) / period) * 100;
+      scrubInput.value = pct.toFixed(1);
+      scrubVal.textContent = Math.round(pct) + '%';
+    }
+
+    /* ---- Component Isolation & Explanatory Micro-card ---- */
+    let isolateRow = null;
+    let microCard = null;
+    if(def.components && def.components.length > 0){
+      isolateRow = document.createElement('div');
+      isolateRow.className = 'av-isolate-row';
+
+      const isolateTitle = document.createElement('span');
+      isolateTitle.className = 'av-isolate-title';
+      isolateTitle.textContent = 'Isolate:';
+      isolateRow.appendChild(isolateTitle);
+
+      const allChip = document.createElement('button');
+      allChip.type = 'button';
+      allChip.className = 'av-isolate-chip active';
+      allChip.textContent = 'Show All';
+      isolateRow.appendChild(allChip);
+
+      microCard = document.createElement('div');
+      microCard.className = 'av-micro-card';
+      microCard.style.display = 'none';
+
+      const microHeader = document.createElement('div');
+      microHeader.className = 'av-micro-card-header';
+      const microName = document.createElement('span');
+      microName.className = 'av-micro-name';
+      const microTag = document.createElement('span');
+      microTag.className = 'av-micro-tag';
+      microTag.textContent = 'FOCUS MODE';
+      microHeader.appendChild(microName);
+      microHeader.appendChild(microTag);
+
+      const microDesc = document.createElement('p');
+      microDesc.className = 'av-micro-desc';
+      microCard.appendChild(microHeader);
+      microCard.appendChild(microDesc);
+
+      const chips = [allChip];
+
+      function isolate(comp){
+        chips.forEach(c => {
+          if(c.classList && c.classList.remove) c.classList.remove('active');
+          else if(c.className) c.className = c.className.replace(/\bactive\b/g, '').trim();
+        });
+        if(!comp){
+          if(allChip.classList && allChip.classList.add) allChip.classList.add('active');
+          else allChip.className += ' active';
+          microCard.style.display = 'none';
+          Object.keys(ctx.refs).forEach(k => {
+            const el = ctx.refs[k];
+            if(el && el.style){ el.style.opacity = '1'; el.style.filter = ''; }
+          });
+        } else {
+          Object.keys(ctx.refs).forEach(k => {
+            const el = ctx.refs[k];
+            if(!el || !el.style) return;
+            const isMatch = (k === comp.id) ||
+              (comp.id === 'piston' && (k === 'piston' || k === 'conRod')) ||
+              (comp.id === 'valves' && (k === 'valvIn' || k === 'valvEx'));
+            if(isMatch){
+              el.style.opacity = '1';
+              el.style.filter = 'drop-shadow(0 0 8px #38bdf8)';
+            } else if(k === 'phaseLabel' || k === 'telemetry' || k === 'status'){
+              el.style.opacity = '1';
+            } else {
+              el.style.opacity = '0.15';
+              el.style.filter = '';
+            }
+          });
+          microName.textContent = comp.name;
+          microDesc.textContent = comp.desc;
+          microCard.style.display = 'block';
+        }
+      }
+
+      allChip.addEventListener('click', () => isolate(null));
+
+      def.components.forEach(comp => {
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = 'av-isolate-chip';
+        chip.textContent = comp.name.split(' ')[0];
+        chip.title = comp.name;
+        chip.addEventListener('click', () => {
+          isolate(comp);
+          if(chip.classList && chip.classList.add) chip.classList.add('active');
+          else chip.className += ' active';
+        });
+        chips.push(chip);
+        isolateRow.appendChild(chip);
+      });
+    }
+
+    /* ---- Optional sliders ---- */
     const sliders = def.sliders || [];
     let sliderWrap = null;
     if(sliders.length){
@@ -735,25 +991,28 @@
         input.addEventListener('input', () => {
           p[s.key] = parseFloat(input.value);
           val.textContent = input.value + (s.unit || '');
-          def.update(ctx, p, t);            /* instant reaction, even when paused */
+          def.update(ctx, p, t);
         });
         row.appendChild(name); row.appendChild(input); row.appendChild(val);
         sliderWrap.appendChild(row);
       });
     }
 
-    /* ---- footer status bar (demo chrome) ---- */
+    /* ---- Footer ---- */
     const foot = document.createElement('div');
     foot.className = 'av-foot';
     const status = document.createElement('span');
     status.className = 'av-status';
     const badge = document.createElement('span');
-    badge.className = 'av-badge'; badge.textContent = 'Aura generated';
+    badge.className = 'av-badge'; badge.textContent = 'Aura Pedagogical Engine';
     foot.appendChild(status); foot.appendChild(badge);
 
-    /* ---- assemble: card holds everything; wrap is the glow shell ---- */
+    /* ---- Assemble Card ---- */
     card.appendChild(bar);
-    card.appendChild(svg);
+    card.appendChild(canvasWrap);
+    card.appendChild(scrubberRow);
+    if(isolateRow) card.appendChild(isolateRow);
+    if(microCard) card.appendChild(microCard);
     if(sliderWrap) card.appendChild(sliderWrap);
     card.appendChild(foot);
     wrap.appendChild(card);
@@ -764,22 +1023,24 @@
 
     function frame(now){
       const dt = last ? (now - last) / 1000 : 0;
-      last = now; t += dt;
+      last = now;
+      t += dt * speedMult;
       def.update(ctx, p, t);
+      syncScrubber();
       raf = requestAnimationFrame(frame);
     }
     function start(){ if(raf) return; last = 0; raf = requestAnimationFrame(frame); }
     function stop(){ if(raf) cancelAnimationFrame(raf); raf = 0; }
     function setIcon(){ playBtn.innerHTML = playing ? '⏸' : '▶'; }
-    function setStatus(){ status.textContent = playing ? 'Playing • Educational animation' : 'Paused • Press play to resume'; }
+    function setStatus(){ status.textContent = playing ? 'Playing • Educational animation' : 'Paused • Drag scrubber or press play'; }
     function setPlaying(v){ playing = v; setIcon(); setStatus(); if(playing) start(); else stop(); }
-    function replay(){ t = 0; last = 0; def.update(ctx, p, t); if(!playing) setPlaying(true); }
+    function replay(){ t = 0; last = 0; def.update(ctx, p, t); syncScrubber(); if(!playing) setPlaying(true); }
 
     playBtn.addEventListener('click', () => setPlaying(!playing));
     replayBtn.addEventListener('click', replay);
     replayBtn.innerHTML = '↻';
 
-    setPlaying(true);                                 /* autoplay on mount */
+    setPlaying(true);
 
     return {
       el: wrap,
@@ -787,9 +1048,8 @@
       replay,
       setParam(k, v){ if(k in p){ p[k] = v; def.update(ctx, p, t); } },
       getParams(){ return Object.assign({}, p); },
-      destroy(){ stop(); mount.innerHTML = ''; }
+      destroy(){ stop(); mount.innerHTML = ''; if(Array.isArray(mount.children)) mount.children.length = 0; }
     };
   }
-
   window.XC.auraVisuals = { detect, extractParams, createPlayer, VISUALS };
 })();
