@@ -232,7 +232,7 @@ function accountButton(){
 }
 
 function header(){
-  const mode = (localStorage.getItem('xc-mode') || 'dark');
+  const mode = (localStorage.getItem('xc-mode') || 'light');
   const activeTheme = (document.body && document.body.getAttribute('data-theme')) || (localStorage.getItem('xc-theme') || 'digital');
   const activeView = state.view==='study'?'workspace':state.view==='formula'?'formulas':state.view;
   const navItem = (view,label) => `<button type="button" data-nav="${view}" class="${activeView===view?'active':''}" ${activeView===view?'aria-current="page"':''}>${label}</button>`;
@@ -379,165 +379,500 @@ function initInteractivePreview(){
     b.onclick = () => switchPreview(b.dataset.pvTab);
   });
   
-  switchPreview('bicycle');
+  switchPreview('engine');
+}
+
+
+const VAATHIYAR_SHOWCASE_SECTIONS = [
+  {
+    title: '1. Overview & Core Intuition',
+    tag: 'INTUITION',
+    html: '<h4 style="margin:0 0 8px;font-size:16px;color:var(--wc-text-primary);">Why Layered Architecture Exists</h4>' +
+          '<p style="color:var(--wc-text-secondary);font-size:14px;line-height:1.6;margin:0 0 12px;">Without layering, every software program would need custom code to talk to Wi-Fi antennas, fiber cables, and satellite links. The OSI 7-Layer model divides network communication into seven independent abstraction layers where each layer performs a specific service for the layer above it.</p>' +
+          '<div style="background:var(--wc-bg-alt);border:1px solid var(--wc-border);border-radius:8px;padding:12px;font-family:var(--wc-font-mono);font-size:12px;color:var(--wc-blue);">' +
+          'Principle: Changing the Physical layer (e.g., from copper wire to optical fiber) requires ZERO changes to your HTTP/Web browser application layer!' +
+          '</div>'
+  },
+  {
+    title: '2. Real-World Analogy',
+    tag: 'ANALOGY',
+    html: '<h4 style="margin:0 0 8px;font-size:16px;color:var(--wc-text-primary);">The International Postal Letter Analogy</h4>' +
+          '<p style="color:var(--wc-text-secondary);font-size:14px;line-height:1.6;margin:0 0 12px;">Imagine writing a letter to a friend in Tokyo. You write the text (<b>Application</b>), translate to common format (<b>Presentation</b>), start a correspondence (<b>Session</b>), seal it in an envelope with return guarantee (<b>Transport/TCP</b>), write street address (<b>Network/IP</b>), put in mail truck (<b>Data Link/Ethernet</b>), and drive on asphalt roads (<b>Physical wire</b>).</p>' +
+          '<p style="color:var(--wc-text-secondary);font-size:13.5px;line-height:1.5;margin:0;">The postman does not read your private message — they only inspect the envelope headers.</p>'
+  },
+  {
+    title: '3. Mechanical & Working Principles',
+    tag: 'MECHANICS',
+    html: '<h4 style="margin:0 0 8px;font-size:16px;color:var(--wc-text-primary);">Data Encapsulation & Decapsulation</h4>' +
+          '<p style="color:var(--wc-text-secondary);font-size:14px;line-height:1.6;margin:0 0 12px;">As user data moves downward through the OSI stack, each layer wraps the payload by prepending its own protocol header (PDU):</p>' +
+          '<div style="display:flex;flex-direction:column;gap:6px;font-family:var(--wc-font-mono);font-size:12px;">' +
+          '<div style="background:var(--wc-bg-alt);padding:6px 12px;border-radius:6px;border-left:3px solid #7C3AED;">Layer 7-5: Application Data [Payload]</div>' +
+          '<div style="background:var(--wc-bg-alt);padding:6px 12px;border-radius:6px;border-left:3px solid #2563EB;">Layer 4 (Transport): [TCP Header | Data] -&gt; <b>Segment</b></div>' +
+          '<div style="background:var(--wc-bg-alt);padding:6px 12px;border-radius:6px;border-left:3px solid #06B6D4;">Layer 3 (Network): [IP Header | TCP Header | Data] -&gt; <b>Packet</b></div>' +
+          '<div style="background:var(--wc-bg-alt);padding:6px 12px;border-radius:6px;border-left:3px solid #10B981;">Layer 2 (Data Link): [MAC Header | IP Header | TCP Header | Data | FCS] -&gt; <b>Frame</b></div>' +
+          '</div>'
+  },
+  {
+    title: '4. Multi-Level Explanation',
+    tag: 'MULTI-LEVEL',
+    html: '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;">' +
+          '<div style="background:var(--wc-bg-alt);padding:14px;border-radius:8px;border:1px solid var(--wc-border);">' +
+          '<span style="font-family:var(--wc-font-mono);font-size:10.5px;font-weight:700;color:#10B981;">LEVEL 1: ELI5</span>' +
+          '<p style="font-size:13px;color:var(--wc-text-secondary);line-height:1.5;margin:8px 0 0;">Russian nesting dolls. You pack your message into smaller and smaller boxes so trucks can ship it safely.</p>' +
+          '</div>' +
+          '<div style="background:var(--wc-bg-alt);padding:14px;border-radius:8px;border:1px solid var(--wc-border);">' +
+          '<span style="font-family:var(--wc-font-mono);font-size:10.5px;font-weight:700;color:#2563EB;">LEVEL 2: EXAM DEFINITION</span>' +
+          '<p style="font-size:13px;color:var(--wc-text-secondary);line-height:1.5;margin:8px 0 0;">A 7-tier reference framework (ISO/IEC 7498-1) standardizing communication functions regardless of underlying hardware architecture.</p>' +
+          '</div>' +
+          '<div style="background:var(--wc-bg-alt);padding:14px;border-radius:8px;border:1px solid var(--wc-border);">' +
+          '<span style="font-family:var(--wc-font-mono);font-size:10.5px;font-weight:700;color:#7C3AED;">LEVEL 3: DEEP DIVE</span>' +
+          '<p style="font-size:13px;color:var(--wc-text-secondary);line-height:1.5;margin:8px 0 0;">Kernel socket buffers (sk_buff), NIC ring descriptors, interrupt coalescing, and protocol demultiplexing via ethertype &amp; IP protocol numbers.</p>' +
+          '</div>' +
+          '</div>'
+  },
+  {
+    title: '5. Traps & Common Exam Pitfalls',
+    tag: 'TRAPS & TRUTHS',
+    html: '<h4 style="margin:0 0 8px;font-size:16px;color:#EF4444;">Top 3 Mistakes Students Make in Anna Univ / GATE</h4>' +
+          '<ul style="margin:0;padding-left:18px;color:var(--wc-text-secondary);font-size:13.5px;line-height:1.6;">' +
+          '<li><b>Trap 1:</b> Thinking IP addresses deliver packets to specific applications. <i>Truth:</i> IP addresses reach the host machine; <b>Port numbers (Transport layer)</b> deliver to the specific application process.</li>' +
+          '<li><b>Trap 2:</b> Believing OSI and TCP/IP have the same layer count. <i>Truth:</i> OSI has 7 layers; TCP/IP compresses Session &amp; Presentation into Application (4 or 5 layers).</li>' +
+          '<li><b>Trap 3:</b> Confusing MAC address (hop-by-hop local link) with IP address (end-to-end host identifier).</li>' +
+          '</ul>'
+  },
+  {
+    title: '6. Comparison Matrix: TCP vs UDP',
+    tag: 'COMPARISON',
+    html: '<table style="width:100%;border-collapse:collapse;font-size:13px;color:var(--wc-text-secondary);">' +
+          '<thead>' +
+          '<tr style="border-bottom:1px solid var(--wc-border);text-align:left;color:var(--wc-text-primary);">' +
+          '<th style="padding:8px 10px;">Metric</th>' +
+          '<th style="padding:8px 10px;color:var(--wc-blue);">TCP (Transmission Control)</th>' +
+          '<th style="padding:8px 10px;color:var(--wc-purple);">UDP (User Datagram)</th>' +
+          '</tr>' +
+          '</thead>' +
+          '<tbody>' +
+          '<tr style="border-bottom:1px solid var(--wc-border);"><td style="padding:8px 10px;font-weight:600;">Connection</td><td style="padding:8px 10px;">Connection-oriented (3-way handshake)</td><td style="padding:8px 10px;">Connectionless (fire &amp; forget)</td></tr>' +
+          '<tr style="border-bottom:1px solid var(--wc-border);"><td style="padding:8px 10px;font-weight:600;">Reliability</td><td style="padding:8px 10px;">Guaranteed (ACK + retransmissions)</td><td style="padding:8px 10px;">Unreliable (no ACKs, packets may drop)</td></tr>' +
+          '<tr style="border-bottom:1px solid var(--wc-border);"><td style="padding:8px 10px;font-weight:600;">Header Overhead</td><td style="padding:8px 10px;">20 - 60 Bytes</td><td style="padding:8px 10px;">8 Bytes (fixed, lightweight)</td></tr>' +
+          '<tr><td style="padding:8px 10px;font-weight:600;">Use Cases</td><td style="padding:8px 10px;">Web (HTTP), Email (SMTP), File transfer</td><td style="padding:8px 10px;">DNS, Video streaming, Multiplayer gaming</td></tr>' +
+          '</tbody>' +
+          '</table>'
+  },
+  {
+    title: '7. Worked Problem & Formula',
+    tag: 'WORKED EXAMPLE',
+    html: '<div style="font-family:var(--wc-font-mono);font-size:13px;color:var(--wc-text-primary);background:var(--wc-bg-alt);padding:14px;border-radius:8px;border:1px solid var(--wc-border);">' +
+          '<div style="color:var(--wc-blue);font-weight:700;margin-bottom:6px;">PROBLEM: Bandwidth-Delay Product (BDP)</div>' +
+          '<p style="margin:0 0 8px;font-size:12.5px;color:var(--wc-text-secondary);font-family:var(--wc-font-body);">A 100 Mbps fiber link has a Round-Trip Time (RTT) of 40 ms. How much data can be "in flight" on the wire?</p>' +
+          '<div style="background:#FFFFFF;padding:10px;border-radius:6px;border:1px solid var(--wc-border);font-size:12px;margin-bottom:8px;">' +
+          '<b>Formula:</b> BDP = Bandwidth × RTT<br>' +
+          'BDP = (100 × 10^6 bits/sec) × (0.040 sec)<br>' +
+          'BDP = 4,000,000 bits = <b>500 Kilobytes (0.5 MB)</b>' +
+          '</div>' +
+          '<span style="font-size:11.5px;color:#10B981;">Exam Insight: This represents the minimum TCP receive window needed to saturate the link!</span>' +
+          '</div>'
+  },
+  {
+    title: '8. Cheat Code & Recall Mnemonics',
+    tag: 'CHEAT CODE',
+    html: '<div style="background:var(--wc-blue-soft);border:1px solid rgba(37,99,235,0.2);border-radius:8px;padding:16px;">' +
+          '<div style="font-family:var(--wc-font-mono);font-size:11px;font-weight:700;color:var(--wc-blue);margin-bottom:6px;">⚡ HIGH-YIELD MNEMONIC</div>' +
+          '<div style="font-size:16px;font-weight:800;color:var(--wc-text-primary);margin-bottom:8px;">' +
+          '"Please Do Not Throw Sausage Pizza Away"' +
+          '</div>' +
+          '<div style="display:flex;gap:6px;flex-wrap:wrap;font-family:var(--wc-font-mono);font-size:11px;">' +
+          '<span style="background:#FFFFFF;padding:3px 8px;border-radius:4px;border:1px solid var(--wc-border);"><b>P</b>hysical</span>' +
+          '<span style="background:#FFFFFF;padding:3px 8px;border-radius:4px;border:1px solid var(--wc-border);"><b>D</b>ata Link</span>' +
+          '<span style="background:#FFFFFF;padding:3px 8px;border-radius:4px;border:1px solid var(--wc-border);"><b>N</b>etwork</span>' +
+          '<span style="background:#FFFFFF;padding:3px 8px;border-radius:4px;border:1px solid var(--wc-border);"><b>T</b>ransport</span>' +
+          '<span style="background:#FFFFFF;padding:3px 8px;border-radius:4px;border:1px solid var(--wc-border);"><b>S</b>ession</span>' +
+          '<span style="background:#FFFFFF;padding:3px 8px;border-radius:4px;border:1px solid var(--wc-border);"><b>P</b>resentation</span>' +
+          '<span style="background:#FFFFFF;padding:3px 8px;border-radius:4px;border:1px solid var(--wc-border);"><b>A</b>pplication</span>' +
+          '</div>' +
+          '</div>'
+  }
+];
+
+function initVaathiyarTabs(){
+  const container = document.getElementById('landingVaathiyarCard');
+  if(!container) return;
+  const content = document.getElementById('landingVaathiyarContent');
+  if(!content) return;
+
+  function renderVTab(idx){
+    const item = VAATHIYAR_SHOWCASE_SECTIONS[idx] || VAATHIYAR_SHOWCASE_SECTIONS[0];
+    content.innerHTML = item.html;
+    container.querySelectorAll('.wc-vaathiyar-tab').forEach((tab, i) => {
+      tab.classList.toggle('active', i === idx);
+    });
+  }
+
+  container.querySelectorAll('.wc-vaathiyar-tab').forEach((tab, i) => {
+    tab.onclick = () => renderVTab(i);
+  });
+
+  renderVTab(0);
+}
+
+function initLandingQuiz(){
+  const card = document.getElementById('landingQuizCard');
+  if(!card) return;
+  const fb = document.getElementById('landingQuizFeedback');
+
+  card.querySelectorAll('.wc-quiz-opt').forEach(opt => {
+    opt.onclick = () => {
+      const idx = parseInt(opt.dataset.landingOpt, 10);
+      card.querySelectorAll('.wc-quiz-opt').forEach(o => {
+        o.classList.remove('correct', 'wrong');
+        const ind = o.querySelector('.wc-opt-indicator');
+        if(ind) ind.textContent = 'Select';
+      });
+
+      if(idx === 1){ // Transport Layer - correct!
+        opt.classList.add('correct');
+        const ind = opt.querySelector('.wc-opt-indicator');
+        if(ind) ind.textContent = '✓ Correct';
+        if(fb){
+          fb.className = 'wc-quiz-feedback visible success';
+          fb.innerHTML = '<b>✓ Verified Mastery (+50 XP):</b> The Transport Layer (Layer 4) handles end-to-end communication, port addressing (TCP/UDP), segment sequencing, and reliable retransmissions.';
+        }
+      } else {
+        opt.classList.add('wrong');
+        const ind = opt.querySelector('.wc-opt-indicator');
+        if(ind) ind.textContent = '✕ Incorrect';
+        if(fb){
+          fb.className = 'wc-quiz-feedback visible diagnostic';
+          if(idx === 0){
+            fb.innerHTML = '<b>✕ Diagnostic:</b> The Network Layer (IP) handles logical host-to-host routing across networks, but does NOT guarantee segment reliability or port-level multiplexing.';
+          } else {
+            fb.innerHTML = '<b>✕ Diagnostic:</b> The Data Link Layer operates solely on the local physical link (hop-by-hop framing via MAC addresses), not across end-to-end internet routes.';
+          }
+        }
+      }
+    };
+  });
 }
 
 function landingView(){
   const totalQuestions = TOPICS.reduce((sum,t)=>sum+t.questions.length,0);
   const unitCount = new Set(TOPICS.map(t=>t.unit||'I')).size;
-  return header()+`<main class="page-shell">
-    <section class="hero">
-      <div class="hero-copy">
-        <div class="hero-kicker"><span></span> AUTONOMOUS PEDAGOGICAL AI • VIBE CODING ARCHITECTURE</div>
-        <h1>Transform 20 to 400+ Page PDFs Into<br><span class="out">Human-Paced,</span> <span class="accent hl">Interactive 3D Spatial Environments.</span></h1>
-        <p>Upload your textbook chapters, lecture slides, or complex research papers. XAMCODE AI decomposes dense technical PDFs into structured units, topic hierarchies, interactive mechanical &amp; algorithmic simulations, and verified Socratic tutoring.</p>
-        <div class="hero-btns">
-          <button class="btn-hero" data-open="upload">Upload PDF &amp; Build 3D Space <span aria-hidden="true">↗</span></button>
-          <button class="btn-hero-outline" data-nav="workspace">Open Interactive Workspace</button>
-        </div>
-        <div class="hero-proof"><span class="proof-avatars" aria-hidden="true"><i>AI</i><i>PDF</i><i>↗</i></span><span>Start with the material you already have</span></div>
-        <div class="stats" aria-label="Sample course contents">
-          <span><b>${unitCount}</b><small>sample units</small></span>
-          <span><b>${TOPICS.length}</b><small>sample concepts</small></span>
-          <span><b>${totalQuestions}</b><small>sample questions</small></span>
-        </div>
-      </div>
-      <div class="preview" id="heroInteractivePreview">
-        <div class="pv-head">
-          <span><i></i> DYNAMIC VISUAL ENGINE</span>
-          <div class="pv-tabs" role="tablist" aria-label="Visual simulations">
-            <button type="button" class="pv-tab active" data-pv-tab="bicycle">🚲 Bicycle</button>
-            <button type="button" class="pv-tab" data-pv-tab="engine">⚙️ 4-Stroke</button>
-            <button type="button" class="pv-tab" data-pv-tab="heart">🫀 Heart</button>
-            <button type="button" class="pv-tab" data-pv-tab="sort">📊 Bubble Sort</button>
-            <button type="button" class="pv-tab" data-pv-tab="network">🌐 Network</button>
-          </div>
-        </div>
-        <div class="pv-scene" id="pvStage" style="min-height:360px;position:relative;display:flex;align-items:center;justify-content:center;background:rgba(8,12,20,0.85);border-radius:12px;overflow:hidden;padding:12px;"></div>
-        <div class="pv-caption" id="pvCaption" style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-          <span class="pv-caption-icon">⚡</span>
-          <span style="flex:1;"><b id="pvTitle">Kinematic Mechanical Drive</b><small id="pvSub">Pedal crank rotation, moving chain, gear ratio transmission &amp; live km/h speed</small></span>
-          <button type="button" class="btn-sm" id="pvAskAura" style="padding:5px 12px;font-size:11px;background:var(--accent,#2dd4bf);color:#061016;border:none;border-radius:6px;cursor:pointer;font-weight:700;">Ask AURA AI ↗</button>
-        </div>
-      </div>
-    </section>
+  return header() + '<main class="page-shell">' +
+    '<!-- HERO SECTION -->' +
+    '<section class="hero">' +
+      '<div class="hero-copy">' +
+        '<div class="hero-kicker"><span></span> AUTONOMOUS PEDAGOGICAL AI • VIBE CODING STUDIO</div>' +
+        '<h1>Transform 20 to 400+ Page PDFs Into<br><span class="hl-blue">Human-Paced,</span> <span class="hl-accent">Interactive 3D Spatial Environments.</span></h1>' +
+        '<p>Upload dense technical textbooks, lecture slides, or complex research papers. XAMCODE AI parses the document into structured units, topic hierarchies, pedagogical slow-motion simulations, and continuous in-situ quizzes for verified exam readiness.</p>' +
+        '<div class="hero-btns">' +
+          '<button class="btn-hero" data-open="upload">Upload PDF &amp; Build 3D Space <span aria-hidden="true">↗</span></button>' +
+          '<button class="btn-hero-outline" data-nav="workspace">Open Interactive Workspace</button>' +
+        '</div>' +
+        '<div class="hero-proof"><span class="proof-avatars" aria-hidden="true"><i>AI</i><i>PDF</i><i>↗</i></span><span>Start with the material you already have</span></div>' +
+        '<div class="stats" aria-label="Sample course contents">' +
+          '<span><b>' + unitCount + '</b><small>sample units</small></span>' +
+          '<span><b>' + TOPICS.length + '</b><small>sample concepts</small></span>' +
+          '<span><b>' + totalQuestions + '</b><small>sample questions</small></span>' +
+          '<span><b>4</b><small>interactive 3D engines</small></span>' +
+        '</div>' +
+      '</div>' +
 
-    <!-- Visual Learning Aura AI Prompts Showcase -->
-    <section class="sec aura-visual-sec" style="padding:44px 0 24px;">
-      <div class="section-heading">
-        <div>
-          <span class="section-kicker">AURA AI TUTOR • TOPIC-SPECIFIC VISUAL LEARNING</span>
-          <h2>Ask Anything. <span>See It Move In Real-Time.</span></h2>
-        </div>
-        <p class="sub">AURA AI doesn't just output generic text — it generates interactive dynamic simulations for mechanical movements, physical principles, and algorithmic execution traces.</p>
-      </div>
-      <div class="grid-4" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px;margin-top:22px;">
-        <div class="card aura-prompt-card" data-launch-aura="How does a bicycle work?" role="button" tabindex="0">
-          <div style="font-size:26px;margin-bottom:10px;">🚲</div>
-          <h4 style="margin:0 0 6px;font-size:16px;color:var(--text,#f1efe3);">How does a bicycle work?</h4>
-          <p style="font-size:12.5px;color:var(--dim,#9aa38d);margin:0 0 14px;line-height:1.5;">Pedal crank kinematics, chain drive transmission, gear ratio calculations &amp; live km/h speed readout.</p>
-          <span style="font-size:12px;color:var(--accent,#2dd4bf);font-weight:700;">Launch Simulation &amp; Ask AURA →</span>
-        </div>
-        <div class="card aura-prompt-card" data-launch-aura="Explain the four-stroke internal combustion engine cycle" role="button" tabindex="0">
-          <div style="font-size:26px;margin-bottom:10px;">⚙️</div>
-          <h4 style="margin:0 0 6px;font-size:16px;color:var(--text,#f1efe3);">4-Stroke Engine Otto Cycle</h4>
-          <p style="font-size:12.5px;color:var(--dim,#9aa38d);margin:0 0 14px;line-height:1.5;">Slider-crank kinematics, reciprocating piston, spark combustion flame &amp; 4-stroke Otto cycle phases.</p>
-          <span style="font-size:12px;color:var(--accent,#2dd4bf);font-weight:700;">Launch Simulation &amp; Ask AURA →</span>
-        </div>
-        <div class="card aura-prompt-card" data-launch-aura="How does Bubble Sort work step by step?" role="button" tabindex="0">
-          <div style="font-size:26px;margin-bottom:10px;">📊</div>
-          <h4 style="margin:0 0 6px;font-size:16px;color:var(--text,#f1efe3);">Bubble Sort Algorithm</h4>
-          <p style="font-size:12.5px;color:var(--dim,#9aa38d);margin:0 0 14px;line-height:1.5;">Deterministic state-machine player with step-by-step element comparisons, swaps &amp; live pseudocode tracing.</p>
-          <span style="font-size:12px;color:var(--accent,#2dd4bf);font-weight:700;">Launch Simulator &amp; Ask AURA →</span>
-        </div>
-        <div class="card aura-prompt-card" data-launch-aura="How does the human heart pump blood through the cardiac chambers?" role="button" tabindex="0">
-          <div style="font-size:26px;margin-bottom:10px;">🫀</div>
-          <h4 style="margin:0 0 6px;font-size:16px;color:var(--text,#f1efe3);">Cardiac Cycle &amp; ECG</h4>
-          <p style="font-size:12.5px;color:var(--dim,#9aa38d);margin:0 0 14px;line-height:1.5;">Atrial and ventricular systole/diastole pumping cycles with real-time synchronized ECG voltage waveform.</p>
-          <span style="font-size:12px;color:var(--accent,#2dd4bf);font-weight:700;">Launch Simulation &amp; Ask AURA →</span>
-        </div>
-      </div>
-    </section>
+      '<!-- Live 5-Step Transformation Pipeline Simulator Mount -->' +
+      '<div id="heroPipelineMount" style="width:100%;"></div>' +
+    '</section>' +
 
-    <!-- Primary Reference Standard: Computer Networks -->
-    <section class="sec" style="padding:36px 0 24px;">
-      <div class="section-heading">
-        <div>
-          <span class="section-kicker">PRIMARY REFERENCE IMPLEMENTATION • UNIT 1</span>
-          <h2>Computer Networks — <span>Reference Study Standard</span></h2>
-        </div>
-        <p class="sub">Explore the foundational model of structured visual learning: verified topic hierarchy, visual placement, interactive quizzes, cheat codes, and Athiyar Mode.</p>
-      </div>
-      <div class="grid-3" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px;margin-top:20px;">
-        <div class="card sample-curriculum-card" data-study="0">
-          <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
-            <span class="panel-tag" style="color:var(--accent,#2dd4bf);font-weight:700;font-size:11px;">UNIT I · TOPIC 01</span>
-            <span style="font-size:11px;color:var(--dim,#9aa38d);">2 Questions · 1 Visual</span>
-          </div>
-          <h3 style="margin:0 0 8px;font-size:17px;color:var(--text,#f1efe3);">OSI 7-Layer Reference Model vs TCP/IP</h3>
-          <p style="font-size:13px;color:var(--dim,#9aa38d);line-height:1.5;margin:0 0 14px;">Understand encapsulation, abstraction layers, protocol data units (PDUs), and data flow across layers.</p>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <span style="font-size:11px;padding:3px 8px;border-radius:4px;background:rgba(45,212,191,0.15);color:var(--accent,#2dd4bf);font-weight:600;">🎬 Visual Lesson</span>
-            <span style="font-size:11px;padding:3px 8px;border-radius:4px;background:rgba(168,85,247,0.15);color:#c084fc;font-weight:600;">⚡ Cheat Code</span>
-            <span style="font-size:11px;padding:3px 8px;border-radius:4px;background:rgba(245,158,11,0.15);color:#fbbf24;font-weight:600;">🎓 Vaathiyar Mode</span>
-          </div>
-        </div>
-        <div class="card sample-curriculum-card" data-study="1">
-          <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
-            <span class="panel-tag" style="color:var(--accent,#2dd4bf);font-weight:700;font-size:11px;">UNIT I · TOPIC 02</span>
-            <span style="font-size:11px;color:var(--dim,#9aa38d);">2 Questions · 1 Visual</span>
-          </div>
-          <h3 style="margin:0 0 8px;font-size:17px;color:var(--text,#f1efe3);">Network Topologies &amp; Physical Media</h3>
-          <p style="font-size:13px;color:var(--dim,#9aa38d);line-height:1.5;margin:0 0 14px;">Bus, Star, Ring, and Mesh topologies; transmission media performance, redundancy, and collision domains.</p>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <span style="font-size:11px;padding:3px 8px;border-radius:4px;background:rgba(45,212,191,0.15);color:var(--accent,#2dd4bf);font-weight:600;">🎬 Visual Lesson</span>
-            <span style="font-size:11px;padding:3px 8px;border-radius:4px;background:rgba(168,85,247,0.15);color:#c084fc;font-weight:600;">❓ Quiz Flow</span>
-            <span style="font-size:11px;padding:3px 8px;border-radius:4px;background:rgba(245,158,11,0.15);color:#fbbf24;font-weight:600;">🎓 Vaathiyar Mode</span>
-          </div>
-        </div>
-        <div class="card sample-curriculum-card" data-study="2">
-          <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
-            <span class="panel-tag" style="color:var(--accent,#2dd4bf);font-weight:700;font-size:11px;">UNIT I · TOPIC 03</span>
-            <span style="font-size:11px;color:var(--dim,#9aa38d);">2 Questions · 1 Visual</span>
-          </div>
-          <h3 style="margin:0 0 8px;font-size:17px;color:var(--text,#f1efe3);">Packet Switching vs Circuit Switching</h3>
-          <p style="font-size:13px;color:var(--dim,#9aa38d);line-height:1.5;margin:0 0 14px;">Store-and-forward switching delays, statistical multiplexing, queueing delays, and packet loss.</p>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <span style="font-size:11px;padding:3px 8px;border-radius:4px;background:rgba(45,212,191,0.15);color:var(--accent,#2dd4bf);font-weight:600;">🎬 Visual Lesson</span>
-            <span style="font-size:11px;padding:3px 8px;border-radius:4px;background:rgba(168,85,247,0.15);color:#c084fc;font-weight:600;">⚡ Cheat Code</span>
-            <span style="font-size:11px;padding:3px 8px;border-radius:4px;background:rgba(245,158,11,0.15);color:#fbbf24;font-weight:600;">❓ Quiz Flow</span>
-          </div>
-        </div>
-      </div>
-      <div style="text-align:center;margin-top:20px;">
-        <button type="button" class="btn-hero-outline" data-nav="workspace" style="display:inline-flex;padding:10px 24px;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;">
-          Open Complete 5-Unit Curriculum (29 Topics &amp; 31 Formulas) →
-        </button>
-      </div>
-    </section>
+    '<!-- SECTION 2: THE NIGHT-BEFORE-EXAM DILEMMA -->' +
+    '<section class="wc-section">' +
+      '<div class="wc-section-header">' +
+        '<span class="wc-section-kicker">THE NIGHT-BEFORE-EXAM DILEMMA</span>' +
+        '<h2 class="wc-section-title">Why Traditional Studying Fails.<br><span>How XAMCODE AI Makes It Stick.</span></h2>' +
+        '<p class="wc-section-sub">Staring at a 300-page unsearchable PDF at 2 AM induces cognitive overload. XAMCODE AI transforms passive reading into active, spatial mastery.</p>' +
+      '</div>' +
 
-    <div class="bq-marquee" aria-hidden="true">
-      <div class="bq-marquee-track"><span class="bq-marquee-item"><i>✳</i> Visual learning steps</span><span class="bq-marquee-item"><i>✳</i> Active recall</span><span class="bq-marquee-item"><i>✳</i> Grounded AI tutor</span><span class="bq-marquee-item"><i>✳</i> Practice questions</span><span class="bq-marquee-item"><i>✳</i> Flashcards</span><span class="bq-marquee-item"><i>✳</i> <em>Any subject, your PDF</em></span></div>
-      <div class="bq-marquee-track"><span class="bq-marquee-item"><i>✳</i> Visual learning steps</span><span class="bq-marquee-item"><i>✳</i> Active recall</span><span class="bq-marquee-item"><i>✳</i> Grounded AI tutor</span><span class="bq-marquee-item"><i>✳</i> Practice questions</span><span class="bq-marquee-item"><i>✳</i> Flashcards</span><span class="bq-marquee-item"><i>✳</i> <em>Any subject, your PDF</em></span></div>
-    </div>
-    ${(typeof window.XC!=='undefined'&&window.XC.trailerShowcase)?window.XC.trailerShowcase.renderMarkup():''}
-    <section class="sec feature-section">
-      <div class="section-heading"><div><span class="section-kicker">MADE TO MAKE IT CLICK</span><h2>From your document<br><span>to real understanding.</span></h2></div><p class="sub">Your material becomes clear concepts, visual learning steps, practice, and revision—whatever the subject.</p></div>
-      <div class="grid-3">
-        <article class="card"><div class="feature-card-top"><div class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m10 9 5 3-5 3z"/></svg></div><span class="feature-index">01</span></div><h3>Visual learning steps</h3><p>Turn difficult ideas into clear sequences</p></article>
-        <article class="card"><div class="feature-card-top"><div class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4.5 7.2v9.6L12 21l7.5-4.2V7.2z"/><path d="m4.8 7.4 7.2 4.1 7.2-4.1M12 11.7V21"/></svg></div><span class="feature-index">02</span></div><h3>Key concepts</h3><p>Focus on the important ideas in your PDF</p></article>
-        <article class="card"><div class="feature-card-top"><div class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19h14M7 16l3-5 3 2 4-7"/><circle cx="17" cy="6" r="2"/></svg></div><span class="feature-index">03</span></div><h3>Relevant formulas</h3><p>Extract equations and explain what they mean</p></article>
-        <article class="card"><div class="feature-card-top"><div class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.5h14v15H5z"/><path d="m8 12 2.5 2.5L16 9"/></svg></div><span class="feature-index">04</span></div><h3>Practice questions</h3><p>Check your understanding with generated quizzes</p></article>
-        <article class="card"><div class="feature-card-top"><div class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21z"/><path d="M4 5.5v13A2.5 2.5 0 0 1 6.5 16H20"/></svg></div><span class="feature-index">05</span></div><h3>Active recall</h3><p>Study key ideas with AI-built flashcards</p></article>
-        <article class="card"><div class="feature-card-top"><div class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v2m0 14v2M3 12h2m14 0h2M5.6 5.6 7 7m10 10 1.4 1.4m0-12.8L17 7M7 17l-1.4 1.4"/><circle cx="12" cy="12" r="4"/></svg></div><span class="feature-index">06</span></div><h3>Grounded AI tutor</h3><p>Ask questions with your document as context</p></article>
-      </div>
-    </section>
-    <section class="course-cta">
-      <div class="course-cta-mark" aria-hidden="true" style="display:flex;align-items:center;justify-content:center;"><img src="/assets/xamcode-metallic-x.png" alt="XamCode AI" style="width:72px;height:72px;object-fit:contain;filter:drop-shadow(0 0 18px rgba(34,197,94,0.65));"></div>
-      <div><span class="section-kicker">YOUR NEXT CONCEPT IS CLOSER THAN YOU THINK</span><h2>Start with your PDF.<br><span>See the whole picture.</span></h2><p>Build a personal AI study space from the subject you’re learning.</p></div>
-      <button class="btn-hero" data-open="upload">Create your AI study space <span aria-hidden="true">↗</span></button>
-    </section>
-  </main>`;
+      '<div class="wc-dilemma-grid">' +
+        '<!-- Old Way -->' +
+        '<div class="wc-dilemma-card old-way">' +
+          '<span class="wc-dilemma-badge">✕ THE TRADITIONAL TEXTBOOK TRAP</span>' +
+          '<h3 class="wc-dilemma-heading">300 Pages of Dense Text &amp; Guesswork</h3>' +
+          '<ul class="wc-dilemma-list">' +
+            '<li>' +
+              '<span class="wc-dilemma-icon">✕</span>' +
+              '<div><b>Passive Reading Fatigue:</b> Reading 40 pages of continuous monochrome text with zero interactive feedback leads to 80% recall decay within 24 hours.</div>' +
+            '</li>' +
+            '<li>' +
+              '<span class="wc-dilemma-icon">✕</span>' +
+              '<div><b>Static, Confusing Diagrams:</b> Complex machinery (piston strokes, valve overlap) and algorithms are frozen on page 142 with no motion or temporal context.</div>' +
+            '</li>' +
+            '<li>' +
+              '<span class="wc-dilemma-icon">✕</span>' +
+              '<div><b>No In-Situ Verification:</b> You don\'t know what you don\'t know until the actual exam question paper is in front of you.</div>' +
+            '</li>' +
+            '<li>' +
+              '<span class="wc-dilemma-icon">✕</span>' +
+              '<div><b>Unorganized Panic:</b> Flipping through 12 chapters searching for relevant formulas and cheat codes minutes before the exam starts.</div>' +
+            '</li>' +
+          '</ul>' +
+        '</div>' +
+
+        '<!-- XAMCODE AI Way -->' +
+        '<div class="wc-dilemma-card xamcode-way">' +
+          '<span class="wc-dilemma-badge">✓ THE XAMCODE AI METHOD</span>' +
+          '<h3 class="wc-dilemma-heading">Decomposed Spatial Mastery &amp; Quizzes</h3>' +
+          '<ul class="wc-dilemma-list">' +
+            '<li>' +
+              '<span class="wc-dilemma-icon">✓</span>' +
+              '<div><b>Autonomous Curriculum Decomposition:</b> Dense PDFs are split into 5 digestible units and topic hierarchies with clear prerequisite maps.</div>' +
+            '</li>' +
+            '<li>' +
+              '<span class="wc-dilemma-icon">✓</span>' +
+              '<div><b>Pedagogical Slow-Motion Visuals:</b> Interactive 3D/SVG simulations running at 0.25x educational baseline with cycle scrubbers and component isolation.</div>' +
+            '</li>' +
+            '<li>' +
+              '<span class="wc-dilemma-icon">✓</span>' +
+              '<div><b>Continuous In-Situ Quizzes:</b> Socratic knowledge checks after every single concept with instant misconception diagnostics.</div>' +
+            '</li>' +
+            '<li>' +
+              '<span class="wc-dilemma-icon">✓</span>' +
+              '<div><b>One-Click Exam Cheat Codes:</b> 8-section Vaathiyar mode, memory mnemonics, and worked mathematical derivations ready for high-speed review.</div>' +
+            '</li>' +
+          '</ul>' +
+        '</div>' +
+      '</div>' +
+    '</section>' +
+
+    '<!-- SECTION 3: PILLAR 1 — INTERACTIVE PEDAGOGICAL VISUAL ENGINE -->' +
+    '<section class="wc-section">' +
+      '<div class="wc-section-header">' +
+        '<span class="wc-section-kicker">CORE PILLAR 1 • PEDAGOGICAL VISUAL ENGINE</span>' +
+        '<h2 class="wc-section-title">See How Complex Systems Move.<br><span>At Your Own Learning Speed.</span></h2>' +
+        '<p class="wc-section-sub">No chaotic 600 RPM animations. Every simulation operates under strict educational pacing with floating HUD speed controls, cycle scrubbers, and component isolation.</p>' +
+      '</div>' +
+
+      '<!-- Visual Simulation Interactive Player & Selector -->' +
+      '<div class="preview" id="heroInteractivePreview" style="background:#FFFFFF;border:1px solid var(--wc-border);box-shadow:var(--wc-shadow-lg);border-radius:var(--wc-radius-lg);overflow:hidden;margin-bottom:28px;">' +
+        '<div class="pv-head" style="background:var(--wc-bg-alt);border-bottom:1px solid var(--wc-border);padding:12px 18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">' +
+          '<span style="font-family:var(--wc-font-mono);font-size:11px;font-weight:700;color:var(--wc-blue);display:inline-flex;align-items:center;gap:6px;"><i style="width:7px;height:7px;border-radius:50%;background:#10B981;display:inline-block;"></i> DYNAMIC SIMULATION VIEWPORT</span>' +
+          '<div class="pv-tabs" role="tablist" aria-label="Visual simulations">' +
+            '<button type="button" class="pv-tab active" data-pv-tab="engine">⚙️ 4-Stroke Engine</button>' +
+            '<button type="button" class="pv-tab" data-pv-tab="bicycle">🚲 Bicycle Kinematics</button>' +
+            '<button type="button" class="pv-tab" data-pv-tab="heart">🫀 Cardiac Cycle</button>' +
+            '<button type="button" class="pv-tab" data-pv-tab="sort">📊 Bubble Sort</button>' +
+            '<button type="button" class="pv-tab" data-pv-tab="network">🌐 TCP/IP Packet Routing</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="pv-scene" id="pvStage" style="min-height:360px;position:relative;display:flex;align-items:center;justify-content:center;background:var(--wc-surface-dark);border-radius:0;overflow:hidden;padding:16px;"></div>' +
+        '<div class="pv-caption" id="pvCaption" style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 20px;background:var(--wc-bg-alt);border-top:1px solid var(--wc-border);">' +
+          '<span class="pv-caption-icon" style="font-size:18px;">⚡</span>' +
+          '<span style="flex:1;"><b id="pvTitle" style="font-family:var(--wc-font-display);font-size:15px;color:var(--wc-text-primary);display:block;">Four-Stroke Otto Cycle</b><small id="pvSub" style="font-size:12.5px;color:var(--wc-text-secondary);">Slider-crank kinematics, reciprocating piston, spark flame &amp; 4-stroke cycle phases</small></span>' +
+          '<button type="button" class="btn-sm" id="pvAskAura" style="padding:6px 14px;font-size:12px;background:var(--wc-blue);color:#FFFFFF;border:none;border-radius:var(--wc-radius-pill);cursor:pointer;font-weight:600;box-shadow:0 2px 8px rgba(37,99,235,0.3);">Ask AURA AI ↗</button>' +
+        '</div>' +
+      '</div>' +
+
+      '<!-- 4 Multi-Subject Cards Grid -->' +
+      '<div class="wc-visuals-grid">' +
+        '<div class="wc-visual-card" data-launch-sim="engine">' +
+          '<div class="wc-visual-icon">⚙️</div>' +
+          '<h4 class="wc-visual-title">Mechanical: 4-Stroke IC Engine</h4>' +
+          '<p class="wc-visual-desc">Reciprocating piston motion, intake &amp; exhaust valve timing, spark ignition combustion flame, and Otto cycle PV diagram.</p>' +
+          '<span class="wc-visual-action">Test Simulation →</span>' +
+        '</div>' +
+        '<div class="wc-visual-card" data-launch-sim="bicycle">' +
+          '<div class="wc-visual-icon">🚲</div>' +
+          '<h4 class="wc-visual-title">Kinematics: Bicycle Drive</h4>' +
+          '<p class="wc-visual-desc">Pedal crank rotation, chain link movement, front-to-rear gear ratio transmission, and dynamic km/h velocity calculations.</p>' +
+          '<span class="wc-visual-action">Test Simulation →</span>' +
+        '</div>' +
+        '<div class="wc-visual-card" data-launch-sim="heart">' +
+          '<div class="wc-visual-icon">🫀</div>' +
+          '<h4 class="wc-visual-title">Biological: Cardiac Cycle &amp; ECG</h4>' +
+          '<p class="wc-visual-desc">4-chamber pumping cycle (atria &amp; ventricles) with synchronized real-time electrocardiogram (ECG P-Q-R-S-T) voltage waveform.</p>' +
+          '<span class="wc-visual-action">Test Simulation →</span>' +
+        '</div>' +
+        '<div class="wc-visual-card" data-launch-sim="sort">' +
+          '<div class="wc-visual-icon">📊</div>' +
+          '<h4 class="wc-visual-title">Algorithms: Sorting State Machine</h4>' +
+          '<p class="wc-visual-desc">Deterministic Bubble Sort trace with step-by-step element comparisons, animated bar swaps, and live line-by-line pseudocode highlighting.</p>' +
+          '<span class="wc-visual-action">Test Simulator →</span>' +
+        '</div>' +
+      '</div>' +
+    '</section>' +
+
+    '<!-- SECTION 4: PILLAR 2 — CONTINUOUS IN-SITU QUIZ ENGINE -->' +
+    '<section class="wc-section">' +
+      '<div class="wc-section-header">' +
+        '<span class="wc-section-kicker">CORE PILLAR 2 • CONTINUOUS IN-SITU QUIZZES</span>' +
+        '<h2 class="wc-section-title">Knowledge Verification After Every Concept.<br><span>Instant Diagnostic Feedback.</span></h2>' +
+        '<p class="wc-section-sub">Never guess if you\'ve mastered a topic. XAMCODE AI tests comprehension immediately with targeted diagnostic feedback that explains common student misconceptions.</p>' +
+      '</div>' +
+
+      '<div class="wc-quiz-showcase" id="landingQuizCard">' +
+        '<div class="wc-quiz-head">' +
+          '<div class="wc-quiz-meta">' +
+            '<span class="wc-quiz-tag">UNIT I · ACTIVE RECALL CHECK</span>' +
+            '<span style="font-family:var(--wc-font-mono);font-size:12px;color:var(--wc-text-muted);">TOPIC 01: OSI VS TCP/IP</span>' +
+          '</div>' +
+          '<div class="wc-quiz-streak">' +
+            '<span>🔥</span> <b>STREAK: 4 CONCEPTS</b>' +
+          '</div>' +
+        '</div>' +
+        '<div class="wc-quiz-body">' +
+          '<h3 class="wc-quiz-question">In the OSI 7-Layer reference model, which layer is strictly responsible for end-to-end reliability, segment retransmission, and port-level addressing?</h3>' +
+          '<div class="wc-quiz-options">' +
+            '<div class="wc-quiz-opt" data-landing-opt="0">' +
+              '<span><b>A</b> &nbsp; Network Layer (IP / Routers)</span>' +
+              '<span class="wc-opt-indicator" style="font-size:12px;color:var(--wc-text-muted);">Select</span>' +
+            '</div>' +
+            '<div class="wc-quiz-opt" data-landing-opt="1">' +
+              '<span><b>B</b> &nbsp; Transport Layer (TCP / UDP)</span>' +
+              '<span class="wc-opt-indicator" style="font-size:12px;color:var(--wc-text-muted);">Select</span>' +
+            '</div>' +
+            '<div class="wc-quiz-opt" data-landing-opt="2">' +
+              '<span><b>C</b> &nbsp; Data Link Layer (MAC / Switches)</span>' +
+              '<span class="wc-opt-indicator" style="font-size:12px;color:var(--wc-text-muted);">Select</span>' +
+            '</div>' +
+          '</div>' +
+          '<div class="wc-quiz-feedback" id="landingQuizFeedback"></div>' +
+        '</div>' +
+      '</div>' +
+    '</section>' +
+
+    '<!-- SECTION 5: VAATHIYAR MODE 8-SECTION MASTERCLASS -->' +
+    '<section class="wc-section">' +
+      '<div class="wc-section-header">' +
+        '<span class="wc-section-kicker">EXAM CRASH COURSE • VAATHIYAR MODE</span>' +
+        '<h2 class="wc-section-title">The 8-Section Masterclass Structure.<br><span>Grounded Socratic Pedagogy.</span></h2>' +
+        '<p class="wc-section-sub">Every unit in XAMCODE AI is structured using the proven 8-pillar Vaathiyar format, providing intuition, analogies, formulas, and pitfalls.</p>' +
+      '</div>' +
+
+      '<div class="wc-vaathiyar-showcase" id="landingVaathiyarCard">' +
+        '<div class="wc-vaathiyar-tabs" role="tablist">' +
+          '<button class="wc-vaathiyar-tab active" data-vtab="0">1. Overview</button>' +
+          '<button class="wc-vaathiyar-tab" data-vtab="1">2. Analogy</button>' +
+          '<button class="wc-vaathiyar-tab" data-vtab="2">3. Mechanics</button>' +
+          '<button class="wc-vaathiyar-tab" data-vtab="3">4. Multi-Level</button>' +
+          '<button class="wc-vaathiyar-tab" data-vtab="4">5. Traps &amp; Truths</button>' +
+          '<button class="wc-vaathiyar-tab" data-vtab="5">6. Comparison</button>' +
+          '<button class="wc-vaathiyar-tab" data-vtab="6">7. Worked Problem</button>' +
+          '<button class="wc-vaathiyar-tab" data-vtab="7">8. Cheat Code</button>' +
+        '</div>' +
+        '<div class="wc-vaathiyar-content" id="landingVaathiyarContent"></div>' +
+      '</div>' +
+    '</section>' +
+
+    '<!-- SECTION 6: PRIMARY REFERENCE CURRICULUM (COMPUTER NETWORKS) -->' +
+    '<section class="wc-section">' +
+      '<div class="wc-section-header">' +
+        '<span class="wc-section-kicker">BENCHMARK CURRICULUM • VERIFIED SAMPLE</span>' +
+        '<h2 class="wc-section-title">Computer Networks Reference Course.<br><span>5 Units • 29 Concepts • 31 Formulas.</span></h2>' +
+        '<p class="wc-section-sub">Explore the full standard implementation. Every concept includes animated SVG visuals, exam cheat codes, and Vaathiyar masterclasses.</p>' +
+      '</div>' +
+
+      '<div class="wc-curriculum-grid">' +
+        '<div class="wc-curriculum-card" data-study="0">' +
+          '<div class="wc-curriculum-top">' +
+            '<span class="wc-curriculum-unit">UNIT I</span>' +
+            '<span class="wc-curriculum-stats">6 Concepts · 12 Questions</span>' +
+          '</div>' +
+          '<h4 class="wc-curriculum-title">Introduction to Networks &amp; OSI</h4>' +
+          '<p class="wc-curriculum-desc">OSI 7-layer reference model, TCP/IP protocol suite, network topologies, and packet switching fundamentals.</p>' +
+          '<div class="wc-curriculum-badges">' +
+            '<span class="wc-badge-sm wc-badge-visual">🎬 Visual Lesson</span>' +
+            '<span class="wc-badge-sm wc-badge-quiz">❓ Quiz Flow</span>' +
+            '<span class="wc-badge-sm wc-badge-vaathiyar">🎓 Vaathiyar Mode</span>' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="wc-curriculum-card" data-study="6">' +
+          '<div class="wc-curriculum-top">' +
+            '<span class="wc-curriculum-unit">UNIT II</span>' +
+            '<span class="wc-curriculum-stats">6 Concepts · 12 Questions</span>' +
+          '</div>' +
+          '<h4 class="wc-curriculum-title">Data Link Layer &amp; MAC</h4>' +
+          '<p class="wc-curriculum-desc">Framing, error detection (CRC &amp; Hamming codes), flow control (Stop-and-Wait, Go-Back-N, Selective Repeat), and CSMA/CD.</p>' +
+          '<div class="wc-curriculum-badges">' +
+            '<span class="wc-badge-sm wc-badge-visual">🎬 Visual Lesson</span>' +
+            '<span class="wc-badge-sm wc-badge-quiz">❓ Quiz Flow</span>' +
+            '<span class="wc-badge-sm wc-badge-vaathiyar">🎓 Vaathiyar Mode</span>' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="wc-curriculum-card" data-study="12">' +
+          '<div class="wc-curriculum-top">' +
+            '<span class="wc-curriculum-unit">UNIT III</span>' +
+            '<span class="wc-curriculum-stats">6 Concepts · 12 Questions</span>' +
+          '</div>' +
+          '<h4 class="wc-curriculum-title">Network Layer &amp; Routing</h4>' +
+          '<p class="wc-curriculum-desc">IPv4/IPv6 addressing, subnetting masks, CIDR, distance-vector routing (RIP), and link-state routing (OSPF Dijkstra).</p>' +
+          '<div class="wc-curriculum-badges">' +
+            '<span class="wc-badge-sm wc-badge-visual">🎬 Visual Lesson</span>' +
+            '<span class="wc-badge-sm wc-badge-quiz">❓ Quiz Flow</span>' +
+            '<span class="wc-badge-sm wc-badge-vaathiyar">🎓 Vaathiyar Mode</span>' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="wc-curriculum-card" data-study="18">' +
+          '<div class="wc-curriculum-top">' +
+            '<span class="wc-curriculum-unit">UNIT IV</span>' +
+            '<span class="wc-curriculum-stats">6 Concepts · 12 Questions</span>' +
+          '</div>' +
+          '<h4 class="wc-curriculum-title">Transport Layer Protocols</h4>' +
+          '<p class="wc-curriculum-desc">TCP 3-way handshake, TCP connection teardown, sliding window flow control, congestion avoidance (Slow Start, AIMD), and UDP.</p>' +
+          '<div class="wc-curriculum-badges">' +
+            '<span class="wc-badge-sm wc-badge-visual">🎬 Visual Lesson</span>' +
+            '<span class="wc-badge-sm wc-badge-quiz">❓ Quiz Flow</span>' +
+            '<span class="wc-badge-sm wc-badge-vaathiyar">🎓 Vaathiyar Mode</span>' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="wc-curriculum-card" data-study="24">' +
+          '<div class="wc-curriculum-top">' +
+            '<span class="wc-curriculum-unit">UNIT V</span>' +
+            '<span class="wc-curriculum-stats">5 Concepts · 10 Questions</span>' +
+          '</div>' +
+          '<h4 class="wc-curriculum-title">Application Layer &amp; Security</h4>' +
+          '<p class="wc-curriculum-desc">DNS domain resolution, HTTP/HTTPS request-response cycles, SMTP/IMAP email transfer, and symmetric/asymmetric encryption.</p>' +
+          '<div class="wc-curriculum-badges">' +
+            '<span class="wc-badge-sm wc-badge-visual">🎬 Visual Lesson</span>' +
+            '<span class="wc-badge-sm wc-badge-quiz">❓ Quiz Flow</span>' +
+            '<span class="wc-badge-sm wc-badge-vaathiyar">🎓 Vaathiyar Mode</span>' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="wc-curriculum-card" data-nav="formulas" style="border:1px dashed var(--wc-blue);background:var(--wc-blue-soft);">' +
+          '<div class="wc-curriculum-top">' +
+            '<span class="wc-curriculum-unit" style="color:var(--wc-blue);">FORMULA STUDIO</span>' +
+            '<span class="wc-curriculum-stats" style="color:var(--wc-blue);font-weight:700;">31 Equations</span>' +
+          '</div>' +
+          '<h4 class="wc-curriculum-title" style="color:var(--wc-blue);">Mathematical Formulas &amp; Derivations</h4>' +
+          '<p class="wc-curriculum-desc">Bandwidth-delay product, Nyquist bit rate, Shannon channel capacity, and propagation delay calculations.</p>' +
+          '<div class="wc-curriculum-badges">' +
+            '<span class="wc-badge-sm" style="background:#FFFFFF;color:var(--wc-blue);font-weight:700;">Open Formula Cards ↗</span>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+
+      '<div style="text-align:center;margin-top:28px;">' +
+        '<button type="button" class="btn-hero-outline" data-nav="workspace">' +
+          'Open Interactive Workspace Curriculum (All 29 Topics) →' +
+        '</button>' +
+      '</div>' +
+    '</section>' +
+
+    '<!-- SECTION 7: DRAG & DROP PDF UPLOAD STUDIO -->' +
+    '<section class="course-cta" style="background:#FFFFFF;border:1px solid var(--wc-border);box-shadow:var(--wc-shadow-lg);border-radius:var(--wc-radius-lg);padding:44px 32px;margin-top:36px;display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap;">' +
+      '<div style="display:flex;align-items:center;gap:20px;">' +
+        '<div class="course-cta-mark" aria-hidden="true" style="display:flex;align-items:center;justify-content:center;background:transparent;box-shadow:none;">' +
+          '<img src="/assets/xamcode-metallic-x.png" alt="XamCode AI" style="width:68px;height:68px;object-fit:contain;filter:drop-shadow(0 0 16px rgba(37,99,235,0.4));">' +
+        '</div>' +
+        '<div>' +
+          '<span class="wc-section-kicker" style="margin-bottom:8px;">READY TO MASTER YOUR EXAM?</span>' +
+          '<h2 style="font-family:var(--wc-font-display);font-size:26px;font-weight:800;color:var(--wc-text-primary);margin:0 0 6px;">Drop Your PDF. See The Whole Picture.</h2>' +
+          '<p style="font-size:14px;color:var(--wc-text-secondary);margin:0;">Transform your textbook, syllabus, or lecture slides into human-paced 3D environments.</p>' +
+        '</div>' +
+      '</div>' +
+      '<button class="btn-hero" data-open="upload" style="font-size:14px;padding:12px 24px;">Upload PDF &amp; Build Space ↗</button>' +
+    '</section>' +
+  '</main>';
 }
 
 let libraryCache = null;
@@ -2569,6 +2904,12 @@ function render(){
       window.XC.trailerShowcase.init();
     }
     initInteractivePreview();
+    const pipeMount = document.getElementById('heroPipelineMount');
+    if(pipeMount && window.XC && window.XC.heroPipeline){
+      window.XC.heroPipeline.init(pipeMount);
+    }
+    if(typeof initVaathiyarTabs === 'function') initVaathiyarTabs();
+    if(typeof initLandingQuiz === 'function') initLandingQuiz();
   }
   /* §15 — enter transition only on a real page change, never on in-page
      state re-renders (quiz clicks, autoplay ticks, chat messages…). */

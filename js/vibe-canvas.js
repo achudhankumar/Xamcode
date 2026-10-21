@@ -227,3 +227,4 @@
     if(cv) window.XC.vibeCanvas.init(cv);
   });
 })();
+
