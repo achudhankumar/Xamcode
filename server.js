@@ -245,10 +245,10 @@ async function callGeminiOnce(parts, opts, slug, key){
   const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + slug + ':generateContent?key=' + encodeURIComponent(key);
   for (let attempts = 1; ; attempts++){
     let res;
-    try{ res = await fetchJson(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }, 180000); }
+    try{ res = await fetchJson(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }, 60000); }
     catch(e){
       if (attempts < 3){ await new Promise(r => setTimeout(r, 500 * attempts)); continue; }
-      throw mkErr(503, 'The AI provider did not respond. Try again shortly.');
+      throw Object.assign(mkErr(503, 'The AI provider did not respond. Try again shortly.'), { rotate: true, slug });
     }
     if (res.ok){
       const text = geminiTextOf(res.body);
@@ -993,25 +993,35 @@ function validateUnitOutline(pack){
 function normalizePlan(plan){
   try{
     if (!plan || typeof plan !== 'object') return false;
-    if (!text(plan.title)) return false;
+    if (!text(plan.title)) {
+      plan.title = plan.courseTitle || plan.name || plan.subject || plan.course || null;
+      if (!text(plan.title)) return false;
+    }
     if (!text(plan.subject)) plan.subject = plan.title;
-    if (!text(plan.summary)) plan.summary = '';
-    if (!Array.isArray(plan.units)) return false;
+    if (!text(plan.summary)) plan.summary = String(plan.overview || plan.description || '');
+    if (!Array.isArray(plan.units)) {
+      if (Array.isArray(plan.chapters)) plan.units = plan.chapters;
+      else if (Array.isArray(plan.modules)) plan.units = plan.modules;
+      else if (Array.isArray(plan.sections)) plan.units = plan.sections;
+      else if (Array.isArray(plan.parts)) plan.units = plan.parts;
+      else return false;
+    }
     plan.units = plan.units.filter(u => u && typeof u === 'object');
     if (!plan.units.length) return false;
     for (const unit of plan.units){
-      if (!text(unit.title)) return false;
-      if (!text(unit.overview)) unit.overview = String(unit.title);
+      if (!text(unit.title)) unit.title = unit.name || unit.chapter || unit.module || 'Unit';
+      if (!text(unit.overview)) unit.overview = String(unit.description || unit.summary || unit.title);
       if (!Array.isArray(unit.learningGoals)) unit.learningGoals = [];
       unit.learningGoals = unit.learningGoals.filter(g => text(g)).slice(0, 4);
       if (!unit.learningGoals.length) unit.learningGoals = [String(unit.overview).slice(0, 140)];
-      if (!Array.isArray(unit.topics)) unit.topics = [];
-      unit.topics = unit.topics.filter(t => t && typeof t === 'object' && text(t.title));
+      if (!Array.isArray(unit.topics)) unit.topics = unit.lessons || unit.subtopics || [];
+      unit.topics = unit.topics.filter(t => t && typeof t === 'object' && text(t.title || t.name));
       if (!unit.topics.length){
         unit.topics = [{ title: String(unit.title), overview: String(unit.overview) }];
       }
       for (const topic of unit.topics){
-        if (!text(topic.overview)) topic.overview = String(unit.overview);
+        if (!text(topic.title)) topic.title = topic.name || 'Core Topic';
+        if (!text(topic.overview)) topic.overview = String(topic.description || topic.summary || unit.overview);
         delete topic.conceptIndices; /* lessons arrive per unit, never in the plan */
       }
       delete unit.concepts;
@@ -1618,21 +1628,39 @@ function extractPdfTextLite(buf){
     const s = Buffer.isBuffer(buf) ? buf : Buffer.from(buf);
     const latin = s.toString('latin1');
     const textLines = [];
-    const re = /stream\r?\n([\s\S]*?)\r?\nendstream/g;
-    let m;
-    while ((m = re.exec(latin))){
-      const raw = Buffer.from(m[1], 'latin1');
+    let pos = 0;
+    let streamCount = 0;
+
+    while (pos < latin.length && textLines.length < 300 && streamCount < 80) {
+      const startTag = latin.indexOf('stream', pos);
+      if (startTag === -1) break;
+      let dataStart = startTag + 6;
+      if (latin.charCodeAt(dataStart) === 13) dataStart++;
+      if (latin.charCodeAt(dataStart) === 10) dataStart++;
+      const endTag = latin.indexOf('endstream', dataStart);
+      if (endTag === -1) break;
+      pos = endTag + 9;
+      streamCount++;
+
+      const streamLen = endTag - dataStart;
+      if (streamLen <= 0 || streamLen > 2 * 1024 * 1024) continue;
+
+      const raw = s.subarray(dataStart, endTag);
       let data = null;
       try{ data = zlib.inflateSync(raw).toString('latin1'); }
-      catch{ try{ data = zlib.inflateRawSync(raw).toString('latin1'); }catch{ data = m[1]; } }
+      catch{ try{ data = zlib.inflateRawSync(raw).toString('latin1'); }catch{ data = latin.slice(dataStart, endTag); } }
       if (!data) continue;
+
       // 1. First preference: TJ arrays (which assemble kerning and syllables into whole words)
       const tjRe = /\[([\s\S]*?)\]\s*TJ/g;
       let tjm;
       while ((tjm = tjRe.exec(data))){
         const parsed = parsePdfTjArray(tjm[1]).trim();
         if (parsed.length >= 2) textLines.push(parsed);
+        if (textLines.length >= 300) break;
       }
+      if (textLines.length >= 300) break;
+
       // 2. Second preference: BT ... ET text blocks with (str) Tj
       const btRe = /BT\s*([\s\S]*?)\s*ET/g;
       let btm;
@@ -1645,8 +1673,12 @@ function extractPdfTextLite(buf){
                               .replace(/\\([()\\\\])/g, '$1')
                               .trim();
           if (cleaned.length >= 2) textLines.push(cleaned);
+          if (textLines.length >= 300) break;
         }
+        if (textLines.length >= 300) break;
       }
+      if (textLines.length >= 300) break;
+
       // 3. Third preference: standalone (str) Tj or general string operators
       const tjSingleRe = /\(((?:\\[\s\S]|[^\\()])*)\)\s*(?:Tj|'|")/g;
       let sm;
@@ -1655,6 +1687,7 @@ function extractPdfTextLite(buf){
                              .replace(/\\([()\\\\])/g, '$1')
                              .trim();
         if (cleaned.length >= 2) textLines.push(cleaned);
+        if (textLines.length >= 300) break;
       }
     }
     if (textLines.length > 0){
@@ -1664,7 +1697,11 @@ function extractPdfTextLite(buf){
     const strings = [];
     const strRe = /\(((?:\\[\s\S]|[^\\()])*)\)/g;
     let t;
-    while ((t = strRe.exec(latin))) strings.push(t[1]);
+    let count = 0;
+    while ((t = strRe.exec(latin.slice(0, 50000))) && count < 100){
+      count++;
+      strings.push(t[1]);
+    }
     return strings.join(' ').slice(0, 400000);
   }catch{ return ''; }
 }
@@ -1802,7 +1839,15 @@ function claimVisualKey(chunk, step, fallbackLabel){
 function wrapUnitPack(resp, unit){
   const topics = (resp && Array.isArray(resp.topics)) ? resp.topics
     : (resp && Array.isArray(resp.units) && resp.units[0] && Array.isArray(resp.units[0].topics)) ? resp.units[0].topics : [];
-  return { units: [Object.assign({}, unit, { topics })], concepts: (resp && Array.isArray(resp.concepts)) ? resp.concepts : [] };
+  let concepts = (resp && Array.isArray(resp.concepts)) ? resp.concepts
+    : (resp && Array.isArray(resp.lessons)) ? resp.lessons : [];
+  if (!concepts.length && topics.length){
+    for (const t of topics){
+      if (Array.isArray(t.concepts)) concepts.push(...t.concepts);
+      else if (Array.isArray(t.lessons)) concepts.push(...t.lessons);
+    }
+  }
+  return { units: [Object.assign({}, unit, { topics })], concepts };
 }
 /* Merge every built unit into the study the browser sees: built units
    carry their topics (already at global offsets), unbuilt ones stay
