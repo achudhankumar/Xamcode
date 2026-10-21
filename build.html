@@ -258,7 +258,7 @@ body.hero-complete .shint{
 .chat-item .when{color:var(--dim);font-size:10px;margin-left:8px;font-family:var(--mono)}
 .chat-item .body{color:var(--paper);font-size:14px;line-height:1.55}
 /* ---------- LAUNCH COUNTDOWN ---------- */
-.count{padding:24px 0}
+.count{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:14px;padding:24px 0}
 /* `hidden` must always win — the <=600px rule sets display:flex, which
    would otherwise expose empty countdown cells when no date is set. */
 .count[hidden]{display:none!important}
@@ -3454,11 +3454,11 @@ list.forEach(function(m){m=m||{};var li=el('li','chat-item');var head=el('div',n
 var row=el('div','vrow');var rep=el('button','vote-btn',null);rep.type='button';rep.textContent='Report';rep.setAttribute('aria-label','Report message from '+(m.nickname||'Visitor'));(function(id){rep.addEventListener('click',function(){report('chat',id);});})(m.id);row.appendChild(rep);li.appendChild(row);box.appendChild(li);});
 try{box.scrollTop=box.scrollHeight;}catch(e){}}
 function rl(L){S.launch=L||{};var a=$('launchState'),b=$('launchNote'),k=$('launchKind'),cc=$('countCells');
-if(S.launch.hasConfirmedDate){if(a)a.textContent='Confirmed launch — counting down';if(k)k.textContent='Confirmed date'+(S.launch.note?(' · '+S.launch.note):'')+' · readiness '+(S.launch.readinessPercent||0)+'% ('+(S.launch.readiness||'')+')';if(cc)cc.hidden=false;try{tickTo(new Date(S.launch.confirmed).getTime());}catch(e){}}
-else if(S.launch.estimated){if(a)a.textContent='Estimated launch — not a promise';if(k)k.textContent='Estimate'+(S.launch.note?(' · '+S.launch.note):'')+' · readiness '+(S.launch.readinessPercent||0)+'% ('+(S.launch.readiness||'')+') · ordinary commits never move this date';if(cc)cc.hidden=false;try{tickTo(new Date(S.launch.estimated).getTime());}catch(e){}}
-else if(S.est&&S.est.projectedAt){if(a)a.textContent='Estimated launch — model projection';if(k)k.textContent='Estimate · readiness '+(S.launch.readinessPercent||0)+'% ('+(S.launch.readiness||'')+') · derived from verified tasks and effort';if(cc)cc.hidden=false;try{tickTo(new Date(S.est.projectedAt).getTime());}catch(e){}}
+if(S.launch.hasConfirmedDate){if(a)a.textContent='Confirmed launch — counting down';if(b)b.textContent=S.launch.note||'Official launch date is confirmed.';if(k)k.textContent='Confirmed date'+(S.launch.note?(' · '+S.launch.note):'')+' · readiness '+(S.launch.readinessPercent||0)+'% ('+(S.launch.readiness||'')+')';if(cc)cc.hidden=false;try{var t=Date.parse(S.launch.confirmed);if(isFinite(t)&&t>0)tickTo(t);}catch(e){}}
+else if(S.launch.estimated){if(a)a.textContent='Estimated launch — counting down';if(b)b.textContent=S.launch.note||'Projected completion based on verified progress and roadmap velocity.';if(k)k.textContent='Estimated date'+(S.launch.note?(' · '+S.launch.note):'')+' · readiness '+(S.launch.readinessPercent||0)+'% ('+(S.launch.readiness||'')+')';if(cc)cc.hidden=false;try{var t=Date.parse(S.launch.estimated);if(isFinite(t)&&t>0)tickTo(t);}catch(e){}}
+else if(S.est&&S.est.projectedAt){if(a)a.textContent='Estimated launch — model projection';if(b)b.textContent='Projection updated in real-time as roadmap tasks are completed.';if(k)k.textContent='Estimate · readiness '+(S.launch.readinessPercent||0)+'% ('+(S.launch.readiness||'')+') · derived from verified tasks and effort';if(cc)cc.hidden=false;try{var t=Date.parse(S.est.projectedAt);if(isFinite(t)&&t>0)tickTo(t);}catch(e){}}
 else{if(a)a.textContent='Launch date not set — readiness '+(S.launch.readinessPercent||0)+'% ('+(S.launch.readiness||'')+')';if(b)b.textContent=S.launch.note||'The date appears here only when maintainers confirm it.';if(k)k.textContent='Track readiness above; the countdown starts when a real date lands.';if(cc)cc.hidden=true;stopT();}}
-function tickTo(t){stopT();if(!isFinite(t))return;function tick(){var ms=t-Date.now();if(ms<0)ms=0;var s=Math.floor(ms/1000);st('cdD',String(Math.floor(s/86400)));st('cdH',String(Math.floor(s%86400/3600)).padStart(2,'0'));st('cdM',String(Math.floor(s%3600/60)).padStart(2,'0'));st('cdS',String(s%60).padStart(2,'0'));}tick();try{S.timer=setInterval(tick,1000);}catch(e){}}
+function tickTo(t){stopT();if(!isFinite(t)||t<=0)return;function tick(){var ms=t-Date.now();if(ms<0)ms=0;var s=Math.floor(ms/1000);st('cdD',String(Math.floor(s/86400)));st('cdH',String(Math.floor(s%86400/3600)).padStart(2,'0'));st('cdM',String(Math.floor(s%3600/60)).padStart(2,'0'));st('cdS',String(s%60).padStart(2,'0'));}tick();try{S.timer=setInterval(tick,1000);}catch(e){}}
 function stopT(){if(S.timer){clearInterval(S.timer);S.timer=null;}}
 function an(id,msg,ok){var n=$(id);if(!n)return;n.textContent=msg;n.className='fmsg '+(ok?'ok':'err');}
 /* ---------- Deterministic effort-model countdown (GET /api/bip/estimate) ----------
