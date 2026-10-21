@@ -241,11 +241,13 @@ async function callGeminiOnce(parts, opts, slug, key){
      JSON instead of near-JSON with comments/trailing commas. If a model
      rejects the mime type the call fails with 400, which is non-rotating,
      so only set it when the caller declares a schema. */
-  if (opts && opts.schema) body.generationConfig = { responseMimeType: 'application/json', maxOutputTokens: 32768 };
+  const maxTokens = (opts && opts.maxTokens) ? opts.maxTokens : 32768;
+  if (opts && opts.schema) body.generationConfig = { responseMimeType: 'application/json', maxOutputTokens: maxTokens };
   const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + slug + ':generateContent?key=' + encodeURIComponent(key);
+  const timeoutMs = (opts && opts.timeoutMs) ? opts.timeoutMs : 240000;
   for (let attempts = 1; ; attempts++){
     let res;
-    try{ res = await fetchJson(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }, 60000); }
+    try{ res = await fetchJson(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }, timeoutMs); }
     catch(e){
       if (attempts < 3){ await new Promise(r => setTimeout(r, 500 * attempts)); continue; }
       throw Object.assign(mkErr(503, 'The AI provider did not respond. Try again shortly.'), { rotate: true, slug });
@@ -1794,13 +1796,13 @@ async function runAnalyzeJob(job){
 function chunkDocParts(prompt, pdfB64){
   return [{ text: prompt }, { inlineData: { mimeType: 'application/pdf', data: pdfB64 } }];
 }
-function chunkCallOpts(job){
-  const opts = { requiresDocument: true, schema: { type: 'object' } };
+function chunkCallOpts(job, extra){
+  const opts = Object.assign({ requiresDocument: true, schema: { type: 'object' }, timeoutMs: 240000 }, extra || {});
   if (job.chunk && job.chunk.fileUri) opts.fileUri = job.chunk.fileUri;
   return opts;
 }
 function planPrompt(job){
-  return ['Analyze the attached educational PDF and respond with a single valid JSON object containing title, subject, summary and units — the course plan ONLY, with no lesson content. units: every distinct unit/chapter/part of the PDF in its own order (at least 1), each with title, overview, learningGoals (2 to 4 short goals) and topics (that unit\'s own topics in PDF order, each with title and overview only — no concepts, no conceptIndices). Level: ' + job.level + '. Keep it compact: this plan is the table of contents a study space unlocks unit by unit. Do not write explanations, examples, questions or diagrams.'].join(' ');
+  return ['Analyze the attached educational PDF and respond with a single valid JSON object containing title, subject, summary and units — the course plan ONLY, with no lesson content. units: organize into 4 to 8 core units in PDF order (at least 1), each with title, overview, learningGoals (2 to 4 concise goals) and topics (3 to 6 key topics per unit in PDF order, each with title and overview only — no concepts, no conceptIndices). Level: ' + job.level + '. Keep it compact and concise: this is the high-level syllabus table of contents a study space unlocks unit by unit. Do not write explanations, examples, questions or diagrams.'].join(' ');
 }
 function unitOutlinePrompt(job, k){
   const unit = job.chunk.plan.units[k];
@@ -1837,6 +1839,7 @@ function claimVisualKey(chunk, step, fallbackLabel){
 /* A unit's lesson response arrives with local indices; wrap it into the
    one-unit shape normalizeOutline and validateUnitOutline expect. */
 function wrapUnitPack(resp, unit){
+  if (Array.isArray(resp) && resp[0] && typeof resp[0] === 'object') resp = resp[0];
   const topics = (resp && Array.isArray(resp.topics)) ? resp.topics
     : (resp && Array.isArray(resp.units) && resp.units[0] && Array.isArray(resp.units[0].topics)) ? resp.units[0].topics : [];
   let concepts = (resp && Array.isArray(resp.concepts)) ? resp.concepts
@@ -1989,7 +1992,7 @@ async function runChunkedJob(job){
     let fileUri = null;
     if (job.pdf.length > GEMINI_INLINE_MB * 1024 * 1024) fileUri = await uploadPdfToGemini(job.pdf);
     job.chunk = { plan: null, built: [], states: [], pdfB64, fileUri, visualKeys: new Set() };
-    const opts = chunkCallOpts(job);
+    const opts = chunkCallOpts(job, { maxTokens: 8192 });
     let plan = null;
     try{
       plan = extractJson(await callAI(chunkDocParts(planPrompt(job), pdfB64), opts));

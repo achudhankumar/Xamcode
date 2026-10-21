@@ -377,8 +377,8 @@ function landingView(){
   return header()+`<main class="page-shell">
     <section class="hero">
       <div class="hero-copy">
-        <div class="hero-kicker"><span></span> YOUR PDF, READY TO TEACH</div>
-        <h1>Turn any PDF into<br>a study space <span class="accent">that gets you.</span></h1>
+        <div class="hero-kicker"><span></span> AUTONOMOUS PEDAGOGICAL AI • VIBE CODING ARCHITECTURE</div>
+        <h1>Turn any PDF into<br><span class="out">a study space</span> <span class="accent hl">that gets you.</span></h1>
         <p>Learn from your own material in any subject. XAMCODE AI turns it into clear explanations, visual learning steps, practice questions, and flashcards.</p>
         <div class="hero-btns">
           <button class="btn-hero" data-open="upload">Create an AI study space <span aria-hidden="true">↗</span></button>
