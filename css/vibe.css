@@ -694,3 +694,143 @@ html, body {
   background: var(--lime) !important;
   box-shadow: 0 0 8px var(--lime) !important;
 }
+
+
+
+/* ============================================================
+   5. QUICK THEME CONTROLS & HIGH-VISIBILITY CTAS IN NAVBAR
+   ============================================================ */
+.quick-theme-group {
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 999px !important;
+  padding: 3px 6px !important;
+}
+
+@media (max-width: 1080px) {
+  .quick-theme-group {
+    display: none !important;
+  }
+}
+
+.quick-theme-btn {
+  background: transparent !important;
+  border: none !important;
+  border-radius: 50% !important;
+  width: 26px !important;
+  height: 26px !important;
+  font-size: 13px !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: transform 0.2s var(--ease-spring), background 0.2s ease !important;
+  padding: 0 !important;
+}
+
+.quick-theme-btn:hover {
+  transform: scale(1.18) !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.quick-theme-btn.active {
+  background: rgba(200, 255, 61, 0.22) !important;
+  box-shadow: 0 0 8px rgba(200, 255, 61, 0.4) !important;
+}
+
+.nav-cta-workspace {
+  font-family: var(--mono) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase !important;
+  color: var(--paper) !important;
+  border: 1px solid var(--line) !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  border-radius: 999px !important;
+  padding: 7px 14px !important;
+  cursor: pointer !important;
+  transition: all 0.2s var(--ease-spring) !important;
+}
+
+@media (max-width: 1200px) {
+  .nav-cta-workspace {
+    display: none !important;
+  }
+}
+
+.nav-cta-workspace:hover {
+  border-color: var(--lime) !important;
+  color: var(--lime) !important;
+  background: rgba(200, 255, 61, 0.08) !important;
+  transform: translateY(-1px) !important;
+}
+
+.nav-cta-upload {
+  font-family: var(--disp) !important;
+  font-weight: 800 !important;
+  font-size: 12px !important;
+  letter-spacing: 0.03em !important;
+  text-transform: uppercase !important;
+  background: var(--lime) !important;
+  color: var(--limeink) !important;
+  border: none !important;
+  border-radius: 999px !important;
+  padding: 8px 18px !important;
+  cursor: pointer !important;
+  box-shadow: 0 0 16px rgba(200, 255, 61, 0.45) !important;
+  transition: transform 0.2s var(--ease-spring), box-shadow 0.2s ease !important;
+}
+
+.nav-cta-upload:hover {
+  transform: translateY(-1px) scale(1.02) !important;
+  box-shadow: 0 0 24px rgba(200, 255, 61, 0.65) !important;
+}
+
+/* ============================================================
+   6. RESPONSIVENESS & TOUCH TARGET AUDIT (PHASE 4)
+   ============================================================ */
+@media (max-width: 768px) {
+  .header {
+    top: 8px !important;
+    width: calc(100% - 16px) !important;
+    padding: 6px 12px !important;
+  }
+  .nav {
+    display: none !important;
+  }
+  .search-trigger {
+    display: none !important;
+  }
+  .h-right .btn-ghost {
+    display: none !important;
+  }
+  .mobile-menu-toggle {
+    min-width: 44px !important;
+    min-height: 44px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  .hero-copy h1 {
+    font-size: 30px !important;
+  }
+  .pv-tabs {
+    flex-wrap: wrap !important;
+  }
+  .pv-tab {
+    min-height: 38px !important;
+    padding: 6px 10px !important;
+  }
+}
+
+/* ============================================================
+   7. ACCESSIBILITY & CONTRAST STANDARDS (WCAG AA / AAA)
+   ============================================================ */
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible {
+  outline: 2px solid var(--lime) !important;
+  outline-offset: 2px !important;
+}

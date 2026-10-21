@@ -233,6 +233,7 @@ function accountButton(){
 
 function header(){
   const mode = (localStorage.getItem('xc-mode') || 'dark');
+  const activeTheme = (document.body && document.body.getAttribute('data-theme')) || (localStorage.getItem('xc-theme') || 'digital');
   const activeView = state.view==='study'?'workspace':state.view==='formula'?'formulas':state.view;
   const navItem = (view,label) => `<button type="button" data-nav="${view}" class="${activeView===view?'active':''}" ${activeView===view?'aria-current="page"':''}>${label}</button>`;
   return `<header class="header"><div class="h-inner">
@@ -258,9 +259,15 @@ function header(){
       </button>
     </div>
     <div class="h-right">
-      <button id="themeBtn" title="Toggle theme (D)" aria-label="Toggle light or dark mode"><div class="knob">${mode==='light'?'☀':'🌙'}</div></button>
-      <button class="btn-primary" data-open="upload">New AI study</button>
-      <button class="btn-ghost" id="themeOpen" style="display:inline-flex;align-items:center;gap:6px">🎨 Theme</button>
+      <div class="quick-theme-group" aria-label="Quick theme selector">
+        <button type="button" class="quick-theme-btn ${activeTheme==='digital'?'active':''}" data-set-theme="digital" title="Digital Wireframe (🧊)">🧊</button>
+        <button type="button" class="quick-theme-btn ${activeTheme==='cosmic'?'active':''}" data-set-theme="cosmic" title="Cosmic Orbit (🪐)">🪐</button>
+        <button type="button" class="quick-theme-btn ${activeTheme==='bubblegum'?'active':''}" data-set-theme="bubblegum" title="Bubblegum Playground (🍬)">🍬</button>
+        <button type="button" class="quick-theme-btn ${activeTheme==='organic'?'active':''}" data-set-theme="organic" title="Organic Liquid (🫧)">🫧</button>
+      </div>
+      <button id="themeBtn" title="Toggle light or dark mode (D)" aria-label="Toggle light or dark mode"><div class="knob">${mode==='light'?'☀':'🌙'}</div></button>
+      <button type="button" class="btn-ghost nav-cta-workspace" data-nav="workspace">Open Interactive Workspace</button>
+      <button type="button" class="btn-primary nav-cta-upload" data-open="upload">Upload PDF ↗</button>
       ${accountButton()}
       <button type="button" class="mobile-menu-toggle" data-mobile-menu aria-expanded="false" aria-controls="mobileNav" aria-label="Open navigation">☰</button>
     </div>
@@ -269,6 +276,10 @@ function header(){
       ${navItem('workspace','Workspace')}
       ${navItem('formulas','Formulas')}
       ${navItem('library','📚 Library')}
+      <div style="padding:12px 16px;border-top:1px solid var(--line2);display:flex;gap:8px;">
+        <button type="button" class="btn-primary" data-open="upload" style="flex:1;">Upload PDF ↗</button>
+        <button type="button" class="btn-ghost" data-nav="workspace" style="flex:1;">Workspace</button>
+      </div>
     </nav>
   </div></header>`;
 }
@@ -378,11 +389,11 @@ function landingView(){
     <section class="hero">
       <div class="hero-copy">
         <div class="hero-kicker"><span></span> AUTONOMOUS PEDAGOGICAL AI • VIBE CODING ARCHITECTURE</div>
-        <h1>Turn any PDF into<br><span class="out">a study space</span> <span class="accent hl">that gets you.</span></h1>
-        <p>Learn from your own material in any subject. XAMCODE AI turns it into clear explanations, visual learning steps, practice questions, and flashcards.</p>
+        <h1>Transform 20 to 400+ Page PDFs Into<br><span class="out">Human-Paced,</span> <span class="accent hl">Interactive 3D Spatial Environments.</span></h1>
+        <p>Upload your textbook chapters, lecture slides, or complex research papers. XAMCODE AI decomposes dense technical PDFs into structured units, topic hierarchies, interactive mechanical &amp; algorithmic simulations, and verified Socratic tutoring.</p>
         <div class="hero-btns">
-          <button class="btn-hero" data-open="upload">Create an AI study space <span aria-hidden="true">↗</span></button>
-          <button class="btn-hero-outline" data-nav="workspace">Explore sample lessons</button>
+          <button class="btn-hero" data-open="upload">Upload PDF &amp; Build 3D Space <span aria-hidden="true">↗</span></button>
+          <button class="btn-hero-outline" data-nav="workspace">Open Interactive Workspace</button>
         </div>
         <div class="hero-proof"><span class="proof-avatars" aria-hidden="true"><i>AI</i><i>PDF</i><i>↗</i></span><span>Start with the material you already have</span></div>
         <div class="stats" aria-label="Sample course contents">

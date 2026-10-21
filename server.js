@@ -1840,10 +1840,15 @@ function claimVisualKey(chunk, step, fallbackLabel){
    one-unit shape normalizeOutline and validateUnitOutline expect. */
 function wrapUnitPack(resp, unit){
   if (Array.isArray(resp) && resp[0] && typeof resp[0] === 'object') resp = resp[0];
+  if (resp && resp.unit && typeof resp.unit === 'object' && !Array.isArray(resp.unit)) resp = Object.assign({}, resp.unit, resp);
+  if (resp && resp.learningContent && typeof resp.learningContent === 'object' && !Array.isArray(resp.learningContent)) resp = Object.assign({}, resp.learningContent, resp);
+  const u0 = (resp && Array.isArray(resp.units) && resp.units[0] && typeof resp.units[0] === 'object') ? resp.units[0] : null;
   const topics = (resp && Array.isArray(resp.topics)) ? resp.topics
-    : (resp && Array.isArray(resp.units) && resp.units[0] && Array.isArray(resp.units[0].topics)) ? resp.units[0].topics : [];
+    : (u0 && Array.isArray(u0.topics)) ? u0.topics : [];
   let concepts = (resp && Array.isArray(resp.concepts)) ? resp.concepts
-    : (resp && Array.isArray(resp.lessons)) ? resp.lessons : [];
+    : (resp && Array.isArray(resp.lessons)) ? resp.lessons
+    : (u0 && Array.isArray(u0.concepts)) ? u0.concepts
+    : (u0 && Array.isArray(u0.lessons)) ? u0.lessons : [];
   if (!concepts.length && topics.length){
     for (const t of topics){
       if (Array.isArray(t.concepts)) concepts.push(...t.concepts);
