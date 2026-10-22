@@ -232,23 +232,19 @@ function accountButton(){
 }
 
 function header(){
-  const mode = (localStorage.getItem('xc-mode') || 'light');
-  const activeTheme = (document.body && document.body.getAttribute('data-theme')) || (localStorage.getItem('xc-theme') || 'digital');
   const activeView = state.view==='study'?'workspace':state.view==='formula'?'formulas':state.view;
   const navItem = (view,label) => `<button type="button" data-nav="${view}" class="${activeView===view?'active':''}" ${activeView===view?'aria-current="page"':''}>${label}</button>`;
   return `<header class="header"><div class="h-inner">
     <div class="h-left">
       <button type="button" class="logo-wrap" data-nav="landing" aria-label="XamCode AI home">
-        <span class="brand-mark logo" aria-hidden="true" style="display:inline-flex;align-items:center;justify-content:center;background:transparent;box-shadow:none;">
-          <img src="/assets/xamcode-metallic-x.png" alt="XamCode AI" class="brand-logo-img" style="width:28px;height:28px;object-fit:contain;filter:drop-shadow(0 0 8px rgba(34,197,94,0.5));vertical-align:middle;">
-        </span>
+        <span class="logo-mark" aria-hidden="true">✕</span>
         <span class="brand">XamCode <span class="brand-ai">AI</span></span>
       </button>
       <nav class="nav" aria-label="Main navigation">
-        ${navItem('landing','Home')}
-        ${navItem('workspace','Workspace')}
-        ${navItem('formulas','Formulas')}
-        ${navItem('library','📚 Library')}
+        ${navItem('landing','HOME')}
+        ${navItem('workspace','WORKSPACE')}
+        ${navItem('formulas','FORMULAS')}
+        ${navItem('library','LIBRARY')}
       </nav>
     </div>
     <div class="h-center">
@@ -259,29 +255,70 @@ function header(){
       </button>
     </div>
     <div class="h-right">
-      <div class="quick-theme-group" aria-label="Quick theme selector">
-        <button type="button" class="quick-theme-btn ${activeTheme==='digital'?'active':''}" data-set-theme="digital" title="Digital Wireframe (🧊)">🧊</button>
-        <button type="button" class="quick-theme-btn ${activeTheme==='cosmic'?'active':''}" data-set-theme="cosmic" title="Cosmic Orbit (🪐)">🪐</button>
-        <button type="button" class="quick-theme-btn ${activeTheme==='bubblegum'?'active':''}" data-set-theme="bubblegum" title="Bubblegum Playground (🍬)">🍬</button>
-        <button type="button" class="quick-theme-btn ${activeTheme==='organic'?'active':''}" data-set-theme="organic" title="Organic Liquid (🫧)">🫧</button>
-      </div>
-      <button id="themeBtn" title="Toggle light or dark mode (D)" aria-label="Toggle light or dark mode"><div class="knob">${mode==='light'?'☀':'🌙'}</div></button>
-      <button type="button" class="btn-ghost nav-cta-workspace" data-nav="workspace">Open Interactive Workspace</button>
+      <button type="button" class="btn-ghost nav-cta-workspace" data-nav="workspace">Workspace</button>
       <button type="button" class="btn-primary nav-cta-upload" data-open="upload">Upload PDF ↗</button>
       ${accountButton()}
       <button type="button" class="mobile-menu-toggle" data-mobile-menu aria-expanded="false" aria-controls="mobileNav" aria-label="Open navigation">☰</button>
     </div>
     <nav class="mobile-nav" id="mobileNav" aria-label="Main navigation">
-      ${navItem('landing','Home')}
-      ${navItem('workspace','Workspace')}
-      ${navItem('formulas','Formulas')}
-      ${navItem('library','📚 Library')}
+      ${navItem('landing','HOME')}
+      ${navItem('workspace','WORKSPACE')}
+      ${navItem('formulas','FORMULAS')}
+      ${navItem('library','LIBRARY')}
       <div style="padding:12px 16px;border-top:1px solid var(--line2);display:flex;gap:8px;">
         <button type="button" class="btn-primary" data-open="upload" style="flex:1;">Upload PDF ↗</button>
         <button type="button" class="btn-ghost" data-nav="workspace" style="flex:1;">Workspace</button>
       </div>
     </nav>
   </div></header>`;
+}
+
+function footer(){
+  return `<footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <div class="footer-logo">
+            <span class="logo-mark" aria-hidden="true">✕</span>
+            <span class="brand">XamCode <span class="brand-ai">AI</span></span>
+          </div>
+          <p class="footer-tagline">Autonomous pedagogical AI platform transforming 20 to 400+ page technical documents into interactive, spatial 3D learning spaces and exam-verified mastery.</p>
+          <div class="footer-pill-row">
+            <span class="footer-pill">DPDP Act Compliant</span>
+            <span class="footer-pill">Zero Hallucinations</span>
+            <span class="footer-pill">India Baseline</span>
+          </div>
+        </div>
+        <div class="footer-nav-group">
+          <h4>Platform</h4>
+          <button type="button" data-nav="landing">Home</button>
+          <button type="button" data-nav="workspace">Workspace</button>
+          <button type="button" data-nav="formulas">Formula Studio</button>
+          <button type="button" data-nav="library">My Library</button>
+          <button type="button" data-open="upload">Upload PDF</button>
+        </div>
+        <div class="footer-nav-group">
+          <h4>Pedagogy</h4>
+          <button type="button" data-dock-action="simulation">3D Visual Engine</button>
+          <button type="button" data-dock-action="quiz">Socratic Quizzes</button>
+          <button type="button" data-dock-action="vaathiyar">Vaathiyar Mode</button>
+          <button type="button" data-dock-action="curriculum">Sample Course</button>
+        </div>
+        <div class="footer-nav-group">
+          <h4>Compliance & Legal</h4>
+          <a href="/privacy-policy">Privacy Policy</a>
+          <a href="/terms-of-service">Terms of Service</a>
+          <a href="/accessibility-statement">Accessibility Statement</a>
+          <a href="/robots.txt">Robots.txt</a>
+          <a href="/sitemap.xml">Sitemap</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>© 2026 XamCode AI • Created By Achudhan • support@xamcode.ai</p>
+        <p class="footer-disclaimer">Academic study tool grounded in user-provided documents. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>`;
 }
 
 /* ============================================================
@@ -561,7 +598,7 @@ function landingView(){
     '<!-- HERO SECTION -->' +
     '<section class="hero">' +
       '<div class="hero-copy">' +
-        '<div class="hero-kicker"><span></span> AUTONOMOUS PEDAGOGICAL AI • VIBE CODING STUDIO</div>' +
+        '<div class="hero-kicker"><span></span> AI PEDAGOGICAL PLATFORM • GROUNDED KNOWLEDGE ENGINE</div>' +
         '<h1>Transform 20 to 400+ Page PDFs Into<br><span class="hl-blue">Human-Paced,</span> <span class="hl-accent">Interactive 3D Spatial Environments.</span></h1>' +
         '<p>Upload dense technical textbooks, lecture slides, or complex research papers. XAMCODE AI parses the document into structured units, topic hierarchies, pedagogical slow-motion simulations, and continuous in-situ quizzes for verified exam readiness.</p>' +
         '<div class="hero-btns">' +
@@ -570,11 +607,45 @@ function landingView(){
         '</div>' +
         '<div class="hero-proof"><span class="proof-avatars" aria-hidden="true"><i>AI</i><i>PDF</i><i>↗</i></span><span>Start with the material you already have</span></div>' +
         '<div class="stats" aria-label="Sample course contents">' +
-          '<span><b>' + unitCount + '</b><small>sample units</small></span>' +
-          '<span><b>' + TOPICS.length + '</b><small>sample concepts</small></span>' +
-          '<span><b>' + totalQuestions + '</b><small>sample questions</small></span>' +
+          '<span><b>' + unitCount + '</b><small>reference units</small></span>' +
+          '<span><b>' + TOPICS.length + '</b><small>grounded concepts</small></span>' +
+          '<span><b>' + totalQuestions + '</b><small>Socratic questions</small></span>' +
           '<span><b>4</b><small>interactive 3D engines</small></span>' +
         '</div>' +
+      '</div>' +
+
+      '<!-- Original Dock-Inspired Lower Controls -->' +
+      '<div class="hero-dock" role="toolbar" aria-label="Quick interactive learning tools">' +
+        '<button type="button" class="dock-item" data-open="upload" title="Upload PDF and generate interactive study plan">' +
+          '<span class="dock-icon">📄</span>' +
+          '<span class="dock-name">PDF Ingestion</span>' +
+          '<span class="dock-hint">Multi-Modal</span>' +
+        '</button>' +
+        '<button type="button" class="dock-item" data-dock-action="curriculum" title="Inspect structured units and prerequisite topics">' +
+          '<span class="dock-icon">🏛️</span>' +
+          '<span class="dock-name">Curriculum DAG</span>' +
+          '<span class="dock-hint">5 Units</span>' +
+        '</button>' +
+        '<button type="button" class="dock-item" data-dock-action="simulation" title="Test educational slow-motion simulations">' +
+          '<span class="dock-icon">⚡</span>' +
+          '<span class="dock-name">3D Simulation</span>' +
+          '<span class="dock-hint">Slow-Mo</span>' +
+        '</button>' +
+        '<button type="button" class="dock-item" data-dock-action="quiz" title="Try in-situ active recall quizzes">' +
+          '<span class="dock-icon">❓</span>' +
+          '<span class="dock-name">In-Situ Quiz</span>' +
+          '<span class="dock-hint">Socratic</span>' +
+        '</button>' +
+        '<button type="button" class="dock-item" data-dock-action="vaathiyar" title="Open 8-section Vaathiyar masterclass">' +
+          '<span class="dock-icon">🎓</span>' +
+          '<span class="dock-name">Vaathiyar Mode</span>' +
+          '<span class="dock-hint">8 Pillars</span>' +
+        '</button>' +
+        '<button type="button" class="dock-item" data-nav="formulas" title="Open mathematical formula derivations">' +
+          '<span class="dock-icon">📐</span>' +
+          '<span class="dock-name">Formula Matrix</span>' +
+          '<span class="dock-hint">31 Equations</span>' +
+        '</button>' +
       '</div>' +
 
       '<!-- Live 5-Step Transformation Pipeline Simulator Mount -->' +
@@ -872,7 +943,7 @@ function landingView(){
       '</div>' +
       '<button class="btn-hero" data-open="upload" style="font-size:14px;padding:12px 24px;">Upload PDF &amp; Build Space ↗</button>' +
     '</section>' +
-  '</main>';
+  '</main>' + footer();
 }
 
 let libraryCache = null;
@@ -894,7 +965,7 @@ function libraryView(){
       <div class="ai-flashcard-actions"><button type="button" data-library-open="${escapeHtml(e.id)}">Open study →</button>
       <button type="button" data-library-delete="${escapeHtml(e.id)}">Delete</button></div></article>`).join('')
     : '<p class="ai-empty-state">No saved studies yet. Upload a PDF to build your first one.</p>'}</div>
-    <div class="hero-btns"><button class="btn-hero" data-open="upload">Analyze a PDF ↗</button></div></main>`;
+    <div class="hero-btns"><button class="btn-hero" data-open="upload">Analyze a PDF ↗</button></div></main>` + footer();
 }
 async function refreshLibrary(){
   try{
@@ -987,7 +1058,7 @@ function workspaceViewInner(){
         }).join('')}
       </div>
     </div>
-  </main>`;
+  </main>` + footer();
 }
 
 function aiStudyPageButton(type,label,indices={},className=''){
@@ -1949,9 +2020,11 @@ function aiStudyView(){
 
     content=`
     <div class="study-bar">
-      <button type="button" class="back-btn" data-ai-page="plan">← Back to study plan</button>
-      <span style="color:#1e2a44">/</span>
-      <span class="study-title">${escapeHtml(concept.title)} • UNIT ${unitIndex+1}</span>
+      <button type="button" class="back-btn" data-ai-page="plan">← Study Plan</button>
+      ${unit ? `<span class="study-bar-sep">/</span><button type="button" class="study-bar-crumb" data-ai-page="unit" data-unit-index="${unitIndex}">Unit ${unitIndex+1}</button>` : ''}
+      ${topic ? `<span class="study-bar-sep">/</span><button type="button" class="study-bar-crumb" data-ai-page="topic" data-unit-index="${unitIndex}" data-topic-index="${location?.topicIndex||0}">Topic ${String((location?.topicIndex||0)+1).padStart(2,'0')}</button>` : ''}
+      <span class="study-bar-sep">/</span>
+      <span class="study-title">${escapeHtml(concept.title)}</span>
       <span class="badge" style="margin-left:auto">${isAlgo?'SIMULATION':isAuraVisual?'DYNAMIC 3D/2D':'DYNAMIC'} • VIS-${String(conceptIndex+1).padStart(3,'0')}</span>
     </div>
     <div class="study-grid">
@@ -1997,7 +2070,13 @@ function aiStudyView(){
           </div>
         </div>
         ${questions.length?questions.map(({question,index},position)=>aiQuestionCard(question,index,position+1,questions.length)).join(''):'<p class="ai-empty-state">Practice questions for this lesson are being prepared.</p>'}
-        <div style="margin-top:14px;">${aiStudyPageButton('quiz','Open all practice questions →',{},'ai-text-link')}</div>
+        <div style="margin-top:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+          ${aiStudyPageButton('quiz','Open all practice questions →',{},'ai-text-link')}
+        </div>
+        <div class="ai-lesson-nav" style="display:flex;justify-content:space-between;align-items:center;margin-top:20px;padding-top:16px;border-top:1px solid var(--line);flex-wrap:wrap;gap:10px;">
+          ${previous !== null ? aiStudyPageButton('concept', `← Previous: ${escapeHtml(study.concepts[previous].title)}`, {'concept-index': previous}, 'btn-hero-outline') : '<span></span>'}
+          ${next !== null ? aiStudyPageButton('concept', `Next: ${escapeHtml(study.concepts[next].title)} →`, {'concept-index': next}, 'btn-hero') : aiStudyPageButton('plan', 'Back to Study Plan ✓', {}, 'btn-hero')}
+        </div>
       </div>
     </div>`;
   }else if(page.type==='quiz'){
@@ -2080,7 +2159,13 @@ function studyView(){
   const pct = attempted ? correct/attempted : 0;
   const badge = attempted===0?'—':pct>=0.8?'Strong':pct>=0.5?'Improving':'Needs review';
   const badgeCls = pct>=0.8?'strong':pct>=0.5?'ok':'weak';
-  return header()+`<div class="study-bar">
+  return header()+`<nav class="study-breadcrumbs" aria-label="Curriculum hierarchy">
+    <button type="button" class="crumb-link" data-nav="workspace">Computer Networks</button>
+    <span class="crumb-sep" aria-hidden="true">/</span>
+    <span class="crumb-unit">Unit ${c.unit||'I'}</span>
+    <span class="crumb-sep" aria-hidden="true">/</span>
+    <span class="crumb-topic" aria-current="page">${c.title}</span>
+  </nav><div class="study-bar">
     <button class="back-btn" data-nav="workspace">← Back to workspace</button>
     <span style="color:#1e2a44">/</span>
     <span class="study-title">${c.title} • UNIT ${c.unit||'I'}</span>
@@ -2296,7 +2381,7 @@ function formulasView(){
         </section>
       `).join('')}
     </div>
-  </main>`;
+  </main>` + footer();
 }
 
 /* ============================================================
@@ -3115,6 +3200,29 @@ fcEl.addEventListener('click',(e)=>{ if(e.target===fcEl) closeFC(); });
    EVENTS
    ============================================================ */
 document.addEventListener('click', async (e)=>{
+  const dockBtn = e.target.closest('[data-dock-action]');
+  if(dockBtn){
+    const action = dockBtn.dataset.dockAction;
+    if(action === 'curriculum'){
+      const el = document.querySelector('.wc-curriculum-grid') || document.querySelector('.wc-section');
+      if(el) el.scrollIntoView({behavior:'smooth'});
+      else { state.view = 'workspace'; render(); window.scrollTo({top:0,behavior:'smooth'}); }
+    } else if(action === 'simulation'){
+      const el = document.getElementById('heroInteractivePreview');
+      if(el) el.scrollIntoView({behavior:'smooth'});
+      else { state.view = 'workspace'; render(); }
+    } else if(action === 'quiz'){
+      const el = document.getElementById('landingQuizCard');
+      if(el) el.scrollIntoView({behavior:'smooth'});
+    } else if(action === 'vaathiyar'){
+      const el = document.getElementById('landingVaathiyarCard');
+      if(el) el.scrollIntoView({behavior:'smooth'});
+    } else if(action === 'pdf-ingest'){
+      const modal = document.getElementById('uploadModal');
+      if(modal && typeof modal.showModal === 'function') modal.showModal();
+    }
+    return;
+  }
   const mobileMenu=e.target.closest('[data-mobile-menu]');
   if(mobileMenu){
     const menu=document.getElementById('mobileNav');
@@ -3320,6 +3428,7 @@ document.addEventListener('click', async (e)=>{
       state.aiQuizAnswers={};
       state.view='ai-study';
       render(); window.scrollTo({top:0,behavior:'smooth'});
+      autoGenerateTopicImages();
       /* A saved study can still have units queued server-side — reattach
          the watcher so they finish unlocking into this session too. */
       if(entry.study?.chunked&&Array.isArray(entry.study.pendingUnits)&&entry.study.pendingUnits.length){
@@ -3732,12 +3841,22 @@ async function requestTopicImage(conceptIndex){
   try{
     const response=await fetch('/api/topic-images',{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({jobId:state.aiJobId,topics:[conceptIndex]})
+      body:JSON.stringify({jobId:state.aiJobId,study:state.aiStudy,topics:[conceptIndex]})
     });
     const posted=await response.json();
     if(!response.ok) throw new Error(posted.error||'The image could not be generated. Please try again.');
     const first=posted.images?.[0];
-    if(first?.imageUrl) state.aiTopicImages[conceptIndex]=first;
+    if(first?.imageUrl) {
+      state.aiTopicImages[conceptIndex]=first;
+      if(window.XC?.library && state.aiStudy && state.aiJobId){
+        window.XC.library.saveStudy({
+          jobId: state.aiJobId,
+          study: state.aiStudy,
+          images: state.aiTopicImages,
+          pdfMeta: state.aiPdfMeta
+        }).catch(()=>{});
+      }
+    }
     else throw new Error(first?.error||'The image provider returned no image. Please try again.');
   }catch(error){
     state.aiTopicImages[conceptIndex]={error:error.message||'The image could not be generated.'};
@@ -4858,17 +4977,13 @@ document.addEventListener('mousemove',(e)=>{
      so the saved id is also validated against the live theme list — a
      browser that stored "lofi" under the old version would otherwise land
      on a body[data-theme="lofi"] with no matching CSS and render unstyled. */
-  const THEME_IDS=['bubblegum','digital','cosmic','organic'];
-  const DEFAULT_THEME='bubblegum';
-  const themeVersion='bg3d-default-v2';
-  const savedTheme=localStorage.getItem('xc-theme');
-  const useSavedTheme=localStorage.getItem('xc-theme-version')===themeVersion
-                   && THEME_IDS.indexOf(savedTheme)!==-1;
-  applyTheme(
-    useSavedTheme?savedTheme:DEFAULT_THEME,
-    localStorage.getItem('xc-mode') === 'light' ? 'light' : 'dark'
-  );
+  const THEME_IDS=['bil','digital','cosmic','bubblegum','organic'];
+  const DEFAULT_THEME='bil';
+  const themeVersion='bil-replica-v1';
+  applyTheme('bil', 'dark');
   localStorage.setItem('xc-theme-version',themeVersion);
+  localStorage.setItem('xc-theme','bil');
+  localStorage.setItem('xc-mode','dark');
 
   document.addEventListener('click', function(e){
     if(e.target.closest('#themeOpen')){

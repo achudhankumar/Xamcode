@@ -50,10 +50,8 @@
      (loader, trailing cursor ring, overlay menu, display type, scroll
      cue, magnetic CTA). Wins at equal specificity so its display type
      and overlay sit on top of every theme. Composes with genz.css. -->
-<link rel="stylesheet" href="css/bunq.css?v=3">
 <link rel="stylesheet" href="css/trailer-showcase.css">
-<link rel="stylesheet" href="css/vibe.css">
-<link rel="stylesheet" href="css/white-code.css">
+<link rel="stylesheet" href="css/bil-replica.css">
 </head>
 <!-- SEO: Compliance metadata -->
 <meta name="description" content="XamCode AI - AI-powered study assistant. Upload PDFs to generate flashcards, quizzes, and study materials. DPDP Act compliant. Free to start.">
@@ -61,38 +59,10 @@
 <meta name="author" content="XamCode AI (Achudhan) - support@xamcode.ai">
 <meta name="robots" content="index, follow">
 
-<!-- Cookie consent banner -->
-<div id="cookie-consent" style="display:none; position:fixed; bottom:0; left:0; right:0; z-index:80; background:#1a1a2e; color:#e2e8f0; padding:12px 16px; font-family:Inter,system-ui,sans-serif; font-size:14px; border-top:1px solid #334155;">
-  <div style="max-width:1200px; margin:0 auto;">
-    <p>This site uses cookies to enhance your experience. <a href="/privacy-policy" style="color:#60a5fa;text-decoration:underline;">Learn more</a></p>
-    <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:8px;">
-      <button id="cookie-decline" style="padding:6px 12px; background:#475569; color:#e2e8f0; border:none; border-radius:4px; cursor:pointer; font-size:13px;">Decline</button>
-      <button id="cookie-accept" style="padding:6px 12px; background:#22c55e; color:#fff; border:none; border-radius:4px; cursor:pointer; font-size:13px;">Accept All</button>
-    </div>
-  </div>
-</div>
-<script>
-(function() {
-  try {
-    var c = document.cookie.split(';').some(function(item) {
-      return item.trim().startsWith('xamcode_consent=');
-    });
-    var el = document.getElementById('cookie-consent');
-    if (c) { el.style.display = 'none'; return; }
-    el.style.display = 'block';
-    document.getElementById('cookie-accept').addEventListener('click', function() {
-      document.cookie = 'xamcode_consent=accepted; path=/; max-age=31536000; SameSite=Lax';
-      el.style.display = 'none';
-    });
-    document.getElementById('cookie-decline').addEventListener('click', function() {
-      document.cookie = 'xamcode_consent=declined; path=/; max-age=31536000; SameSite=Lax';
-      el.style.display = 'none';
-    });
-  } catch (e) {}
-})();
-</script>
+<body data-theme="bil" data-mode="dark">
 
-<body data-theme="digital" data-mode="light">
+<div class="bg grid" aria-hidden="true"></div>
+<div class="bg glow" aria-hidden="true"></div>
 
 <div id="bootLoader" role="status" aria-live="polite" aria-label="XamCode AI is loading">
   <div class="bl-mark" aria-hidden="true" style="display:flex;align-items:center;justify-content:center;background:transparent;box-shadow:none;"><img src="/assets/xamcode-metallic-x.png" alt="XamCode AI" style="width:48px;height:48px;object-fit:contain;filter:drop-shadow(0 0 12px rgba(34,197,94,0.6));"></div>
@@ -101,152 +71,6 @@
   <div class="bl-bar" aria-hidden="true"><i></i></div>
 </div>
 
-<div id="bg">
-  <div class="wash w1"></div><div class="wash w2"></div>
-  <div class="wash w3"></div><div class="wash w4"></div>
-  <div class="dots"></div>
-  <div class="theme-fx" aria-hidden="true"></div>
-</div>
-
-<svg id="bg3d" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" style="width:100%;height:100%">
-  <defs>
-    <filter id="blurB"><feGaussianBlur stdDeviation="90"/></filter>
-    <radialGradient id="gCard"><stop offset="0%" stop-color="#ffffff"/><stop offset="100%" stop-color="#f0faf8"/></radialGradient>
-    <radialGradient id="gCardP"><stop offset="0%" stop-color="#ffffff"/><stop offset="100%" stop-color="#f3ecff"/></radialGradient>
-    <radialGradient id="gCardY"><stop offset="0%" stop-color="#ffffff"/><stop offset="100%" stop-color="#fef3d5"/></radialGradient>
-  </defs>
-  <g data-parallax="8">
-    <circle cx="200" cy="150" r="220" fill="rgba(45,212,191,.10)" filter="url(#blurB)"/>
-    <circle cx="1400" cy="220" r="240" fill="rgba(167,139,250,.10)" filter="url(#blurB)"/>
-    <circle cx="800" cy="820" r="320" fill="rgba(244,114,182,.07)" filter="url(#blurB)"/>
-  </g>
-  <g transform="translate(110,120)"><g data-parallax="22">
-    <rect width="130" height="62" rx="12" fill="url(#gCard)" stroke="rgba(15,118,110,.5)" stroke-width="1.5"/>
-    <text x="14" y="28" font-size="15" fill="#2dd4bf">📚</text>
-    <rect x="38" y="18" width="65" height="4" rx="2" fill="#0f766e" opacity=".6"/>
-    <rect x="38" y="28" width="48" height="4" rx="2" fill="#6d28d9" opacity=".55"/>
-    <rect x="38" y="38" width="38" height="4" rx="2" fill="#a16207" opacity=".55"/>
-  </g></g>
-  <g transform="translate(1360,180)"><g data-parallax="26">
-    <rect width="115" height="56" rx="12" fill="url(#gCardP)" stroke="rgba(109,40,217,.5)" stroke-width="1.5"/>
-    <text x="14" y="26" font-size="15" fill="#a78bfa">📊</text>
-    <rect x="38" y="18" width="58" height="4" rx="2" fill="#6d28d9" opacity=".6"/>
-    <rect x="38" y="28" width="42" height="4" rx="2" fill="#0f766e" opacity=".55"/>
-  </g></g>
-  <g transform="translate(180,700)"><g data-parallax="20">
-    <rect width="120" height="60" rx="12" fill="url(#gCardY)" stroke="rgba(161,98,7,.5)" stroke-width="1.5"/>
-    <text x="14" y="28" font-size="15" fill="#d97706">🎯</text>
-    <rect x="38" y="18" width="60" height="4" rx="2" fill="#a16207" opacity=".6"/>
-    <rect x="38" y="28" width="44" height="4" rx="2" fill="#0f766e" opacity=".55"/>
-  </g></g>
-  <g transform="translate(1420,700)"><g data-parallax="24">
-    <rect width="110" height="54" rx="12" fill="url(#gCard)" stroke="rgba(15,118,110,.5)" stroke-width="1.5"/>
-    <text x="14" y="26" font-size="15" fill="#2dd4bf">💡</text>
-    <rect x="38" y="18" width="55" height="4" rx="2" fill="#0f766e" opacity=".6"/>
-  </g></g>
-  <g transform="translate(430,80)"><g data-parallax="30">
-    <rect width="80" height="28" rx="8" fill="url(#gCardP)" stroke="rgba(109,40,217,.55)" stroke-width="1.5"/>
-    <text x="40" y="19" text-anchor="middle" font-size="11" font-family="monospace" font-weight="700" fill="#6d28d9">&lt;html&gt;</text>
-  </g></g>
-  <g transform="translate(1290,560)"><g data-parallax="28">
-    <rect width="72" height="28" rx="8" fill="url(#gCard)" stroke="rgba(15,118,110,.55)" stroke-width="1.5"/>
-    <text x="36" y="19" text-anchor="middle" font-size="11" font-family="monospace" font-weight="700" fill="#0f766e">TCP/IP</text>
-  </g></g>
-  <g transform="translate(70,470)"><g data-parallax="32">
-    <rect width="76" height="28" rx="8" fill="url(#gCardY)" stroke="rgba(161,98,7,.55)" stroke-width="1.5"/>
-    <text x="38" y="19" text-anchor="middle" font-size="11" font-family="monospace" font-weight="700" fill="#a16207">0x7F</text>
-  </g></g>
-  <g transform="translate(1460,380)"><g data-parallax="30">
-    <rect width="60" height="28" rx="8" fill="url(#gCard)" stroke="rgba(15,118,110,.55)" stroke-width="1.5"/>
-    <text x="30" y="19" text-anchor="middle" font-size="11" font-family="monospace" font-weight="700" fill="#0f766e">OSI</text>
-  </g></g>
-  <g transform="translate(560,780)"><g data-parallax="26">
-    <rect width="70" height="26" rx="8" fill="url(#gCardP)" stroke="rgba(109,40,217,.55)" stroke-width="1.5"/>
-    <text x="35" y="18" text-anchor="middle" font-size="10.5" font-family="monospace" font-weight="700" fill="#6d28d9">router</text>
-  </g></g>
-  <g data-parallax="36">
-    <circle cx="640" cy="220" r="10" fill="#2dd4bf"><animate attributeName="cy" values="220;200;220" dur="5s" repeatCount="indefinite"/></circle>
-    <circle cx="1160" cy="380" r="8" fill="#a78bfa"><animate attributeName="cy" values="380;360;380" dur="5.5s" repeatCount="indefinite"/></circle>
-    <circle cx="300" cy="620" r="9" fill="#facc15"><animate attributeName="cy" values="620;600;620" dur="6s" repeatCount="indefinite"/></circle>
-  </g>
-</svg>
-
-<!-- COSMIC FIELD — layer 1 (canvas) + layer 2 (orbit rings).
-     Both are inert unless body[data-theme="cosmic"]; the canvas engine
-     in js/cosmic.js parks itself on every other theme so it costs
-     nothing. Kept ahead of #scenes so DOM order gives the intended
-     paint order: base -> canvas -> rings -> scene cards. -->
-<canvas id="cosmicCanvas" aria-hidden="true"></canvas>
-<div id="cosmicOrbits" aria-hidden="true">
-  <div class="orbit orbit-1"></div>
-  <div class="orbit orbit-2"></div>
-  <div class="orbit orbit-3"></div>
-</div>
-
-<canvas id="heroCanvas" aria-hidden="true" style="position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:1;"></canvas>
-<!-- Per-theme 3D scenes. #bg3d (above) renders the SAME artwork for every
-     theme — only hue-rotated — at opacity .05, so themes never really
-     differed in 3D. These give each theme its own geometry instead.
-     MUST stay after #bg3d: both are z-index 0, so DOM order decides
-     which paints on top. Still below #app (z-index 2). Pure CSS. -->
-<div id="scenes" aria-hidden="true">
-  <!-- geometry is defined per scene in css/scenes.css; the markup is
-       deliberately just classed <i> elements so the whole layer stays
-       declarative and removable in one edit -->
-  <div class="scene scene-bubblegum">
-    <i class="scene-wash sw1"></i><i class="scene-wash sw2"></i><i class="scene-wash sw3"></i>
-    <i class="float-card fc1"></i><i class="float-card fc2"></i>
-    <i class="float-card fc3"></i><i class="float-card fc4"></i>
-  </div>
-  <div class="scene scene-digital">
-    <i class="floor"></i>
-    <i class="cube cb1"></i><i class="cube cb2"></i><i class="cube cb3"></i>
-    <i class="stream st1"></i><i class="stream st2"></i>
-    <i class="stream st3"></i><i class="stream st4"></i>
-  </div>
-  <div class="scene scene-cosmic">
-    <i class="glass-card gc-1" data-parallax="8"><b></b></i><i class="glass-card gc-2" data-parallax="22"><b></b></i>
-    <i class="glass-card gc-3" data-parallax="26"><b></b></i><i class="glass-card gc-4" data-parallax="20"><b></b></i>
-  </div>
-  <div class="scene scene-organic">
-    <i class="liquid l1"></i><i class="liquid l2"></i><i class="liquid l3"></i>
-    <i class="blob b1"></i><i class="blob b2"></i><i class="blob b3"></i>
-    <i class="blob b4"></i><i class="blob b5"></i>
-  </div>
-</div>
-
-<div id="videoIntro" role="dialog" aria-modal="true" aria-labelledby="introTitle" aria-describedby="introDescription">
-  <h1 class="vi-visually-hidden" id="introTitle">XamCode AI cinematic introduction</h1>
-  <p class="vi-visually-hidden" id="introDescription">A short cinematic clip introducing XamCode AI, which transforms any subject's study PDF into organized concepts, visual explanations, and interactive practice.</p>
-  <video class="vi-intro-video" id="introVideo" autoplay muted playsinline preload="auto" aria-hidden="true">
-    <source src="assets/xamcode-ai-intro.mp4?v=5-hd" type="video/mp4">
-  </video>
-  <div class="vi-cine-top" aria-hidden="true"></div>
-  <div class="vi-cine-bottom" aria-hidden="true"></div>
-  <div class="vi-brand" aria-hidden="true">
-    <p class="vi-eyebrow"><span class="vi-eyebrow-dot"></span> Your PDF, ready to teach</p>
-    <p class="vi-brand-title">XamCode <em>AI</em></p>
-    <p class="vi-brand-sub">Turn any PDF into a study space that gets you — clear lessons, visual steps, quizzes &amp; flashcards.</p>
-    <ul class="vi-beats">
-      <li data-beat="0">📄 PDF in</li>
-      <li data-beat="1">🧠 Lessons out</li>
-      <li data-beat="2">🎨 Visual steps</li>
-      <li data-beat="3">✅ Quiz yourself</li>
-    </ul>
-  </div>
-  <div class="vi-video-shade" aria-hidden="true"></div>
-  <div class="vi-progress" aria-hidden="true"><i id="introProgress"></i></div>
-  <div class="vi-video-controls">
-    <p class="vi-video-status" id="introVideoStatus" role="status" aria-live="polite"></p>
-    <div class="vi-video-actions">
-      <button class="vi-sound-toggle" id="introSound" type="button" aria-pressed="false">Enable sound</button>
-      <button class="vi-skip" id="skipIntro" type="button">Skip intro</button>
-    </div>
-  </div>
-</div>
-<div id="grain" aria-hidden="true"></div>
-<div id="cursorGlow" aria-hidden="true"></div>
-<div id="themeVeil" aria-hidden="true"></div>
 <div id="app"></div>
 
 <button id="flash">🎴 Flashcards</button>
@@ -258,23 +82,7 @@
   </div>
   <div class="fc-nav"><button id="fcPrev">← Prev</button><span class="fc-counter" id="fcCounter">1 / 1</span><button id="fcNext">Next →</button></div>
 </div>
-<div id="themeModal">
-  <div class="ts-studio" role="dialog" aria-modal="true" aria-labelledby="themeTitle">
-    <button id="themeClose" type="button" aria-label="Close theme studio">✕</button>
 
-    <div class="ts-head">
-      <div>
-        <h2 id="themeTitle">🎨 Theme studio</h2>
-        <p>4 themes · light &amp; dark · pick a vibe and go. ✨</p>
-      </div>
-      <button class="ts-shuffle" type="button" title="Surprise me" aria-label="Pick a random theme">⟳</button>
-    </div>
-
-    <div class="ts-body">
-      <div class="ts-gallery" id="tsGallery" aria-label="Theme gallery"></div>
-      <div class="ts-side" id="tsSide" aria-label="Active theme details"></div>
-    </div>
-  </div>
 </div>
 <dialog id="uploadModal" class="upload-modal" aria-labelledby="uploadTitle">
   <form id="pdfUploadForm" class="upload-modal-content">
@@ -372,8 +180,6 @@
     <button type="button" id="journeyPreviewButton" class="journey-preview-trigger">Preview the processing journey</button>
   </form>
 </dialog>
-<div class="badge-creator"><div class="dot"></div>Created By Achudhan • XamCode AI</div>
-
 <script src="js/data-topics.js"></script>
 <script src="js/data-formulas.js"></script>
 <script src="js/data-formula-notes.js"></script>
@@ -403,9 +209,5 @@
 <!-- BunqLabs studio chrome (loader, cursor ring, overlay menu, magnetic
      CTA). Loaded after genz.js so it observes the same #app re-renders
      and never collides with genz's #cursorGlow / .gz-reveal / tilt. -->
-<script src="js/bunq.js?v=2"></script>
-<script src="js/theme-studio.js"></script>
-<script src="js/cosmic.js"></script>
-<script src="js/vibe-canvas.js"></script>
 </body>
 </html>

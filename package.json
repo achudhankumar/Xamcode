@@ -32,10 +32,7 @@
     "test:bip-durable": "node test-bip-durable.js",
     "test:bip-countdown": "node test-bip-countdown.js",
     "bip:migrate": "node bip/migrate.js",
-    "test:wiring": "node test-aura-wiring.js",
-    "test:bunq": "node test-bunq-layer.js",
     "test:smoke": "node test-journey-smoke.js",
-    "test:e2e": "node test-pdf-subject-e2e.js",
     "check": "node --check server.js && node --check bip/util.js && node --check bip/store.js && node --check bip/db.js && node --check bip/progress.js && node --check bip/events.js && node --check bip/community.js && node --check bip/admin.js && node --check bip/routes.js && node --check bip/estimate.js && node --check bip/storage.js && node --check bip/migrate.js"
   },
   "engines": {

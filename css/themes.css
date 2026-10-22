@@ -17,31 +17,44 @@
    overlay in genz.css, so each world gets its own film stock.
    ============================================================ */
 
-/* -------- DEFAULT (Bubblegum Dark) -------- */
-:root{
-  --bg:#0f0612;
-  --surface:#1e1020;
-  --surface-strong:#2a1828;
-  --text:#fcf8ff;
-  --muted:#a08aa0;
-  --accent:#ff5a8a;
-  --accent-2:#c9a8ff;
-  --accent-3:#ffc8a0;
-  --line:rgba(255,255,255,.09);
-  --shadow:rgba(60,6,40,.55);
-  --radius-sm:6px;
+/* -------- DEFAULT (XAMCODE CINEMATIC: Deep Black #09090D · Solar Orange #FF6B35 · Cosmic Purple #8B5CF6) -------- */
+:root,
+body[data-theme="bil"],
+body[data-theme="bil"][data-mode="dark"]{
+  --bg:#09090D;
+  --surface:#12121A;
+  --surface-strong:#161622;
+  --surface-alt:#1C1C2B;
+  --text:#F5F3FF;
+  --muted:#94A3B8;
+  --dim:#64748B;
+  --accent:#FF6B35;
+  --accent-hover:#FF8554;
+  --accent-ink:#09090D;
+  --accent-2:#8B5CF6;
+  --accent-3:#A78BFA;
+  --accent-orange:#FF6B35;
+  --accent-purple:#8B5CF6;
+  --accent-bad:#FF5F5F;
+  --line:rgba(255,255,255,.08);
+  --line2:rgba(255,255,255,.05);
+  --line-accent:rgba(255,107,53,.25);
+  --line-purple:rgba(139,92,246,.25);
+  --shadow:rgba(0,0,0,.75);
+  --radius-sm:8px;
   --radius-md:12px;
   --radius-lg:16px;
   --radius-pill:999px;
-  --font-body:'Inter',system-ui,-apple-system,sans-serif;
-  --font-mono:ui-monospace,'SF Mono',monospace;
+  --font-body:'Space Grotesk',system-ui,-apple-system,sans-serif;
+  --font-disp:'Syne',system-ui,-apple-system,sans-serif;
+  --font-mono:'JetBrains Mono',ui-monospace,'SF Mono',monospace;
   --motion-speed:40s;
-  --aurora-1:#ff5a8a;
-  --aurora-2:#c9a8ff;
-  --aurora-3:#ffc8a0;
-  --aurora-opacity:.95;
-  --glass-blur:20px;
-  --glass-opacity:.42;
+  --aurora-1:#FF6B35;
+  --aurora-2:#8B5CF6;
+  --aurora-3:#38BDF8;
+  --aurora-opacity:.90;
+  --glass-blur:16px;
+  --glass-opacity:.88;
   --grain-alpha:.03;
   --grain-alpha-light:.03;
 }
