@@ -11,6 +11,22 @@ const { buildOutlinePrompt, buildTopicPrompt, OUTLINE_SYSTEM_INSTRUCTION, TOPIC_
 const REAL_FIXTURES_DIR = path.join(__dirname, 'fixtures', 'real');
 const REPORT_PATH = path.join(__dirname, 'docs', 'PHASE3-REPORT.md');
 
+// Command-line flags: --pdf <filename>, --topic <index>, --verbose
+let args = process.argv.slice(2);
+let targetPdf = null;
+let targetTopic = null;
+let verbose = false;
+
+for (let i = 0; i < args.length; i++) {
+  if (args[i] === '--pdf' && i + 1 < args.length) {
+    targetPdf = args[++i];
+  } else if (args[i] === '--topic' && i + 1 < args.length) {
+    targetTopic = parseInt(args[++i], 10);
+  } else if (args[i] === '--verbose') {
+    verbose = true;
+  }
+}
+
 const IMPLEMENTED_TEMPLATES = new Set(['process_flow', 'topology', 'packet_flow', 'sliding_window']);
 
 async function runLiveEvaluation() {
@@ -41,6 +57,7 @@ async function runLiveEvaluation() {
   let grandTotalTemplateUsed = 0;
   for (let fileIdx = 0; fileIdx < files.length; fileIdx++) {
     const filename = files[fileIdx];
+    if (targetPdf && filename !== targetPdf) continue;
     const filepath = path.join(REAL_FIXTURES_DIR, filename);
     const unitNumber = fileIdx + 1;
 
@@ -94,6 +111,10 @@ async function runLiveEvaluation() {
       for (const unit of units) {
         const unitTopics = unit.topics || [];
         for (const topicMeta of unitTopics) {
+          if (targetTopic !== null && topicIndex !== targetTopic) {
+            topicIndex++;
+            continue;
+          }
           const topicId = 'u' + unitNumber + '-t' + topicIndex;
           topicIndex++;
 
@@ -183,6 +204,14 @@ async function runLiveEvaluation() {
             grandTotalFailed++;
             pdfFailed++;
             console.log('    FAIL: ' + topicId + ' - ' + topicMeta.title);
+            if (verbose) {
+              if (topicResult) {
+                console.log('      Raw response: ' + JSON.stringify(topicResult.parsed).substring(0, 2000));
+                console.log('      Validation errors: ' + failureReasons.join('; '));
+              } else {
+                console.log('      API error: ' + (failureReasons.length > 0 ? failureReasons[0] : 'Unknown error'));
+              }
+            }
             if (failingExamples.length < 3) {
               failingExamples.push({
                 filename,
