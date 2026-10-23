@@ -1,6 +1,13 @@
 # XamCode AI
 
-Turn a boring lecture PDF into an interactive visual tutor: animated unit-by-unit lessons, AURA (the document-grounded AI tutor with diagram recipes), quiz + Vaathiyar modes, flashcards, a formula bank, and a personal library — all in the browser, powered by a zero-dependency Node.js server.
+Turn a boring lecture PDF into an interactive visual tutor: animated unit-by-unit lessons, AURA (the document-grounded AI tutor with diagram recipes), quiz + Vaathiyar modes, flashcards, a formula bank, and a personal library — all in the browser, powered by a Node.js server with strict structured-output schema validation.
+
+## Dependencies
+
+The project previously targeted zero external runtime dependencies. As of Phase 3 (Structured AI Generation Pipeline), the runtime dependencies are:
+- **`zod`** (`^4.x`): Runtime contract validation for AI generation outputs (outlines, topics, 8 Vaathiyar modes, quiz verification, lexical quote matching).
+- **`pdfjs-dist`** (`^3.x` legacy build): Per-page text extraction from uploaded PDFs with sparse-text detection for OCR tagging candidate flags.
+- *(Note: `pdf-parse` has been completely removed as per-page extraction is handled directly by `pdfjs-dist`)*.
 
 A public **Build-in-Public dashboard** lives at `/build`: weighted development progress, roadmap, changelog feed, ideas board with voting, community chat, launch countdown, and waitlist. Same server, same store, no separate database.
 
@@ -28,7 +35,9 @@ Open `http://127.0.0.1:4173` for the study app, `http://127.0.0.1:4173/build` fo
 |---|---|
 | `npm start` | Start the server (production bind when `NODE_ENV=production`, else localhost) |
 | `npm run check` | Syntax-check `server.js` + all `bip/*.js` modules |
-| `npm test` | Full offline unit suite (no API keys, no quota spent) |
+| `npm test` | Full offline unit suite (no API keys, no quota spent; includes offline schema plumbing) |
+| `npm run test:offline` | Fast offline extraction, schema validation, and rendering plumbing test |
+| `npm run eval:live` | Real-world generation quality evaluation with live Gemini API across `fixtures/real/` (manual only, spends quota, not in CI) |
 | `npm run test:e2e` | Live E2E through the real pipeline — **spends one real Gemini generation** (manual only, not in CI) |
 | `npm run test:smoke` | Journey smoke: serves the app, checks assets reach the browser |
 | `npm run test:wiring` / `test:bunq` | AURA visual engine + studio-chrome wiring checks |

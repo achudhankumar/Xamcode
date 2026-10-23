@@ -1004,13 +1004,13 @@ function workspaceViewInner(){
   };
   const totalConcepts = TOPICS.length;
   const totalQuestions = TOPICS.reduce((s,t)=>s+t.questions.length,0);
-  const totalVisuals = TOPICS.filter(t=>typeof t.visual==='function').length;
+  const totalVisuals = TOPICS.filter(t=>typeof t.visual==='function' || (t.visual && t.visual.steps)).length;
   const isCollapsed = u => state.collapsedUnits[u] === true;
 
   return header()+`<main>
     <div class="ws-head">
-      <div class="ws-eyebrow">SAMPLE COURSE • COMPUTER NETWORKS</div>
-      <h1 class="ws-title">Computer Networks — Unit Wise</h1>
+      <div class="ws-eyebrow">${state.activeCourseEyebrow || 'SAMPLE COURSE • COMPUTER NETWORKS'}</div>
+      <h1 class="ws-title">${state.activeCourseTitle || 'Computer Networks — Unit Wise'}</h1>
       <div class="ws-pills">
         <span class="ws-pill"><b>${Object.keys(units).length}</b> UNITS</span>
         <span class="ws-pill"><b>${totalConcepts}</b> CONCEPTS</span>
@@ -2186,7 +2186,7 @@ ${state.studyTab==='cheat' ? cheatcodeTabView() : state.studyTab==='quiz' ? vaat
       <div class="panel">
         <div class="visual-head"><span>ANIMATED 2D VISUAL • STEP ${state.step+1}/${c.steps.length}</span><span>${c.visId}</span></div>
         <div class="visual-box">
-          <div class="visual-inner" id="mainVisual">${c.visual(state.step)}</div>
+          <div class="visual-inner" id="mainVisual">${(typeof c.visual === 'function') ? c.visual(state.step) : (window.XC && window.XC.renderVisualSvg ? window.XC.renderVisualSvg(c.visual, state.step) : '')}</div>
           <div class="narration-bar show" id="narration">${c.steps[state.step].desc}</div>
         </div>
         <div class="visual-cap" id="visualCap"><span class="cap-step">STEP ${state.step+1}/${c.steps.length}</span><b>${c.steps[state.step].title}</b> — ${c.steps[state.step].desc}</div>
@@ -2541,7 +2541,7 @@ document.addEventListener('click', (e)=>{
   if(e.target.closest('[data-v-crash]')){
     const a = e.target.closest('[data-v-crash]').dataset.vCrash;
     const t = TOPICS[state.topicIdx];
-    const v = getVaathiyar(t.id);
+    const v = (t && t.vaathiyar) || getVaathiyar(t.id);
     if(!v) return;
     if(a === 'play'){
       state.vaathiyarCrashPlaying = !state.vaathiyarCrashPlaying;
@@ -2572,7 +2572,7 @@ document.addEventListener('click', (e)=>{
   if(e.target.closest('[data-v-solve]')){
     const a = e.target.closest('[data-v-solve]').dataset.vSolve;
     const t = TOPICS[state.topicIdx];
-    const v = getVaathiyar(t.id);
+    const v = (t && t.vaathiyar) || getVaathiyar(t.id);
     if(!v) return;
     if(a === 'auto'){
       state.vaathiyarSolveAuto = !state.vaathiyarSolveAuto;
@@ -2603,7 +2603,7 @@ document.addEventListener('click', (e)=>{
   if(e.target.closest('[data-v-flash]')){
     const a = e.target.closest('[data-v-flash]').dataset.vFlash;
     const t = TOPICS[state.topicIdx];
-    const v = getVaathiyar(t.id);
+    const v = (t && t.vaathiyar) || getVaathiyar(t.id);
     if(!v) return;
     if(a === 'next') state.vaathiyarFlashIdx = (state.vaathiyarFlashIdx+1) % v.flash.length;
     if(a === 'prev') state.vaathiyarFlashIdx = (state.vaathiyarFlashIdx-1+v.flash.length) % v.flash.length;
@@ -2623,7 +2623,7 @@ document.addEventListener('click', (e)=>{
    ============================================================ */
 function vaathiyarTabView(){
   const t = TOPICS[state.topicIdx];
-  const v = getVaathiyar(t.id);
+  const v = (t && t.vaathiyar) || getVaathiyar(t.id);
   if(!v){
     return `<div class="panel">
       <div class="panel-tag">👨‍🏫 VAATHIYAR MODE</div>
@@ -2815,7 +2815,7 @@ function vaathiyarTabView(){
 function startVaathiyarCrashProgress(){
   clearVaathiyarCrashTimer();
   const t = TOPICS[state.topicIdx];
-  const v = getVaathiyar(t.id);
+  const v = (t && t.vaathiyar) || getVaathiyar(t.id);
   if(!v || !v.crash) return;
   const idx = state.vaathiyarCrashIdx || 0;
   const ms = v.crash[idx].readMs;
@@ -2843,7 +2843,7 @@ function clearVaathiyarCrashTimer(){
 function runVaathiyarSolveAutoPlay(){
   clearVaathiyarSolveTimer();
   const t = TOPICS[state.topicIdx];
-  const v = getVaathiyar(t.id);
+  const v = (t && t.vaathiyar) || getVaathiyar(t.id);
   if(!v || !v.solve) return;
   state.vaathiyarSolveTimer = setTimeout(()=>{
     if(!state.vaathiyarSolveAuto) return;
@@ -2866,7 +2866,7 @@ function clearVaathiyarSolveTimer(){
    ============================================================ */
 function cheatcodeTabView(){
   const t = TOPICS[state.topicIdx];
-  const cc = CHEATCODES[t.id];
+  const cc = (t && t.cheatcode) || CHEATCODES[t.id];
   if(!cc){
     return `<div class="panel">
       <div class="panel-tag">🎯 CHEATCODE</div>
@@ -3426,7 +3426,17 @@ document.addEventListener('click', async (e)=>{
       state.aiPage={type:'plan'};
       state.aiLessonMode='crash'; state.aiVisualStep=0;
       state.aiQuizAnswers={};
+      if(result.study && Array.isArray(result.study.topics) && result.study.topics.length > 0){
+      window.XC.TOPICS = result.study.topics;
+      state.activeCourseTitle = result.study.subject || (result.study.title || file.name.replace(/\.pdf$/i, ''));
+      state.activeCourseEyebrow = 'AI GENERATED COURSE • ' + (result.study.subject || 'SYLLABUS').toUpperCase();
+      state.view = 'study';
+      state.topicIdx = 0;
+      state.step = 0;
+      state.studyTab = 'visual';
+    } else {
       state.view='ai-study';
+    }
       render(); window.scrollTo({top:0,behavior:'smooth'});
       autoGenerateTopicImages();
       /* A saved study can still have units queued server-side — reattach
@@ -4581,7 +4591,17 @@ pdfUploadForm?.addEventListener('submit',async event=>{
     state.aiFlashFlipped=false;
     state.aiMessages=[];
     state.aiChatBusy=false;
-    state.view='ai-study';
+    if(result.study && Array.isArray(result.study.topics) && result.study.topics.length > 0){
+      window.XC.TOPICS = result.study.topics;
+      state.activeCourseTitle = result.study.subject || (result.study.title || file.name.replace(/\.pdf$/i, ''));
+      state.activeCourseEyebrow = 'AI GENERATED COURSE • ' + (result.study.subject || 'SYLLABUS').toUpperCase();
+      state.view = 'study';
+      state.topicIdx = 0;
+      state.step = 0;
+      state.studyTab = 'visual';
+    } else {
+      state.view='ai-study';
+    }
     pdfUploadForm.reset();
     setSelectedPdf(null);
     resetProgress();

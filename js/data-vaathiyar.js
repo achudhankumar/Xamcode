@@ -571,7 +571,60 @@ const VAATHIYAR = {
 window.XC.VAATHIYAR = VAATHIYAR;
 
 function getVaathiyar(topicId){
+  const top = (window.XC.TOPICS || []).find(t => t && t.id === topicId);
+  if (top && top.vaathiyar) return top.vaathiyar;
   return (window.XC.VAATHIYAR || {})[topicId] || null;
 }
 
-console.log('Data loaded: VAATHIYAR =', Object.keys(VAATHIYAR).length, 'topics');
+function convertSampleToUnifiedSchema(){
+  if (!window.XC.TOPICS || !Array.isArray(window.XC.TOPICS)) return;
+  const cheats = window.XC.CHEATCODES || {};
+  const vaaths = window.XC.VAATHIYAR || {};
+
+  window.XC.TOPICS.forEach(t => {
+    if (!t) return;
+    if (!t.cheatcode && cheats[t.id]) {
+      t.cheatcode = cheats[t.id];
+    }
+    if (!t.vaathiyar && vaaths[t.id]) {
+      t.vaathiyar = vaaths[t.id];
+    }
+    if (!t.pdfQuote && t.quote) {
+      t.pdfQuote = t.quote;
+    }
+    if (!t.pdfQuote && t.explanation) {
+      t.pdfQuote = t.explanation.slice(0, 100);
+    }
+    if (!t.pdfPage) {
+      t.pdfPage = 'Page 1';
+    }
+    if (typeof t.visual === 'function') {
+      const origFn = t.visual;
+      const visObj = {
+        type: t.diagram || 'process_flow',
+        title: t.title,
+        steps: t.steps || [],
+        parameters: {}
+      };
+      const callable = function(s) {
+        try { return origFn(s); }
+        catch(e) {
+          if (window.XC && window.XC.renderVisualSvg) return window.XC.renderVisualSvg(visObj, s);
+          return '';
+        }
+      };
+      Object.assign(callable, visObj);
+      t.visual = callable;
+    } else if (!t.visual || typeof t.visual !== 'object') {
+      t.visual = {
+        type: t.diagram || 'process_flow',
+        title: t.title,
+        steps: t.steps || [],
+        parameters: {}
+      };
+    }
+  });
+}
+try { convertSampleToUnifiedSchema(); } catch(e) {}
+window.XC.convertSampleToUnifiedSchema = convertSampleToUnifiedSchema;
+console.log('Data loaded: VAATHIYAR =', Object.keys(VAATHIYAR).length, 'topics (unified schema synced)');

@@ -2124,6 +2124,54 @@ async function runAnalyzeJob(job){
        the field to exist as an array — only its contents are optional. */
     if (!Array.isArray(bank.formulas)) bank.formulas = [];
     const study = Object.assign({}, outline, bank);
+    if (Array.isArray(study.concepts)) {
+      study.topics = study.concepts.map((c, i) => {
+        const qList = (study.questions || []).filter(q => q.conceptIndex === i);
+        return {
+          id: 'concept-' + (i + 1),
+          unit: 'I',
+          unitTitle: study.title || 'Course Units',
+          title: c.title,
+          topic: c.title,
+          pdfPage: 'Page 1',
+          pdfQuote: (c.keyPoints && c.keyPoints[0]) || (c.summary ? c.summary.slice(0, 100) : ''),
+          explanation: c.summary || '',
+          keyPoints: c.keyPoints || [c.summary ? c.summary.slice(0, 60) : 'Core concept'],
+          steps: (c.visualization && Array.isArray(c.visualization.steps))
+            ? c.visualization.steps.map(s => ({ title: s.title || 'Step', desc: s.description || '' }))
+            : [{ title: 'Overview', desc: c.summary || '' }],
+          visual: {
+            type: (c.visualization && Array.isArray(c.visualization.steps) && c.visualization.steps[0] && c.visualization.steps[0].layout) || 'process_flow',
+            title: c.title,
+            steps: (c.visualization && Array.isArray(c.visualization.steps))
+              ? c.visualization.steps.map(s => ({ title: s.title || 'Step', desc: s.description || '' }))
+              : [{ title: 'Overview', desc: c.summary || '' }],
+            parameters: {}
+          },
+          cheatcode: c.cheatCode || {
+            why: 'Key concept explanation',
+            like: 'Conceptual analogy',
+            wrong: 'Common misunderstanding',
+            right: 'Core principle',
+            see: ['Real world application', 'Standard practice'],
+            oneLine: c.title
+          },
+          questions: qList.map(q => ({
+            q: q.question,
+            opts: q.options || [],
+            a: q.answerIndex ?? 0,
+            cat: q.category || 'CONCEPT',
+            diff: q.difficulty || 'Medium',
+            why: q.explanation || '',
+            wrong: q.optionExplanations || [],
+            quote: '',
+            page: 'Page 1',
+            hint: q.hint || '',
+            eli: q.eli5 || ''
+          }))
+        };
+      });
+    }
     if (!validateStudyPack(study)) throw mkErr(502, 'The AI returned an incomplete study plan. Please try the PDF again.');
     setJobStage(job, 'ready');
     finishJob(job, { status: 'done', study });
