@@ -11,11 +11,17 @@ const { buildOutlinePrompt, buildTopicPrompt, OUTLINE_SYSTEM_INSTRUCTION, TOPIC_
 const REAL_FIXTURES_DIR = path.join(__dirname, 'fixtures', 'real');
 const REPORT_PATH = path.join(__dirname, 'docs', 'PHASE3-REPORT.md');
 
-// Command-line flags: --pdf <filename>, --topic <index>, --verbose
+// Command-line flags: --pdf <filename>, --topic <index>, --verbose, --apiKey, --model, --apiBase, --userId, --testId, --testTopics
 let args = process.argv.slice(2);
 let targetPdf = null;
 let targetTopic = null;
 let verbose = false;
+let apiKey = null;
+let model = null;
+let apiBase = null;
+let userId = null;
+let testId = null;
+let testTopics = null;
 
 for (let i = 0; i < args.length; i++) {
   if (args[i] === '--pdf' && i + 1 < args.length) {
@@ -24,6 +30,18 @@ for (let i = 0; i < args.length; i++) {
     targetTopic = parseInt(args[++i], 10);
   } else if (args[i] === '--verbose') {
     verbose = true;
+  } else if (args[i] === '--apiKey' && i + 1 < args.length) {
+    apiKey = args[++i];
+  } else if (args[i] === '--model' && i + 1 < args.length) {
+    model = args[++i];
+  } else if (args[i] === '--apiBase' && i + 1 < args.length) {
+    apiBase = args[++i];
+  } else if (args[i] === '--userId' && i + 1 < args.length) {
+    userId = args[++i];
+  } else if (args[i] === '--testId' && i + 1 < args.length) {
+    testId = args[++i];
+  } else if (args[i] === '--testTopics' && i + 1 < args.length) {
+    testTopics = args[++i].split(' ').map(t => parseInt(t, 10)).filter(t => !isNaN(t));
   }
 }
 
