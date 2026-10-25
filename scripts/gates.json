@@ -95,5 +95,13 @@
       "excerpt_match_rate": 0.95,
       "cost_per_300p_book_inr": 40.1
     }
+  },
+  "12": {
+    "report": "reports/phase-12.json",
+    "pass": {
+      "ci_green": 1,
+      "staging_e2e_passes": 1,
+      "load_test_success_rate": 0.99
+    }
   }
 }

@@ -27,6 +27,7 @@ const PORT = Number(process.env.PORT || 4173);
 const PDF_PER_DAY = Number(process.env.PDF_GENERATIONS_PER_DAY ?? 5);
 const MAX_REQ_HOUR = Math.min(60, Math.max(1, Number(process.env.MAX_REQUESTS_PER_HOUR || 60)));
 const MAX_PDF_MB = Number(process.env.MAX_PDF_MB || 20);
+const SUPABASE_URL = process.env.SUPABASE_URL || null;
 /* The browser base64-encodes the PDF, inflating it by 4/3, so the JSON body
    cap derives from the same limit plus a documented 2 MB of slack. Without
    the slack an upload just over the limit was rejected by the body gate with
@@ -1805,6 +1806,111 @@ function finishJob(job, patch){
   if (!job.keepPdf) job.pdf = null;
   return job;
 }
+async function setJobStageDb(jobId, stage, weight) {
+  if (!SUPABASE_URL) {
+    throw new Error('setJobStageDb requires SUPABASE_URL');
+  }
+  const { fetch } = globalThis;
+  const apiKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+  const rpcUrl = `${SUPABASE_URL}/rest/v1/rpc/bip_set_job_stage`;
+  const res = await fetch(rpcUrl, {
+    method: 'POST',
+    headers: {
+      'apikey': apiKey,
+      'Authorization': 'Bearer ' + apiKey,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+    body: JSON.stringify({ p_job_id: jobId, p_stage: stage, p_weight: weight }),
+  });
+  if (!res.ok) {
+    const txt = await res.text();
+    throw new Error('bip_set_job_stage RPC failed: ' + res.status + ' ' + txt);
+  }
+  return res.json();
+}
+
+async function saveJob(jobId, status) {
+  if (!SUPABASE_URL) {
+    throw new Error('saveJob requires SUPABASE_URL');
+  }
+  const { fetch } = globalThis;
+  const apiKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+  const rpcUrl = `${SUPABASE_URL}/rest/v1/rpc/bip_save_job`;
+  const res = await fetch(rpcUrl, {
+    method: 'POST',
+    headers: {
+      'apikey': apiKey,
+      'Authorization': 'Bearer ' + apiKey,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+    body: JSON.stringify({ p_job_id: jobId, p_status: status || 'queued' }),
+  });
+  if (!res.ok) {
+    const txt = await res.text();
+    throw new Error('bip_save_job RPC failed: ' + res.status + ' ' + txt);
+  }
+  return res.json();
+}
+
+async function claimJob() {
+  if (!SUPABASE_URL) {
+    throw new Error('claimJob requires SUPABASE_URL');
+  }
+  const { fetch } = globalThis;
+  const apiKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+  const rpcUrl = `${SUPABASE_URL}/rest/v1/rpc/bip_claim_job`;
+  const res = await fetch(rpcUrl, {
+    method: 'POST',
+    headers: {
+      'apikey': apiKey,
+      'Authorization': 'Bearer ' + apiKey,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+    body: JSON.stringify({}),
+  });
+  if (!res.ok) {
+    const txt = await res.text();
+    throw new Error('bip_claim_job RPC failed: ' + res.status + ' ' + txt);
+  }
+  const data = await res.json();
+  if (data && data.error) {
+    return { error: data.error };
+  }
+  return data;
+}
+
+async function finishJobDb(jobId, finishData) {
+  if (!SUPABASE_URL) {
+    throw new Error('finishJobDb requires SUPABASE_URL');
+  }
+  const { fetch } = globalThis;
+  const apiKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+  const rpcUrl = `${SUPABASE_URL}/rest/v1/rpc/bip_finish_job`;
+  const res = await fetch(rpcUrl, {
+    method: 'POST',
+    headers: {
+      'apikey': apiKey,
+      'Authorization': 'Bearer ' + apiKey,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+    body: JSON.stringify({
+      p_job_id: jobId,
+      p_status: finishData.status,
+      p_stage: finishData.stage,
+      p_progress: finishData.progress,
+    }),
+  });
+  if (!res.ok) {
+    const txt = await res.text();
+    throw new Error('bip_finish_job RPC failed: ' + res.status + ' ' + txt);
+  }
+  return res.json();
+}
+
 function extractJson(text){
   console.log('[DEBUG extractJson length]:', text ? text.length : 0, 'preview:', String(text).slice(0, 300));
   const clean = String(text || '').replace(/```json/gi, '```').trim();
@@ -2772,13 +2878,13 @@ const server = http.createServer(async (req, res) => {
   try{
     const url = new URL(req.url, 'http://localhost');
     const p = url.pathname;
-    if (req.method === 'GET' && (p === '/' || p === '/api/health')){
+    if (req.method === 'GET' && (p === '/' || p === '/api/health' || p === '/healthz' || p === '/livez' || p === '/readyz')){
       /* Identity fields are a contract with the browser probe
          (js/app.js xcProbeHealth): it only treats this origin as the real
          XAMCODE AI server when service === 'xamcode-ai' && apiVersion === 1.
          Returning just { ok } made every probe fail, so each submit showed
          the "XAMCODE AI is not running" banner even with /api/quota live. */
-      if (p === '/api/health') return sendJson(res, 200, { ok: true, service: 'xamcode-ai', apiVersion: 1, requestId }, requestId);
+      if (p === '/api/health' || p === '/healthz' || p === '/livez' || p === '/readyz') return sendJson(res, 200, { ok: true, service: 'xamcode-ai', apiVersion: 1, ready: true, uptime: process.uptime(), requestId }, requestId);
       return serveStatic(req, res);
     }
     if (req.method === 'GET' && p === '/api/providers') return sendJson(res, 200, { providers: providerStatus(), image: imageStatus(), video: { id: 'hailuo-video', provider: 'minimax', model: process.env.MINIMAX_VIDEO_MODEL || 'MiniMax-Hailuo-02', configured: false, disabled: true }, requestId }, requestId);
@@ -3189,6 +3295,97 @@ function compactOutlinePromptWithFingerprint(job, k){
     'SUBJECT FINGERPRINT (required): include a field "subjectFingerprint": a 3–6 word lowercase summary of this unit\'s actual subject and the key technical terms it covers, from the PDF — for example "routing, distance vector, link state, dijkstra" or "star, bus, mesh, topology". It must come from the PDF, not from general knowledge. This is checked against the lesson words to reject a fluent answer from another subject.'
   ].join(' ');
   return base;
+}
+
+/* ============================================================
+   PHASE 4 MODULE EXPORTS — job queue infrastructure
+   ============================================================ */
+module.exports = {
+  SUPABASE_URL: typeof SUPABASE_URL !== 'undefined' ? SUPABASE_URL : null,
+  ANALYZE_STAGES: typeof ANALYZE_STAGES !== 'undefined' ? ANALYZE_STAGES : null,
+  jobs: typeof jobs !== 'undefined' ? jobs : null,
+  setJobStage: typeof setJobStage !== 'undefined' ? setJobStage : null,
+  setJobStageDb: typeof setJobStageDb !== 'undefined' ? setJobStageDb : null,
+  jobSnapshot: typeof jobSnapshot !== 'undefined' ? jobSnapshot : null,
+  finishJob: typeof finishJob !== 'undefined' ? finishJob : null,
+  finishJobDb: typeof finishJobDb !== 'undefined' ? finishJobDb : null,
+  saveJob: typeof saveJob !== 'undefined' ? saveJob : null,
+  claimJob: typeof claimJob !== 'undefined' ? claimJob : null,
+  extractJson: typeof extractJson !== 'undefined' ? extractJson : null,
+  getVisualPipeline: typeof getVisualPipeline !== 'undefined' ? getVisualPipeline : null,
+  initVisualPipeline: typeof initVisualPipeline !== 'undefined' ? initVisualPipeline : null,
+};
+
+/* ============================================================
+   PHASE 5: VISUAL SYSTEM CORE — Visual Pipeline Integration
+   ============================================================
+   Exports visual-related functions for the ANALYZE_STAGES pipeline.
+   Uses dynamic import to load the ES module visual system.
+
+   Integration points:
+   • visualRegistry — unified visual schema registry
+   • createVisualJob — create a visual job with schema validation
+   • processVisualStage — process visual stage items in the pipeline
+   • getVisualState — get current visual state for a job
+
+   To use in server.js (async context):
+     const { createVisualJob, processVisualStage, getVisualState } = await import('./js/visuals/index.js');
+   ============================================================ */
+
+// Visual pipeline integration function (loaded dynamically)
+let visualModule = null;
+
+async function loadVisualModule() {
+  if (visualModule) return visualModule;
+  try {
+    // Dynamic import for ES Module visual system
+    visualModule = await import('./js/visuals/index.js');
+    return visualModule;
+  } catch (e) {
+    console.warn('[Visual Pipeline] Could not load visual module:', e.message);
+    // Return CommonJS-compatible stubs
+    visualModule = {
+      VISUAL_SCHEMAS: {},
+      VALID_VISUAL_TYPES: [],
+      getVisualSchema: () => null,
+      checkRichness: () => false,
+      getStepCount: () => 0,
+      createVisual: () => ({
+        type: '',
+        steps: [],
+        theme: 'light',
+        config: { loop: false, autoPlay: false, interval: 2000, direction: 'forward' }
+      }),
+      createVisualJob: () => null,
+      processVisualStage: () => null,
+      getVisualState: () => null
+    };
+    return visualModule;
+  }
+}
+
+// Export visual pipeline API (await loadVisualModule() at runtime)
+async function getVisualPipeline() {
+  const m = await loadVisualModule();
+  return {
+    VISUAL_REGISTRY: m.VISUAL_SCHEMAS,
+    VALID_VISUAL_TYPES: m.VALID_VISUAL_TYPES,
+    createVisual: m.createVisual,
+    checkRichness: m.checkRichness,
+    getStepCount: m.getStepCount,
+    createVisualJob: m.createVisualJob,
+    processVisualStage: m.processVisualStage,
+    getVisualState: m.getVisualState
+  };
+}
+
+// Backward compatibility: load module once at startup
+let _visualPipelinePromise = null;
+async function initVisualPipeline() {
+  if (!_visualPipelinePromise) {
+    _visualPipelinePromise = loadVisualModule();
+  }
+  return _visualPipelinePromise;
 }
 
 /* ============================================================

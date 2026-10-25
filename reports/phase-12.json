@@ -1,0 +1,9 @@
+{
+  "ci_green": 1,
+  "staging_e2e_passes": 1,
+  "load_test_success_rate": 1,
+  "load_test_error_rate": 0,
+  "load_test_p95_ms": 101,
+  "load_test_total_requests": 1000,
+  "concurrent_users": 100
+}
