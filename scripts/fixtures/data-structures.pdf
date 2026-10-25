@@ -1,0 +1,105 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [5 0 R 7 0 R 9 0 R] /Count 3 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+4 0 obj
+<< /Length 575 >>
+stream
+BT
+/F1 16 Tf
+50 750 Td
+(Data Structures Lecture 1: Tree Architectures) Tj
+/F1 12 Tf
+0 -24 Td
+0 -20 Td
+/F1 13 Tf
+(Binary Search Trees and Self Balancing AVL Nodes) Tj
+/F1 11 Tf
+0 -16 Td
+(A binary search tree enforces the invariant that left subtree keys are strictly smaller than root and right are greater.) Tj
+0 -16 Td
+(Unbalanced binary trees degrade to linear O\(N\) linked list complexity in the worst-case ascending insertion order.) Tj
+0 -16 Td
+(AVL trees maintain a balance factor of minus one, zero, or one using single and double rotation operations.) Tj
+0 -16 Td
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 4 0 R >>
+endobj
+6 0 obj
+<< /Length 567 >>
+stream
+BT
+/F1 16 Tf
+50 750 Td
+(Data Structures Lecture 2: Graph Exploration) Tj
+/F1 12 Tf
+0 -24 Td
+0 -20 Td
+/F1 13 Tf
+(Depth-First Search and Breadth-First Shortest Paths) Tj
+/F1 11 Tf
+0 -16 Td
+(Graphs represent pairwise node relationships through vertices connected by directed or undirected weighted edges.) Tj
+0 -16 Td
+(Breadth-first search traverses level by level using a FIFO queue to discover shortest paths in unweighted graphs.) Tj
+0 -16 Td
+(Depth-first search uses a recursion stack to explore branches deeply and compute topological sorts in DAGs.) Tj
+0 -16 Td
+ET
+endstream
+endobj
+7 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 6 0 R >>
+endobj
+8 0 obj
+<< /Length 574 >>
+stream
+BT
+/F1 16 Tf
+50 750 Td
+(Data Structures Lecture 3: Dynamic Programming) Tj
+/F1 12 Tf
+0 -24 Td
+0 -20 Td
+/F1 13 Tf
+(Optimal Substructure and Overlapping Subproblems) Tj
+/F1 11 Tf
+0 -16 Td
+(Dynamic programming solves complex optimization problems by decomposing them into memoized subproblem solutions.) Tj
+0 -16 Td
+(Top-down memoization caches recursive results in a lookup table, whereas bottom-up tabulation builds iteratively.) Tj
+0 -16 Td
+(The classic 0-1 knapsack problem establishes a two-dimensional recurrence relation bounded by total weight capacity.) Tj
+0 -16 Td
+ET
+endstream
+endobj
+9 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 8 0 R >>
+endobj
+xref
+0 10
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000127 00000 n 
+0000000197 00000 n 
+0000000823 00000 n 
+0000000949 00000 n 
+0000001567 00000 n 
+0000001693 00000 n 
+0000002318 00000 n 
+trailer
+<< /Size 10 /Root 1 0 R >>
+startxref
+2444
+%%EOF

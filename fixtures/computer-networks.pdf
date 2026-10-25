@@ -1,0 +1,105 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [5 0 R 7 0 R 9 0 R] /Count 3 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+4 0 obj
+<< /Length 562 >>
+stream
+BT
+/F1 16 Tf
+50 750 Td
+(Computer Networks Lecture 1: Core Architectures) Tj
+/F1 12 Tf
+0 -24 Td
+0 -20 Td
+/F1 13 Tf
+(Layered Protocol Stack and Transmission Media) Tj
+/F1 11 Tf
+0 -16 Td
+(A computer network consists of two or more autonomous computing devices linked by communication media to exchange data packets.) Tj
+0 -16 Td
+(Transmission media are categorized into guided copper or optical fiber and unguided wireless channels.) Tj
+0 -16 Td
+(The physical layer translates logical binary bits into electrical, optical, or radio physical signals.) Tj
+0 -16 Td
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 4 0 R >>
+endobj
+6 0 obj
+<< /Length 545 >>
+stream
+BT
+/F1 16 Tf
+50 750 Td
+(Computer Networks Lecture 2: Packet Switching and Routing) Tj
+/F1 12 Tf
+0 -24 Td
+0 -20 Td
+/F1 13 Tf
+(Datagram Forwarding and IP Addressing) Tj
+/F1 11 Tf
+0 -16 Td
+(In a packet-switched network, routers inspect destination IP headers and consult forwarding routing tables.) Tj
+0 -16 Td
+(Subnet masks partition the 32-bit IPv4 address into network prefixes and individual host identifiers.) Tj
+0 -16 Td
+(Hierarchical CIDR routing aggregates multiple subnet prefixes to prevent global routing table explosion.) Tj
+0 -16 Td
+ET
+endstream
+endobj
+7 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 6 0 R >>
+endobj
+8 0 obj
+<< /Length 558 >>
+stream
+BT
+/F1 16 Tf
+50 750 Td
+(Computer Networks Lecture 3: Reliable Transport Protocols) Tj
+/F1 12 Tf
+0 -24 Td
+0 -20 Td
+/F1 13 Tf
+(TCP Sliding Window and Congestion Avoidance) Tj
+/F1 11 Tf
+0 -16 Td
+(TCP guarantees ordered reliable delivery using cumulative acknowledgements and retransmission timers.) Tj
+0 -16 Td
+(The sliding window protocol maximizes channel throughput by allowing multiple unacknowledged frames in flight.) Tj
+0 -16 Td
+(Congestion control uses additive-increase multiplicative-decrease AIMD to converge on fair network capacity.) Tj
+0 -16 Td
+ET
+endstream
+endobj
+9 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 8 0 R >>
+endobj
+xref
+0 10
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000127 00000 n 
+0000000197 00000 n 
+0000000810 00000 n 
+0000000936 00000 n 
+0000001532 00000 n 
+0000001658 00000 n 
+0000002267 00000 n 
+trailer
+<< /Size 10 /Root 1 0 R >>
+startxref
+2393
+%%EOF

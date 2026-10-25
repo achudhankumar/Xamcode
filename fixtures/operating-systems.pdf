@@ -1,0 +1,105 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [5 0 R 7 0 R 9 0 R] /Count 3 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+4 0 obj
+<< /Length 558 >>
+stream
+BT
+/F1 16 Tf
+50 750 Td
+(Operating Systems Lecture 1: Process Management) Tj
+/F1 12 Tf
+0 -24 Td
+0 -20 Td
+/F1 13 Tf
+(Process Control Blocks and CPU Scheduling) Tj
+/F1 11 Tf
+0 -16 Td
+(A process is an active program in execution possessing its own distinct virtual address space and call stack.) Tj
+0 -16 Td
+(The operating system kernel maintains a Process Control Block PCB tracking registers, program counter, and state.) Tj
+0 -16 Td
+(Context switching saves hardware registers of the current process and loads the saved state of the next task.) Tj
+0 -16 Td
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 4 0 R >>
+endobj
+6 0 obj
+<< /Length 584 >>
+stream
+BT
+/F1 16 Tf
+50 750 Td
+(Operating Systems Lecture 2: Memory Hierarchy and Paging) Tj
+/F1 12 Tf
+0 -24 Td
+0 -20 Td
+/F1 13 Tf
+(Virtual Address Translation and Page Replacement) Tj
+/F1 11 Tf
+0 -16 Td
+(Paging divides physical memory into fixed-size frames and logical process space into equal-sized virtual pages.) Tj
+0 -16 Td
+(The memory management unit MMU uses translation lookaside buffers TLB to accelerate virtual-to-physical address mapping.) Tj
+0 -16 Td
+(When an accessed page is not resident in physical RAM, the MMU raises a page fault trap to fetch it from disk.) Tj
+0 -16 Td
+ET
+endstream
+endobj
+7 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 6 0 R >>
+endobj
+8 0 obj
+<< /Length 589 >>
+stream
+BT
+/F1 16 Tf
+50 750 Td
+(Operating Systems Lecture 3: Concurrency and Synchronization) Tj
+/F1 12 Tf
+0 -24 Td
+0 -20 Td
+/F1 13 Tf
+(Mutual Exclusion Primitives and Deadlock Prevention) Tj
+/F1 11 Tf
+0 -16 Td
+(Race conditions occur when multiple concurrent threads read and mutate shared mutable state without coordination.) Tj
+0 -16 Td
+(Mutual exclusion locks and counting semaphores ensure that only one thread executes inside the critical section.) Tj
+0 -16 Td
+(Deadlocks require four simultaneous conditions: mutual exclusion, hold and wait, no preemption, and circular wait.) Tj
+0 -16 Td
+ET
+endstream
+endobj
+9 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 8 0 R >>
+endobj
+xref
+0 10
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000127 00000 n 
+0000000197 00000 n 
+0000000806 00000 n 
+0000000932 00000 n 
+0000001567 00000 n 
+0000001693 00000 n 
+0000002333 00000 n 
+trailer
+<< /Size 10 /Root 1 0 R >>
+startxref
+2459
+%%EOF

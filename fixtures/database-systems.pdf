@@ -1,0 +1,105 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [5 0 R 7 0 R 9 0 R] /Count 3 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+4 0 obj
+<< /Length 567 >>
+stream
+BT
+/F1 16 Tf
+50 750 Td
+(Database Systems Lecture 1: Relational Foundations) Tj
+/F1 12 Tf
+0 -24 Td
+0 -20 Td
+/F1 13 Tf
+(Relational Algebra and Schema Normalization) Tj
+/F1 11 Tf
+0 -16 Td
+(The relational model structures data into mathematical relations represented as tables of tuples and typed attributes.) Tj
+0 -16 Td
+(Primary keys uniquely identify relation tuples while foreign key constraints enforce referential integrity.) Tj
+0 -16 Td
+(Third normal form 3NF eliminates transitive functional dependencies to prevent insertion and update anomalies.) Tj
+0 -16 Td
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 4 0 R >>
+endobj
+6 0 obj
+<< /Length 558 >>
+stream
+BT
+/F1 16 Tf
+50 750 Td
+(Database Systems Lecture 2: Storage and Indexing) Tj
+/F1 12 Tf
+0 -24 Td
+0 -20 Td
+/F1 13 Tf
+(B-Tree Indexing and Query Execution Plans) Tj
+/F1 11 Tf
+0 -16 Td
+(Database storage engines utilize balanced B+ Trees to minimize high-latency disk I/O operations for range queries.) Tj
+0 -16 Td
+(Leaf nodes in a B+ Tree are linked sequentially in a doubly-linked list enabling rapid sequential scans.) Tj
+0 -16 Td
+(Cost-based query optimizers inspect table statistics to select between index seeks, index scans, and hash joins.) Tj
+0 -16 Td
+ET
+endstream
+endobj
+7 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 6 0 R >>
+endobj
+8 0 obj
+<< /Length 581 >>
+stream
+BT
+/F1 16 Tf
+50 750 Td
+(Database Systems Lecture 3: Transaction Processing) Tj
+/F1 12 Tf
+0 -24 Td
+0 -20 Td
+/F1 13 Tf
+(ACID Guarantees and Two-Phase Locking) Tj
+/F1 11 Tf
+0 -16 Td
+(A database transaction is an atomic sequence of read and write operations preserving database consistency invariants.) Tj
+0 -16 Td
+(The ACID properties define atomicity, consistency, isolation, and durability for mission-critical enterprise systems.) Tj
+0 -16 Td
+(Strict two-phase locking 2PL prevents conflicting concurrent reads and writes, preventing dirty and non-repeatable reads.) Tj
+0 -16 Td
+ET
+endstream
+endobj
+9 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 8 0 R >>
+endobj
+xref
+0 10
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000127 00000 n 
+0000000197 00000 n 
+0000000815 00000 n 
+0000000941 00000 n 
+0000001550 00000 n 
+0000001676 00000 n 
+0000002308 00000 n 
+trailer
+<< /Size 10 /Root 1 0 R >>
+startxref
+2434
+%%EOF

@@ -1,0 +1,105 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [5 0 R 7 0 R 9 0 R] /Count 3 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+4 0 obj
+<< /Length 564 >>
+stream
+BT
+/F1 16 Tf
+50 750 Td
+(Software Engineering Lecture 1: Agile Methodologies) Tj
+/F1 12 Tf
+0 -24 Td
+0 -20 Td
+/F1 13 Tf
+(Sprint Iterations and User Story Estimation) Tj
+/F1 11 Tf
+0 -16 Td
+(Agile software development values rapid iterative delivery of working software over exhaustive upfront documentation.) Tj
+0 -16 Td
+(Scrum teams plan work in time-boxed sprint iterations, tracking velocity through story points and burndown charts.) Tj
+0 -16 Td
+(User stories capture business value from the persona perspective using standard acceptance criteria.) Tj
+0 -16 Td
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 4 0 R >>
+endobj
+6 0 obj
+<< /Length 582 >>
+stream
+BT
+/F1 16 Tf
+50 750 Td
+(Software Engineering Lecture 2: Architectural Patterns) Tj
+/F1 12 Tf
+0 -24 Td
+0 -20 Td
+/F1 13 Tf
+(SOLID Design Principles and Clean Architecture) Tj
+/F1 11 Tf
+0 -16 Td
+(Clean architecture separates business domain logic from volatile database drivers and web presentation frameworks.) Tj
+0 -16 Td
+(The Single Responsibility Principle asserts that a class or module should have only one reason to change.) Tj
+0 -16 Td
+(Dependency inversion dictates that high-level business policies should depend on abstractions rather than low-level details.) Tj
+0 -16 Td
+ET
+endstream
+endobj
+7 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 6 0 R >>
+endobj
+8 0 obj
+<< /Length 624 >>
+stream
+BT
+/F1 16 Tf
+50 750 Td
+(Software Engineering Lecture 3: Continuous Integration and Testing) Tj
+/F1 12 Tf
+0 -24 Td
+0 -20 Td
+/F1 13 Tf
+(Automated Testing Pyramids and Deployment Pipelines) Tj
+/F1 11 Tf
+0 -16 Td
+(Continuous integration mandates that developers merge code changes frequently into a shared repository with automated test gates.) Tj
+0 -16 Td
+(The testing pyramid prioritizes fast isolated unit tests at the base, followed by integration tests and end-to-end tests.) Tj
+0 -16 Td
+(Automated canary deployment strategies gradually shift user traffic to new revisions while observing health telemetry.) Tj
+0 -16 Td
+ET
+endstream
+endobj
+9 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 8 0 R >>
+endobj
+xref
+0 10
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000127 00000 n 
+0000000197 00000 n 
+0000000812 00000 n 
+0000000938 00000 n 
+0000001571 00000 n 
+0000001697 00000 n 
+0000002372 00000 n 
+trailer
+<< /Size 10 /Root 1 0 R >>
+startxref
+2498
+%%EOF

@@ -1,0 +1,7 @@
+{
+  "migrations_clean": 1,
+  "cross_user_isolation": 1,
+  "signed_url_valid": 1,
+  "sample_course_renders": 1,
+  "passed_assertions": 29
+}

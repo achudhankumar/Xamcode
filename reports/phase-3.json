@@ -1,0 +1,10 @@
+{
+  "real_model_calls": 96,
+  "pdf_count": 5,
+  "pdf_min_pages": 24,
+  "first_pass_rate": 1,
+  "final_pass_rate": 1,
+  "api_error_share": 0.1,
+  "npm_test": 0,
+  "isRealModelCall": true
+}

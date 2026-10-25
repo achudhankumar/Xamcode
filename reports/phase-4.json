@@ -1,0 +1,8 @@
+{
+  "bip_jobs_table": 1,
+  "bip_save_job_rpc": 1,
+  "bip_claim_job_rpc": 1,
+  "bip_finish_job_rpc": 1,
+  "server_module_exports": 1,
+  "server_exports_complete": 1
+}
