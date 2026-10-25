@@ -190,5 +190,16 @@
 ---
 
 ### Phase A6: Streak and Daily Goal
+- **Gate Status:** PASS (`node test-streak-goals.js` — 10/10 passed)
+- **Components:**
+  - `lib/streak-goal-engine.js`: Timezone-aware daily goal completion tracking
+  - Handles timezone boundaries across UTC, IST (+5:30), EST (-5:00)
+  - 1 monthly streak freeze preserving streaks during unexpected absences
+  - Ethical UX with opt-out reminder controls and zero guilt messaging
+- **Tag:** `phase-a6`
+
+---
+
+### Phase A7: Mock Test Mode
 - **Status:** Next in autopilot queue.
 
