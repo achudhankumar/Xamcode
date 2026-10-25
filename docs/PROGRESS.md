@@ -95,5 +95,16 @@
 ---
 
 ### Phase A1: Study Plan Generator
+- **Gate Status:** PASS (`node test-study-plan.js` — 11/11 passed)
+- **Components:**
+  - `lib/study-plan-generator.js`: Builds deterministic plans for 7, 30, and 90 days
+  - Spaced repetition schedules (Day 1, 3, 7, 14) and weekly mock tests
+  - Reserves last 20% of schedule for comprehensive review
+  - Adaptive rescheduling for missed days strictly capped at $\le 2\times$ daily minutes
+- **Tag:** `phase-a1`
+
+---
+
+### Phase A2: Spaced Repetition (SM-2) & Daily Review
 - **Status:** Next in autopilot queue.
 
