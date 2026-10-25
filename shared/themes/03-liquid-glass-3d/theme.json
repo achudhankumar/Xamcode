@@ -1,0 +1,10 @@
+{
+  "id": "03-liquid-glass-3d",
+  "name": "03 Liquid Glass 3D",
+  "styleKey": "glass",
+  "description": "Frosted glass, prisms",
+  "cost": "heavy",
+  "fontDisplay": "Space Grotesk, Syne, sans-serif",
+  "fontMono": "JetBrains Mono, monospace",
+  "recommendedFor": "spatial"
+}

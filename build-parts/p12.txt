@@ -80,7 +80,7 @@ function restRefreshBind(){
 }
 function rAll(){var s=null;gt('/api/bip/summary').then(function(r){s=r;}).catch(function(e){var w=(e&&e.message)?String(e.message):'the server did not respond';st('phaseLabel','Build status unavailable — '+w);}).then(function(){
 if(!s)return;rs(function(){rp({progress:s.progress,milestones:s.milestones});});rs(function(){rr(s.roadmap||[]);});rs(function(){rstatus(s.status||{});});rs(function(){ract(s.recentActivity||[],s.integration);});
-rs(function(){rReadiness(s);});
+rs(function(){rReadiness(s);if(s&&s.progress&&s.progress.percent!==undefined){st('act6ReadinessWeight',s.progress.percent+'% Readiness Weight');}});
 rs(function(){ri(s.ideas||[]);});rs(function(){if(s.launch)rl(s.launch);});
 rs(function(){st('statIdeas',String((s.counts&&s.counts.ideas)||0));st('statWait',String((s.counts&&s.counts.waitlist)||0));st('waitCount',String((s.counts&&s.counts.waitlist)||0));});});
 gt('/api/bip/chat?limit=30').then(function(c){rc(c.messages||[]);}).catch(function(){});}

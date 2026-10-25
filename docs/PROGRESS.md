@@ -163,5 +163,18 @@
 ---
 
 ### Phase 9: Theme System Ported from Build-in-Public
+- **Gate Status:** PASS (`node scripts/gate.js 9`)
+- **Components:**
+  - `shared/themes/`: Extracted all 5 themes (`01 Vibe Coding Studio`, `02 Bubblegum Playground`, `03 Liquid Glass 3D`, `04 Neo-Brutalist Creative Lab`, `05 Soft Minimal Studio`) with tokens, lazy 3D scenes, and theme manifests
+  - Live switching without page reload (`applyThemeLive`)
+  - Battery-saver recommendation for mobile devices (`Soft Minimal Studio` recommended when coarse pointer, RAM $\le 4$GB, cores $\le 4$, or Save-Data is active)
+  - Section 06 dynamic readiness weight wiring from `/api/bip/summary`
+  - 15 screenshots saved in `docs/theme-screens/`
+- **Artifact:** `reports/phase-9.json`, `shared/themes/`, `test-themes.js`
+- **Tag:** `phase-9`
+
+---
+
+### Phase 10: Accounts, Quotas, Payments & Security
 - **Status:** Next in autopilot queue.
 

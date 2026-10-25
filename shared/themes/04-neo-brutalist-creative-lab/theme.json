@@ -1,0 +1,10 @@
+{
+  "id": "04-neo-brutalist-creative-lab",
+  "name": "04 Neo-Brutalist Creative Lab",
+  "styleKey": "brutalist",
+  "description": "3px borders, acid yellow, 3D monolith",
+  "cost": "heavy",
+  "fontDisplay": "Syne, system-ui, sans-serif",
+  "fontMono": "JetBrains Mono, monospace",
+  "recommendedFor": "experimental"
+}

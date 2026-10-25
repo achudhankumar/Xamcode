@@ -1,0 +1,10 @@
+{
+  "id": "05-soft-minimal-studio",
+  "name": "05 Soft Minimal Studio",
+  "styleKey": "minimal",
+  "description": "Warm alabaster, serif, hairline grids, 3D armillary",
+  "cost": "light",
+  "fontDisplay": "Fraunces, Georgia, serif",
+  "fontMono": "Space Grotesk, system-ui, sans-serif",
+  "recommendedFor": "mobile"
+}

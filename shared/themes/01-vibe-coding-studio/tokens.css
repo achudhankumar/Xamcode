@@ -1,0 +1,27 @@
+/* 01 Vibe Coding Studio — Design Tokens */
+body[data-style="vibe"], :root[data-theme="01-vibe-coding-studio"] {
+  --theme-id: "01-vibe-coding-studio";
+  --paper: #f1efe3;
+  --lime: #c8ff3d;
+  --limeink: #121804;
+  --inkink: #0b0e05;
+  --cobalt: #5c6dff;
+  --mut: #9aa38d;
+  --dim: #6b745c;
+  --line: rgba(255, 255, 255, 0.10);
+  --line2: rgba(255, 255, 255, 0.06);
+  --soft: rgba(200, 255, 61, 0.35);
+  --warn: #ffb43d;
+  --orange: #f97316;
+  --violet: #a855f7;
+  --bad: #ff5f5f;
+  --cyan: #5eead4;
+  --card: #0e1206;
+  --bg: #060803;
+  --font-display: "Syne", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 14px;
+  --shadow-main: 0 16px 40px rgba(0, 0, 0, 0.65);
+}

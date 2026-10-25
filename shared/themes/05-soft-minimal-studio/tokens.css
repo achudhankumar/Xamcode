@@ -1,0 +1,28 @@
+/* 05 Soft Minimal Studio — Design Tokens */
+body[data-style="minimal"], :root[data-theme="05-soft-minimal-studio"] {
+  --theme-id: "05-soft-minimal-studio";
+  --paper: #181816;
+  --lime: #23533d;
+  --limeink: #faf8f5;
+  --inkink: #181816;
+  --cobalt: #b4532a;
+  --mut: #57534e;
+  --dim: #78716c;
+  --line: rgba(24, 24, 22, 0.12);
+  --line2: rgba(24, 24, 22, 0.08);
+  --soft: rgba(35, 83, 61, 0.22);
+  --warn: #b45309;
+  --orange: #b4532a;
+  --violet: #57534e;
+  --bad: #b91c1c;
+  --cyan: #23533d;
+  --card: #ffffff;
+  --bg: #faf8f5;
+  --font-display: "Fraunces", Georgia, serif;
+  --font-mono: "Space Grotesk", system-ui, sans-serif;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --shadow-main: 0 12px 32px -12px rgba(24, 24, 22, 0.08);
+  --hairline: 1px solid rgba(24, 24, 22, 0.12);
+}

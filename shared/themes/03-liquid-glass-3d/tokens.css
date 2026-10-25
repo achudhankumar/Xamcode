@@ -1,0 +1,28 @@
+/* 03 Liquid Glass 3D — Design Tokens */
+body[data-style="glass"], :root[data-theme="03-liquid-glass-3d"] {
+  --theme-id: "03-liquid-glass-3d";
+  --paper: #eef6ff;
+  --lime: #38bdf8;
+  --limeink: #031124;
+  --inkink: #030914;
+  --cobalt: #818cf8;
+  --mut: #94b3d4;
+  --dim: #6788ab;
+  --line: rgba(255, 255, 255, 0.22);
+  --line2: rgba(186, 230, 253, 0.16);
+  --soft: rgba(56, 189, 248, 0.38);
+  --warn: #fbbf24;
+  --orange: #38bdf8;
+  --violet: #c084fc;
+  --bad: #f87171;
+  --cyan: #2dd4bf;
+  --card: rgba(12, 25, 48, 0.48);
+  --bg: #030816;
+  --font-display: "Space Grotesk", "Syne", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+  --radius-sm: 6px;
+  --radius-md: 14px;
+  --radius-lg: 24px;
+  --shadow-main: 0 24px 64px rgba(3, 8, 22, 0.7);
+  --backdrop-blur: blur(28px) saturate(190%);
+}

@@ -1,0 +1,10 @@
+{
+  "id": "01-vibe-coding-studio",
+  "name": "01 Vibe Coding Studio",
+  "styleKey": "vibe",
+  "description": "Dark, asymmetric, 3D tesseract",
+  "cost": "heavy",
+  "fontDisplay": "Syne, system-ui, sans-serif",
+  "fontMono": "JetBrains Mono, ui-monospace, monospace",
+  "recommendedFor": "desktop"
+}

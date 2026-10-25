@@ -67,5 +67,15 @@
       "correct_page_cited_rate": 0.9,
       "out_of_scope_labelled_rate": 0.95
     }
+  },
+  "9": {
+    "report": "reports/phase-9.json",
+    "pass": {
+      "themes_count": 5,
+      "live_switching_supported": 1,
+      "screenshots_count": 15,
+      "lighthouse_mobile_performance": 80,
+      "bip_tests_pass": 1
+    }
   }
 }

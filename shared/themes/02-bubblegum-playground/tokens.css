@@ -1,0 +1,27 @@
+/* 02 Bubblegum Playground — Design Tokens */
+body[data-style="bubblegum"], :root[data-theme="02-bubblegum-playground"] {
+  --theme-id: "02-bubblegum-playground";
+  --paper: #261021;
+  --lime: #e62e7a;
+  --limeink: #ffffff;
+  --inkink: #261021;
+  --cobalt: #6d28d9;
+  --mut: #633958;
+  --dim: #87587a;
+  --line: rgba(230, 46, 122, 0.18);
+  --line2: rgba(139, 92, 246, 0.16);
+  --soft: rgba(230, 46, 122, 0.28);
+  --warn: #d97706;
+  --orange: #ff6b4a;
+  --violet: #9333ea;
+  --bad: #dc2626;
+  --cyan: #0284c7;
+  --card: #ffffff;
+  --bg: #fff2f7;
+  --font-display: "Fredoka", "Plus Jakarta Sans", sans-serif;
+  --font-mono: "Space Grotesk", system-ui, sans-serif;
+  --radius-sm: 8px;
+  --radius-md: 18px;
+  --radius-lg: 999px;
+  --shadow-main: 0 20px 48px rgba(230, 46, 122, 0.2);
+}

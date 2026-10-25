@@ -1,0 +1,10 @@
+{
+  "id": "02-bubblegum-playground",
+  "name": "02 Bubblegum Playground",
+  "styleKey": "bubblegum",
+  "description": "Pastel, 3D clay spheres",
+  "cost": "heavy",
+  "fontDisplay": "Fredoka, Plus Jakarta Sans, sans-serif",
+  "fontMono": "Space Grotesk, system-ui, sans-serif",
+  "recommendedFor": "creative"
+}
