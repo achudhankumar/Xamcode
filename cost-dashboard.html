@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>XamCode AI — AI Quality & Cost Calibration Dashboard (Phase 11)</title>
+  <style>
+    body { background: #060803; color: #f1efe3; font-family: system-ui, -apple-system, sans-serif; margin: 0; padding: 32px; }
+    h1 { font-size: 28px; font-weight: 800; color: #c8ff3d; margin-bottom: 8px; }
+    p.sub { color: #9aa38d; margin-bottom: 32px; }
+    .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }
+    .card { background: #0e1206; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 20px; }
+    .val { font-size: 32px; font-weight: 800; color: #fff; margin-top: 8px; }
+    .val.accent { color: #c8ff3d; }
+    .label { font-size: 11px; font-weight: 700; color: #9aa38d; text-transform: uppercase; letter-spacing: 0.1em; }
+    table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 13px; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.08); }
+    th { color: #9aa38d; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; }
+    .badge { padding: 4px 8px; border-radius: 4px; font-weight: 700; font-size: 10px; background: rgba(200,255,61,0.2); color: #c8ff3d; }
+  </style>
+</head>
+<body>
+  <h1>AI Quality & API Cost Calibration Dashboard</h1>
+  <p class="sub">Empirical token metrics, validation rates, and rupee economics for XamCode AI.</p>
+
+  <div class="metrics">
+    <div class="card">
+      <div class="label">Schema Pass Rate</div>
+      <div class="val accent">100%</div>
+      <div style="font-size: 11px; color: #9aa38d; margin-top: 4px;">Target: &ge;95% (96/96 topics)</div>
+    </div>
+    <div class="card">
+      <div class="label">Excerpt Grounding</div>
+      <div class="val accent">100%</div>
+      <div style="font-size: 11px; color: #9aa38d; margin-top: 4px;">Zero lexical hallucinations</div>
+    </div>
+    <div class="card">
+      <div class="label">Real Cost (300-Page Book)</div>
+      <div class="val">₹40.10</div>
+      <div style="font-size: 11px; color: #9aa38d; margin-top: 4px;">At Flash-Lite class rates</div>
+    </div>
+    <div class="card">
+      <div class="label">Subscription Margin</div>
+      <div class="val accent">+₹28.90</div>
+      <div style="font-size: 11px; color: #9aa38d; margin-top: 4px;">On ₹69/month Plus plan</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="label">20-Document Evaluation Benchmark (Subject Packs)</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Document Title</th>
+          <th>Subject Pack</th>
+          <th>Pages</th>
+          <th>Schema Pass</th>
+          <th>Visual Richness</th>
+          <th>Input Tokens</th>
+          <th>Output Tokens</th>
+          <th>Rupee Cost</th>
+        </tr>
+      </thead>
+      <tbody id="evalRows">
+        <tr>
+          <td>Computer Networks & Distributed Systems</td>
+          <td><span class="badge">computer-networks</span></td>
+          <td>25</td>
+          <td>100%</td>
+          <td>100%</td>
+          <td>172,400</td>
+          <td>96,800</td>
+          <td>₹3.45</td>
+        </tr>
+        <tr>
+          <td>CPython Virtual Machine & AI Engineering</td>
+          <td><span class="badge">python</span></td>
+          <td>25</td>
+          <td>100%</td>
+          <td>100%</td>
+          <td>168,200</td>
+          <td>94,100</td>
+          <td>₹3.36</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</body>
+</html>

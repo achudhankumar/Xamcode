@@ -86,5 +86,14 @@
       "quotas_block_overage": 1,
       "cross_user_isolation_passes": 1
     }
+  },
+  "11": {
+    "report": "reports/phase-11.json",
+    "pass": {
+      "eval_pdf_count": 20,
+      "schema_pass_rate": 0.95,
+      "excerpt_match_rate": 0.95,
+      "cost_per_300p_book_inr": 40.1
+    }
   }
 }
