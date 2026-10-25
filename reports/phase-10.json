@@ -1,0 +1,6 @@
+{
+  "test_payment_unlocks_library": 1,
+  "lapse_locks_library": 1,
+  "quotas_block_overage": 1,
+  "cross_user_isolation_passes": 1
+}

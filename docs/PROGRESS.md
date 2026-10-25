@@ -176,5 +176,19 @@
 ---
 
 ### Phase 10: Accounts, Quotas, Payments & Security
+- **Gate Status:** PASS (`node scripts/gate.js 10`)
+- **Components:**
+  - `lib/account-billing-security.js`: 300-page monthly allowance (Free), 1000-page allowance (Plus @ Rs 69/mo)
+  - Quota overage guard: strictly blocks the 301st page
+  - Razorpay Webhook HMAC verification for UPI AutoPay subscription lifecycle
+  - Library locks (without deletion) on lapse; 60-day retention grace period
+  - Multi-tenant RLS isolation: cross-user access denied
+  - Subtle student email watermarking on study canvases
+- **Artifact:** `reports/phase-10.json`, `lib/account-billing-security.js`, `test-billing-security.js`
+- **Tag:** `phase-10`
+
+---
+
+### Phase A6: Streak and Daily Goal
 - **Status:** Next in autopilot queue.
 
