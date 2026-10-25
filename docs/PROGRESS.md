@@ -201,5 +201,16 @@
 ---
 
 ### Phase A7: Mock Test Mode
+- **Gate Status:** PASS (`node test-mock-test.js` — 9/9 passed)
+- **Components:**
+  - `lib/mock-test-engine.js`: Assembles 10, 20, or 30-question tests from cached quizzes and Exam Mode
+  - Strict exam condition: hints and ELI5 disabled during assessment
+  - Diagnostic weak-topics report with direct links back to syllabus units
+  - Automatic injection of missed questions into SM-2 spaced repetition queue (A2)
+- **Tag:** `phase-a7`
+
+---
+
+### Phase A8: Referral Engine
 - **Status:** Next in autopilot queue.
 
