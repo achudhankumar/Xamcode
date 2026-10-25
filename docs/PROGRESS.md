@@ -81,5 +81,19 @@
 ---
 
 ### Phase 7: Modes, CheatCode and Quiz
+- **Gate Status:** PASS (`node scripts/gate.js 7`)
+- **Components:**
+  - `modes_implemented`: 8 (`crash`, `compare`, `solve`, `life`, `history`, `flash`, `exam`, `eli5`)
+  - `second_open_served_from_cache`: 1 (instantaneous retrieval < 5ms)
+  - `label_rules_enforced`: 1 (`AI estimate` on ungrounded comparisons; `Extra knowledge, not from your PDF` on real-life & history)
+  - Full mesh topology diagram generated with all 10 links explicitly drawn
+  - Renamed quiz panel to `Practice Quiz` with crisp inline SVG check/cross icons
+  - Fixed sample-page title overlap on sticky header
+- **Artifact:** `reports/phase-7.json`, `lib/mode-cache.js`, `test-modes-quiz.js`
+- **Tag:** `phase-7`
+
+---
+
+### Phase A1: Study Plan Generator
 - **Status:** Next in autopilot queue.
 

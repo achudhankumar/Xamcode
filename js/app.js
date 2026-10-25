@@ -2206,7 +2206,7 @@ ${state.studyTab==='cheat' ? cheatcodeTabView() : state.studyTab==='quiz' ? vaat
 
     <div style="min-width:0">
       <div class="panel" style="margin-bottom:14px">
-        <div class="quiz-head"><span>VAATHIYAR MODE • ${c.questions.length} Qs</span><span>${attempted}/${c.questions.length} attempted</span></div>
+        <div class="quiz-head"><span>PRACTICE QUIZ • ${c.questions.length} Qs</span><span>${attempted}/${c.questions.length} attempted</span></div>
         <div class="score-bar" role="status" aria-live="polite">
           <div class="score-row">
             <span style="font-weight:600">Score: ${score}</span>
@@ -2282,7 +2282,7 @@ function quizResults(c){
           <div class="q-final-row"><span class="q-final-k">Your answer</span><span class="q-final-v">${String.fromCharCode(65+chosen)}. ${q.opts[chosen]}</span></div>
           ${isCorrect?'':`<div class="q-final-row"><span class="q-final-k">Correct answer</span><span class="q-final-v good">${String.fromCharCode(65+q.a)}. ${q.opts[q.a]}</span></div>`}
         </div>
-        <span class="q-final-mark" aria-label="${isCorrect?'Correct':'Incorrect'}">${isCorrect?'✓':'✕'}</span>
+        <span class="q-final-mark" aria-label="${isCorrect?'Correct':'Incorrect'}">${isCorrect?'<svg class="quiz-icon quiz-icon-check" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 8.5 6.5 12 13 4"></polyline></svg>':'<svg class="quiz-icon quiz-icon-cross" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="4" x2="12" y2="12"></line><line x1="12" y1="4" x2="4" y2="12"></line></svg>'}</span>
       </li>`;
   }).join('');
   return `<div class="q-results">
@@ -2316,7 +2316,7 @@ function qCard(c,q,qi){
       else if(!isChosen&&isAns) cls+=' reveal';
       else cls+=' faded';
     }
-    const mark=done&&isAns?'<span style="font-weight:900">✓</span>':done&&isChosen?'<span style="font-weight:900">✕</span>':'';
+    const mark=done&&isAns?'<svg class="quiz-icon quiz-icon-check" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto"><polyline points="3 8.5 6.5 12 13 4"></polyline></svg>':done&&isChosen?'<svg class="quiz-icon quiz-icon-cross" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto"><line x1="4" y1="4" x2="12" y2="12"></line><line x1="12" y1="4" x2="4" y2="12"></line></svg>':'';
     return `<button class="${cls}" ${done?'disabled':''} data-ans="${oi}" data-q="${qi}"><span>${String.fromCharCode(65+oi)}. ${o}</span>${mark}</button>`;
   }).join('');
   const explain=done?`
