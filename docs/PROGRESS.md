@@ -128,5 +128,18 @@
 ---
 
 ### Phase 8: AURA Grounded Tutor
+- **Gate Status:** PASS (`node scripts/gate.js 8`)
+- **Components:**
+  - `lib/aura-grounded-tutor.js`: Document chunking (500-800 tokens), BM25-style term retrieval with whole-word regex
+  - Citation grounding: 100% (15/15) in-scope test questions cited exact page numbers ($\ge 90\%$)
+  - Out-of-scope identification: 100% (5/5) labeled with `Outside knowledge, not from your PDF` ($\ge 95\%$)
+  - Structured visual scene generation matching Phase 5 validator
+  - Per-user rate limiting (max 30 queries per minute)
+- **Artifact:** `reports/phase-8.json`, `lib/aura-grounded-tutor.js`, `test-aura-grounded.js`
+- **Tag:** `phase-8`
+
+---
+
+### Phase A3: Languages (English, Tamil, Hindi, Telugu, Kannada)
 - **Status:** Next in autopilot queue.
 
