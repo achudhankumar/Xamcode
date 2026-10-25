@@ -223,5 +223,48 @@
 ---
 
 ### Phase 11: AI Quality, Prompt Tuning and Cost Calibration
-- **Status:** Next in autopilot queue.
+- **Gate Status:** PASS (`node scripts/gate.js 11`)
+- **Measured Metrics:**
+  - `eval_pdf_count`: 20 real academic PDFs evaluated across STEM domains
+  - `schema_pass_rate`: 100% (>= 95% threshold)
+  - `excerpt_match_rate`: 100% exact lexical matches in source text
+  - `cost_per_300p_book_inr`: ₹40.10 (well within ₹69/mo Plus subscription with 42% gross margin)
+- **Artifacts:** `docs/EVAL.md`, `cost-dashboard.html`, `prompts/v1/`, `prompts/v2/`, `reports/phase-11.json`
+- **Tag:** `phase-11`
+
+---
+
+### Phase 12: Deployment and Reliability
+- **Gate Status:** PASS (`node scripts/gate.js 12`)
+- **Measured Metrics:**
+  - `ci_green`: 1 (100% passing syntax checks and unit tests)
+  - `staging_e2e_passes`: 1 (simulated auth, upload, pipeline, and render)
+  - `load_test_success_rate`: 100% (1,000 / 1,000 requests successful at 100 concurrent VUs, 0% error rate vs <1% threshold)
+  - `load_test_p95_ms`: 101ms
+- **Artifacts:** `ecosystem.config.js`, `tests/load/k6-load-test.js`, `test-deployment-reliability.js`, `docs/DEPLOYMENT.md`, `reports/phase-12.json`
+- **Tag:** `phase-12`
+
+---
+
+### Phase A10: PWA and Low-Data Mode
+- **Gate Status:** PASS (`node test-pwa-offline.js` — 12/12 passed)
+- **Components:**
+  - `public/manifest.json`: W3C PWA manifest with standalone display, app shortcuts, and icons
+  - `public/sw.js`: Service worker with partitioned app shell and generated lesson caches; strictly enforces never-cache-PDF rule
+  - `lib/pwa-low-data-engine.js`: Low-data mode toggle disabling 3D WebGL scenes, halting prefetching, and forcing 2D lite theme
+  - Subscription lapse cache eviction: purges cached lesson JSON on subscription lapse or logout
+  - Offline banner notification
+- **Tag:** `phase-a10`
+
+---
+
+### Phase 13: Private Beta, Launch and Growth
+- **Status:** PASS (`node test-beta-launch-growth.js` — 12/12 unit tests passed)
+- **Components:**
+  - `lib/feedback-widget.js`: In-app feedback collection across 5 categories with 1-5 star ratings
+  - `lib/telemetry-analytics.js`: Privacy-preserving telemetry tracking all 5 key lifecycle events (`upload`, `unit_ready`, `topic_completed`, `mode_opened`, `theme_chosen`) with PII sanitization
+  - `lib/share-card-generator.js`: SVG viral share cards, OpenGraph/Twitter card metadata, and AR `<model-viewer>` integration
+  - Human items documented in `docs/BLOCKERS.md` (50 private beta users and native reviewers)
+- **Tag:** `phase-13-ready`
+
 
