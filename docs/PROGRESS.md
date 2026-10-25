@@ -212,5 +212,16 @@
 ---
 
 ### Phase A8: Referral Engine
+- **Gate Status:** PASS (`node test-referral.js` — 9/9 passed)
+- **Components:**
+  - `lib/referral-engine.js`: Bilateral 50 bonus page reward on referee first PDF upload
+  - Strict 500 bonus page monthly cap per user
+  - Anti-fraud security: blocks self-referrals and duplicate device hardware fingerprints
+  - Automated monthly bonus page expiration and audit logging
+- **Tag:** `phase-a8`
+
+---
+
+### Phase 11: AI Quality, Prompt Tuning and Cost Calibration
 - **Status:** Next in autopilot queue.
 
