@@ -93,3 +93,4 @@ assert(!capViolated, `No single day exceeds 2x daily minutes cap (max observed: 
 
 console.log(`\nResults: ${passed} passed, ${failed} failed`);
 process.exit(failed > 0 ? 1 : 0);
+

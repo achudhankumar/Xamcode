@@ -151,3 +151,108 @@ reflects it without a page refresh (polling).
 - [ ] Rate limits sane for expected traffic
 - [ ] Persistent disk attached if votes/chat/waitlist must survive redeploys
 
+
+
+## 10. Staging vs Production Topology (Phase 12 Reliability)
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                        Cloudflare Edge / DNS                           │
+│     - SSL/TLS Termination (Strict Full)                                │
+│     - DDoS Shield & Web Application Firewall (WAF)                     │
+│     - Edge Caching for Static Assets (CSS, JS, Fonts, SVGs)             │
+└──────────────────┬─────────────────────────────────┬───────────────────┘
+                   │                                 │
+                   ▼ (staging.xamcode.ai)            ▼ (xamcode.ai)
+       ┌───────────────────────┐         ┌───────────────────────┐
+       │   Staging Instance    │         │  Production Cluster   │
+       │  (Single Node VM)     │         │  (PM2 Clustered API)  │
+       │  - node server.js     │         │  - 4 Worker Processes │
+       │  - staging Supabase   │         │  - Load Balanced      │
+       │  - staging R2 Bucket  │         │  - Prod Supabase DB   │
+       └───────────────────────┘         └───────────┬───────────┘
+                                                     │
+                                                     ▼
+                                         ┌───────────────────────┐
+                                         │ Background Job Worker │
+                                         │ (bip/worker.js - PM2) │
+                                         │ - Always-on daemon    │
+                                         │ - Queue poll loop     │
+                                         │ - Sentry tracing      │
+                                         └───────────────────────┘
+```
+
+## 11. PM2 Process Management & Systemd Service
+
+### PM2 Configuration (`ecosystem.config.js`)
+- Runs API in cluster mode (`exec_mode: 'cluster'`) spanning available CPU cores.
+- Background worker runs as single isolated daemon (`exec_mode: 'fork'`).
+- Auto-restart when memory consumption exceeds thresholds (`500M` for API, `1G` for worker).
+- Zero-downtime reloads via `pm2 reload ecosystem.config.js --env production`.
+
+### Systemd Service Configuration
+For native Linux hosting (e.g., Oracle Cloud Always Free VM or Ubuntu LTS):
+
+`/etc/systemd/system/xamcode-api.service`:
+```ini
+[Unit]
+Description=XamCode AI Clustered API Service
+After=network.target
+
+[Service]
+Type=simple
+User=xamcode
+WorkingDirectory=/opt/xamcode
+ExecStart=/usr/bin/pm2-runtime start ecosystem.config.js --env production
+Restart=always
+RestartSec=10
+Environment=NODE_ENV=production
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=xamcode-api
+
+[Install]
+WantedBy=multi-user.target
+```
+
+## 12. Sentry Observability & Health Probes
+
+### Sentry Error & Performance Tracing
+1. Configure `SENTRY_DSN` in environment variables.
+2. Server initializes `@sentry/node` with request/error handling middleware, transaction tracing, and unhandled rejection interceptors.
+3. Client initializes `@sentry/browser` with error boundaries around dynamic visual canvases.
+
+### Comprehensive Health Probes
+- `GET /api/health` or `/healthz`: Liveness probe (HTTP 200 `{ ok: true, service: "xamcode-ai" }`).
+- `GET /readyz`: Readiness probe verifying Postgres connection pool, Cloudflare R2 bucket connectivity, and AI provider availability.
+
+## 13. Automated Database Backups & Point-in-Time Recovery
+
+1. **Automated Daily Backups:**
+   Cron schedule on worker host executing daily pg_dump:
+   ```bash
+   pg_dump -Fc --no-acl --no-owner -h "$SUPABASE_DB_HOST" -U "$SUPABASE_DB_USER" "$SUPABASE_DB_NAME" | gzip > /backups/db-$(date +%Y%m%d_%H%M%S).dump.gz
+   ```
+2. **Offsite Backup Sync:**
+   Encrypted dumps synced to Cloudflare R2 backup bucket with 30-day retention lifecycles.
+3. **Point-in-Time Recovery (PITR):**
+   Supabase PITR enabled with continuous Write-Ahead Log (WAL) archiving for 7-day instant restoration.
+
+## 14. Emergency Rollback Runbook
+
+1. **Detection:** Sentry alerts error rate > 1% or health probe fails consecutive checks.
+2. **Immediate Traffic Shift:**
+   - On Cloudflare: Flip origin DNS or Page Rule to previous stable blue target.
+   - On PM2: `pm2 revert` or checkout previous release tag (`git checkout phase-N`) and reload.
+3. **Database Down-Migration Protocol:**
+   - Ensure all migrations include downward rollbacks (`_down.sql`).
+   - If a breaking schema change occurred: run corresponding down-migration script before restarting older code.
+
+## 15. k6 Load Testing Benchmarks
+
+- **Target Profile:** 100 concurrent Virtual Users (VUs) sustaining continuous requests over 1 minute.
+- **Workflow:** Auth handshake -> Health check -> Quota inspection -> BIP live polling -> Job lifecycle simulation.
+- **Acceptance Criteria:**
+  - `http_req_duration`: p95 < 500ms
+  - `error_rate`: < 0.01 (< 1% failed requests)
+- **Execution:** `npm run test:load` or `k6 run tests/load/k6-load-test.js`.

@@ -26,3 +26,4 @@ body[data-style="glass"], :root[data-theme="03-liquid-glass-3d"] {
   --shadow-main: 0 24px 64px rgba(3, 8, 22, 0.7);
   --backdrop-blur: blur(28px) saturate(190%);
 }
+

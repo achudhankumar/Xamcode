@@ -40,3 +40,4 @@ class SoftMinimalArmillaryScene {
 if (typeof module !== 'undefined') {
   module.exports = { SoftMinimalArmillaryScene };
 }
+

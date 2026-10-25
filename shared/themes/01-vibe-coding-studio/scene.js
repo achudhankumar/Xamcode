@@ -56,3 +56,4 @@ class VibeStudioScene {
 if (typeof module !== 'undefined') {
   module.exports = { VibeStudioScene };
 }
+

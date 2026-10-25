@@ -77,3 +77,4 @@ assert(highlightedIndices.length === 3 && highlightedIndices.join(',') === '0,1,
 
 console.log(`\nResults: ${passed} passed, ${failed} failed`);
 process.exit(failed > 0 ? 1 : 0);
+

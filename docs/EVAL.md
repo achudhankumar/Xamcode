@@ -64,3 +64,4 @@ At measured Google Gemini Flash-Lite commercial pricing:
 - Cloud hosting & R2 storage: **₹2.50**
 - AI generation cost (1 $\times$ 300p book): **₹40.10**
 - **Net Contribution Margin per Student:** **+₹24.77 (~36% margin)**
+

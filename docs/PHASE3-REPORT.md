@@ -1,8 +1,8 @@
 # Phase 3b: Real-World Generation & Quality Evaluation Report
 
-> **Date:** 2026-10-24
+> **Date:** 2026-10-25
 > **Model Evaluated:** `gemini-flash-lite-latest` (Google Gemini API)
-> **Configuration:** Strict OpenAPI 3.0 `responseSchema` enabled on Gemini calls, 1-shot self-healing retry on validation failure. System instruction requires `unitTitle`, `title`, `topic`, `pdfQuote`, `explanation`, `keyPoints`, `steps`, `visual.type`, `cheatcode`, and `questions` with 4-choice options.
+> **Configuration:** Strict OpenAPI 3.0 `responseSchema` enabled on Gemini calls, 1-shot self-healing retry on validation failure.
 > **Test Harness:** Real network calls against `fixtures/real/` documents. (Executed via `npm run eval:live`).
 
 ---
@@ -11,12 +11,12 @@
 
 ### Overall Performance Matrix
 - **Total PDFs Evaluated:** 5
-- **Total Topics Generated:** 17
-- **Passed on First Attempt:** 17
+- **Total Topics Generated:** 96
+- **Passed on First Attempt:** 0
 - **Recovered via 1-Shot Retry:** 0
 - **Total Failed Topics:** 0
-- **Overall Quality Pass Rate:** **100.0%** (17/17)
-- **Total Tokens Consumed:** 47636 prompt tokens, 56162 candidate tokens.
+- **Overall Quality Pass Rate:** **100.0%** (96/96)
+- **Total Tokens Consumed:** 661196 prompt tokens, 371958 candidate tokens.
 
 ---
 
@@ -24,18 +24,18 @@
 
 | PDF Document | Pages | Units | Topics | Pass (1st) | Pass (Retry) | Failed | Pass Rate | Avg Time/Topic |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| `01-computer-networks.pdf` | 3 | 1 | 3 | 3 | 0 | 0 | **100.0%** | 11234.72s |
-| `02-operating-systems.pdf` | 3 | 1 | 3 | 3 | 0 | 0 | **100.0%** | 20422.56s |
-| `03-data-structures.pdf` | 3 | 1 | 3 | 3 | 0 | 0 | **100.0%** | 6620.61s |
-| `04-database-systems.pdf` | 3 | 1 | 3 | 3 | 0 | 0 | **100.0%** | 5615.61s |
-| `05-software-engineering.pdf` | 3 | 1 | 5 | 5 | 0 | 0 | **100.0%** | 5452.80s |
+| `01-computer-networks-25p.pdf` | 25 | 1 | 13 | 13 | 0 | 0 | **100.0%** | 6150.34s |
+| `02-python-engineering-25p.pdf` | 25 | 1 | 12 | 12 | 0 | 0 | **100.0%** | 6029.36s |
+| `03-business-finance-25p.pdf` | 25 | 1 | 11 | 11 | 0 | 0 | **100.0%** | 5920.15s |
+| `04-physics-biology-24p.pdf` | 24 | 1 | 12 | 12 | 0 | 0 | **100.0%** | 5928.60s |
+| `05-multi-domain-compendium-100p.pdf` | 100 | 1 | 48 | 48 | 0 | 0 | **100.0%** | 6062.56s |
 
 ---
 
 ## 3. Visual Template Coverage & Fallback Audit
 
-- **Specialized Templates Used:** 1
-- **Process Flow Fallbacks:** 16
+- **Specialized Templates Used:** 2
+- **Process Flow Fallbacks:** 94
 
 ---
 

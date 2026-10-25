@@ -20,3 +20,4 @@ INVARIANTS:
 1. pdfQuote MUST be an exact verbatim substring from the provided page text.
 2. visual.type MUST be chosen from the subject pack allowed list. Never output raw SVG or HTML.
 3. Every step in visual must have a descriptive caption (>= 3 distinct elements, >= 3 steps).
+

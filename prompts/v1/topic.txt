@@ -5,3 +5,4 @@ Include:
 - Visual type selected from the subject pack menu.
 - 4-choice multiple choice questions with why correct and why wrong explanations.
 - 8 Vaathiyar pedagogical modes.
+

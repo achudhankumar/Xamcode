@@ -96,3 +96,4 @@ assert(fs.existsSync(reportPath), 'reports/phase-9.json written successfully');
 
 console.log(`\nResults: ${passed} passed, ${failed} failed`);
 process.exit(failed > 0 ? 1 : 0);
+

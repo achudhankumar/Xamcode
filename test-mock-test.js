@@ -104,3 +104,4 @@ assert(srsDue.totalDue === 5, `Dispatched all 5 missed questions into student's 
 
 console.log(`\nResults: ${passed} passed, ${failed} failed`);
 process.exit(failed > 0 ? 1 : 0);
+

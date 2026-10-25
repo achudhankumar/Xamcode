@@ -40,3 +40,4 @@ class LiquidGlassScene {
 if (typeof module !== 'undefined') {
   module.exports = { LiquidGlassScene };
 }
+

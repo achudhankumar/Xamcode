@@ -91,3 +91,4 @@ assert(aliceNextMonthState.bonusPages === 0, 'Bonus pages expire upon transition
 
 console.log(`\nResults: ${passed} passed, ${failed} failed`);
 process.exit(failed > 0 ? 1 : 0);
+

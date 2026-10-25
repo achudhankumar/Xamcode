@@ -40,3 +40,4 @@ class BubblegumPlaygroundScene {
 if (typeof module !== 'undefined') {
   module.exports = { BubblegumPlaygroundScene };
 }
+

@@ -40,3 +40,4 @@ class BrutalistMonolithScene {
 if (typeof module !== 'undefined') {
   module.exports = { BrutalistMonolithScene };
 }
+
