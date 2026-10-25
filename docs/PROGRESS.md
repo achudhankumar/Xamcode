@@ -141,5 +141,16 @@
 ---
 
 ### Phase A3: Languages (English, Tamil, Hindi, Telugu, Kannada)
+- **Gate Status:** PASS (`node test-multilingual.js` — 35/35 passed)
+- **Components:**
+  - `lib/i18n-engine.js`: Multilingual architecture supporting `en`, `ta`, `hi`, `te` (Beta), `kn` (Beta)
+  - Strict preservation of English JSON schema keys, verbatim original PDF quotes, and visual scene structures
+  - Indic font line-height clipping prevention ($\ge 1.65$)
+  - 20 review sample topics generated per language and archived in `docs/lang-review/`
+- **Tag:** `phase-a3`
+
+---
+
+### Phase A9: Text to Speech (TTS)
 - **Status:** Next in autopilot queue.
 

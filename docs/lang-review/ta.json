@@ -1,0 +1,782 @@
+[
+  {
+    "id": "review-topic-1",
+    "title": "பாடம்: Engineering Concept 1",
+    "pdfQuote": "Verbatim engineering excerpt from textbook page 1.",
+    "pdfPage": "Page 1",
+    "explanation": "இது ஒரு கணினி நெட்வொர்க் (Computer Network) நெறிமுறையாகும். தரவுப் பொதிகள் (Data Packets) நம்பகத்தன்மையுடன் கடத்தப்படுவதை உறுதிசெய்கிறது.",
+    "keyPoints": [
+      "நெட்வொர்க் இணைப்பு மற்றும் பிழை திருத்தம் (Error Correction)",
+      "ஹம்மிங் தூரம் (Hamming Distance) கணக்கீடுகள்",
+      "ஸ்லைடிங் விண்டோ (Sliding Window) பஃபர் மேலாண்மை"
+    ],
+    "visual": {
+      "type": "process_flow",
+      "title": "Process 1",
+      "steps": [
+        {
+          "title": "Phase A",
+          "desc": "தொடக்க நிலை (Initialization)"
+        },
+        {
+          "title": "Phase B",
+          "desc": "தரவு பரிமாற்றம் (Transmission)"
+        },
+        {
+          "title": "Phase C",
+          "desc": "ஒப்புதல் சரிபார்ப்பு (Acknowledgement)"
+        }
+      ]
+    },
+    "language": "ta",
+    "languageMeta": {
+      "code": "ta",
+      "name": "Tamil",
+      "beta": false,
+      "script": "Tamil",
+      "font": "Noto Sans Tamil",
+      "casual": "Tanglish"
+    }
+  },
+  {
+    "id": "review-topic-2",
+    "title": "பாடம்: Engineering Concept 2",
+    "pdfQuote": "Verbatim engineering excerpt from textbook page 2.",
+    "pdfPage": "Page 2",
+    "explanation": "இது ஒரு கணினி நெட்வொர்க் (Computer Network) நெறிமுறையாகும். தரவுப் பொதிகள் (Data Packets) நம்பகத்தன்மையுடன் கடத்தப்படுவதை உறுதிசெய்கிறது.",
+    "keyPoints": [
+      "நெட்வொர்க் இணைப்பு மற்றும் பிழை திருத்தம் (Error Correction)",
+      "ஹம்மிங் தூரம் (Hamming Distance) கணக்கீடுகள்",
+      "ஸ்லைடிங் விண்டோ (Sliding Window) பஃபர் மேலாண்மை"
+    ],
+    "visual": {
+      "type": "process_flow",
+      "title": "Process 2",
+      "steps": [
+        {
+          "title": "Phase A",
+          "desc": "தொடக்க நிலை (Initialization)"
+        },
+        {
+          "title": "Phase B",
+          "desc": "தரவு பரிமாற்றம் (Transmission)"
+        },
+        {
+          "title": "Phase C",
+          "desc": "ஒப்புதல் சரிபார்ப்பு (Acknowledgement)"
+        }
+      ]
+    },
+    "language": "ta",
+    "languageMeta": {
+      "code": "ta",
+      "name": "Tamil",
+      "beta": false,
+      "script": "Tamil",
+      "font": "Noto Sans Tamil",
+      "casual": "Tanglish"
+    }
+  },
+  {
+    "id": "review-topic-3",
+    "title": "பாடம்: Engineering Concept 3",
+    "pdfQuote": "Verbatim engineering excerpt from textbook page 3.",
+    "pdfPage": "Page 3",
+    "explanation": "இது ஒரு கணினி நெட்வொர்க் (Computer Network) நெறிமுறையாகும். தரவுப் பொதிகள் (Data Packets) நம்பகத்தன்மையுடன் கடத்தப்படுவதை உறுதிசெய்கிறது.",
+    "keyPoints": [
+      "நெட்வொர்க் இணைப்பு மற்றும் பிழை திருத்தம் (Error Correction)",
+      "ஹம்மிங் தூரம் (Hamming Distance) கணக்கீடுகள்",
+      "ஸ்லைடிங் விண்டோ (Sliding Window) பஃபர் மேலாண்மை"
+    ],
+    "visual": {
+      "type": "process_flow",
+      "title": "Process 3",
+      "steps": [
+        {
+          "title": "Phase A",
+          "desc": "தொடக்க நிலை (Initialization)"
+        },
+        {
+          "title": "Phase B",
+          "desc": "தரவு பரிமாற்றம் (Transmission)"
+        },
+        {
+          "title": "Phase C",
+          "desc": "ஒப்புதல் சரிபார்ப்பு (Acknowledgement)"
+        }
+      ]
+    },
+    "language": "ta",
+    "languageMeta": {
+      "code": "ta",
+      "name": "Tamil",
+      "beta": false,
+      "script": "Tamil",
+      "font": "Noto Sans Tamil",
+      "casual": "Tanglish"
+    }
+  },
+  {
+    "id": "review-topic-4",
+    "title": "பாடம்: Engineering Concept 4",
+    "pdfQuote": "Verbatim engineering excerpt from textbook page 4.",
+    "pdfPage": "Page 4",
+    "explanation": "இது ஒரு கணினி நெட்வொர்க் (Computer Network) நெறிமுறையாகும். தரவுப் பொதிகள் (Data Packets) நம்பகத்தன்மையுடன் கடத்தப்படுவதை உறுதிசெய்கிறது.",
+    "keyPoints": [
+      "நெட்வொர்க் இணைப்பு மற்றும் பிழை திருத்தம் (Error Correction)",
+      "ஹம்மிங் தூரம் (Hamming Distance) கணக்கீடுகள்",
+      "ஸ்லைடிங் விண்டோ (Sliding Window) பஃபர் மேலாண்மை"
+    ],
+    "visual": {
+      "type": "process_flow",
+      "title": "Process 4",
+      "steps": [
+        {
+          "title": "Phase A",
+          "desc": "தொடக்க நிலை (Initialization)"
+        },
+        {
+          "title": "Phase B",
+          "desc": "தரவு பரிமாற்றம் (Transmission)"
+        },
+        {
+          "title": "Phase C",
+          "desc": "ஒப்புதல் சரிபார்ப்பு (Acknowledgement)"
+        }
+      ]
+    },
+    "language": "ta",
+    "languageMeta": {
+      "code": "ta",
+      "name": "Tamil",
+      "beta": false,
+      "script": "Tamil",
+      "font": "Noto Sans Tamil",
+      "casual": "Tanglish"
+    }
+  },
+  {
+    "id": "review-topic-5",
+    "title": "பாடம்: Engineering Concept 5",
+    "pdfQuote": "Verbatim engineering excerpt from textbook page 5.",
+    "pdfPage": "Page 5",
+    "explanation": "இது ஒரு கணினி நெட்வொர்க் (Computer Network) நெறிமுறையாகும். தரவுப் பொதிகள் (Data Packets) நம்பகத்தன்மையுடன் கடத்தப்படுவதை உறுதிசெய்கிறது.",
+    "keyPoints": [
+      "நெட்வொர்க் இணைப்பு மற்றும் பிழை திருத்தம் (Error Correction)",
+      "ஹம்மிங் தூரம் (Hamming Distance) கணக்கீடுகள்",
+      "ஸ்லைடிங் விண்டோ (Sliding Window) பஃபர் மேலாண்மை"
+    ],
+    "visual": {
+      "type": "process_flow",
+      "title": "Process 5",
+      "steps": [
+        {
+          "title": "Phase A",
+          "desc": "தொடக்க நிலை (Initialization)"
+        },
+        {
+          "title": "Phase B",
+          "desc": "தரவு பரிமாற்றம் (Transmission)"
+        },
+        {
+          "title": "Phase C",
+          "desc": "ஒப்புதல் சரிபார்ப்பு (Acknowledgement)"
+        }
+      ]
+    },
+    "language": "ta",
+    "languageMeta": {
+      "code": "ta",
+      "name": "Tamil",
+      "beta": false,
+      "script": "Tamil",
+      "font": "Noto Sans Tamil",
+      "casual": "Tanglish"
+    }
+  },
+  {
+    "id": "review-topic-6",
+    "title": "பாடம்: Engineering Concept 6",
+    "pdfQuote": "Verbatim engineering excerpt from textbook page 6.",
+    "pdfPage": "Page 6",
+    "explanation": "இது ஒரு கணினி நெட்வொர்க் (Computer Network) நெறிமுறையாகும். தரவுப் பொதிகள் (Data Packets) நம்பகத்தன்மையுடன் கடத்தப்படுவதை உறுதிசெய்கிறது.",
+    "keyPoints": [
+      "நெட்வொர்க் இணைப்பு மற்றும் பிழை திருத்தம் (Error Correction)",
+      "ஹம்மிங் தூரம் (Hamming Distance) கணக்கீடுகள்",
+      "ஸ்லைடிங் விண்டோ (Sliding Window) பஃபர் மேலாண்மை"
+    ],
+    "visual": {
+      "type": "process_flow",
+      "title": "Process 6",
+      "steps": [
+        {
+          "title": "Phase A",
+          "desc": "தொடக்க நிலை (Initialization)"
+        },
+        {
+          "title": "Phase B",
+          "desc": "தரவு பரிமாற்றம் (Transmission)"
+        },
+        {
+          "title": "Phase C",
+          "desc": "ஒப்புதல் சரிபார்ப்பு (Acknowledgement)"
+        }
+      ]
+    },
+    "language": "ta",
+    "languageMeta": {
+      "code": "ta",
+      "name": "Tamil",
+      "beta": false,
+      "script": "Tamil",
+      "font": "Noto Sans Tamil",
+      "casual": "Tanglish"
+    }
+  },
+  {
+    "id": "review-topic-7",
+    "title": "பாடம்: Engineering Concept 7",
+    "pdfQuote": "Verbatim engineering excerpt from textbook page 7.",
+    "pdfPage": "Page 7",
+    "explanation": "இது ஒரு கணினி நெட்வொர்க் (Computer Network) நெறிமுறையாகும். தரவுப் பொதிகள் (Data Packets) நம்பகத்தன்மையுடன் கடத்தப்படுவதை உறுதிசெய்கிறது.",
+    "keyPoints": [
+      "நெட்வொர்க் இணைப்பு மற்றும் பிழை திருத்தம் (Error Correction)",
+      "ஹம்மிங் தூரம் (Hamming Distance) கணக்கீடுகள்",
+      "ஸ்லைடிங் விண்டோ (Sliding Window) பஃபர் மேலாண்மை"
+    ],
+    "visual": {
+      "type": "process_flow",
+      "title": "Process 7",
+      "steps": [
+        {
+          "title": "Phase A",
+          "desc": "தொடக்க நிலை (Initialization)"
+        },
+        {
+          "title": "Phase B",
+          "desc": "தரவு பரிமாற்றம் (Transmission)"
+        },
+        {
+          "title": "Phase C",
+          "desc": "ஒப்புதல் சரிபார்ப்பு (Acknowledgement)"
+        }
+      ]
+    },
+    "language": "ta",
+    "languageMeta": {
+      "code": "ta",
+      "name": "Tamil",
+      "beta": false,
+      "script": "Tamil",
+      "font": "Noto Sans Tamil",
+      "casual": "Tanglish"
+    }
+  },
+  {
+    "id": "review-topic-8",
+    "title": "பாடம்: Engineering Concept 8",
+    "pdfQuote": "Verbatim engineering excerpt from textbook page 8.",
+    "pdfPage": "Page 8",
+    "explanation": "இது ஒரு கணினி நெட்வொர்க் (Computer Network) நெறிமுறையாகும். தரவுப் பொதிகள் (Data Packets) நம்பகத்தன்மையுடன் கடத்தப்படுவதை உறுதிசெய்கிறது.",
+    "keyPoints": [
+      "நெட்வொர்க் இணைப்பு மற்றும் பிழை திருத்தம் (Error Correction)",
+      "ஹம்மிங் தூரம் (Hamming Distance) கணக்கீடுகள்",
+      "ஸ்லைடிங் விண்டோ (Sliding Window) பஃபர் மேலாண்மை"
+    ],
+    "visual": {
+      "type": "process_flow",
+      "title": "Process 8",
+      "steps": [
+        {
+          "title": "Phase A",
+          "desc": "தொடக்க நிலை (Initialization)"
+        },
+        {
+          "title": "Phase B",
+          "desc": "தரவு பரிமாற்றம் (Transmission)"
+        },
+        {
+          "title": "Phase C",
+          "desc": "ஒப்புதல் சரிபார்ப்பு (Acknowledgement)"
+        }
+      ]
+    },
+    "language": "ta",
+    "languageMeta": {
+      "code": "ta",
+      "name": "Tamil",
+      "beta": false,
+      "script": "Tamil",
+      "font": "Noto Sans Tamil",
+      "casual": "Tanglish"
+    }
+  },
+  {
+    "id": "review-topic-9",
+    "title": "பாடம்: Engineering Concept 9",
+    "pdfQuote": "Verbatim engineering excerpt from textbook page 9.",
+    "pdfPage": "Page 9",
+    "explanation": "இது ஒரு கணினி நெட்வொர்க் (Computer Network) நெறிமுறையாகும். தரவுப் பொதிகள் (Data Packets) நம்பகத்தன்மையுடன் கடத்தப்படுவதை உறுதிசெய்கிறது.",
+    "keyPoints": [
+      "நெட்வொர்க் இணைப்பு மற்றும் பிழை திருத்தம் (Error Correction)",
+      "ஹம்மிங் தூரம் (Hamming Distance) கணக்கீடுகள்",
+      "ஸ்லைடிங் விண்டோ (Sliding Window) பஃபர் மேலாண்மை"
+    ],
+    "visual": {
+      "type": "process_flow",
+      "title": "Process 9",
+      "steps": [
+        {
+          "title": "Phase A",
+          "desc": "தொடக்க நிலை (Initialization)"
+        },
+        {
+          "title": "Phase B",
+          "desc": "தரவு பரிமாற்றம் (Transmission)"
+        },
+        {
+          "title": "Phase C",
+          "desc": "ஒப்புதல் சரிபார்ப்பு (Acknowledgement)"
+        }
+      ]
+    },
+    "language": "ta",
+    "languageMeta": {
+      "code": "ta",
+      "name": "Tamil",
+      "beta": false,
+      "script": "Tamil",
+      "font": "Noto Sans Tamil",
+      "casual": "Tanglish"
+    }
+  },
+  {
+    "id": "review-topic-10",
+    "title": "பாடம்: Engineering Concept 10",
+    "pdfQuote": "Verbatim engineering excerpt from textbook page 10.",
+    "pdfPage": "Page 10",
+    "explanation": "இது ஒரு கணினி நெட்வொர்க் (Computer Network) நெறிமுறையாகும். தரவுப் பொதிகள் (Data Packets) நம்பகத்தன்மையுடன் கடத்தப்படுவதை உறுதிசெய்கிறது.",
+    "keyPoints": [
+      "நெட்வொர்க் இணைப்பு மற்றும் பிழை திருத்தம் (Error Correction)",
+      "ஹம்மிங் தூரம் (Hamming Distance) கணக்கீடுகள்",
+      "ஸ்லைடிங் விண்டோ (Sliding Window) பஃபர் மேலாண்மை"
+    ],
+    "visual": {
+      "type": "process_flow",
+      "title": "Process 10",
+      "steps": [
+        {
+          "title": "Phase A",
+          "desc": "தொடக்க நிலை (Initialization)"
+        },
+        {
+          "title": "Phase B",
+          "desc": "தரவு பரிமாற்றம் (Transmission)"
+        },
+        {
+          "title": "Phase C",
+          "desc": "ஒப்புதல் சரிபார்ப்பு (Acknowledgement)"
+        }
+      ]
+    },
+    "language": "ta",
+    "languageMeta": {
+      "code": "ta",
+      "name": "Tamil",
+      "beta": false,
+      "script": "Tamil",
+      "font": "Noto Sans Tamil",
+      "casual": "Tanglish"
+    }
+  },
+  {
+    "id": "review-topic-11",
+    "title": "பாடம்: Engineering Concept 11",
+    "pdfQuote": "Verbatim engineering excerpt from textbook page 11.",
+    "pdfPage": "Page 11",
+    "explanation": "இது ஒரு கணினி நெட்வொர்க் (Computer Network) நெறிமுறையாகும். தரவுப் பொதிகள் (Data Packets) நம்பகத்தன்மையுடன் கடத்தப்படுவதை உறுதிசெய்கிறது.",
+    "keyPoints": [
+      "நெட்வொர்க் இணைப்பு மற்றும் பிழை திருத்தம் (Error Correction)",
+      "ஹம்மிங் தூரம் (Hamming Distance) கணக்கீடுகள்",
+      "ஸ்லைடிங் விண்டோ (Sliding Window) பஃபர் மேலாண்மை"
+    ],
+    "visual": {
+      "type": "process_flow",
+      "title": "Process 11",
+      "steps": [
+        {
+          "title": "Phase A",
+          "desc": "தொடக்க நிலை (Initialization)"
+        },
+        {
+          "title": "Phase B",
+          "desc": "தரவு பரிமாற்றம் (Transmission)"
+        },
+        {
+          "title": "Phase C",
+          "desc": "ஒப்புதல் சரிபார்ப்பு (Acknowledgement)"
+        }
+      ]
+    },
+    "language": "ta",
+    "languageMeta": {
+      "code": "ta",
+      "name": "Tamil",
+      "beta": false,
+      "script": "Tamil",
+      "font": "Noto Sans Tamil",
+      "casual": "Tanglish"
+    }
+  },
+  {
+    "id": "review-topic-12",
+    "title": "பாடம்: Engineering Concept 12",
+    "pdfQuote": "Verbatim engineering excerpt from textbook page 12.",
+    "pdfPage": "Page 12",
+    "explanation": "இது ஒரு கணினி நெட்வொர்க் (Computer Network) நெறிமுறையாகும். தரவுப் பொதிகள் (Data Packets) நம்பகத்தன்மையுடன் கடத்தப்படுவதை உறுதிசெய்கிறது.",
+    "keyPoints": [
+      "நெட்வொர்க் இணைப்பு மற்றும் பிழை திருத்தம் (Error Correction)",
+      "ஹம்மிங் தூரம் (Hamming Distance) கணக்கீடுகள்",
+      "ஸ்லைடிங் விண்டோ (Sliding Window) பஃபர் மேலாண்மை"
+    ],
+    "visual": {
+      "type": "process_flow",
+      "title": "Process 12",
+      "steps": [
+        {
+          "title": "Phase A",
+          "desc": "தொடக்க நிலை (Initialization)"
+        },
+        {
+          "title": "Phase B",
+          "desc": "தரவு பரிமாற்றம் (Transmission)"
+        },
+        {
+          "title": "Phase C",
+          "desc": "ஒப்புதல் சரிபார்ப்பு (Acknowledgement)"
+        }
+      ]
+    },
+    "language": "ta",
+    "languageMeta": {
+      "code": "ta",
+      "name": "Tamil",
+      "beta": false,
+      "script": "Tamil",
+      "font": "Noto Sans Tamil",
+      "casual": "Tanglish"
+    }
+  },
+  {
+    "id": "review-topic-13",
+    "title": "பாடம்: Engineering Concept 13",
+    "pdfQuote": "Verbatim engineering excerpt from textbook page 13.",
+    "pdfPage": "Page 13",
+    "explanation": "இது ஒரு கணினி நெட்வொர்க் (Computer Network) நெறிமுறையாகும். தரவுப் பொதிகள் (Data Packets) நம்பகத்தன்மையுடன் கடத்தப்படுவதை உறுதிசெய்கிறது.",
+    "keyPoints": [
+      "நெட்வொர்க் இணைப்பு மற்றும் பிழை திருத்தம் (Error Correction)",
+      "ஹம்மிங் தூரம் (Hamming Distance) கணக்கீடுகள்",
+      "ஸ்லைடிங் விண்டோ (Sliding Window) பஃபர் மேலாண்மை"
+    ],
+    "visual": {
+      "type": "process_flow",
+      "title": "Process 13",
+      "steps": [
+        {
+          "title": "Phase A",
+          "desc": "தொடக்க நிலை (Initialization)"
+        },
+        {
+          "title": "Phase B",
+          "desc": "தரவு பரிமாற்றம் (Transmission)"
+        },
+        {
+          "title": "Phase C",
+          "desc": "ஒப்புதல் சரிபார்ப்பு (Acknowledgement)"
+        }
+      ]
+    },
+    "language": "ta",
+    "languageMeta": {
+      "code": "ta",
+      "name": "Tamil",
+      "beta": false,
+      "script": "Tamil",
+      "font": "Noto Sans Tamil",
+      "casual": "Tanglish"
+    }
+  },
+  {
+    "id": "review-topic-14",
+    "title": "பாடம்: Engineering Concept 14",
+    "pdfQuote": "Verbatim engineering excerpt from textbook page 14.",
+    "pdfPage": "Page 14",
+    "explanation": "இது ஒரு கணினி நெட்வொர்க் (Computer Network) நெறிமுறையாகும். தரவுப் பொதிகள் (Data Packets) நம்பகத்தன்மையுடன் கடத்தப்படுவதை உறுதிசெய்கிறது.",
+    "keyPoints": [
+      "நெட்வொர்க் இணைப்பு மற்றும் பிழை திருத்தம் (Error Correction)",
+      "ஹம்மிங் தூரம் (Hamming Distance) கணக்கீடுகள்",
+      "ஸ்லைடிங் விண்டோ (Sliding Window) பஃபர் மேலாண்மை"
+    ],
+    "visual": {
+      "type": "process_flow",
+      "title": "Process 14",
+      "steps": [
+        {
+          "title": "Phase A",
+          "desc": "தொடக்க நிலை (Initialization)"
+        },
+        {
+          "title": "Phase B",
+          "desc": "தரவு பரிமாற்றம் (Transmission)"
+        },
+        {
+          "title": "Phase C",
+          "desc": "ஒப்புதல் சரிபார்ப்பு (Acknowledgement)"
+        }
+      ]
+    },
+    "language": "ta",
+    "languageMeta": {
+      "code": "ta",
+      "name": "Tamil",
+      "beta": false,
+      "script": "Tamil",
+      "font": "Noto Sans Tamil",
+      "casual": "Tanglish"
+    }
+  },
+  {
+    "id": "review-topic-15",
+    "title": "பாடம்: Engineering Concept 15",
+    "pdfQuote": "Verbatim engineering excerpt from textbook page 15.",
+    "pdfPage": "Page 15",
+    "explanation": "இது ஒரு கணினி நெட்வொர்க் (Computer Network) நெறிமுறையாகும். தரவுப் பொதிகள் (Data Packets) நம்பகத்தன்மையுடன் கடத்தப்படுவதை உறுதிசெய்கிறது.",
+    "keyPoints": [
+      "நெட்வொர்க் இணைப்பு மற்றும் பிழை திருத்தம் (Error Correction)",
+      "ஹம்மிங் தூரம் (Hamming Distance) கணக்கீடுகள்",
+      "ஸ்லைடிங் விண்டோ (Sliding Window) பஃபர் மேலாண்மை"
+    ],
+    "visual": {
+      "type": "process_flow",
+      "title": "Process 15",
+      "steps": [
+        {
+          "title": "Phase A",
+          "desc": "தொடக்க நிலை (Initialization)"
+        },
+        {
+          "title": "Phase B",
+          "desc": "தரவு பரிமாற்றம் (Transmission)"
+        },
+        {
+          "title": "Phase C",
+          "desc": "ஒப்புதல் சரிபார்ப்பு (Acknowledgement)"
+        }
+      ]
+    },
+    "language": "ta",
+    "languageMeta": {
+      "code": "ta",
+      "name": "Tamil",
+      "beta": false,
+      "script": "Tamil",
+      "font": "Noto Sans Tamil",
+      "casual": "Tanglish"
+    }
+  },
+  {
+    "id": "review-topic-16",
+    "title": "பாடம்: Engineering Concept 16",
+    "pdfQuote": "Verbatim engineering excerpt from textbook page 16.",
+    "pdfPage": "Page 16",
+    "explanation": "இது ஒரு கணினி நெட்வொர்க் (Computer Network) நெறிமுறையாகும். தரவுப் பொதிகள் (Data Packets) நம்பகத்தன்மையுடன் கடத்தப்படுவதை உறுதிசெய்கிறது.",
+    "keyPoints": [
+      "நெட்வொர்க் இணைப்பு மற்றும் பிழை திருத்தம் (Error Correction)",
+      "ஹம்மிங் தூரம் (Hamming Distance) கணக்கீடுகள்",
+      "ஸ்லைடிங் விண்டோ (Sliding Window) பஃபர் மேலாண்மை"
+    ],
+    "visual": {
+      "type": "process_flow",
+      "title": "Process 16",
+      "steps": [
+        {
+          "title": "Phase A",
+          "desc": "தொடக்க நிலை (Initialization)"
+        },
+        {
+          "title": "Phase B",
+          "desc": "தரவு பரிமாற்றம் (Transmission)"
+        },
+        {
+          "title": "Phase C",
+          "desc": "ஒப்புதல் சரிபார்ப்பு (Acknowledgement)"
+        }
+      ]
+    },
+    "language": "ta",
+    "languageMeta": {
+      "code": "ta",
+      "name": "Tamil",
+      "beta": false,
+      "script": "Tamil",
+      "font": "Noto Sans Tamil",
+      "casual": "Tanglish"
+    }
+  },
+  {
+    "id": "review-topic-17",
+    "title": "பாடம்: Engineering Concept 17",
+    "pdfQuote": "Verbatim engineering excerpt from textbook page 17.",
+    "pdfPage": "Page 17",
+    "explanation": "இது ஒரு கணினி நெட்வொர்க் (Computer Network) நெறிமுறையாகும். தரவுப் பொதிகள் (Data Packets) நம்பகத்தன்மையுடன் கடத்தப்படுவதை உறுதிசெய்கிறது.",
+    "keyPoints": [
+      "நெட்வொர்க் இணைப்பு மற்றும் பிழை திருத்தம் (Error Correction)",
+      "ஹம்மிங் தூரம் (Hamming Distance) கணக்கீடுகள்",
+      "ஸ்லைடிங் விண்டோ (Sliding Window) பஃபர் மேலாண்மை"
+    ],
+    "visual": {
+      "type": "process_flow",
+      "title": "Process 17",
+      "steps": [
+        {
+          "title": "Phase A",
+          "desc": "தொடக்க நிலை (Initialization)"
+        },
+        {
+          "title": "Phase B",
+          "desc": "தரவு பரிமாற்றம் (Transmission)"
+        },
+        {
+          "title": "Phase C",
+          "desc": "ஒப்புதல் சரிபார்ப்பு (Acknowledgement)"
+        }
+      ]
+    },
+    "language": "ta",
+    "languageMeta": {
+      "code": "ta",
+      "name": "Tamil",
+      "beta": false,
+      "script": "Tamil",
+      "font": "Noto Sans Tamil",
+      "casual": "Tanglish"
+    }
+  },
+  {
+    "id": "review-topic-18",
+    "title": "பாடம்: Engineering Concept 18",
+    "pdfQuote": "Verbatim engineering excerpt from textbook page 18.",
+    "pdfPage": "Page 18",
+    "explanation": "இது ஒரு கணினி நெட்வொர்க் (Computer Network) நெறிமுறையாகும். தரவுப் பொதிகள் (Data Packets) நம்பகத்தன்மையுடன் கடத்தப்படுவதை உறுதிசெய்கிறது.",
+    "keyPoints": [
+      "நெட்வொர்க் இணைப்பு மற்றும் பிழை திருத்தம் (Error Correction)",
+      "ஹம்மிங் தூரம் (Hamming Distance) கணக்கீடுகள்",
+      "ஸ்லைடிங் விண்டோ (Sliding Window) பஃபர் மேலாண்மை"
+    ],
+    "visual": {
+      "type": "process_flow",
+      "title": "Process 18",
+      "steps": [
+        {
+          "title": "Phase A",
+          "desc": "தொடக்க நிலை (Initialization)"
+        },
+        {
+          "title": "Phase B",
+          "desc": "தரவு பரிமாற்றம் (Transmission)"
+        },
+        {
+          "title": "Phase C",
+          "desc": "ஒப்புதல் சரிபார்ப்பு (Acknowledgement)"
+        }
+      ]
+    },
+    "language": "ta",
+    "languageMeta": {
+      "code": "ta",
+      "name": "Tamil",
+      "beta": false,
+      "script": "Tamil",
+      "font": "Noto Sans Tamil",
+      "casual": "Tanglish"
+    }
+  },
+  {
+    "id": "review-topic-19",
+    "title": "பாடம்: Engineering Concept 19",
+    "pdfQuote": "Verbatim engineering excerpt from textbook page 19.",
+    "pdfPage": "Page 19",
+    "explanation": "இது ஒரு கணினி நெட்வொர்க் (Computer Network) நெறிமுறையாகும். தரவுப் பொதிகள் (Data Packets) நம்பகத்தன்மையுடன் கடத்தப்படுவதை உறுதிசெய்கிறது.",
+    "keyPoints": [
+      "நெட்வொர்க் இணைப்பு மற்றும் பிழை திருத்தம் (Error Correction)",
+      "ஹம்மிங் தூரம் (Hamming Distance) கணக்கீடுகள்",
+      "ஸ்லைடிங் விண்டோ (Sliding Window) பஃபர் மேலாண்மை"
+    ],
+    "visual": {
+      "type": "process_flow",
+      "title": "Process 19",
+      "steps": [
+        {
+          "title": "Phase A",
+          "desc": "தொடக்க நிலை (Initialization)"
+        },
+        {
+          "title": "Phase B",
+          "desc": "தரவு பரிமாற்றம் (Transmission)"
+        },
+        {
+          "title": "Phase C",
+          "desc": "ஒப்புதல் சரிபார்ப்பு (Acknowledgement)"
+        }
+      ]
+    },
+    "language": "ta",
+    "languageMeta": {
+      "code": "ta",
+      "name": "Tamil",
+      "beta": false,
+      "script": "Tamil",
+      "font": "Noto Sans Tamil",
+      "casual": "Tanglish"
+    }
+  },
+  {
+    "id": "review-topic-20",
+    "title": "பாடம்: Engineering Concept 20",
+    "pdfQuote": "Verbatim engineering excerpt from textbook page 20.",
+    "pdfPage": "Page 20",
+    "explanation": "இது ஒரு கணினி நெட்வொர்க் (Computer Network) நெறிமுறையாகும். தரவுப் பொதிகள் (Data Packets) நம்பகத்தன்மையுடன் கடத்தப்படுவதை உறுதிசெய்கிறது.",
+    "keyPoints": [
+      "நெட்வொர்க் இணைப்பு மற்றும் பிழை திருத்தம் (Error Correction)",
+      "ஹம்மிங் தூரம் (Hamming Distance) கணக்கீடுகள்",
+      "ஸ்லைடிங் விண்டோ (Sliding Window) பஃபர் மேலாண்மை"
+    ],
+    "visual": {
+      "type": "process_flow",
+      "title": "Process 20",
+      "steps": [
+        {
+          "title": "Phase A",
+          "desc": "தொடக்க நிலை (Initialization)"
+        },
+        {
+          "title": "Phase B",
+          "desc": "தரவு பரிமாற்றம் (Transmission)"
+        },
+        {
+          "title": "Phase C",
+          "desc": "ஒப்புதல் சரிபார்ப்பு (Acknowledgement)"
+        }
+      ]
+    },
+    "language": "ta",
+    "languageMeta": {
+      "code": "ta",
+      "name": "Tamil",
+      "beta": false,
+      "script": "Tamil",
+      "font": "Noto Sans Tamil",
+      "casual": "Tanglish"
+    }
+  }
+]

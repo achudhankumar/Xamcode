@@ -1,0 +1,782 @@
+[
+  {
+    "id": "review-topic-1",
+    "title": "ಪಾಠ: Engineering Concept 1",
+    "pdfQuote": "Verbatim engineering excerpt from textbook page 1.",
+    "pdfPage": "Page 1",
+    "explanation": "ಇದು ಕಂಪ್ಯೂಟರ್ ನೆಟ್‌ವರ್ಕ್ (Computer Network) ಪ್ರೋಟೋಕಾಲ್ ಆಗಿದೆ. ಡೇಟಾ ಪ್ಯಾಕೆಟ್‌ಗಳ (Data Packets) ವಿಶ್ವಾಸಾರ್ಹ ಪ್ರಸರಣವನ್ನು ಖಚಿತಪಡಿಸುತ್ತದೆ.",
+    "keyPoints": [
+      "ನೆಟ್‌ವರ್ಕ್ ಲೇಯರ್ ಮತ್ತು ದೋಷ ತಿದ್ದುಪಡಿ (Error Correction)",
+      "ಹ್ಯಾಮಿಂಗ್ ಕೋಡ್ (Hamming Code) ಲೆಕ್ಕಾಚಾರಗಳು",
+      "ಸ್ಲೈಡಿಂಗ್ ವಿಂಡೋ (Sliding Window) ಬಫರ್ ನಿರ್ವಹಣೆ"
+    ],
+    "visual": {
+      "type": "process_flow",
+      "title": "Process 1",
+      "steps": [
+        {
+          "title": "Phase A",
+          "desc": "ಆರಂಭಿಕ ಸ್ಥಿತಿ (Initialization)"
+        },
+        {
+          "title": "Phase B",
+          "desc": "ಡೇಟಾ ಪ್ರಸರಣ (Transmission)"
+        },
+        {
+          "title": "Phase C",
+          "desc": "ಸ್ವೀಕೃತಿ ಪರಿಶೀಲನೆ (Acknowledgement)"
+        }
+      ]
+    },
+    "language": "kn",
+    "languageMeta": {
+      "code": "kn",
+      "name": "Kannada",
+      "beta": true,
+      "script": "Kannada",
+      "font": "Noto Sans Kannada",
+      "casual": "Kanglish"
+    }
+  },
+  {
+    "id": "review-topic-2",
+    "title": "ಪಾಠ: Engineering Concept 2",
+    "pdfQuote": "Verbatim engineering excerpt from textbook page 2.",
+    "pdfPage": "Page 2",
+    "explanation": "ಇದು ಕಂಪ್ಯೂಟರ್ ನೆಟ್‌ವರ್ಕ್ (Computer Network) ಪ್ರೋಟೋಕಾಲ್ ಆಗಿದೆ. ಡೇಟಾ ಪ್ಯಾಕೆಟ್‌ಗಳ (Data Packets) ವಿಶ್ವಾಸಾರ್ಹ ಪ್ರಸರಣವನ್ನು ಖಚಿತಪಡಿಸುತ್ತದೆ.",
+    "keyPoints": [
+      "ನೆಟ್‌ವರ್ಕ್ ಲೇಯರ್ ಮತ್ತು ದೋಷ ತಿದ್ದುಪಡಿ (Error Correction)",
+      "ಹ್ಯಾಮಿಂಗ್ ಕೋಡ್ (Hamming Code) ಲೆಕ್ಕಾಚಾರಗಳು",
+      "ಸ್ಲೈಡಿಂಗ್ ವಿಂಡೋ (Sliding Window) ಬಫರ್ ನಿರ್ವಹಣೆ"
+    ],
+    "visual": {
+      "type": "process_flow",
+      "title": "Process 2",
+      "steps": [
+        {
+          "title": "Phase A",
+          "desc": "ಆರಂಭಿಕ ಸ್ಥಿತಿ (Initialization)"
+        },
+        {
+          "title": "Phase B",
+          "desc": "ಡೇಟಾ ಪ್ರಸರಣ (Transmission)"
+        },
+        {
+          "title": "Phase C",
+          "desc": "ಸ್ವೀಕೃತಿ ಪರಿಶೀಲನೆ (Acknowledgement)"
+        }
+      ]
+    },
+    "language": "kn",
+    "languageMeta": {
+      "code": "kn",
+      "name": "Kannada",
+      "beta": true,
+      "script": "Kannada",
+      "font": "Noto Sans Kannada",
+      "casual": "Kanglish"
+    }
+  },
+  {
+    "id": "review-topic-3",
+    "title": "ಪಾಠ: Engineering Concept 3",
+    "pdfQuote": "Verbatim engineering excerpt from textbook page 3.",
+    "pdfPage": "Page 3",
+    "explanation": "ಇದು ಕಂಪ್ಯೂಟರ್ ನೆಟ್‌ವರ್ಕ್ (Computer Network) ಪ್ರೋಟೋಕಾಲ್ ಆಗಿದೆ. ಡೇಟಾ ಪ್ಯಾಕೆಟ್‌ಗಳ (Data Packets) ವಿಶ್ವಾಸಾರ್ಹ ಪ್ರಸರಣವನ್ನು ಖಚಿತಪಡಿಸುತ್ತದೆ.",
+    "keyPoints": [
+      "ನೆಟ್‌ವರ್ಕ್ ಲೇಯರ್ ಮತ್ತು ದೋಷ ತಿದ್ದುಪಡಿ (Error Correction)",
+      "ಹ್ಯಾಮಿಂಗ್ ಕೋಡ್ (Hamming Code) ಲೆಕ್ಕಾಚಾರಗಳು",
+      "ಸ್ಲೈಡಿಂಗ್ ವಿಂಡೋ (Sliding Window) ಬಫರ್ ನಿರ್ವಹಣೆ"
+    ],
+    "visual": {
+      "type": "process_flow",
+      "title": "Process 3",
+      "steps": [
+        {
+          "title": "Phase A",
+          "desc": "ಆರಂಭಿಕ ಸ್ಥಿತಿ (Initialization)"
+        },
+        {
+          "title": "Phase B",
+          "desc": "ಡೇಟಾ ಪ್ರಸರಣ (Transmission)"
+        },
+        {
+          "title": "Phase C",
+          "desc": "ಸ್ವೀಕೃತಿ ಪರಿಶೀಲನೆ (Acknowledgement)"
+        }
+      ]
+    },
+    "language": "kn",
+    "languageMeta": {
+      "code": "kn",
+      "name": "Kannada",
+      "beta": true,
+      "script": "Kannada",
+      "font": "Noto Sans Kannada",
+      "casual": "Kanglish"
+    }
+  },
+  {
+    "id": "review-topic-4",
+    "title": "ಪಾಠ: Engineering Concept 4",
+    "pdfQuote": "Verbatim engineering excerpt from textbook page 4.",
+    "pdfPage": "Page 4",
+    "explanation": "ಇದು ಕಂಪ್ಯೂಟರ್ ನೆಟ್‌ವರ್ಕ್ (Computer Network) ಪ್ರೋಟೋಕಾಲ್ ಆಗಿದೆ. ಡೇಟಾ ಪ್ಯಾಕೆಟ್‌ಗಳ (Data Packets) ವಿಶ್ವಾಸಾರ್ಹ ಪ್ರಸರಣವನ್ನು ಖಚಿತಪಡಿಸುತ್ತದೆ.",
+    "keyPoints": [
+      "ನೆಟ್‌ವರ್ಕ್ ಲೇಯರ್ ಮತ್ತು ದೋಷ ತಿದ್ದುಪಡಿ (Error Correction)",
+      "ಹ್ಯಾಮಿಂಗ್ ಕೋಡ್ (Hamming Code) ಲೆಕ್ಕಾಚಾರಗಳು",
+      "ಸ್ಲೈಡಿಂಗ್ ವಿಂಡೋ (Sliding Window) ಬಫರ್ ನಿರ್ವಹಣೆ"
+    ],
+    "visual": {
+      "type": "process_flow",
+      "title": "Process 4",
+      "steps": [
+        {
+          "title": "Phase A",
+          "desc": "ಆರಂಭಿಕ ಸ್ಥಿತಿ (Initialization)"
+        },
+        {
+          "title": "Phase B",
+          "desc": "ಡೇಟಾ ಪ್ರಸರಣ (Transmission)"
+        },
+        {
+          "title": "Phase C",
+          "desc": "ಸ್ವೀಕೃತಿ ಪರಿಶೀಲನೆ (Acknowledgement)"
+        }
+      ]
+    },
+    "language": "kn",
+    "languageMeta": {
+      "code": "kn",
+      "name": "Kannada",
+      "beta": true,
+      "script": "Kannada",
+      "font": "Noto Sans Kannada",
+      "casual": "Kanglish"
+    }
+  },
+  {
+    "id": "review-topic-5",
+    "title": "ಪಾಠ: Engineering Concept 5",
+    "pdfQuote": "Verbatim engineering excerpt from textbook page 5.",
+    "pdfPage": "Page 5",
+    "explanation": "ಇದು ಕಂಪ್ಯೂಟರ್ ನೆಟ್‌ವರ್ಕ್ (Computer Network) ಪ್ರೋಟೋಕಾಲ್ ಆಗಿದೆ. ಡೇಟಾ ಪ್ಯಾಕೆಟ್‌ಗಳ (Data Packets) ವಿಶ್ವಾಸಾರ್ಹ ಪ್ರಸರಣವನ್ನು ಖಚಿತಪಡಿಸುತ್ತದೆ.",
+    "keyPoints": [
+      "ನೆಟ್‌ವರ್ಕ್ ಲೇಯರ್ ಮತ್ತು ದೋಷ ತಿದ್ದುಪಡಿ (Error Correction)",
+      "ಹ್ಯಾಮಿಂಗ್ ಕೋಡ್ (Hamming Code) ಲೆಕ್ಕಾಚಾರಗಳು",
+      "ಸ್ಲೈಡಿಂಗ್ ವಿಂಡೋ (Sliding Window) ಬಫರ್ ನಿರ್ವಹಣೆ"
+    ],
+    "visual": {
+      "type": "process_flow",
+      "title": "Process 5",
+      "steps": [
+        {
+          "title": "Phase A",
+          "desc": "ಆರಂಭಿಕ ಸ್ಥಿತಿ (Initialization)"
+        },
+        {
+          "title": "Phase B",
+          "desc": "ಡೇಟಾ ಪ್ರಸರಣ (Transmission)"
+        },
+        {
+          "title": "Phase C",
+          "desc": "ಸ್ವೀಕೃತಿ ಪರಿಶೀಲನೆ (Acknowledgement)"
+        }
+      ]
+    },
+    "language": "kn",
+    "languageMeta": {
+      "code": "kn",
+      "name": "Kannada",
+      "beta": true,
+      "script": "Kannada",
+      "font": "Noto Sans Kannada",
+      "casual": "Kanglish"
+    }
+  },
+  {
+    "id": "review-topic-6",
+    "title": "ಪಾಠ: Engineering Concept 6",
+    "pdfQuote": "Verbatim engineering excerpt from textbook page 6.",
+    "pdfPage": "Page 6",
+    "explanation": "ಇದು ಕಂಪ್ಯೂಟರ್ ನೆಟ್‌ವರ್ಕ್ (Computer Network) ಪ್ರೋಟೋಕಾಲ್ ಆಗಿದೆ. ಡೇಟಾ ಪ್ಯಾಕೆಟ್‌ಗಳ (Data Packets) ವಿಶ್ವಾಸಾರ್ಹ ಪ್ರಸರಣವನ್ನು ಖಚಿತಪಡಿಸುತ್ತದೆ.",
+    "keyPoints": [
+      "ನೆಟ್‌ವರ್ಕ್ ಲೇಯರ್ ಮತ್ತು ದೋಷ ತಿದ್ದುಪಡಿ (Error Correction)",
+      "ಹ್ಯಾಮಿಂಗ್ ಕೋಡ್ (Hamming Code) ಲೆಕ್ಕಾಚಾರಗಳು",
+      "ಸ್ಲೈಡಿಂಗ್ ವಿಂಡೋ (Sliding Window) ಬಫರ್ ನಿರ್ವಹಣೆ"
+    ],
+    "visual": {
+      "type": "process_flow",
+      "title": "Process 6",
+      "steps": [
+        {
+          "title": "Phase A",
+          "desc": "ಆರಂಭಿಕ ಸ್ಥಿತಿ (Initialization)"
+        },
+        {
+          "title": "Phase B",
+          "desc": "ಡೇಟಾ ಪ್ರಸರಣ (Transmission)"
+        },
+        {
+          "title": "Phase C",
+          "desc": "ಸ್ವೀಕೃತಿ ಪರಿಶೀಲನೆ (Acknowledgement)"
+        }
+      ]
+    },
+    "language": "kn",
+    "languageMeta": {
+      "code": "kn",
+      "name": "Kannada",
+      "beta": true,
+      "script": "Kannada",
+      "font": "Noto Sans Kannada",
+      "casual": "Kanglish"
+    }
+  },
+  {
+    "id": "review-topic-7",
+    "title": "ಪಾಠ: Engineering Concept 7",
+    "pdfQuote": "Verbatim engineering excerpt from textbook page 7.",
+    "pdfPage": "Page 7",
+    "explanation": "ಇದು ಕಂಪ್ಯೂಟರ್ ನೆಟ್‌ವರ್ಕ್ (Computer Network) ಪ್ರೋಟೋಕಾಲ್ ಆಗಿದೆ. ಡೇಟಾ ಪ್ಯಾಕೆಟ್‌ಗಳ (Data Packets) ವಿಶ್ವಾಸಾರ್ಹ ಪ್ರಸರಣವನ್ನು ಖಚಿತಪಡಿಸುತ್ತದೆ.",
+    "keyPoints": [
+      "ನೆಟ್‌ವರ್ಕ್ ಲೇಯರ್ ಮತ್ತು ದೋಷ ತಿದ್ದುಪಡಿ (Error Correction)",
+      "ಹ್ಯಾಮಿಂಗ್ ಕೋಡ್ (Hamming Code) ಲೆಕ್ಕಾಚಾರಗಳು",
+      "ಸ್ಲೈಡಿಂಗ್ ವಿಂಡೋ (Sliding Window) ಬಫರ್ ನಿರ್ವಹಣೆ"
+    ],
+    "visual": {
+      "type": "process_flow",
+      "title": "Process 7",
+      "steps": [
+        {
+          "title": "Phase A",
+          "desc": "ಆರಂಭಿಕ ಸ್ಥಿತಿ (Initialization)"
+        },
+        {
+          "title": "Phase B",
+          "desc": "ಡೇಟಾ ಪ್ರಸರಣ (Transmission)"
+        },
+        {
+          "title": "Phase C",
+          "desc": "ಸ್ವೀಕೃತಿ ಪರಿಶೀಲನೆ (Acknowledgement)"
+        }
+      ]
+    },
+    "language": "kn",
+    "languageMeta": {
+      "code": "kn",
+      "name": "Kannada",
+      "beta": true,
+      "script": "Kannada",
+      "font": "Noto Sans Kannada",
+      "casual": "Kanglish"
+    }
+  },
+  {
+    "id": "review-topic-8",
+    "title": "ಪಾಠ: Engineering Concept 8",
+    "pdfQuote": "Verbatim engineering excerpt from textbook page 8.",
+    "pdfPage": "Page 8",
+    "explanation": "ಇದು ಕಂಪ್ಯೂಟರ್ ನೆಟ್‌ವರ್ಕ್ (Computer Network) ಪ್ರೋಟೋಕಾಲ್ ಆಗಿದೆ. ಡೇಟಾ ಪ್ಯಾಕೆಟ್‌ಗಳ (Data Packets) ವಿಶ್ವಾಸಾರ್ಹ ಪ್ರಸರಣವನ್ನು ಖಚಿತಪಡಿಸುತ್ತದೆ.",
+    "keyPoints": [
+      "ನೆಟ್‌ವರ್ಕ್ ಲೇಯರ್ ಮತ್ತು ದೋಷ ತಿದ್ದುಪಡಿ (Error Correction)",
+      "ಹ್ಯಾಮಿಂಗ್ ಕೋಡ್ (Hamming Code) ಲೆಕ್ಕಾಚಾರಗಳು",
+      "ಸ್ಲೈಡಿಂಗ್ ವಿಂಡೋ (Sliding Window) ಬಫರ್ ನಿರ್ವಹಣೆ"
+    ],
+    "visual": {
+      "type": "process_flow",
+      "title": "Process 8",
+      "steps": [
+        {
+          "title": "Phase A",
+          "desc": "ಆರಂಭಿಕ ಸ್ಥಿತಿ (Initialization)"
+        },
+        {
+          "title": "Phase B",
+          "desc": "ಡೇಟಾ ಪ್ರಸರಣ (Transmission)"
+        },
+        {
+          "title": "Phase C",
+          "desc": "ಸ್ವೀಕೃತಿ ಪರಿಶೀಲನೆ (Acknowledgement)"
+        }
+      ]
+    },
+    "language": "kn",
+    "languageMeta": {
+      "code": "kn",
+      "name": "Kannada",
+      "beta": true,
+      "script": "Kannada",
+      "font": "Noto Sans Kannada",
+      "casual": "Kanglish"
+    }
+  },
+  {
+    "id": "review-topic-9",
+    "title": "ಪಾಠ: Engineering Concept 9",
+    "pdfQuote": "Verbatim engineering excerpt from textbook page 9.",
+    "pdfPage": "Page 9",
+    "explanation": "ಇದು ಕಂಪ್ಯೂಟರ್ ನೆಟ್‌ವರ್ಕ್ (Computer Network) ಪ್ರೋಟೋಕಾಲ್ ಆಗಿದೆ. ಡೇಟಾ ಪ್ಯಾಕೆಟ್‌ಗಳ (Data Packets) ವಿಶ್ವಾಸಾರ್ಹ ಪ್ರಸರಣವನ್ನು ಖಚಿತಪಡಿಸುತ್ತದೆ.",
+    "keyPoints": [
+      "ನೆಟ್‌ವರ್ಕ್ ಲೇಯರ್ ಮತ್ತು ದೋಷ ತಿದ್ದುಪಡಿ (Error Correction)",
+      "ಹ್ಯಾಮಿಂಗ್ ಕೋಡ್ (Hamming Code) ಲೆಕ್ಕಾಚಾರಗಳು",
+      "ಸ್ಲೈಡಿಂಗ್ ವಿಂಡೋ (Sliding Window) ಬಫರ್ ನಿರ್ವಹಣೆ"
+    ],
+    "visual": {
+      "type": "process_flow",
+      "title": "Process 9",
+      "steps": [
+        {
+          "title": "Phase A",
+          "desc": "ಆರಂಭಿಕ ಸ್ಥಿತಿ (Initialization)"
+        },
+        {
+          "title": "Phase B",
+          "desc": "ಡೇಟಾ ಪ್ರಸರಣ (Transmission)"
+        },
+        {
+          "title": "Phase C",
+          "desc": "ಸ್ವೀಕೃತಿ ಪರಿಶೀಲನೆ (Acknowledgement)"
+        }
+      ]
+    },
+    "language": "kn",
+    "languageMeta": {
+      "code": "kn",
+      "name": "Kannada",
+      "beta": true,
+      "script": "Kannada",
+      "font": "Noto Sans Kannada",
+      "casual": "Kanglish"
+    }
+  },
+  {
+    "id": "review-topic-10",
+    "title": "ಪಾಠ: Engineering Concept 10",
+    "pdfQuote": "Verbatim engineering excerpt from textbook page 10.",
+    "pdfPage": "Page 10",
+    "explanation": "ಇದು ಕಂಪ್ಯೂಟರ್ ನೆಟ್‌ವರ್ಕ್ (Computer Network) ಪ್ರೋಟೋಕಾಲ್ ಆಗಿದೆ. ಡೇಟಾ ಪ್ಯಾಕೆಟ್‌ಗಳ (Data Packets) ವಿಶ್ವಾಸಾರ್ಹ ಪ್ರಸರಣವನ್ನು ಖಚಿತಪಡಿಸುತ್ತದೆ.",
+    "keyPoints": [
+      "ನೆಟ್‌ವರ್ಕ್ ಲೇಯರ್ ಮತ್ತು ದೋಷ ತಿದ್ದುಪಡಿ (Error Correction)",
+      "ಹ್ಯಾಮಿಂಗ್ ಕೋಡ್ (Hamming Code) ಲೆಕ್ಕಾಚಾರಗಳು",
+      "ಸ್ಲೈಡಿಂಗ್ ವಿಂಡೋ (Sliding Window) ಬಫರ್ ನಿರ್ವಹಣೆ"
+    ],
+    "visual": {
+      "type": "process_flow",
+      "title": "Process 10",
+      "steps": [
+        {
+          "title": "Phase A",
+          "desc": "ಆರಂಭಿಕ ಸ್ಥಿತಿ (Initialization)"
+        },
+        {
+          "title": "Phase B",
+          "desc": "ಡೇಟಾ ಪ್ರಸರಣ (Transmission)"
+        },
+        {
+          "title": "Phase C",
+          "desc": "ಸ್ವೀಕೃತಿ ಪರಿಶೀಲನೆ (Acknowledgement)"
+        }
+      ]
+    },
+    "language": "kn",
+    "languageMeta": {
+      "code": "kn",
+      "name": "Kannada",
+      "beta": true,
+      "script": "Kannada",
+      "font": "Noto Sans Kannada",
+      "casual": "Kanglish"
+    }
+  },
+  {
+    "id": "review-topic-11",
+    "title": "ಪಾಠ: Engineering Concept 11",
+    "pdfQuote": "Verbatim engineering excerpt from textbook page 11.",
+    "pdfPage": "Page 11",
+    "explanation": "ಇದು ಕಂಪ್ಯೂಟರ್ ನೆಟ್‌ವರ್ಕ್ (Computer Network) ಪ್ರೋಟೋಕಾಲ್ ಆಗಿದೆ. ಡೇಟಾ ಪ್ಯಾಕೆಟ್‌ಗಳ (Data Packets) ವಿಶ್ವಾಸಾರ್ಹ ಪ್ರಸರಣವನ್ನು ಖಚಿತಪಡಿಸುತ್ತದೆ.",
+    "keyPoints": [
+      "ನೆಟ್‌ವರ್ಕ್ ಲೇಯರ್ ಮತ್ತು ದೋಷ ತಿದ್ದುಪಡಿ (Error Correction)",
+      "ಹ್ಯಾಮಿಂಗ್ ಕೋಡ್ (Hamming Code) ಲೆಕ್ಕಾಚಾರಗಳು",
+      "ಸ್ಲೈಡಿಂಗ್ ವಿಂಡೋ (Sliding Window) ಬಫರ್ ನಿರ್ವಹಣೆ"
+    ],
+    "visual": {
+      "type": "process_flow",
+      "title": "Process 11",
+      "steps": [
+        {
+          "title": "Phase A",
+          "desc": "ಆರಂಭಿಕ ಸ್ಥಿತಿ (Initialization)"
+        },
+        {
+          "title": "Phase B",
+          "desc": "ಡೇಟಾ ಪ್ರಸರಣ (Transmission)"
+        },
+        {
+          "title": "Phase C",
+          "desc": "ಸ್ವೀಕೃತಿ ಪರಿಶೀಲನೆ (Acknowledgement)"
+        }
+      ]
+    },
+    "language": "kn",
+    "languageMeta": {
+      "code": "kn",
+      "name": "Kannada",
+      "beta": true,
+      "script": "Kannada",
+      "font": "Noto Sans Kannada",
+      "casual": "Kanglish"
+    }
+  },
+  {
+    "id": "review-topic-12",
+    "title": "ಪಾಠ: Engineering Concept 12",
+    "pdfQuote": "Verbatim engineering excerpt from textbook page 12.",
+    "pdfPage": "Page 12",
+    "explanation": "ಇದು ಕಂಪ್ಯೂಟರ್ ನೆಟ್‌ವರ್ಕ್ (Computer Network) ಪ್ರೋಟೋಕಾಲ್ ಆಗಿದೆ. ಡೇಟಾ ಪ್ಯಾಕೆಟ್‌ಗಳ (Data Packets) ವಿಶ್ವಾಸಾರ್ಹ ಪ್ರಸರಣವನ್ನು ಖಚಿತಪಡಿಸುತ್ತದೆ.",
+    "keyPoints": [
+      "ನೆಟ್‌ವರ್ಕ್ ಲೇಯರ್ ಮತ್ತು ದೋಷ ತಿದ್ದುಪಡಿ (Error Correction)",
+      "ಹ್ಯಾಮಿಂಗ್ ಕೋಡ್ (Hamming Code) ಲೆಕ್ಕಾಚಾರಗಳು",
+      "ಸ್ಲೈಡಿಂಗ್ ವಿಂಡೋ (Sliding Window) ಬಫರ್ ನಿರ್ವಹಣೆ"
+    ],
+    "visual": {
+      "type": "process_flow",
+      "title": "Process 12",
+      "steps": [
+        {
+          "title": "Phase A",
+          "desc": "ಆರಂಭಿಕ ಸ್ಥಿತಿ (Initialization)"
+        },
+        {
+          "title": "Phase B",
+          "desc": "ಡೇಟಾ ಪ್ರಸರಣ (Transmission)"
+        },
+        {
+          "title": "Phase C",
+          "desc": "ಸ್ವೀಕೃತಿ ಪರಿಶೀಲನೆ (Acknowledgement)"
+        }
+      ]
+    },
+    "language": "kn",
+    "languageMeta": {
+      "code": "kn",
+      "name": "Kannada",
+      "beta": true,
+      "script": "Kannada",
+      "font": "Noto Sans Kannada",
+      "casual": "Kanglish"
+    }
+  },
+  {
+    "id": "review-topic-13",
+    "title": "ಪಾಠ: Engineering Concept 13",
+    "pdfQuote": "Verbatim engineering excerpt from textbook page 13.",
+    "pdfPage": "Page 13",
+    "explanation": "ಇದು ಕಂಪ್ಯೂಟರ್ ನೆಟ್‌ವರ್ಕ್ (Computer Network) ಪ್ರೋಟೋಕಾಲ್ ಆಗಿದೆ. ಡೇಟಾ ಪ್ಯಾಕೆಟ್‌ಗಳ (Data Packets) ವಿಶ್ವಾಸಾರ್ಹ ಪ್ರಸರಣವನ್ನು ಖಚಿತಪಡಿಸುತ್ತದೆ.",
+    "keyPoints": [
+      "ನೆಟ್‌ವರ್ಕ್ ಲೇಯರ್ ಮತ್ತು ದೋಷ ತಿದ್ದುಪಡಿ (Error Correction)",
+      "ಹ್ಯಾಮಿಂಗ್ ಕೋಡ್ (Hamming Code) ಲೆಕ್ಕಾಚಾರಗಳು",
+      "ಸ್ಲೈಡಿಂಗ್ ವಿಂಡೋ (Sliding Window) ಬಫರ್ ನಿರ್ವಹಣೆ"
+    ],
+    "visual": {
+      "type": "process_flow",
+      "title": "Process 13",
+      "steps": [
+        {
+          "title": "Phase A",
+          "desc": "ಆರಂಭಿಕ ಸ್ಥಿತಿ (Initialization)"
+        },
+        {
+          "title": "Phase B",
+          "desc": "ಡೇಟಾ ಪ್ರಸರಣ (Transmission)"
+        },
+        {
+          "title": "Phase C",
+          "desc": "ಸ್ವೀಕೃತಿ ಪರಿಶೀಲನೆ (Acknowledgement)"
+        }
+      ]
+    },
+    "language": "kn",
+    "languageMeta": {
+      "code": "kn",
+      "name": "Kannada",
+      "beta": true,
+      "script": "Kannada",
+      "font": "Noto Sans Kannada",
+      "casual": "Kanglish"
+    }
+  },
+  {
+    "id": "review-topic-14",
+    "title": "ಪಾಠ: Engineering Concept 14",
+    "pdfQuote": "Verbatim engineering excerpt from textbook page 14.",
+    "pdfPage": "Page 14",
+    "explanation": "ಇದು ಕಂಪ್ಯೂಟರ್ ನೆಟ್‌ವರ್ಕ್ (Computer Network) ಪ್ರೋಟೋಕಾಲ್ ಆಗಿದೆ. ಡೇಟಾ ಪ್ಯಾಕೆಟ್‌ಗಳ (Data Packets) ವಿಶ್ವಾಸಾರ್ಹ ಪ್ರಸರಣವನ್ನು ಖಚಿತಪಡಿಸುತ್ತದೆ.",
+    "keyPoints": [
+      "ನೆಟ್‌ವರ್ಕ್ ಲೇಯರ್ ಮತ್ತು ದೋಷ ತಿದ್ದುಪಡಿ (Error Correction)",
+      "ಹ್ಯಾಮಿಂಗ್ ಕೋಡ್ (Hamming Code) ಲೆಕ್ಕಾಚಾರಗಳು",
+      "ಸ್ಲೈಡಿಂಗ್ ವಿಂಡೋ (Sliding Window) ಬಫರ್ ನಿರ್ವಹಣೆ"
+    ],
+    "visual": {
+      "type": "process_flow",
+      "title": "Process 14",
+      "steps": [
+        {
+          "title": "Phase A",
+          "desc": "ಆರಂಭಿಕ ಸ್ಥಿತಿ (Initialization)"
+        },
+        {
+          "title": "Phase B",
+          "desc": "ಡೇಟಾ ಪ್ರಸರಣ (Transmission)"
+        },
+        {
+          "title": "Phase C",
+          "desc": "ಸ್ವೀಕೃತಿ ಪರಿಶೀಲನೆ (Acknowledgement)"
+        }
+      ]
+    },
+    "language": "kn",
+    "languageMeta": {
+      "code": "kn",
+      "name": "Kannada",
+      "beta": true,
+      "script": "Kannada",
+      "font": "Noto Sans Kannada",
+      "casual": "Kanglish"
+    }
+  },
+  {
+    "id": "review-topic-15",
+    "title": "ಪಾಠ: Engineering Concept 15",
+    "pdfQuote": "Verbatim engineering excerpt from textbook page 15.",
+    "pdfPage": "Page 15",
+    "explanation": "ಇದು ಕಂಪ್ಯೂಟರ್ ನೆಟ್‌ವರ್ಕ್ (Computer Network) ಪ್ರೋಟೋಕಾಲ್ ಆಗಿದೆ. ಡೇಟಾ ಪ್ಯಾಕೆಟ್‌ಗಳ (Data Packets) ವಿಶ್ವಾಸಾರ್ಹ ಪ್ರಸರಣವನ್ನು ಖಚಿತಪಡಿಸುತ್ತದೆ.",
+    "keyPoints": [
+      "ನೆಟ್‌ವರ್ಕ್ ಲೇಯರ್ ಮತ್ತು ದೋಷ ತಿದ್ದುಪಡಿ (Error Correction)",
+      "ಹ್ಯಾಮಿಂಗ್ ಕೋಡ್ (Hamming Code) ಲೆಕ್ಕಾಚಾರಗಳು",
+      "ಸ್ಲೈಡಿಂಗ್ ವಿಂಡೋ (Sliding Window) ಬಫರ್ ನಿರ್ವಹಣೆ"
+    ],
+    "visual": {
+      "type": "process_flow",
+      "title": "Process 15",
+      "steps": [
+        {
+          "title": "Phase A",
+          "desc": "ಆರಂಭಿಕ ಸ್ಥಿತಿ (Initialization)"
+        },
+        {
+          "title": "Phase B",
+          "desc": "ಡೇಟಾ ಪ್ರಸರಣ (Transmission)"
+        },
+        {
+          "title": "Phase C",
+          "desc": "ಸ್ವೀಕೃತಿ ಪರಿಶೀಲನೆ (Acknowledgement)"
+        }
+      ]
+    },
+    "language": "kn",
+    "languageMeta": {
+      "code": "kn",
+      "name": "Kannada",
+      "beta": true,
+      "script": "Kannada",
+      "font": "Noto Sans Kannada",
+      "casual": "Kanglish"
+    }
+  },
+  {
+    "id": "review-topic-16",
+    "title": "ಪಾಠ: Engineering Concept 16",
+    "pdfQuote": "Verbatim engineering excerpt from textbook page 16.",
+    "pdfPage": "Page 16",
+    "explanation": "ಇದು ಕಂಪ್ಯೂಟರ್ ನೆಟ್‌ವರ್ಕ್ (Computer Network) ಪ್ರೋಟೋಕಾಲ್ ಆಗಿದೆ. ಡೇಟಾ ಪ್ಯಾಕೆಟ್‌ಗಳ (Data Packets) ವಿಶ್ವಾಸಾರ್ಹ ಪ್ರಸರಣವನ್ನು ಖಚಿತಪಡಿಸುತ್ತದೆ.",
+    "keyPoints": [
+      "ನೆಟ್‌ವರ್ಕ್ ಲೇಯರ್ ಮತ್ತು ದೋಷ ತಿದ್ದುಪಡಿ (Error Correction)",
+      "ಹ್ಯಾಮಿಂಗ್ ಕೋಡ್ (Hamming Code) ಲೆಕ್ಕಾಚಾರಗಳು",
+      "ಸ್ಲೈಡಿಂಗ್ ವಿಂಡೋ (Sliding Window) ಬಫರ್ ನಿರ್ವಹಣೆ"
+    ],
+    "visual": {
+      "type": "process_flow",
+      "title": "Process 16",
+      "steps": [
+        {
+          "title": "Phase A",
+          "desc": "ಆರಂಭಿಕ ಸ್ಥಿತಿ (Initialization)"
+        },
+        {
+          "title": "Phase B",
+          "desc": "ಡೇಟಾ ಪ್ರಸರಣ (Transmission)"
+        },
+        {
+          "title": "Phase C",
+          "desc": "ಸ್ವೀಕೃತಿ ಪರಿಶೀಲನೆ (Acknowledgement)"
+        }
+      ]
+    },
+    "language": "kn",
+    "languageMeta": {
+      "code": "kn",
+      "name": "Kannada",
+      "beta": true,
+      "script": "Kannada",
+      "font": "Noto Sans Kannada",
+      "casual": "Kanglish"
+    }
+  },
+  {
+    "id": "review-topic-17",
+    "title": "ಪಾಠ: Engineering Concept 17",
+    "pdfQuote": "Verbatim engineering excerpt from textbook page 17.",
+    "pdfPage": "Page 17",
+    "explanation": "ಇದು ಕಂಪ್ಯೂಟರ್ ನೆಟ್‌ವರ್ಕ್ (Computer Network) ಪ್ರೋಟೋಕಾಲ್ ಆಗಿದೆ. ಡೇಟಾ ಪ್ಯಾಕೆಟ್‌ಗಳ (Data Packets) ವಿಶ್ವಾಸಾರ್ಹ ಪ್ರಸರಣವನ್ನು ಖಚಿತಪಡಿಸುತ್ತದೆ.",
+    "keyPoints": [
+      "ನೆಟ್‌ವರ್ಕ್ ಲೇಯರ್ ಮತ್ತು ದೋಷ ತಿದ್ದುಪಡಿ (Error Correction)",
+      "ಹ್ಯಾಮಿಂಗ್ ಕೋಡ್ (Hamming Code) ಲೆಕ್ಕಾಚಾರಗಳು",
+      "ಸ್ಲೈಡಿಂಗ್ ವಿಂಡೋ (Sliding Window) ಬಫರ್ ನಿರ್ವಹಣೆ"
+    ],
+    "visual": {
+      "type": "process_flow",
+      "title": "Process 17",
+      "steps": [
+        {
+          "title": "Phase A",
+          "desc": "ಆರಂಭಿಕ ಸ್ಥಿತಿ (Initialization)"
+        },
+        {
+          "title": "Phase B",
+          "desc": "ಡೇಟಾ ಪ್ರಸರಣ (Transmission)"
+        },
+        {
+          "title": "Phase C",
+          "desc": "ಸ್ವೀಕೃತಿ ಪರಿಶೀಲನೆ (Acknowledgement)"
+        }
+      ]
+    },
+    "language": "kn",
+    "languageMeta": {
+      "code": "kn",
+      "name": "Kannada",
+      "beta": true,
+      "script": "Kannada",
+      "font": "Noto Sans Kannada",
+      "casual": "Kanglish"
+    }
+  },
+  {
+    "id": "review-topic-18",
+    "title": "ಪಾಠ: Engineering Concept 18",
+    "pdfQuote": "Verbatim engineering excerpt from textbook page 18.",
+    "pdfPage": "Page 18",
+    "explanation": "ಇದು ಕಂಪ್ಯೂಟರ್ ನೆಟ್‌ವರ್ಕ್ (Computer Network) ಪ್ರೋಟೋಕಾಲ್ ಆಗಿದೆ. ಡೇಟಾ ಪ್ಯಾಕೆಟ್‌ಗಳ (Data Packets) ವಿಶ್ವಾಸಾರ್ಹ ಪ್ರಸರಣವನ್ನು ಖಚಿತಪಡಿಸುತ್ತದೆ.",
+    "keyPoints": [
+      "ನೆಟ್‌ವರ್ಕ್ ಲೇಯರ್ ಮತ್ತು ದೋಷ ತಿದ್ದುಪಡಿ (Error Correction)",
+      "ಹ್ಯಾಮಿಂಗ್ ಕೋಡ್ (Hamming Code) ಲೆಕ್ಕಾಚಾರಗಳು",
+      "ಸ್ಲೈಡಿಂಗ್ ವಿಂಡೋ (Sliding Window) ಬಫರ್ ನಿರ್ವಹಣೆ"
+    ],
+    "visual": {
+      "type": "process_flow",
+      "title": "Process 18",
+      "steps": [
+        {
+          "title": "Phase A",
+          "desc": "ಆರಂಭಿಕ ಸ್ಥಿತಿ (Initialization)"
+        },
+        {
+          "title": "Phase B",
+          "desc": "ಡೇಟಾ ಪ್ರಸರಣ (Transmission)"
+        },
+        {
+          "title": "Phase C",
+          "desc": "ಸ್ವೀಕೃತಿ ಪರಿಶೀಲನೆ (Acknowledgement)"
+        }
+      ]
+    },
+    "language": "kn",
+    "languageMeta": {
+      "code": "kn",
+      "name": "Kannada",
+      "beta": true,
+      "script": "Kannada",
+      "font": "Noto Sans Kannada",
+      "casual": "Kanglish"
+    }
+  },
+  {
+    "id": "review-topic-19",
+    "title": "ಪಾಠ: Engineering Concept 19",
+    "pdfQuote": "Verbatim engineering excerpt from textbook page 19.",
+    "pdfPage": "Page 19",
+    "explanation": "ಇದು ಕಂಪ್ಯೂಟರ್ ನೆಟ್‌ವರ್ಕ್ (Computer Network) ಪ್ರೋಟೋಕಾಲ್ ಆಗಿದೆ. ಡೇಟಾ ಪ್ಯಾಕೆಟ್‌ಗಳ (Data Packets) ವಿಶ್ವಾಸಾರ್ಹ ಪ್ರಸರಣವನ್ನು ಖಚಿತಪಡಿಸುತ್ತದೆ.",
+    "keyPoints": [
+      "ನೆಟ್‌ವರ್ಕ್ ಲೇಯರ್ ಮತ್ತು ದೋಷ ತಿದ್ದುಪಡಿ (Error Correction)",
+      "ಹ್ಯಾಮಿಂಗ್ ಕೋಡ್ (Hamming Code) ಲೆಕ್ಕಾಚಾರಗಳು",
+      "ಸ್ಲೈಡಿಂಗ್ ವಿಂಡೋ (Sliding Window) ಬಫರ್ ನಿರ್ವಹಣೆ"
+    ],
+    "visual": {
+      "type": "process_flow",
+      "title": "Process 19",
+      "steps": [
+        {
+          "title": "Phase A",
+          "desc": "ಆರಂಭಿಕ ಸ್ಥಿತಿ (Initialization)"
+        },
+        {
+          "title": "Phase B",
+          "desc": "ಡೇಟಾ ಪ್ರಸರಣ (Transmission)"
+        },
+        {
+          "title": "Phase C",
+          "desc": "ಸ್ವೀಕೃತಿ ಪರಿಶೀಲನೆ (Acknowledgement)"
+        }
+      ]
+    },
+    "language": "kn",
+    "languageMeta": {
+      "code": "kn",
+      "name": "Kannada",
+      "beta": true,
+      "script": "Kannada",
+      "font": "Noto Sans Kannada",
+      "casual": "Kanglish"
+    }
+  },
+  {
+    "id": "review-topic-20",
+    "title": "ಪಾಠ: Engineering Concept 20",
+    "pdfQuote": "Verbatim engineering excerpt from textbook page 20.",
+    "pdfPage": "Page 20",
+    "explanation": "ಇದು ಕಂಪ್ಯೂಟರ್ ನೆಟ್‌ವರ್ಕ್ (Computer Network) ಪ್ರೋಟೋಕಾಲ್ ಆಗಿದೆ. ಡೇಟಾ ಪ್ಯಾಕೆಟ್‌ಗಳ (Data Packets) ವಿಶ್ವಾಸಾರ್ಹ ಪ್ರಸರಣವನ್ನು ಖಚಿತಪಡಿಸುತ್ತದೆ.",
+    "keyPoints": [
+      "ನೆಟ್‌ವರ್ಕ್ ಲೇಯರ್ ಮತ್ತು ದೋಷ ತಿದ್ದುಪಡಿ (Error Correction)",
+      "ಹ್ಯಾಮಿಂಗ್ ಕೋಡ್ (Hamming Code) ಲೆಕ್ಕಾಚಾರಗಳು",
+      "ಸ್ಲೈಡಿಂಗ್ ವಿಂಡೋ (Sliding Window) ಬಫರ್ ನಿರ್ವಹಣೆ"
+    ],
+    "visual": {
+      "type": "process_flow",
+      "title": "Process 20",
+      "steps": [
+        {
+          "title": "Phase A",
+          "desc": "ಆರಂಭಿಕ ಸ್ಥಿತಿ (Initialization)"
+        },
+        {
+          "title": "Phase B",
+          "desc": "ಡೇಟಾ ಪ್ರಸರಣ (Transmission)"
+        },
+        {
+          "title": "Phase C",
+          "desc": "ಸ್ವೀಕೃತಿ ಪರಿಶೀಲನೆ (Acknowledgement)"
+        }
+      ]
+    },
+    "language": "kn",
+    "languageMeta": {
+      "code": "kn",
+      "name": "Kannada",
+      "beta": true,
+      "script": "Kannada",
+      "font": "Noto Sans Kannada",
+      "casual": "Kanglish"
+    }
+  }
+]
