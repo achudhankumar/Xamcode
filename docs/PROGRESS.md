@@ -152,5 +152,16 @@
 ---
 
 ### Phase A9: Text to Speech (TTS)
+- **Gate Status:** PASS (`node test-speech-synthesis.js` — 11/11 passed)
+- **Components:**
+  - `lib/speech-synthesis-engine.js`: Web Speech API implementation (zero paid speech API)
+  - Matching voices for English, Tamil (`ta-IN`), Hindi (`hi-IN`) on Android Chrome
+  - Graceful degradation: hides Listen button when target voice is absent (prevents mismatched language reading)
+  - Step-through sentence boundary tracking and active sentence highlighting
+- **Tag:** `phase-a9`
+
+---
+
+### Phase 9: Theme System Ported from Build-in-Public
 - **Status:** Next in autopilot queue.
 
