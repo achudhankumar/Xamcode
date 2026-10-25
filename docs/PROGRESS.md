@@ -70,5 +70,16 @@
 ---
 
 ### Phase A5: Photo Upload
+- **Gate Status:** PASS (`node test-photo-upload.js` — 11/11 passed)
+- **Components:**
+  - `lib/photo-extractor.js`: Handles up to 20 textbook photos (JPG, PNG, WEBP, HEIC)
+  - Blurry/cropped photo detection heuristics (flags images < 400px)
+  - Seamless transformation into standard `{ numPages, pages }` structure
+  - Valid topic tree generation matching the PDF generation schema
+- **Tag:** `phase-a5`
+
+---
+
+### Phase 7: Modes, CheatCode and Quiz
 - **Status:** Next in autopilot queue.
 
