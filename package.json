@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "test": "npm run test:offline && npm run test:simulations && npm run test:aura-visuals && npm run test:providers && npm run test:aura && npm run test:fidelity && npm run test:quiz && npm run test:content && npm run test:sections && npm run test:diagrams && npm run test:mermaid && npm run test:journey && npm run test:markup && npm run test:jobs && npm run test:jobs-http && npm run test:topics && npm run test:chunks && npm run test:render && npm run test:allowance && npm run test:bip && npm run test:bip-smoke && npm run test:bip-security && npm run test:bip-durable && npm run test:bip-countdown",
+    "test": "npm run test:offline && npm run test:simulations && npm run test:aura-visuals && npm run test:providers && npm run test:aura && npm run test:fidelity && npm run test:quiz && npm run test:content && npm run test:sections && npm run test:diagrams && npm run test:mermaid && npm run test:journey && npm run test:markup && npm run test:jobs && npm run test:jobs-http && npm run test:topics && npm run test:chunks && npm run test:render && npm run test:allowance && npm run test:bip && npm run test:bip-smoke && npm run test:bip-security && npm run test:bip-durable && npm run test:bip-countdown && npm run test:subjects",
     "test:offline": "node test-offline-plumbing.js",
     "eval:live": "node eval-live.js",
     "test:simulations": "node test-interactive-simulations.js",
@@ -33,9 +33,10 @@
     "test:bip-security": "node test-bip-security.js",
     "test:bip-durable": "node test-bip-durable.js",
     "test:bip-countdown": "node test-bip-countdown.js",
+    "test:subjects": "node test-subject-packs.js",
     "bip:migrate": "node bip/migrate.js",
     "test:smoke": "node test-journey-smoke.js",
-    "check": "node --check server.js && node --check lib/schemas.js && node --check lib/gemini-schemas.js && node --check lib/gemini-live-client.js && node --check lib/pdf-extractor.js && node --check lib/validator.js && node --check lib/provider-router.js && node --check lib/generation-pipeline.js && node --check lib/visual-templates.js && node --check lib/fixture-generator.js && node --check bip/util.js && node --check bip/store.js && node --check bip/db.js && node --check bip/progress.js && node --check bip/events.js && node --check bip/community.js && node --check bip/admin.js && node --check bip/routes.js && node --check bip/estimate.js && node --check bip/storage.js && node --check bip/migrate.js"
+    "check": "node --check server.js && node --check lib/schemas.js && node --check lib/gemini-schemas.js && node --check lib/gemini-live-client.js && node --check lib/pdf-extractor.js && node --check lib/validator.js && node --check lib/provider-router.js && node --check lib/generation-pipeline.js && node --check lib/visual-templates.js && node --check lib/fixture-generator.js && node --check subjects/index.js && node --check subjects/computer-networks.js && node --check subjects/python.js && node --check bip/util.js && node --check bip/store.js && node --check bip/db.js && node --check bip/progress.js && node --check bip/events.js && node --check bip/community.js && node --check bip/admin.js && node --check bip/routes.js && node --check bip/estimate.js && node --check bip/storage.js && node --check bip/migrate.js"
   },
   "engines": {
     "node": ">=18"
