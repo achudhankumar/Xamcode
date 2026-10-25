@@ -106,5 +106,16 @@
 ---
 
 ### Phase A2: Spaced Repetition (SM-2) & Daily Review
+- **Gate Status:** PASS (`node test-srs.js` — 10/10 passed)
+- **Components:**
+  - `lib/srs-engine.js`: SuperMemo-2 scheduling implementation (Again, Hard, Good, Easy)
+  - Card generator from Flashcards mode and missed quiz answers
+  - Daily Review queue aggregating due cards across all courses
+  - 20-card session cap with seamless "Continue" flow
+- **Tag:** `phase-a2`
+
+---
+
+### Phase A4: Report a Problem Button & Quality Pipeline
 - **Status:** Next in autopilot queue.
 
