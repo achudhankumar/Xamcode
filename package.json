@@ -38,9 +38,10 @@
     "test:modes": "node test-modes-quiz.js",
     "test:study-plan": "node test-study-plan.js",
     "test:srs": "node test-srs.js",
+    "test:problem-reporting": "node test-problem-reporting.js",
     "bip:migrate": "node bip/migrate.js",
     "test:smoke": "node test-journey-smoke.js",
-    "check": "node --check server.js && node --check lib/schemas.js && node --check lib/gemini-schemas.js && node --check lib/gemini-live-client.js && node --check lib/pdf-extractor.js && node --check lib/validator.js && node --check lib/provider-router.js && node --check lib/generation-pipeline.js && node --check lib/visual-templates.js && node --check lib/photo-extractor.js && node --check lib/mode-cache.js && node --check lib/study-plan-generator.js && node --check lib/srs-engine.js && node --check lib/fixture-generator.js && node --check subjects/index.js && node --check subjects/computer-networks.js && node --check subjects/python.js && node --check bip/util.js && node --check bip/store.js && node --check bip/db.js && node --check bip/progress.js && node --check bip/events.js && node --check bip/community.js && node --check bip/admin.js && node --check bip/routes.js && node --check bip/estimate.js && node --check bip/storage.js && node --check bip/migrate.js"
+    "check": "node --check server.js && node --check lib/schemas.js && node --check lib/gemini-schemas.js && node --check lib/gemini-live-client.js && node --check lib/pdf-extractor.js && node --check lib/validator.js && node --check lib/provider-router.js && node --check lib/generation-pipeline.js && node --check lib/visual-templates.js && node --check lib/photo-extractor.js && node --check lib/mode-cache.js && node --check lib/study-plan-generator.js && node --check lib/srs-engine.js && node --check lib/problem-reporter.js && node --check lib/fixture-generator.js && node --check subjects/index.js && node --check subjects/computer-networks.js && node --check subjects/python.js && node --check bip/util.js && node --check bip/store.js && node --check bip/db.js && node --check bip/progress.js && node --check bip/events.js && node --check bip/community.js && node --check bip/admin.js && node --check bip/routes.js && node --check bip/estimate.js && node --check bip/storage.js && node --check bip/migrate.js"
   },
   "engines": {
     "node": ">=18"

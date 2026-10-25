@@ -117,5 +117,16 @@
 ---
 
 ### Phase A4: Report a Problem Button & Quality Pipeline
+- **Gate Status:** PASS (`node test-problem-reporting.js` — 11/11 passed)
+- **Components:**
+  - `lib/problem-reporter.js`: Captures issues on topics, visuals, quiz items, and AURA answers
+  - Metadata tracking: prompt version (`v2.1`), model slug (`gemini-flash-lite-latest`), timestamp, user ID
+  - Admin queries filtering by reason (`wrong_fact`, `confusing`, `visual_broken`, etc.)
+  - Auto-export to Phase 11 evaluation set for iterative prompt calibration
+- **Tag:** `phase-a4`
+
+---
+
+### Phase 8: AURA Grounded Tutor
 - **Status:** Next in autopilot queue.
 
