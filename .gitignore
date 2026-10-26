@@ -36,3 +36,14 @@ xamcode.diff
 build-parts/inline.js
 dom-dump*.txt
 fixtures/real/
+
+scratch/
+*_diff.txt
+*_output.txt
+*_results.txt
+check.txt
+phase5.txt
+supabase_*.txt
+original_eval_live.js
+update-instruction.js
+check-pdfs.js
