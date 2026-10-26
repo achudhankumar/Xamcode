@@ -2381,3 +2381,14 @@ button[data-open="upload"].btn-primary:hover,
     display: none !important;
   }
 }
+
+
+/* Ensure inner page containers clear the floating top header dock */
+.study-breadcrumbs,
+.ws-head,
+.library-head,
+.formulas-head,
+.formula-head,
+.ai-study-shell {
+  padding-top: 84px !important;
+}

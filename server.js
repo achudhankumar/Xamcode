@@ -2586,7 +2586,7 @@ async function readJson(request, limitBytes, tooLargeMessage){
   catch{ throw mkErr(400, 'The request body was unreadable.'); }
 }
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8', '.txt': 'text/plain; charset=utf-8', '.xml': 'application/xml; charset=utf-8', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.svg': 'image/svg+xml', '.mp4': 'video/mp4', '.ico': 'image/x-icon' };
-const PUBLIC_ROOT_FILES = new Set(['/XamCode.html', '/privacy-policy.html', '/terms-of-service.html', '/accessibility-statement.html', '/robots.txt', '/sitemap.xml']);
+const PUBLIC_ROOT_FILES = new Set(['/XamCode.html', '/privacy-policy.html', '/terms-of-service.html', '/accessibility-statement.html', '/robots.txt', '/sitemap.xml', '/subjects-gallery.html', '/cost-dashboard.html', '/public/manifest.json', '/public/sw.js']);
 const PUBLIC_ASSETS = new Set(['/assets/xamcode-ai-intro.mp4', '/assets/xamcode-build-trailer.mp4', '/assets/xamcode-build-trailer-poster.jpg', '/assets/xamcode-metallic-x.png', '/assets/xamcode-logo.png', '/assets/favicon.ico', '/assets/favicon.png', '/assets/favicon-192.png', '/assets/favicon-512.png', '/assets/apple-touch-icon.png']);
 function serveStatic(req, res){
   if (req.method !== 'GET' && req.method !== 'HEAD') return sendJson(res, 405, { error: 'Method not allowed.' });
@@ -2600,7 +2600,7 @@ function serveStatic(req, res){
   if (p.indexOf('\0') >= 0 || p.indexOf('\\') >= 0 || /(^|\/)\.\.(\/|$)/.test(p) || /(^|\/)\./.test(p)){
     return sendJson(res, 403, { error: 'Forbidden.' });
   }
-  const allowed = PUBLIC_ROOT_FILES.has(p) || PUBLIC_ASSETS.has(p) || /^\/(css|js)\/[A-Za-z0-9._-]+\.(css|js)$/.test(p);
+  const allowed = PUBLIC_ROOT_FILES.has(p) || PUBLIC_ASSETS.has(p) || /^\/(css|js|shared|public)\/[A-Za-z0-9._\/-]+\.(css|js|json|png|svg|jpg)$/.test(p);
   if (!allowed){
     if (/^\/(bip-data|bip|build-parts|setup|supabase|server\.js|package)/.test(p)) return sendJson(res, 403, { error: 'Forbidden.' });
     return sendJson(res, 404, { error: 'Not found.' });
