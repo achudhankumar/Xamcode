@@ -979,7 +979,7 @@ async function refreshLibrary(){
 }
 
 function wsConceptDone(idx){
-  const c = TOPICS[idx];
+  const c = getTopic(idx);
   if(!c || !c.questions.length) return false;
   return c.questions.every((q,qi)=>state.answers[`${idx}-${qi}`]===q.a);
 }
@@ -990,7 +990,7 @@ function wsUnitProgress(list){
 }
 function workspaceViewInner(){
   const units = {};
-  TOPICS.forEach((t, i) => {
+  getTopics().forEach((t, i) => {
     const u = t.unit || 'I';
     if(!units[u]) units[u] = [];
     units[u].push({ ...t, _idx: i });
@@ -2152,7 +2152,7 @@ function aiStudyView(){
    STUDY VIEW
    ============================================================ */
 function studyView(){
-  const c=TOPICS[state.topicIdx];
+  const c=getTopic(state.topicIdx);
   const attempted=Object.keys(state.answers).filter(k=>k.startsWith(state.topicIdx+'-')).length;
   const correct=Object.keys(state.answers).filter(k=>k.startsWith(state.topicIdx+'-') && state.answers[k]===c.questions[+k.split('-')[1]].a).length;
   const score = attempted===0?'—':`${correct}/${attempted}`;
@@ -2160,7 +2160,7 @@ function studyView(){
   const badge = attempted===0?'—':pct>=0.8?'Strong':pct>=0.5?'Improving':'Needs review';
   const badgeCls = pct>=0.8?'strong':pct>=0.5?'ok':'weak';
   return header()+`<nav class="study-breadcrumbs" aria-label="Curriculum hierarchy">
-    <button type="button" class="crumb-link" data-nav="workspace">Computer Networks</button>
+    <button type="button" class="crumb-link" data-nav="workspace">${escapeHtml(state.activeCourseTitle || "Computer Networks")}</button>
     <span class="crumb-sep" aria-hidden="true">/</span>
     <span class="crumb-unit">Unit ${c.unit||'I'}</span>
     <span class="crumb-sep" aria-hidden="true">/</span>
@@ -2302,12 +2302,161 @@ function quizResults(c){
     </div>`;
 }
 
+
+
+function getTopics() {
+  return (window.XC && Array.isArray(window.XC.TOPICS) && window.XC.TOPICS.length > 0) ? window.XC.TOPICS : TOPICS;
+}
+function getTopic(idx) {
+  const list = getTopics();
+  return list[idx] || list[0];
+}
+
+function studyToTopics(study, defaultTitle = 'Course') {
+  if (!study) return [];
+  if (Array.isArray(study.topics) && study.topics.length > 0) {
+    return study.topics.map((t, idx) => ({
+      id: t.id || ('topic-' + idx),
+      title: t.title || ('Lesson ' + (idx + 1)),
+      topic: t.topic || (study.subject || 'Core Curriculum'),
+      unit: String(t.unit || 'I'),
+      visId: t.visId || (t.visual?.type ? t.visual.type.toUpperCase() : ('NET-' + String(idx + 1).padStart(3, '0'))),
+      pdfPage: t.pdfPage || (t.page ? ('Page ' + t.page) : 'Reference'),
+      pdfQuote: t.pdfQuote || t.pdf_excerpt || t.quote || '',
+      explanation: t.explanation || t.lesson || t.overview || '',
+      keyPoints: Array.isArray(t.keyPoints) ? t.keyPoints : (Array.isArray(t.key_points) ? t.key_points : []),
+      steps: Array.isArray(t.steps) ? t.steps : (t.visual?.steps || [
+        { title: 'Core Concept', desc: t.explanation || t.lesson || '' },
+        { title: 'Mechanism', desc: 'Process execution and transition' },
+        { title: 'Verification', desc: 'State verified and complete' }
+      ]),
+      visual: t.visual,
+      questions: (Array.isArray(t.questions) ? t.questions : (Array.isArray(t.quiz) ? t.quiz : [])).map(q => ({
+        q: q.q || q.question || 'Review Question',
+        opts: Array.isArray(q.opts) ? q.opts : (Array.isArray(q.options) ? q.options : ['Option A', 'Option B', 'Option C', 'Option D']),
+        a: typeof q.a === 'number' ? q.a : (typeof q.answerIndex === 'number' ? q.answerIndex : 0),
+        diff: q.diff || q.difficulty || 'Easy',
+        cat: q.cat || q.category || 'CONCEPT',
+        why: q.why || q.explanation || 'Directly grounded in source text.',
+        wrong: Array.isArray(q.wrong) ? q.wrong : (Array.isArray(q.optionExplanations) ? q.optionExplanations : (q.opts || q.options || []).map(() => 'Alternative conceptual option')),
+        quote: q.quote || q.pdf_excerpt || '',
+        page: q.page ? ('Page ' + q.page) : '',
+        mini: q.mini || 'packet',
+        cap: q.cap || 'Visual model'
+      })),
+      cheatcode: t.cheatcode,
+      vaathiyar: t.vaathiyar
+    }));
+  }
+
+  if (Array.isArray(study.concepts) && study.concepts.length > 0) {
+    return study.concepts.map((concept, idx) => {
+      const relatedQuestions = (study.questions || []).filter(q => (q.conceptIndex ?? idx % study.concepts.length) === idx);
+      const steps = (concept.visualization && Array.isArray(concept.visualization.steps) && concept.visualization.steps.length > 0)
+        ? concept.visualization.steps.map(s => ({ title: s.title || 'Step', desc: s.description || s.desc || '' }))
+        : [
+            { title: 'Core Concept', desc: concept.overview || concept.explanation || concept.summary || concept.title || '' },
+            { title: 'Execution Dynamics', desc: (concept.keyPoints && concept.keyPoints[0]) || 'Operational principles and state transitions' },
+            { title: 'Validation & Assertions', desc: (concept.keyPoints && concept.keyPoints[1]) || 'Output verification and boundary assertions' }
+          ];
+      return {
+        id: 'concept-' + idx,
+        title: concept.title || ('Lesson ' + (idx + 1)),
+        topic: concept.topic || (study.subject || defaultTitle),
+        unit: String(concept.unit || (concept.unitIndex !== undefined ? concept.unitIndex + 1 : 'I')),
+        visId: (concept.visualization && concept.visualization.type ? concept.visualization.type.toUpperCase() : ('VIS-' + String(idx + 1).padStart(3, '0'))),
+        pdfPage: concept.page ? ('Page ' + concept.page) : 'Reference',
+        pdfQuote: concept.pdfExcerpt || concept.pdfQuote || concept.quote || (concept.keyPoints && concept.keyPoints[0]) || concept.overview || concept.summary || 'Direct excerpt from syllabus.',
+        explanation: concept.overview || concept.explanation || concept.summary || '',
+        keyPoints: Array.isArray(concept.keyPoints) ? concept.keyPoints : [concept.overview || concept.summary || 'Core concept principle'],
+        steps: steps,
+        visual: (concept.visualization && concept.visualization.svg) || (window.XC?.renderVisualSvg ? (step) => window.XC.renderVisualSvg(concept.visualization?.type || 'process_flow', step) : null),
+        questions: relatedQuestions.length > 0 ? relatedQuestions.map(q => ({
+          q: q.question || q.q || 'Concept evaluation question',
+          opts: q.options || q.opts || ['Option A', 'Option B', 'Option C', 'Option D'],
+          a: typeof q.answerIndex === 'number' ? q.answerIndex : (typeof q.a === 'number' ? q.a : 0),
+          diff: q.difficulty || q.diff || 'Easy',
+          cat: q.category || q.cat || 'CONCEPT',
+          why: q.explanation || q.why || q.hint || 'Directly grounded in source text.',
+          wrong: q.optionExplanations || q.wrong || (q.options || q.opts || []).map(() => 'Alternative conceptual option'),
+          quote: q.quote || concept.pdfExcerpt || '',
+          page: q.page ? ('Page ' + q.page) : '',
+          mini: q.mini || 'packet',
+          cap: q.cap || 'Visual model'
+        })) : [
+          {
+            q: 'What is the primary function of ' + concept.title + '?',
+            opts: [concept.overview || concept.summary || 'Core concept operation', 'Secondary mechanism', 'Unrelated component', 'Alternative framework'],
+            a: 0,
+            diff: 'Easy',
+            cat: 'CONCEPT',
+            why: concept.overview || concept.summary || 'Directly defined in lesson material.',
+            wrong: ['Correct principle', 'Secondary mechanism', 'Unrelated component', 'Alternative framework'],
+            quote: concept.pdfExcerpt || '',
+            page: concept.page ? ('Page ' + concept.page) : '',
+            mini: 'packet',
+            cap: 'Visual model'
+          }
+        ]
+      };
+    });
+  }
+
+  if (Array.isArray(study.units) && study.units.length > 0) {
+    const list = [];
+    study.units.forEach((unit, uIdx) => {
+      if (Array.isArray(unit.topics)) {
+        unit.topics.forEach((t, tIdx) => {
+          list.push({
+            id: 'u' + uIdx + '-t' + tIdx,
+            title: t.title || ('Topic ' + (tIdx + 1)),
+            topic: unit.title || 'Curriculum',
+            unit: String(uIdx + 1),
+            visId: 'UNIT-' + (uIdx + 1) + '-' + (tIdx + 1),
+            pdfPage: t.page ? ('Page ' + t.page) : 'Reference',
+            pdfQuote: t.quote || t.pdfQuote || t.overview || 'Reference notes',
+            explanation: t.overview || t.explanation || unit.overview || '',
+            keyPoints: Array.isArray(t.keyPoints) ? t.keyPoints : [t.overview || unit.overview || 'Core topic'],
+            steps: [
+              { title: 'Topic Foundation', desc: t.overview || 'Fundamental principles' },
+              { title: 'Core Mechanics', desc: 'Process execution and transition' },
+              { title: 'Summary', desc: 'Evaluation and key takeaway' }
+            ],
+            visual: window.XC?.renderVisualSvg ? (step) => window.XC.renderVisualSvg('process_flow', step) : null,
+            questions: [
+              {
+                q: 'What does ' + t.title + ' primarily address?',
+                opts: [t.overview || 'Core principle', 'Bypass execution', 'Ignored state', 'Unrelated topic'],
+                a: 0,
+                diff: 'Easy',
+                cat: 'CONCEPT',
+                why: 'Directly stated in unit notes.',
+                wrong: ['Core principle', 'Bypass execution', 'Ignored state', 'Unrelated topic'],
+                quote: '',
+                page: '',
+                mini: 'packet',
+                cap: 'Visual model'
+              }
+            ]
+          });
+        });
+      }
+    });
+    return list;
+  }
+  return [];
+}
+
 function qCard(c,q,qi){
   const key = `${state.topicIdx}-${qi}`;
   const chosen=state.answers[key];
   const done=chosen!==undefined;
   const isCorrect=done&&chosen===q.a;
-  const opts=q.opts.map((o,oi)=>{
+  const optsList = Array.isArray(q.opts) ? q.opts : (Array.isArray(q.options) ? q.options : []);
+  const wrongList = Array.isArray(q.wrong) ? q.wrong : (Array.isArray(q.optionExplanations) ? q.optionExplanations : []);
+  const diffStr = (q.diff || 'Easy').toUpperCase();
+  const catStr = q.cat || 'CONCEPT';
+  const opts=optsList.map((o,oi)=>{
     const isChosen=chosen===oi, isAns=q.a===oi;
     let cls='opt';
     if(done){
@@ -2320,18 +2469,18 @@ function qCard(c,q,qi){
     return `<button class="${cls}" ${done?'disabled':''} data-ans="${oi}" data-q="${qi}"><span>${String.fromCharCode(65+oi)}. ${o}</span>${mark}</button>`;
   }).join('');
   const explain=done?`
-    <div class="explain good"><span class="head">✅ WHY CORRECT:</span>${q.why}</div>
-    <div class="explain bad"><span class="head">❌ WHY OTHERS WRONG:</span><ul>${q.opts.map((o,oi)=>oi!==q.a?`<li><b>${String.fromCharCode(65+oi)}.</b> ${o} — ${q.wrong[oi]}</li>`:'').join('')}</ul></div>
-    <div class="pdf-q"><div class="q">"${q.quote}"</div><div class="p">${q.page} • FROM YOUR PDF</div></div>
+    <div class="explain good"><span class="head">✅ WHY CORRECT:</span>${q.why || q.explanation || 'Verified from core principles.'}</div>
+    <div class="explain bad"><span class="head">❌ WHY OTHERS WRONG:</span><ul>${optsList.map((o,oi)=>oi!==q.a?`<li><b>${String.fromCharCode(65+oi)}.</b> ${o} — ${wrongList[oi] || 'Alternative conceptual option'}</li>`:'').join('')}</ul></div>
+    <div class="pdf-q"><div class="q">"${q.quote || ''}"</div><div class="p">${q.page || ''} • FROM YOUR PDF</div></div>
   `:'';
   return `<div class="q-card ${done?(isCorrect?'correct':'wrong'):''}">
     <div class="q-meta">
-      <span class="pill cat">Q${qi+1} • ${q.cat}</span>
-      <span class="pill ${q.diff==='Easy'?'easy':'medium'}">${q.diff.toUpperCase()}</span>
+      <span class="pill cat">Q${qi+1} • ${catStr}</span>
+      <span class="pill ${(q.diff||'').toLowerCase()==='easy'?'easy':'medium'}">${diffStr}</span>
       ${done?`<span class="pill ${isCorrect?'correct':'wrong'}">${isCorrect?'CORRECT':'WRONG'}</span>`:''}
     </div>
-    <div class="mini-visual"><div class="mini-tag"><span>VISUAL FOR THIS QUESTION</span><span>${q.cat}</span></div>${mini(q.mini)}<div class="mini-cap">${q.cap}</div></div>
-    <div class="q-text">${q.q}</div>
+    <div class="mini-visual"><div class="mini-tag"><span>VISUAL FOR THIS QUESTION</span><span>${catStr}</span></div>${mini(q.mini || 'packet')}<div class="mini-cap">${q.cap || ''}</div></div>
+    <div class="q-text">${q.q || q.question || ''}</div>
     <div class="opts">${opts}</div>
     <div class="actions">
       ${!done?`<button class="act hint" data-hint="${qi}">💡 Show Hint</button>`:''}
@@ -2540,7 +2689,7 @@ document.addEventListener('click', (e)=>{
   }
   if(e.target.closest('[data-v-crash]')){
     const a = e.target.closest('[data-v-crash]').dataset.vCrash;
-    const t = TOPICS[state.topicIdx];
+    const t = getTopic(state.topicIdx);
     const v = (t && t.vaathiyar) || getVaathiyar(t.id);
     if(!v) return;
     if(a === 'play'){
@@ -2571,7 +2720,7 @@ document.addEventListener('click', (e)=>{
   }
   if(e.target.closest('[data-v-solve]')){
     const a = e.target.closest('[data-v-solve]').dataset.vSolve;
-    const t = TOPICS[state.topicIdx];
+    const t = getTopic(state.topicIdx);
     const v = (t && t.vaathiyar) || getVaathiyar(t.id);
     if(!v) return;
     if(a === 'auto'){
@@ -2602,7 +2751,7 @@ document.addEventListener('click', (e)=>{
   }
   if(e.target.closest('[data-v-flash]')){
     const a = e.target.closest('[data-v-flash]').dataset.vFlash;
-    const t = TOPICS[state.topicIdx];
+    const t = getTopic(state.topicIdx);
     const v = (t && t.vaathiyar) || getVaathiyar(t.id);
     if(!v) return;
     if(a === 'next') state.vaathiyarFlashIdx = (state.vaathiyarFlashIdx+1) % v.flash.length;
@@ -2622,7 +2771,7 @@ document.addEventListener('click', (e)=>{
    VAATHIYAR MODE — 8 sub-modes
    ============================================================ */
 function vaathiyarTabView(){
-  const t = TOPICS[state.topicIdx];
+  const t = getTopic(state.topicIdx);
   const v = (t && t.vaathiyar) || getVaathiyar(t.id);
   if(!v){
     return `<div class="panel">
@@ -2814,7 +2963,7 @@ function vaathiyarTabView(){
 
 function startVaathiyarCrashProgress(){
   clearVaathiyarCrashTimer();
-  const t = TOPICS[state.topicIdx];
+  const t = getTopic(state.topicIdx);
   const v = (t && t.vaathiyar) || getVaathiyar(t.id);
   if(!v || !v.crash) return;
   const idx = state.vaathiyarCrashIdx || 0;
@@ -2842,7 +2991,7 @@ function clearVaathiyarCrashTimer(){
 
 function runVaathiyarSolveAutoPlay(){
   clearVaathiyarSolveTimer();
-  const t = TOPICS[state.topicIdx];
+  const t = getTopic(state.topicIdx);
   const v = (t && t.vaathiyar) || getVaathiyar(t.id);
   if(!v || !v.solve) return;
   state.vaathiyarSolveTimer = setTimeout(()=>{
@@ -2865,7 +3014,7 @@ function clearVaathiyarSolveTimer(){
    CHEATCODE TAB — short revision card
    ============================================================ */
 function cheatcodeTabView(){
-  const t = TOPICS[state.topicIdx];
+  const t = getTopic(state.topicIdx);
   const cc = (t && t.cheatcode) || CHEATCODES[t.id];
   if(!cc){
     return `<div class="panel">
@@ -3086,7 +3235,7 @@ if(typeof window.addEventListener==='function'){
 }
 
 function resetQuizFlow(){
-  const c=TOPICS[state.topicIdx];
+  const c=getTopic(state.topicIdx);
   const total=(c && c.questions) ? c.questions.length : 0;
   let step=0;
   while(step<total && state.answers[`${state.topicIdx}-${step}`]!==undefined) step++;
@@ -3175,7 +3324,7 @@ function setStepInternal(i){
    ============================================================ */
 const fcEl=document.getElementById('fcOverlay'), fcCard=document.getElementById('fcCard');
 function openFC(){
-  const c=TOPICS[state.topicIdx];
+  const c=getTopic(state.topicIdx);
   state.fcDeck=c.questions.map((q,i)=>({q:q.q,a:q.why,tag:'Q'+(i+1)+' • '+q.cat}));
   state.fcIdx=0; state.fcOpen=true;
   fcEl.classList.add('open');
@@ -3417,31 +3566,36 @@ document.addEventListener('click', async (e)=>{
   if(libOpen && window.XC?.library){
     const entry=await window.XC.library.getStudy(libOpen.dataset.libraryOpen);
     if(entry?.study){
-      state.aiStudy=entry.study;
-      state.aiJobId=entry.id;
-      state.aiPdfMeta=entry.pdfMeta||null;
-      state.aiChunkNote='';
-      state.aiTopicImages=entry.images||{};
-      state.aiTopicImageBusy={};
-      state.aiPage={type:'plan'};
-      state.aiLessonMode='crash'; state.aiVisualStep=0;
-      state.aiQuizAnswers={};
-      if(result.study && Array.isArray(result.study.topics) && result.study.topics.length > 0){
-      window.XC.TOPICS = result.study.topics;
-      state.activeCourseTitle = result.study.subject || (result.study.title || file.name.replace(/\.pdf$/i, ''));
-      state.activeCourseEyebrow = 'AI GENERATED COURSE • ' + (result.study.subject || 'SYLLABUS').toUpperCase();
-      state.view = 'study';
-      state.topicIdx = 0;
-      state.step = 0;
-      state.studyTab = 'visual';
-    } else {
-      state.view='ai-study';
-    }
-      render(); window.scrollTo({top:0,behavior:'smooth'});
+      const study = entry.study;
+      state.aiStudy = study;
+      state.aiJobId = entry.id;
+      state.aiPdfMeta = entry.pdfMeta || null;
+      state.aiChunkNote = '';
+      state.aiTopicImages = entry.images || {};
+      state.aiTopicImageBusy = {};
+      state.aiPage = { type: 'plan' };
+      state.aiLessonMode = 'crash';
+      state.aiVisualStep = 0;
+      state.aiQuizAnswers = {};
+
+      const topics = studyToTopics(study, entry.title || 'Course');
+      if (topics.length > 0) {
+        window.XC.TOPICS = topics;
+        state.activeCourseTitle = study.subject || (study.title || entry.title || 'Course');
+        state.activeCourseEyebrow = 'AI GENERATED COURSE • ' + (study.subject || 'SYLLABUS').toUpperCase();
+        state.view = 'study';
+        state.topicIdx = 0;
+        state.step = 0;
+        state.studyTab = 'visual';
+      } else {
+        state.view = 'study';
+      }
+
+      render();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       autoGenerateTopicImages();
-      /* A saved study can still have units queued server-side — reattach
-         the watcher so they finish unlocking into this session too. */
-      if(entry.study?.chunked&&Array.isArray(entry.study.pendingUnits)&&entry.study.pendingUnits.length){
+
+      if (entry.study?.chunked && Array.isArray(entry.study.pendingUnits) && entry.study.pendingUnits.length) {
         startChunkWatch(entry.id);
       }
     }
@@ -3469,7 +3623,7 @@ document.addEventListener('click', async (e)=>{
      for the results screen. */
   const next=e.target.closest('[data-qnext]');
   if(next && !next.disabled){
-    const c=TOPICS[state.topicIdx];
+    const c=getTopic(state.topicIdx);
     const last=state.qStep>=c.questions.length-1;
     if(last) state.qDone=true; else state.qStep++;
     render();
@@ -3574,7 +3728,7 @@ document.addEventListener('click', async (e)=>{
       try{
         const ctx=new (window.AudioContext||window.webkitAudioContext)();
         const osc=ctx.createOscillator(), g=ctx.createGain();
-        const c=TOPICS[state.topicIdx];
+        const c=getTopic(state.topicIdx);
         const isC=o===c.questions[q].a;
         osc.frequency.value=isC?660:220;
         osc.type=isC?'sine':'sawtooth';
@@ -3587,9 +3741,9 @@ document.addEventListener('click', async (e)=>{
     return;
   }
   const hint=e.target.closest('[data-hint]');
-  if(hint){ alert('HINT: '+TOPICS[state.topicIdx].questions[+hint.dataset.hint].hint); return; }
+  if(hint){ alert('HINT: '+(getTopic(state.topicIdx).questions[+hint.dataset.hint]?.why || getTopic(state.topicIdx).questions[+hint.dataset.hint]?.hint || 'No hint available.')); return; }
   const eli=e.target.closest('[data-eli]');
-  if(eli){ alert('EXPLAIN LIKE I\'M 5:\n\n'+TOPICS[state.topicIdx].questions[+eli.dataset.eli].eli); return; }
+  if(eli){ alert('EXPLAIN LIKE I\'M 5:\n\n'+(getTopic(state.topicIdx).questions[+eli.dataset.eli]?.why || 'Core conceptual explanation.')); return; }
   if(e.target.closest('#themeBtn')){
     const cur = document.body.getAttribute('data-mode') || 'dark';
     const next = cur === 'light' ? 'dark' : 'light';
@@ -4591,8 +4745,9 @@ pdfUploadForm?.addEventListener('submit',async event=>{
     state.aiFlashFlipped=false;
     state.aiMessages=[];
     state.aiChatBusy=false;
-    if(result.study && Array.isArray(result.study.topics) && result.study.topics.length > 0){
-      window.XC.TOPICS = result.study.topics;
+    const uploadedTopics = studyToTopics(result.study, file.name.replace(/\.pdf$/i, ''));
+    if (uploadedTopics.length > 0) {
+      window.XC.TOPICS = uploadedTopics;
       state.activeCourseTitle = result.study.subject || (result.study.title || file.name.replace(/\.pdf$/i, ''));
       state.activeCourseEyebrow = 'AI GENERATED COURSE • ' + (result.study.subject || 'SYLLABUS').toUpperCase();
       state.view = 'study';
@@ -4600,7 +4755,7 @@ pdfUploadForm?.addEventListener('submit',async event=>{
       state.step = 0;
       state.studyTab = 'visual';
     } else {
-      state.view='ai-study';
+      state.view = 'study';
     }
     pdfUploadForm.reset();
     setSelectedPdf(null);
