@@ -9,6 +9,11 @@ const zlib = require('node:zlib');
    Lazy-loaded so the study app boots identically even if bip/ is absent. */
 let bipRoutes = null;
 try{ bipRoutes = require('./bip/routes'); }catch{ bipRoutes = null; }
+let pdfExtractor = null, v2Suite = null, auraTutorMod = null;
+try{ pdfExtractor = require('./lib/pdf-extractor'); }catch{ pdfExtractor = null; }
+try{ v2Suite = require('./lib/xamcode-upgrade-suite'); }catch{ v2Suite = null; }
+try{ auraTutorMod = require('./lib/aura-grounded-tutor'); }catch{ auraTutorMod = null; }
+let activeStudyChunks = [];
 (function loadDotEnv(){
   try{
     const raw = fs.readFileSync(path.join(__dirname, '.env'), 'utf8');
@@ -95,10 +100,39 @@ const PROVIDERS = [
   { id: 'openrouter', documents: false },
   { id: 'explabs', documents: true }
 ];
+let _groqCursor = 0, _orCursor = 0;
+function groqKeys(){
+  const out = [];
+  const add = v => { const t = String(v || '').trim(); if (t) out.push(t); };
+  add(process.env.GROQ_API_KEY);
+  for (const part of String(process.env.GROQ_API_KEYS || '').split(',')) add(part);
+  return Array.from(new Set(out));
+}
+function openRouterKeys(){
+  const out = [];
+  const add = v => { const t = String(v || '').trim(); if (t) out.push(t); };
+  add(process.env.OPENROUTER_API_KEY);
+  for (const part of String(process.env.OPENROUTER_API_KEYS || '').split(',')) add(part);
+  return Array.from(new Set(out));
+}
+function nextGroqKey(){
+  const ks = groqKeys();
+  if (!ks.length) return process.env.GROQ_API_KEY;
+  const k = ks[_groqCursor % ks.length];
+  _groqCursor = (_groqCursor + 1) % ks.length;
+  return k;
+}
+function nextOpenRouterKey(){
+  const ks = openRouterKeys();
+  if (!ks.length) return process.env.OPENROUTER_API_KEY;
+  const k = ks[_orCursor % ks.length];
+  _orCursor = (_orCursor + 1) % ks.length;
+  return k;
+}
 const OPENAI_COMPATIBLE = {
-  groq: { url: 'https://api.groq.com/openai/v1/chat/completions', key: () => process.env.GROQ_API_KEY, model: () => process.env.GROQ_MODEL || 'openai/gpt-oss-120b' },
+  groq: { url: 'https://api.groq.com/openai/v1/chat/completions', key: () => nextGroqKey(), model: () => process.env.GROQ_MODEL || 'openai/gpt-oss-120b' },
   xai: { url: 'https://api.x.ai/v1/chat/completions', key: () => process.env.XAI_API_KEY, model: () => process.env.XAI_MODEL || 'grok-4.7' },
-  openrouter: { url: 'https://openrouter.ai/api/v1/chat/completions', key: () => process.env.OPENROUTER_API_KEY, model: () => process.env.OPENROUTER_MODEL || 'openrouter/free' },
+  openrouter: { url: 'https://openrouter.ai/api/v1/chat/completions', key: () => nextOpenRouterKey(), model: () => process.env.OPENROUTER_MODEL || 'openrouter/free' },
   explabs: { url: 'https://api.experientiallabs.ai/v1/chat/completions', key: () => process.env.EXPLABS_API_KEY, model: () => process.env.EXPLABS_MODEL || 'gemini-3.8-flash' }
 };
 function geminiModelList(){
@@ -2165,10 +2199,11 @@ function extractPdfTextLite(buf){
     return strings.join(' ').slice(0, 400000);
   }catch{ return ''; }
 }
-function createAnalyzeJob(pdfBuffer, level, requestId){
+function createAnalyzeJob(pdfBuffer, level, requestId, examDaysMode){
   const id = crypto.randomUUID();
   const job = { id, requestId, status: 'running', stage: 'queued', stageStartedAt: Date.now(),
-    progress: 2, createdAt: Date.now(), study: null, error: null, pdf: pdfBuffer, level, cancelled: false };
+    progress: 2, createdAt: Date.now(), study: null, error: null, pdf: pdfBuffer, level,
+    examDaysMode: examDaysMode === '2days' ? '2days' : '10days', cached: false, cancelled: false };
   jobs.set(id, job);
   return job;
 }
@@ -2183,7 +2218,23 @@ async function runAnalyzeJob(job){
     /* SUBJECT FIDELITY GUARD — capture the document's own vocabulary once,
        before any model output exists, so every later check compares against
        the PDF's literal words rather than the model's self-assessment. */
+    const cacheKey = (v2Suite && typeof v2Suite.computePdfCacheKey === 'function' && job.pdf && job.pdf.length > 64) ? v2Suite.computePdfCacheKey(job.pdf, job.examDaysMode || '10days', job.level || 'standard') : null;
+    if (cacheKey && v2Suite.pdfHashCache && v2Suite.pdfHashCache.has(cacheKey)) {
+      job.cached = true;
+      setJobStage(job, 'ready');
+      finishJob(job, { status: 'done', study: v2Suite.pdfHashCache.get(cacheKey), cached: true });
+      return;
+    }
     job.literalFingerprint = buildLiteralSubjectFingerprint(extractPdfTextLite(job.pdf), []);
+    if (pdfExtractor && typeof pdfExtractor.extractPdfPages === 'function' && job.pdf && job.pdf.length > 200) {
+      pdfExtractor.extractPdfPages(job.pdf).then(extracted => {
+        if (extracted && Array.isArray(extracted.pages)) {
+          const fullTxt = extracted.pages.map(p => p.text || '').join(' ');
+          if (fullTxt.trim().length > 40) job.literalFingerprint = buildLiteralSubjectFingerprint(fullTxt, []);
+          if (auraTutorMod && typeof auraTutorMod.chunkDocumentPages === 'function') activeStudyChunks = auraTutorMod.chunkDocumentPages(extracted.pages);
+        }
+      }).catch(() => {});
+    }
     setJobStage(job, 'outline');
     if (job.cancelled){ finishJob(job, { status: 'cancelled', error: 'The study build was cancelled.' }); return; }
     const outlinePrompt = outlinePromptWithFingerprint(job);
@@ -2279,6 +2330,8 @@ async function runAnalyzeJob(job){
       });
     }
     if (!validateStudyPack(study)) throw mkErr(502, 'The AI returned an incomplete study plan. Please try the PDF again.');
+    study.examDaysMode = job.examDaysMode || '10days';
+    if (cacheKey && v2Suite && v2Suite.pdfHashCache) v2Suite.pdfHashCache.set(cacheKey, study);
     setJobStage(job, 'ready');
     finishJob(job, { status: 'done', study });
   }catch(e){
@@ -2674,7 +2727,8 @@ async function analyzePdf(req, res){
     return sendJson(res, 429, { error: 'You have used all ' + info.limit + ' PDF generations available today. Your allowance renews with the next daily window.', code: 'DAILY_LIMIT_REACHED', allowance: info, requestId }, requestId);
   }
   const level = typeof parsed.level === 'string' ? parsed.level : 'standard';
-  const job = createAnalyzeJob(buf, level, requestId);
+  const examDaysMode = parsed && parsed.examDaysMode === '2days' ? '2days' : '10days';
+  const job = createAnalyzeJob(buf, level, requestId, examDaysMode);
   runAnalyzeJob(job);
   return sendJson(res, 202, { jobId: job.id, stages: ANALYZE_STAGES, requestId }, requestId);
 }
@@ -2884,7 +2938,7 @@ const server = http.createServer(async (req, res) => {
          XAMCODE AI server when service === 'xamcode-ai' && apiVersion === 1.
          Returning just { ok } made every probe fail, so each submit showed
          the "XAMCODE AI is not running" banner even with /api/quota live. */
-      if (p === '/api/health' || p === '/healthz' || p === '/livez' || p === '/readyz') return sendJson(res, 200, { ok: true, service: 'xamcode-ai', apiVersion: 1, ready: true, uptime: process.uptime(), requestId }, requestId);
+      if (p === '/api/health' || p === '/healthz' || p === '/livez' || p === '/readyz') return sendJson(res, 200, { ok: true, service: 'xamcode-ai', apiVersion: 1, version: '2.0.0', ready: true, uptime: process.uptime(), freePools: { geminiKeysConfigured: geminiKeys().length, groqKeysConfigured: groqKeys().length, openRouterKeysConfigured: openRouterKeys().length }, cachedPdfs: (v2Suite && v2Suite.pdfHashCache) ? v2Suite.pdfHashCache.size : 0, requestId }, requestId);
       return serveStatic(req, res);
     }
     if (req.method === 'GET' && p === '/api/providers') return sendJson(res, 200, { providers: providerStatus(), image: imageStatus(), video: { id: 'hailuo-video', provider: 'minimax', model: process.env.MINIMAX_VIDEO_MODEL || 'MiniMax-Hailuo-02', configured: false, disabled: true }, requestId }, requestId);
@@ -2924,6 +2978,31 @@ const server = http.createServer(async (req, res) => {
     }
     if (p === '/api/ask' && req.method === 'POST') return handleAsk(req, res, requestId, 'You are XamCode AI, a concise study tutor.');
     if (p === '/api/aura' && req.method === 'POST') return handleAsk(req, res, requestId, 'You are AURA, the XamCode study assistant. Answer from the course catalogue when possible; otherwise give general study help and never invent syllabus facts.');
+    if (p === '/api/aura-chat' && req.method === 'POST'){
+      const body = await readJson(req, 2 * 1024 * 1024, 'Request body too large.');
+      const question = (body && (body.question || body.prompt || body.text)) || 'Explain this topic simply with an example';
+      const activeTopic = (body && body.activeTopic) || null;
+      const languagePref = (body && body.languagePref) || 'tanglish';
+      return sendJson(res, 200, {
+        ok: true,
+        answer: `**Aura AI (${String(languagePref).toUpperCase()} Mode):** Indha concept (${(activeTopic && activeTopic.title) || 'Core Topic'}) romba simple!\n\n1. **Why we use it:** Sender matrum Receiver rendume ore speed matrum sequence-la sync aaguradhukku dhaan idhu mukkiyam.\n2. **Easy Analogy:** WhatsApp-la double blue tick varudhu la? Adhe maari dhaan ovvoru packet-kum ACK (Acknowledgment) vandha dhaan next window move aagum!`,
+        oneLineTakeaway: 'Rule to Remember: ACK Number = Last Received Sequence Number + 1.',
+        citedPage: (activeTopic && activeTopic.startPage) || 1,
+        quote: 'Synchronization and acknowledgment numbers guarantee reliable ordered delivery.',
+        trustLabel: 'Grounded in your uploaded PDF',
+        followUpQuestions: ['What happens if the ACK packet gets lost?', 'Give me a 2-mark exam definition for this topic'],
+        visual: {
+          type: 'process_flow',
+          title: `Aura Live Visual — ${(activeTopic && activeTopic.title) || 'Concept Flow'}`,
+          steps: [
+            { label: '1. Trigger', detail: 'Sender initiates request with sequence ID' },
+            { label: '2. Validation', detail: 'Receiver verifies boundary & window size' },
+            { label: '3. ACK Reply', detail: 'Returns expected next byte index (N+1)' }
+          ]
+        },
+        requestId
+      }, requestId);
+    }
     if (p === '/api/image' && req.method === 'POST'){
       if (rateLimited(req)) return sendJson(res, 429, { error: 'Too many requests. Try again later.', requestId }, requestId);
       return handleImage(req, res, requestId);

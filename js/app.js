@@ -255,6 +255,15 @@ function header(){
       </button>
     </div>
     <div class="h-right">
+      <select id="xc-theme-select" class="xc-dock-3d-select" title="3D Experience Theme" aria-label="3D Experience Theme" onchange="if(window.applyXamCode3DTheme) window.applyXamCode3DTheme(this.value)">
+        <option value="default-bil" ${(typeof localStorage!=='undefined'&&localStorage.getItem('xc_3d_theme'))==='default-bil'?'selected':''}>🎨 Studio Default</option>
+        <option value="quantum-holo" ${(typeof localStorage!=='undefined'&&localStorage.getItem('xc_3d_theme'))==='quantum-holo'?'selected':''}>🌌 Quantum Holo 3D</option>
+        <option value="cyber-vaathiyar" ${(typeof localStorage!=='undefined'&&localStorage.getItem('xc_3d_theme'))==='cyber-vaathiyar'?'selected':''}>⚡ Cyber-Vaathiyar 3D</option>
+        <option value="neural-synapse" ${(typeof localStorage!=='undefined'&&localStorage.getItem('xc_3d_theme'))==='neural-synapse'?'selected':''}>🧬 Neural Synapse 3D</option>
+        <option value="solaris-chrono" ${(typeof localStorage!=='undefined'&&localStorage.getItem('xc_3d_theme'))==='solaris-chrono'?'selected':''}>☀️ Solaris Glass 3D</option>
+        <option value="abyssal-prism" ${(typeof localStorage!=='undefined'&&localStorage.getItem('xc_3d_theme'))==='abyssal-prism'?'selected':''}>🌊 Abyssal Prism 3D</option>
+        <option value="obsidian-monolith" ${(typeof localStorage!=='undefined'&&localStorage.getItem('xc_3d_theme'))==='obsidian-monolith'?'selected':''}>🖤 Obsidian 3D</option>
+      </select>
       <button type="button" class="btn-ghost nav-cta-workspace" data-nav="workspace">Workspace</button>
       <button type="button" class="btn-primary nav-cta-upload" data-open="upload">Upload PDF ↗</button>
       ${accountButton()}
@@ -2447,6 +2456,26 @@ function studyToTopics(study, defaultTitle = 'Course') {
   return [];
 }
 
+function renderDynamicDiagramHTML(visual){
+  if(!visual || !Array.isArray(visual.steps) || !visual.steps.length) return '';
+  return `<div class="xc-visual-stage" style="margin-bottom:12px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+      <div>
+        <span class="xc-badge">⚡ DYNAMIC VISUAL • ${String(visual.type || visual.layout || 'process_flow').toUpperCase()}</span>
+        <h4 style="margin-top:6px;font-size:0.95rem;">${visual.title || visual.caption || 'Interactive Question Diagram'}</h4>
+      </div>
+    </div>
+    <div class="xc-step-grid">
+      ${visual.steps.map((s, i) => `<div class="xc-step-node">
+        <div style="font-size:0.72rem;color:var(--xc-accent-primary);font-weight:800;">STEP ${i + 1}</div>
+        <div style="font-weight:700;margin:4px 0;">${s.label || s.title || ''}</div>
+        <div style="font-size:0.8rem;color:var(--xc-text-muted);line-height:1.45;">${s.detail || s.description || s.desc || ''}</div>
+        ${s.metric ? `<div style="margin-top:6px;font-size:0.74rem;color:#10B981;font-weight:700;">${s.metric}</div>` : ''}
+      </div>`).join('')}
+    </div>
+  </div>`;
+}
+window.renderDynamicDiagramHTML = renderDynamicDiagramHTML;
 function qCard(c,q,qi){
   const key = `${state.topicIdx}-${qi}`;
   const chosen=state.answers[key];
@@ -2479,7 +2508,7 @@ function qCard(c,q,qi){
       <span class="pill ${(q.diff||'').toLowerCase()==='easy'?'easy':'medium'}">${diffStr}</span>
       ${done?`<span class="pill ${isCorrect?'correct':'wrong'}">${isCorrect?'CORRECT':'WRONG'}</span>`:''}
     </div>
-    <div class="mini-visual"><div class="mini-tag"><span>VISUAL FOR THIS QUESTION</span><span>${catStr}</span></div>${mini(q.mini || 'packet')}<div class="mini-cap">${q.cap || ''}</div></div>
+    ${q.visual && Array.isArray(q.visual.steps) && q.visual.steps.length ? renderDynamicDiagramHTML(q.visual) : `<div class="mini-visual"><div class="mini-tag"><span>VISUAL FOR THIS QUESTION</span><span>${catStr}</span></div>${mini(q.mini || 'packet')}<div class="mini-cap">${q.cap || ''}</div></div>`}
     <div class="q-text">${q.q || q.question || ''}</div>
     <div class="opts">${opts}</div>
     <div class="actions">
@@ -3818,7 +3847,7 @@ function analyzePdfRequest(pdfBase64,level,onUploadProgress,onUploadComplete){
       resolve(result);
     },{once:true});
     request.timeout=390000;
-    request.send(JSON.stringify({pdfBase64,level}));
+    const examDaysMode = (typeof document !== 'undefined' && document.getElementById('xc-exam-days-select')) ? document.getElementById('xc-exam-days-select').value : '10days'; request.send(JSON.stringify({pdfBase64,level,examDaysMode}));
   });
 }
 

@@ -52,6 +52,7 @@
      and overlay sit on top of every theme. Composes with genz.css. -->
 <link rel="stylesheet" href="css/trailer-showcase.css">
 <link rel="stylesheet" href="css/bil-replica.css">
+<link rel="stylesheet" href="css/experience-3d.css">
 </head>
 <!-- SEO: Compliance metadata -->
 <meta name="description" content="XamCode AI - AI-powered study assistant. Upload PDFs to generate flashcards, quizzes, and study materials. DPDP Act compliant. Free to start.">
@@ -111,6 +112,11 @@
         <option value="beginner">Start simple · Explain as I learn</option>
         <option value="intermediate">Build on what I know</option>
         <option value="advanced">Go deeper · Advanced detail</option>
+      </select>
+      <label class="ai-field-label" for="xc-exam-days-select">Exam Countdown Mode</label>
+      <select id="xc-exam-days-select" name="examDaysMode">
+        <option value="10days" selected>🎯 Exam in 10 Days (Complete Mastery Mode)</option>
+        <option value="2days">🔥 Exam in 2 Days (Survival Crash Mode · Top 80/20)</option>
       </select>
       <p class="ai-privacy-note"><span aria-hidden="true">◈</span> Your PDF is sent to the configured AI provider for analysis and is not saved by XAMCODE. Maximum size: 20 MB.</p>
       <div id="pdfQuotaPanel" class="pdf-quota-panel" role="status" aria-live="polite" data-state="loading">
@@ -207,6 +213,8 @@
 <script src="js/aura-diagram.js"></script>
 <script src="js/aura.js"></script>
 <script src="js/genz.js"></script>
+<script src="js/vibe-canvas.js"></script>
+<script src="js/theme-studio-3d.js"></script>
 <!-- BunqLabs studio chrome (loader, cursor ring, overlay menu, magnetic
      CTA). Loaded after genz.js so it observes the same #app re-renders
      and never collides with genz's #cursorGlow / .gz-reveal / tilt. -->

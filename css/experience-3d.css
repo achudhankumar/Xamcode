@@ -1,0 +1,193 @@
+/* ============================================================================
+ * css/experience-3d.css
+ * XamCode AI v2.0 — 3D Spatial Vibe-Coding Styling & 6 Exclusive Themes
+ * ============================================================================ */
+
+:root {
+  --xc-bg-primary: #040611;
+  --xc-bg-elevated: rgba(14, 22, 50, 0.76);
+  --xc-accent-primary: #00F0FF;
+  --xc-accent-secondary: #FF2A85;
+  --xc-accent-glow: rgba(0, 240, 255, 0.28);
+  --xc-grid-color: rgba(0, 240, 255, 0.10);
+  --xc-text-main: #F8FAFC;
+  --xc-text-muted: #94A3B8;
+  --xc-perspective: 1200px;
+}
+
+#xc-particle-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.65;
+}
+
+/* When a 3D Experience Theme is active on <html>, apply spatial background & accents */
+html[data-xc-3d-theme] body {
+  background-color: var(--xc-bg-primary) !important;
+  background-image:
+    radial-gradient(circle at 15% 15%, var(--xc-accent-glow), transparent 38%),
+    radial-gradient(circle at 85% 80%, rgba(181, 55, 242, 0.16), transparent 40%),
+    linear-gradient(var(--xc-grid-color) 1px, transparent 1px),
+    linear-gradient(90deg, var(--xc-grid-color) 1px, transparent 1px) !important;
+  background-size: 100% 100%, 100% 100%, 44px 44px, 44px 44px !important;
+  transition: background-color 0.35s ease, color 0.25s ease;
+}
+
+html[data-xc-3d-theme] .top-dock,
+html[data-xc-3d-theme] .study-card,
+html[data-xc-3d-theme] .q-card,
+html[data-xc-3d-theme] .lib-card {
+  border-color: var(--xc-accent-glow) !important;
+  box-shadow: 0 18px 40px -15px rgba(0, 0, 0, 0.7), 0 0 18px var(--xc-accent-glow);
+}
+
+/* 3D Theme Switcher Pill in Top Dock */
+.xc-dock-3d-select {
+  background: rgba(15, 23, 42, 0.85);
+  color: #F8FAFC;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  max-width: 165px;
+  transition: all 0.2s ease;
+}
+
+.xc-dock-3d-select:hover,
+.xc-dock-3d-select:focus {
+  border-color: var(--xc-accent-primary);
+  box-shadow: 0 0 12px var(--xc-accent-glow);
+  outline: none;
+}
+
+.xc-app-shell {
+  position: relative;
+  z-index: 1;
+  max-width: 1380px;
+  margin: 0 auto;
+  padding: 20px 24px 60px;
+}
+
+/* Top 3D Command Bar */
+.xc-navbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 22px;
+  border-radius: 18px;
+  background: var(--xc-bg-elevated);
+  backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 18px 40px -15px rgba(0, 0, 0, 0.7), 0 0 24px var(--xc-accent-glow);
+  margin-bottom: 24px;
+}
+
+.xc-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 800;
+  font-size: 1.3rem;
+  letter-spacing: -0.02em;
+}
+
+.xc-brand-cube {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--xc-accent-primary), var(--xc-accent-secondary));
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+  color: #020617;
+  box-shadow: 0 0 18px var(--xc-accent-primary);
+}
+
+.xc-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.xc-select, .xc-btn {
+  background: rgba(15, 23, 42, 0.85);
+  color: var(--xc-text-main);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  padding: 9px 14px;
+  border-radius: 11px;
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.xc-btn-primary {
+  background: linear-gradient(135deg, var(--xc-accent-primary), var(--xc-accent-secondary));
+  color: #040611;
+  font-weight: 800;
+  border: none;
+  box-shadow: 0 0 20px var(--xc-accent-glow);
+}
+
+.xc-btn-primary:hover {
+  transform: translateY(-2px) scale(1.02);
+}
+
+/* 3D Spatial Cards */
+.xc-3d-card {
+  background: var(--xc-bg-elevated);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
+  padding: 22px;
+  box-shadow: 0 20px 45px -18px rgba(0, 0, 0, 0.75);
+  transform-style: preserve-3d;
+  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.2s ease;
+}
+
+.xc-3d-card:hover {
+  border-color: var(--xc-accent-primary);
+}
+
+/* Dynamic SVG Visual Canvas Box (Used in Visual Mode, Quiz Diagrams & Aura Chat) */
+.xc-visual-stage {
+  background: rgba(4, 8, 22, 0.85);
+  border: 1px solid rgba(0, 240, 255, 0.28);
+  border-radius: 16px;
+  padding: 18px;
+  margin-bottom: 16px;
+}
+
+.xc-step-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.xc-step-node {
+  padding: 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border-left: 4px solid var(--xc-accent-primary);
+}
+
+.xc-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  background: rgba(0, 240, 255, 0.16);
+  color: var(--xc-accent-primary);
+  letter-spacing: 0.04em;
+}

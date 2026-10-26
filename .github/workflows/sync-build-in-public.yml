@@ -1,0 +1,18 @@
+name: Sync Progress to Xamcode-Build-in-Public
+on:
+  push:
+    branches: [ main ]
+jobs:
+  notify-bip:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Commit Activity to Build-in-Public Webhook
+        if: env.BIP_SYNC_WEBHOOK_URL != ''
+        env:
+          BIP_SYNC_WEBHOOK_URL: ${{ secrets.BIP_SYNC_WEBHOOK_URL }}
+          BIP_SYNC_SECRET: ${{ secrets.BIP_SYNC_SECRET }}
+        run: |
+          curl -sS -X POST "$BIP_SYNC_WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -H "x-bip-secret: $BIP_SYNC_SECRET" \
+            -d '{"repo":"Xamcode","commit":"'"$GITHUB_SHA"'","ref":"'"$GITHUB_REF"'"}'
