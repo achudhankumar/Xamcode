@@ -123,7 +123,7 @@ html, body {
   gap: 12px !important;
   padding: 8px 14px !important;
   border-radius: 999px !important;
-  background: rgba(6, 8, 3, 0.88) !important;
+  background: var(--card) !important;
   border: 1px solid var(--line) !important;
   backdrop-filter: blur(14px) !important;
   -webkit-backdrop-filter: blur(14px) !important;
@@ -354,7 +354,7 @@ html, body {
   gap: 8px !important;
   padding: 4px 12px !important;
   border-radius: 999px !important;
-  background: rgba(14, 18, 6, 0.8) !important;
+  background: var(--card) !important;
   border: 1px solid var(--soft) !important;
   color: var(--lime) !important;
   font-family: var(--mono) !important;
@@ -432,7 +432,7 @@ html, body {
 }
 
 .btn-hero-outline {
-  background: rgba(14, 18, 6, 0.8) !important;
+  background: var(--card) !important;
   color: var(--paper) !important;
   font-family: var(--mono) !important;
   font-size: 13.5px !important;
@@ -457,7 +457,7 @@ html, body {
   gap: 18px !important;
   padding: 8px 20px !important;
   border-radius: 999px !important;
-  background: rgba(14, 18, 6, 0.75) !important;
+  background: var(--card) !important;
   border: 1px solid var(--line2) !important;
   font-family: var(--mono) !important;
   font-size: 12px !important;
@@ -490,7 +490,7 @@ html, body {
   align-items: center !important;
   justify-content: space-between !important;
   padding: 12px 18px !important;
-  background: rgba(19, 25, 8, 0.85) !important;
+  background: var(--card-alt) !important;
   border-bottom: 1px solid var(--line) !important;
 }
 
@@ -580,7 +580,7 @@ html, body {
 }
 
 .wc-terminal-card {
-  background: #090D04 !important;
+  background: var(--card-alt) !important;
   border-radius: 12px !important;
   border: 1px solid var(--line) !important;
   overflow: hidden !important;
@@ -605,7 +605,7 @@ html, body {
 }
 
 .wc-preview-card {
-  background: #090D04 !important;
+  background: var(--card-alt) !important;
   border-radius: 12px !important;
   border: 1px solid var(--line) !important;
   position: relative !important;
@@ -760,7 +760,7 @@ html, body {
 
 .wc-quiz-head {
   padding: 14px 20px !important;
-  background: rgba(19, 25, 8, 0.8) !important;
+  background: var(--card-alt) !important;
   border-bottom: 1px solid var(--line) !important;
   display: flex !important;
   justify-content: space-between !important;
@@ -818,7 +818,7 @@ html, body {
 
 .wc-vaathiyar-tabs {
   display: flex !important;
-  background: rgba(19, 25, 8, 0.9) !important;
+  background: var(--card-alt) !important;
   border-bottom: 1px solid var(--line) !important;
   padding: 4px !important;
   gap: 4px !important;
@@ -916,7 +916,7 @@ html, body {
    ============================================================ */
 .upload-modal,
 dialog#uploadModal {
-  background: #12121A !important;
+  background: var(--card) !important;
   color: var(--paper) !important;
   border: 1px solid var(--soft) !important;
   border-radius: 24px !important;
@@ -928,7 +928,7 @@ dialog#uploadModal {
 
 .upload-modal::backdrop,
 dialog#uploadModal::backdrop {
-  background: rgba(6, 8, 3, 0.88) !important;
+  background: var(--card) !important;
   backdrop-filter: blur(14px) !important;
   -webkit-backdrop-filter: blur(14px) !important;
 }
@@ -1004,7 +1004,7 @@ dialog#uploadModal::backdrop {
 .pdf-dropzone {
   border: 2px dashed var(--soft) !important;
   border-radius: 16px !important;
-  background: rgba(14, 18, 6, 0.6) !important;
+  background: var(--card) !important;
   padding: 30px 20px !important;
   display: flex !important;
   flex-direction: column !important;
@@ -1072,7 +1072,7 @@ dialog#uploadModal::backdrop {
 
 /* Progress Fill */
 .pdf-progress-card {
-  background: rgba(14, 18, 6, 0.8) !important;
+  background: var(--card) !important;
   border: 1px solid var(--line) !important;
   border-radius: 14px !important;
   padding: 16px !important;
@@ -1101,7 +1101,7 @@ dialog#uploadModal::backdrop {
   align-items: center !important;
   gap: 12px !important;
   padding: 12px 20px !important;
-  background: rgba(14, 18, 6, 0.75) !important;
+  background: var(--card) !important;
   border: 1px solid var(--line) !important;
   border-radius: 12px !important;
   margin-bottom: 20px !important;
@@ -1154,7 +1154,7 @@ dialog#uploadModal::backdrop {
 }
 
 .kp {
-  background: rgba(19, 25, 8, 0.6) !important;
+  background: var(--card-alt) !important;
   border: 1px solid var(--line2) !important;
   border-radius: 12px !important;
   padding: 16px !important;
@@ -1200,7 +1200,7 @@ dialog#uploadModal::backdrop {
 }
 
 .ai-unit-row {
-  background: rgba(14, 18, 6, 0.75) !important;
+  background: var(--card) !important;
   border: 1px solid var(--line) !important;
   border-radius: 12px !important;
   padding: 16px 20px !important;
@@ -1226,7 +1226,7 @@ dialog#uploadModal::backdrop {
 
 /* Top Subject & Workspace Navigation */
 .ai-study-top {
-  background: rgba(6, 8, 3, 0.92) !important;
+  background: var(--card) !important;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
   backdrop-filter: blur(14px) !important;
   -webkit-backdrop-filter: blur(14px) !important;
@@ -1238,7 +1238,7 @@ dialog#uploadModal::backdrop {
 
 .ai-study-top .back-btn,
 .study-bar .back-btn {
-  background: rgba(14, 18, 6, 0.85) !important;
+  background: var(--card) !important;
   border: 1px solid rgba(255, 255, 255, 0.12) !important;
   border-radius: 999px !important;
   color: var(--mut) !important;
@@ -1326,7 +1326,7 @@ button[data-open="upload"].btn-primary:hover,
 }
 
 .tree-btn {
-  background: rgba(19, 25, 8, 0.75) !important;
+  background: var(--card-alt) !important;
   border: 1px solid var(--line2) !important;
   border-radius: 8px !important;
   color: var(--paper) !important;
@@ -1446,7 +1446,7 @@ button[data-open="upload"].btn-primary:hover,
 }
 
 .ai-plan-stats > div {
-  background: rgba(19, 25, 8, 0.85) !important;
+  background: var(--card-alt) !important;
   border: 1px solid var(--line) !important;
   border-radius: 12px !important;
   padding: 10px 14px !important;
@@ -1496,7 +1496,7 @@ button[data-open="upload"].btn-primary:hover,
 }
 
 .ai-secondary-link {
-  background: rgba(19, 25, 8, 0.85) !important;
+  background: var(--card-alt) !important;
   color: var(--paper) !important;
   border: 1px solid var(--line) !important;
   border-radius: 999px !important;
@@ -1644,7 +1644,7 @@ button[data-open="upload"].btn-primary:hover,
 }
 
 .ai-goal-chip {
-  background: rgba(19, 25, 8, 0.8) !important;
+  background: var(--card-alt) !important;
   border: 1px solid var(--line2) !important;
   color: var(--mut) !important;
   font-family: var(--mono) !important;
@@ -1654,7 +1654,7 @@ button[data-open="upload"].btn-primary:hover,
 
 /* Study Bar Navigation */
 .study-bar {
-  background: rgba(14, 18, 6, 0.85) !important;
+  background: var(--card) !important;
   border: 1px solid var(--line) !important;
   border-radius: 12px !important;
   padding: 12px 18px !important;
@@ -1723,7 +1723,7 @@ button[data-open="upload"].btn-primary:hover,
 }
 
 .kp {
-  background: rgba(19, 25, 8, 0.8) !important;
+  background: var(--card-alt) !important;
   border: 1px solid var(--line2) !important;
   border-radius: 12px !important;
   padding: 16px !important;
@@ -1769,7 +1769,7 @@ button[data-open="upload"].btn-primary:hover,
 }
 
 .study-tab {
-  background: rgba(14, 18, 6, 0.8) !important;
+  background: var(--card) !important;
   border: 1px solid var(--line) !important;
   border-radius: 999px !important;
   color: var(--mut) !important;
@@ -1818,7 +1818,7 @@ button[data-open="upload"].btn-primary:hover,
 }
 
 .narration-bar {
-  background: rgba(14, 18, 6, 0.92) !important;
+  background: var(--card) !important;
   border-top: 1px solid var(--soft) !important;
   color: var(--paper) !important;
   font-family: var(--mono) !important;
@@ -1901,7 +1901,7 @@ button[data-open="upload"].btn-primary:hover,
 }
 
 .ai-diagram-node-card {
-  fill: #12121A !important;
+  fill: var(--card) !important;
   stroke: var(--soft) !important;
 }
 
@@ -1954,7 +1954,7 @@ button[data-open="upload"].btn-primary:hover,
 }
 
 .score-bar {
-  background: rgba(19, 25, 8, 0.7) !important;
+  background: var(--card-alt) !important;
   border: 1px solid var(--line2) !important;
   border-radius: 10px !important;
   padding: 10px 14px !important;
@@ -2043,7 +2043,7 @@ button[data-open="upload"].btn-primary:hover,
 .ai-answer-option,
 .opt,
 .q-option {
-  background: rgba(19, 25, 8, 0.8) !important;
+  background: var(--card-alt) !important;
   border: 1px solid var(--line2) !important;
   border-radius: 10px !important;
   color: var(--paper) !important;
@@ -2086,7 +2086,7 @@ button[data-open="upload"].btn-primary:hover,
 }
 
 .ai-answer-explanation {
-  background: rgba(19, 25, 8, 0.9) !important;
+  background: var(--card-alt) !important;
   border: 1px solid var(--soft) !important;
   border-radius: 10px !important;
   padding: 12px 16px !important;
@@ -2106,7 +2106,7 @@ button[data-open="upload"].btn-primary:hover,
 }
 
 .ai-topic-image figcaption {
-  background: rgba(14, 18, 6, 0.95) !important;
+  background: var(--card) !important;
   border-top: 1px solid var(--line2) !important;
   padding: 10px 16px !important;
   display: flex !important;
@@ -2143,7 +2143,7 @@ button[data-open="upload"].btn-primary:hover,
 
 .ai-topic-image-empty,
 .ai-topic-image-error {
-  background: rgba(14, 18, 6, 0.7) !important;
+  background: var(--card) !important;
   border: 1px dashed var(--soft) !important;
   border-radius: 14px !important;
   padding: 24px !important;
@@ -2161,7 +2161,7 @@ button[data-open="upload"].btn-primary:hover,
 .aura-btn,
 .ai-study-shell ~ .aura-btn,
 #auraBtn {
-  background: #12121A !important;
+  background: var(--card) !important;
   border: 1px solid var(--soft) !important;
   border-radius: 999px !important;
   color: var(--lime) !important;
@@ -2187,7 +2187,7 @@ button[data-open="upload"].btn-primary:hover,
   gap: 8px !important;
   padding: 8px 12px !important;
   border-radius: 999px !important;
-  background: rgba(18, 18, 26, 0.85) !important;
+  background: var(--card) !important;
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
   backdrop-filter: blur(16px) !important;
   -webkit-backdrop-filter: blur(16px) !important;
@@ -2245,7 +2245,7 @@ button[data-open="upload"].btn-primary:hover,
    ============================================================ */
 .site-footer {
   border-top: 1px solid var(--line) !important;
-  background: rgba(9, 9, 13, 0.95) !important;
+  background: var(--card) !important;
   padding: 64px 24px 40px !important;
   margin-top: 60px !important;
   position: relative !important;
@@ -4699,11 +4699,232 @@ body[data-style="minimal"] .cine-hud{
   }
 }
 
+
+
 /* === XAMCODE MAIN STUDY WORKSPACE & LANDING BRIDGE FOR BUILD.HTML 5 STYLES === */
+
+/* ==========================================================================
+   1. COMPLETE 5-STYLE ROOT & BODY TOKEN DEFINITIONS (ZERO BLACK BLEED)
+   ========================================================================== */
+html[data-style="vibe"],
+body[data-style="vibe"] {
+  --bg: #060803 !important;
+  --paper: #f1efe3 !important;
+  --text: #f1efe3 !important;
+  --card: #0e1206 !important;
+  --card-alt: #141a0a !important;
+  --mut: #9aa38d !important;
+  --dim: #6b745c !important;
+  --lime: #c8ff3d !important;
+  --limeink: #121804 !important;
+  --inkink: #0b0e05 !important;
+  --cyan: #5eead4 !important;
+  --orange: #f97316 !important;
+  --violet: #a855f7 !important;
+  --line: rgba(255, 255, 255, 0.10) !important;
+  --line2: rgba(255, 255, 255, 0.06) !important;
+  --soft: rgba(200, 255, 61, 0.35) !important;
+  --accent-soft: rgba(200, 255, 61, 0.12) !important;
+  --disp: "Syne", system-ui, sans-serif !important;
+  --mono: "JetBrains Mono", monospace !important;
+  background: #060803 !important;
+  background-color: #060803 !important;
+  color: #f1efe3 !important;
+}
+
+html[data-style="bubblegum"],
+body[data-style="bubblegum"] {
+  --bg: #fff2f7 !important;
+  --paper: #261021 !important;
+  --text: #261021 !important;
+  --card: #ffffff !important;
+  --card-alt: #fff7fa !important;
+  --mut: #633958 !important;
+  --dim: #87587a !important;
+  --lime: #e62e7a !important;
+  --limeink: #ffffff !important;
+  --inkink: #261021 !important;
+  --cyan: #0284c7 !important;
+  --orange: #ff6b4a !important;
+  --violet: #9333ea !important;
+  --line: rgba(230, 46, 122, 0.18) !important;
+  --line2: rgba(139, 92, 246, 0.14) !important;
+  --soft: rgba(230, 46, 122, 0.28) !important;
+  --accent-soft: rgba(230, 46, 122, 0.10) !important;
+  --disp: "Fredoka", "Syne", sans-serif !important;
+  --mono: "Space Grotesk", system-ui, sans-serif !important;
+  background: #fff2f7 !important;
+  background-color: #fff2f7 !important;
+  color: #261021 !important;
+}
+
+html[data-style="glass"],
+body[data-style="glass"] {
+  --bg: #030816 !important;
+  --paper: #eef6ff !important;
+  --text: #eef6ff !important;
+  --card: rgba(15, 28, 56, 0.62) !important;
+  --card-alt: rgba(22, 38, 74, 0.72) !important;
+  --mut: #9db4d4 !important;
+  --dim: #647ea3 !important;
+  --lime: #38bdf8 !important;
+  --limeink: #031124 !important;
+  --inkink: #030914 !important;
+  --cyan: #2dd4bf !important;
+  --orange: #fb923c !important;
+  --violet: #c084fc !important;
+  --line: rgba(125, 211, 252, 0.22) !important;
+  --line2: rgba(125, 211, 252, 0.12) !important;
+  --soft: rgba(56, 189, 248, 0.32) !important;
+  --accent-soft: rgba(56, 189, 248, 0.12) !important;
+  --disp: "Syne", system-ui, sans-serif !important;
+  --mono: "JetBrains Mono", monospace !important;
+  background: #030816 !important;
+  background-color: #030816 !important;
+  color: #eef6ff !important;
+}
+
+html[data-style="brutalist"],
+body[data-style="brutalist"] {
+  --bg: #f4f0e6 !important;
+  --paper: #0d0d0d !important;
+  --text: #0d0d0d !important;
+  --card: #ffffff !important;
+  --card-alt: #fffbe6 !important;
+  --mut: #2e2e2c !important;
+  --dim: #4a4a46 !important;
+  --lime: #ffe600 !important;
+  --limeink: #0d0d0d !important;
+  --inkink: #0d0d0d !important;
+  --cyan: #00d68f !important;
+  --orange: #ff4d00 !important;
+  --violet: #7c3aed !important;
+  --line: #0d0d0d !important;
+  --line2: rgba(13, 13, 13, 0.22) !important;
+  --soft: #0d0d0d !important;
+  --accent-soft: rgba(255, 230, 0, 0.35) !important;
+  --disp: "Syne", system-ui, sans-serif !important;
+  --mono: "JetBrains Mono", monospace !important;
+  background: #f4f0e6 !important;
+  background-color: #f4f0e6 !important;
+  color: #0d0d0d !important;
+}
+
+html[data-style="minimal"],
+body[data-style="minimal"] {
+  --bg: #faf8f5 !important;
+  --paper: #181816 !important;
+  --text: #181816 !important;
+  --card: #ffffff !important;
+  --card-alt: #f2efe9 !important;
+  --mut: #57534e !important;
+  --dim: #78716c !important;
+  --lime: #23533d !important;
+  --limeink: #faf8f5 !important;
+  --inkink: #181816 !important;
+  --cyan: #23533d !important;
+  --orange: #b4532a !important;
+  --violet: #57534e !important;
+  --line: rgba(24, 24, 22, 0.12) !important;
+  --line2: rgba(24, 24, 22, 0.08) !important;
+  --soft: rgba(35, 83, 61, 0.22) !important;
+  --accent-soft: rgba(35, 83, 61, 0.08) !important;
+  --disp: "Fraunces", Georgia, serif !important;
+  --mono: "JetBrains Mono", monospace !important;
+  background: #faf8f5 !important;
+  background-color: #faf8f5 !important;
+  color: #181816 !important;
+}
+
+/* Hide #xc-particle-canvas when build.html's #heroCanvas + .bg.grid/.bg.glow are active */
+#xc-particle-canvas {
+  display: none !important;
+}
+
+#app,
+main,
+.page-shell,
+.wc-section {
+  background: transparent !important;
+}
+
+/* ==========================================================================
+   2. NAVBAR & EXAM COUNTDOWN SELECTOR (MATCHING build.html DOCK)
+   ========================================================================== */
+.header {
+  position: fixed !important;
+  top: 12px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  width: min(1360px, calc(100% - 24px)) !important;
+  z-index: 120 !important;
+}
+.header .h-right {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-wrap: nowrap !important;
+}
+.header .h-right .nav-cta-workspace {
+  display: none !important;
+}
+.header .h-right .style-trigger {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+  margin-left: 0 !important;
+  height: 34px !important;
+  padding: 5px 11px 5px 10px !important;
+}
+.header .h-right .xc-dock-3d-select {
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: 155px !important;
+  height: 34px !important;
+  padding: 4px 26px 4px 11px !important;
+  border-radius: 999px !important;
+  font-family: var(--mono) !important;
+  font-size: 10.5px !important;
+  font-weight: 700 !important;
+  color: var(--paper) !important;
+  background-color: var(--card-alt) !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23888' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 9px center !important;
+  background-size: 10px 6px !important;
+  border: 1px solid var(--line) !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+  box-shadow: none !important;
+}
+
+/* ==========================================================================
+   3. HERO OPENING SECTION (EXACT build.html PROPORTIONS & CHROME)
+   ========================================================================== */
+.page-shell {
+  max-width: 1360px !important;
+  margin: 0 auto !important;
+  padding: 76px 24px 64px !important;
+}
 .hero.opening {
   position: relative !important;
-  overflow: hidden !important;
+  min-height: calc(100svh - 90px) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  align-items: stretch !important;
+  text-align: left !important;
+  padding: clamp(28px, 4vw, 56px) clamp(20px, 3vw, 40px) 26px !important;
   border-bottom: 1px solid var(--line) !important;
+  overflow: hidden !important;
+  border-radius: 0 !important;
+  background: transparent !important;
 }
 .hero.opening #heroCanvas {
   position: absolute !important;
@@ -4719,174 +4940,245 @@ body[data-style="minimal"] .cine-hud{
   inset: 0 !important;
   pointer-events: none !important;
   z-index: 1 !important;
-  background:
-    radial-gradient(50% 45% at 50% 38%, rgba(6,8,3,0) 0%, rgba(6,8,3,.52) 70%, rgba(6,8,3,.92) 100%),
-    linear-gradient(180deg, rgba(6,8,3,.3) 0%, rgba(6,8,3,.15) 45%, var(--bg) 100%) !important;
 }
+body[data-style="vibe"] .hero.opening .shade {
+  background: linear-gradient(180deg, rgba(6,8,3,.18) 0%, rgba(6,8,3,0) 45%, rgba(6,8,3,.82) 100%) !important;
+}
+body[data-style="bubblegum"] .hero.opening .shade {
+  background: linear-gradient(180deg, rgba(255,242,247,.1) 0%, rgba(255,242,247,0) 45%, rgba(255,242,247,.75) 100%) !important;
+}
+body[data-style="glass"] .hero.opening .shade {
+  background: linear-gradient(180deg, rgba(3,8,22,.15) 0%, rgba(3,8,22,0) 45%, rgba(3,8,22,.78) 100%) !important;
+}
+body[data-style="brutalist"] .hero.opening .shade {
+  background: none !important;
+}
+body[data-style="minimal"] .hero.opening .shade {
+  background: linear-gradient(180deg, rgba(250,248,245,.15) 0%, rgba(250,248,245,0) 45%, rgba(250,248,245,.85) 100%) !important;
+}
+
 .hero.opening .hero-layout {
   position: relative !important;
   z-index: 2 !important;
-  max-width: 1380px !important;
+  max-width: 1280px !important;
   width: 100% !important;
-  margin: 0 auto !important;
+  margin: auto !important;
   display: grid !important;
-  grid-template-columns: minmax(0, 1.18fr) minmax(320px, 0.82fr) !important;
+  grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr) !important;
   align-items: center !important;
-  gap: clamp(20px, 3.5vw, 48px) !important;
+  gap: clamp(24px, 4vw, 52px) !important;
 }
-.hero.opening .hero-copy {
+.hero.opening .hero-copy.hero-in {
   align-items: flex-start !important;
   text-align: left !important;
   margin: 0 !important;
+  max-width: 720px !important;
 }
-.hero.opening .hero-copy h1,
-.hero.opening .hero-copy p.sub {
+.hero.opening .tag.kick {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  font-family: var(--mono) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.14em !important;
+  text-transform: uppercase !important;
+  color: var(--lime) !important;
+  padding: 6px 12px !important;
+  border-radius: 999px !important;
+  border: 1px solid var(--soft) !important;
+  background: var(--accent-soft) !important;
+  margin-bottom: 18px !important;
+}
+.hero.opening .tag.kick .dot {
+  width: 7px !important;
+  height: 7px !important;
+  border-radius: 50% !important;
+  background: var(--lime) !important;
+  box-shadow: 0 0 10px var(--lime) !important;
+}
+.hero.opening h1.frag {
+  font-family: var(--disp) !important;
+  font-size: clamp(36px, 5vw, 66px) !important;
+  line-height: 0.98 !important;
+  letter-spacing: -0.03em !important;
+  font-weight: 800 !important;
+  color: var(--paper) !important;
+  margin: 0 0 18px !important;
   text-align: left !important;
-  margin-left: 0 !important;
 }
-.hero.opening .hero-btns,
-.hero.opening .hero-proof,
-.hero.opening .stats {
+body[data-style="minimal"] .hero.opening h1.frag {
+  font-family: "Fraunces", Georgia, serif !important;
+  font-weight: 600 !important;
+  line-height: 1.02 !important;
+}
+body[data-style="minimal"] .hero.opening h1.frag .hl {
+  color: #23533d !important;
+  font-style: italic !important;
+}
+body[data-style="minimal"] .hero.opening h1.frag .out {
+  color: #b4532a !important;
+  font-style: italic !important;
+}
+.hero.opening p.sub.lede {
+  font-size: clamp(15px, 1.35vw, 18px) !important;
+  line-height: 1.6 !important;
+  color: var(--mut) !important;
+  margin: 0 0 18px !important;
+  max-width: 620px !important;
+  text-align: left !important;
+}
+.hero.opening p.sub.lede b {
+  color: var(--paper) !important;
+}
+.hero.opening .schip-row {
+  margin-bottom: 14px !important;
+}
+.hero.opening .schip {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  font-family: var(--mono) !important;
+  font-size: 10.5px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.14em !important;
+  text-transform: uppercase !important;
+  padding: 6px 12px !important;
+  border-radius: 999px !important;
+  background: var(--card-alt) !important;
+  color: var(--orange) !important;
+  border: 1px solid var(--line) !important;
+}
+.hero.opening .hp.stats {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+  width: 100% !important;
+  max-width: 620px !important;
+  padding: 12px 18px !important;
+  border-radius: 16px !important;
+  background: var(--card) !important;
+  border: 1px solid var(--line) !important;
+  margin: 0 0 20px !important;
+  box-sizing: border-box !important;
+}
+.hero.opening .hp.stats span {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: 2px !important;
+}
+.hero.opening .hp.stats span b {
+  font-family: var(--disp) !important;
+  font-size: 20px !important;
+  font-weight: 800 !important;
+  color: var(--lime) !important;
+  line-height: 1.1 !important;
+}
+.hero.opening .hp.stats span small {
+  font-family: var(--mono) !important;
+  font-size: 9.5px !important;
+  letter-spacing: 0.08em !important;
+  color: var(--mut) !important;
+  text-transform: uppercase !important;
+}
+.hero.opening .crow.hero-btns {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 10px !important;
   justify-content: flex-start !important;
+  margin: 0 0 18px !important;
 }
-.hero.opening .hero-dock,
-.hero.opening #heroPipelineMount {
+.hero.opening .hmeta {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 18px !important;
+  font-family: var(--mono) !important;
+  font-size: 10.5px !important;
+  letter-spacing: 0.12em !important;
+  text-transform: uppercase !important;
+  color: var(--dim) !important;
+}
+.hero.opening .ch-foot {
   position: relative !important;
   z-index: 2 !important;
-}
-@media (max-width: 1024px) {
-  .hero.opening .hero-layout {
-    grid-template-columns: 1fr !important;
-    text-align: center !important;
-  }
-  .hero.opening .hero-copy {
-    align-items: center !important;
-    text-align: center !important;
-  }
-  .hero.opening .hero-copy h1,
-  .hero.opening .hero-copy p.sub {
-    text-align: center !important;
-  }
-  .hero.opening .hero-btns,
-  .hero.opening .hero-proof,
-  .hero.opening .stats {
-    justify-content: center !important;
-  }
+  max-width: 1280px !important;
+  width: 100% !important;
+  margin: 24px auto 0 !important;
+  padding-top: 16px !important;
+  border-top: 1px solid var(--line2) !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  font-family: var(--mono) !important;
+  font-size: 10.5px !important;
+  letter-spacing: 0.14em !important;
+  text-transform: uppercase !important;
+  color: var(--dim) !important;
 }
 
-/* Style 2: Bubblegum Playground mappings for XamCode Main components */
-body[data-style="bubblegum"] .hero.opening .shade {
-  background:
-    radial-gradient(55% 50% at 50% 38%, rgba(255,245,251,0) 0%, rgba(255,245,251,.55) 72%, rgba(255,245,251,.94) 100%),
-    linear-gradient(180deg, rgba(255,245,251,.25) 0%, rgba(255,245,251,.15) 45%, #fff5fb 100%) !important;
-}
+/* ==========================================================================
+   4. PER-STYLE HEADER, BUTTONS & STUDY CARDS (ALL 5 STYLES)
+   ========================================================================== */
+
+/* Style 2: Bubblegum Playground */
 body[data-style="bubblegum"] .header .h-inner {
   background: rgba(255, 255, 255, 0.92) !important;
-  border: 2.5px solid #231438 !important;
-  box-shadow: 0 6px 0 #231438, 0 14px 32px rgba(255, 61, 154, 0.18) !important;
+  border: 2px solid rgba(255, 133, 179, 0.5) !important;
+  box-shadow: 0 14px 34px rgba(230, 46, 122, 0.14), inset 0 3px 6px #ffffff !important;
+  border-radius: 999px !important;
 }
-body[data-style="bubblegum"] .brand,
-body[data-style="bubblegum"] .hero h1,
-body[data-style="bubblegum"] .wc-section-title,
-body[data-style="bubblegum"] .ws-left h1,
-body[data-style="bubblegum"] .ai-page-hero h1,
-body[data-style="bubblegum"] .study-title h2 {
-  font-family: 'Fredoka', 'Syne', sans-serif !important;
-  color: #231438 !important;
+body[data-style="bubblegum"] .nav button.active {
+  background: linear-gradient(135deg, #ff6b9d, #c084fc) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(230, 46, 122, 0.28) !important;
 }
-body[data-style="bubblegum"] .nav button,
-body[data-style="bubblegum"] .search-trigger,
-body[data-style="bubblegum"] .btn-ghost,
-body[data-style="bubblegum"] .acct-trigger {
-  color: #231438 !important;
-  border-color: rgba(35, 20, 56, 0.25) !important;
-  background: rgba(255, 255, 255, 0.85) !important;
-}
-body[data-style="bubblegum"] .nav button.active,
 body[data-style="bubblegum"] .btn-primary,
 body[data-style="bubblegum"] .btn-hero {
-  background: linear-gradient(135deg, #ff3d9a 0%, #ff85bf 55%, #ffd43b 100%) !important;
+  background: linear-gradient(135deg, #ff4d94 0%, #a855f7 55%, #38bdf8 100%) !important;
   color: #ffffff !important;
-  border: 2px solid #231438 !important;
-  box-shadow: 0 4px 0 #231438 !important;
+  border: 2px solid #ffffff !important;
+  box-shadow: 0 10px 24px rgba(230, 46, 122, 0.28) !important;
 }
-body[data-style="bubblegum"] .dock-item,
-body[data-style="bubblegum"] .wc-pipeline-container,
-body[data-style="bubblegum"] .wc-dilemma-card,
-body[data-style="bubblegum"] .preview,
-body[data-style="bubblegum"] .wc-visual-card,
-body[data-style="bubblegum"] .wc-quiz-showcase,
-body[data-style="bubblegum"] .wc-vaathiyar-showcase,
-body[data-style="bubblegum"] .wc-curriculum-card,
-body[data-style="bubblegum"] .course-cta,
-body[data-style="bubblegum"] .ws-head,
-body[data-style="bubblegum"] .tree,
-body[data-style="bubblegum"] .concept-card,
-body[data-style="bubblegum"] .ai-page-hero,
-body[data-style="bubblegum"] .ai-plan-hero,
-body[data-style="bubblegum"] .ai-concept-card,
-body[data-style="bubblegum"] .study-bar,
-body[data-style="bubblegum"] .panel,
-body[data-style="bubblegum"] .kp,
-body[data-style="bubblegum"] .visual-box,
-body[data-style="bubblegum"] .q-card,
-body[data-style="bubblegum"] .ai-question-card,
-body[data-style="bubblegum"] .upload-modal-content {
+body[data-style="bubblegum"] .btn-hero-outline {
   background: #ffffff !important;
-  color: #231438 !important;
-  border: 2.5px solid #231438 !important;
-  border-radius: 26px !important;
-  box-shadow: 0 7px 0 #231438, 0 14px 28px rgba(255, 61, 154, 0.14) !important;
-}
-body[data-style="bubblegum"] .site-footer {
-  background: #ffeef8 !important;
-  border-top: 2.5px solid #231438 !important;
-  color: #231438 !important;
+  color: #261021 !important;
+  border: 2px solid rgba(230, 46, 122, 0.28) !important;
+  box-shadow: 0 6px 16px rgba(230, 46, 122, 0.10) !important;
 }
 
-/* Style 3: Liquid Glass 3D mappings for XamCode Main components */
-body[data-style="glass"] .hero.opening .shade {
-  background:
-    radial-gradient(55% 48% at 50% 38%, rgba(4,9,20,0) 0%, rgba(4,9,20,.48) 72%, rgba(4,9,20,.90) 100%),
-    linear-gradient(180deg, rgba(4,9,20,.25) 0%, rgba(4,9,20,.15) 45%, #040914 100%) !important;
+/* Style 4: Neo-Brutalist Creative Lab */
+body[data-style="brutalist"] .header .h-inner {
+  background: #ffffff !important;
+  border: 3px solid #0d0d0d !important;
+  border-radius: 0 !important;
+  box-shadow: 6px 6px 0 #0d0d0d !important;
 }
-body[data-style="glass"] .header .h-inner,
-body[data-style="glass"] .dock-item,
-body[data-style="glass"] .wc-pipeline-container,
-body[data-style="glass"] .wc-dilemma-card,
-body[data-style="glass"] .preview,
-body[data-style="glass"] .wc-visual-card,
-body[data-style="glass"] .wc-quiz-showcase,
-body[data-style="glass"] .wc-vaathiyar-showcase,
-body[data-style="glass"] .wc-curriculum-card,
-body[data-style="glass"] .course-cta,
-body[data-style="glass"] .ws-head,
-body[data-style="glass"] .tree,
-body[data-style="glass"] .concept-card,
-body[data-style="glass"] .ai-page-hero,
-body[data-style="glass"] .ai-plan-hero,
-body[data-style="glass"] .ai-concept-card,
-body[data-style="glass"] .study-bar,
-body[data-style="glass"] .panel,
-body[data-style="glass"] .kp,
-body[data-style="glass"] .visual-box,
-body[data-style="glass"] .q-card,
-body[data-style="glass"] .ai-question-card,
-body[data-style="glass"] .upload-modal-content {
-  background: linear-gradient(145deg, rgba(255,255,255,0.11) 0%, rgba(56,232,255,0.05) 55%, rgba(99,102,241,0.07) 100%) !important;
-  backdrop-filter: blur(26px) saturate(190%) !important;
-  -webkit-backdrop-filter: blur(26px) saturate(190%) !important;
-  border: 1px solid rgba(186,230,255,0.26) !important;
-  box-shadow: 0 20px 48px rgba(0,8,28,0.55), inset 0 1px 0 rgba(255,255,255,0.34) !important;
+body[data-style="brutalist"] .nav button {
+  color: #0d0d0d !important;
+  border-radius: 0 !important;
 }
-
-/* Style 4: Neo-Brutalist Creative Lab mappings for XamCode Main components */
-body[data-style="brutalist"] .hero.opening .shade {
-  background:
-    linear-gradient(180deg, rgba(13,13,13,0.25) 0%, rgba(13,13,13,0.6) 75%, #0d0d0d 100%) !important;
+body[data-style="brutalist"] .nav button.active {
+  background: #ffe600 !important;
+  color: #0d0d0d !important;
+  box-shadow: inset 0 0 0 2px #0d0d0d !important;
 }
-body[data-style="brutalist"] .header .h-inner,
-body[data-style="brutalist"] .dock-item,
+body[data-style="brutalist"] .btn-primary,
+body[data-style="brutalist"] .btn-hero {
+  background: #ffe600 !important;
+  color: #0d0d0d !important;
+  border: 3px solid #0d0d0d !important;
+  border-radius: 0 !important;
+  box-shadow: 5px 5px 0 #0d0d0d !important;
+}
+body[data-style="brutalist"] .btn-hero-outline {
+  background: #ffffff !important;
+  color: #0d0d0d !important;
+  border: 3px solid #0d0d0d !important;
+  border-radius: 0 !important;
+  box-shadow: 5px 5px 0 #0d0d0d !important;
+}
+body[data-style="brutalist"] .hero-dock,
 body[data-style="brutalist"] .wc-pipeline-container,
 body[data-style="brutalist"] .wc-dilemma-card,
 body[data-style="brutalist"] .preview,
@@ -4904,62 +5196,66 @@ body[data-style="brutalist"] .ai-concept-card,
 body[data-style="brutalist"] .study-bar,
 body[data-style="brutalist"] .panel,
 body[data-style="brutalist"] .kp,
-body[data-style="brutalist"] .visual-box,
 body[data-style="brutalist"] .q-card,
 body[data-style="brutalist"] .ai-question-card,
-body[data-style="brutalist"] .upload-modal-content {
-  background: #171717 !important;
-  border: 2.5px solid #fffbe6 !important;
-  border-radius: 4px !important;
-  box-shadow: 7px 7px 0 #ffe600 !important;
-}
-body[data-style="brutalist"] .btn-primary,
-body[data-style="brutalist"] .btn-hero,
-body[data-style="brutalist"] .nav button.active {
-  background: #ffe600 !important;
+body[data-style="brutalist"] .upload-modal {
+  background: #ffffff !important;
   color: #0d0d0d !important;
-  border: 2.5px solid #fffbe6 !important;
-  border-radius: 2px !important;
-  box-shadow: 4px 4px 0 #ff4d00 !important;
+  border: 3px solid #0d0d0d !important;
+  border-radius: 0 !important;
+  box-shadow: 7px 7px 0 #0d0d0d !important;
 }
 
-/* Style 5: Soft Minimal Studio mappings for XamCode Main components */
-body[data-style="minimal"] .hero.opening .shade {
-  background:
-    radial-gradient(55% 48% at 50% 38%, rgba(246,243,236,0) 0%, rgba(246,243,236,.55) 70%, rgba(246,243,236,.95) 100%),
-    linear-gradient(180deg, rgba(246,243,236,.25) 0%, rgba(246,243,236,.15) 45%, #f6f3ec 100%) !important;
-}
+/* Style 5: Soft Minimal Studio (matching Image 2 build.html) */
 body[data-style="minimal"] .header .h-inner {
-  background: rgba(255, 253, 249, 0.90) !important;
-  border: 1px solid rgba(26, 25, 22, 0.12) !important;
-  box-shadow: 0 10px 30px rgba(26, 25, 22, 0.06) !important;
+  background: rgba(250, 248, 245, 0.94) !important;
+  border: 1px solid rgba(24, 24, 22, 0.12) !important;
+  box-shadow: 0 12px 32px -12px rgba(24, 24, 22, 0.08) !important;
+  border-radius: 14px !important;
 }
-body[data-style="minimal"] .brand,
-body[data-style="minimal"] .hero h1,
-body[data-style="minimal"] .wc-section-title,
-body[data-style="minimal"] .ws-left h1,
-body[data-style="minimal"] .ai-page-hero h1,
-body[data-style="minimal"] .study-title h2 {
-  font-family: 'Fraunces', Georgia, serif !important;
-  color: #1a1916 !important;
+body[data-style="minimal"] .logo-mark {
+  background: #181816 !important;
+  color: #faf8f5 !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
 }
-body[data-style="minimal"] .nav button,
-body[data-style="minimal"] .search-trigger,
-body[data-style="minimal"] .btn-ghost,
-body[data-style="minimal"] .acct-trigger {
-  color: #1a1916 !important;
-  border-color: rgba(26, 25, 22, 0.14) !important;
-  background: #fffdf9 !important;
+body[data-style="minimal"] .brand-ai {
+  background: #f2efe9 !important;
+  color: #57534e !important;
+  border: 1px solid rgba(24, 24, 22, 0.12) !important;
 }
-body[data-style="minimal"] .nav button.active,
+body[data-style="minimal"] .nav button {
+  color: #57534e !important;
+  border-radius: 8px !important;
+}
+body[data-style="minimal"] .nav button:hover,
+body[data-style="minimal"] .nav button.active {
+  color: #181816 !important;
+  background: #f2efe9 !important;
+  box-shadow: inset 0 -2px 0 #23533d !important;
+}
 body[data-style="minimal"] .btn-primary,
 body[data-style="minimal"] .btn-hero {
-  background: #1a1916 !important;
-  color: #fffdf9 !important;
-  border: 1px solid #1a1916 !important;
-  box-shadow: 0 8px 20px rgba(26, 25, 22, 0.16) !important;
+  background: #181816 !important;
+  color: #faf8f5 !important;
+  border: 1px solid #181816 !important;
+  border-radius: 10px !important;
+  box-shadow: none !important;
 }
-body[data-style="minimal"] .dock-item,
+body[data-style="minimal"] .btn-primary:hover,
+body[data-style="minimal"] .btn-hero:hover {
+  background: #23533d !important;
+  border-color: #23533d !important;
+  color: #faf8f5 !important;
+}
+body[data-style="minimal"] .btn-hero-outline {
+  background: #ffffff !important;
+  color: #181816 !important;
+  border: 1px solid rgba(24, 24, 22, 0.20) !important;
+  border-radius: 10px !important;
+  box-shadow: none !important;
+}
+body[data-style="minimal"] .hero-dock,
 body[data-style="minimal"] .wc-pipeline-container,
 body[data-style="minimal"] .wc-dilemma-card,
 body[data-style="minimal"] .preview,
@@ -4977,146 +5273,72 @@ body[data-style="minimal"] .ai-concept-card,
 body[data-style="minimal"] .study-bar,
 body[data-style="minimal"] .panel,
 body[data-style="minimal"] .kp,
-body[data-style="minimal"] .visual-box,
 body[data-style="minimal"] .q-card,
 body[data-style="minimal"] .ai-question-card,
-body[data-style="minimal"] .upload-modal-content {
-  background: #fffdf9 !important;
-  color: #1a1916 !important;
-  border: 1px solid rgba(26, 25, 22, 0.11) !important;
-  border-radius: 20px !important;
-  box-shadow: 0 12px 32px rgba(26, 25, 22, 0.05) !important;
+body[data-style="minimal"] .upload-modal {
+  background: #ffffff !important;
+  color: #181816 !important;
+  border: 1px solid rgba(24, 24, 22, 0.11) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 16px 40px -20px rgba(24, 24, 22, 0.07) !important;
 }
 body[data-style="minimal"] .site-footer {
-  background: #efeae0 !important;
-  border-top: 1px solid rgba(26, 25, 22, 0.12) !important;
-  color: #1a1916 !important;
+  background: #f2efe9 !important;
+  border-top: 1px solid rgba(24, 24, 22, 0.12) !important;
+  color: #181816 !important;
 }
 
-
-/* Navbar Experience Trigger single-line pill alignment */
-.header .h-right .style-trigger {
-  display: inline-flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-  white-space: nowrap !important;
-  flex-shrink: 0 !important;
-  margin-left: 0 !important;
-  height: 36px !important;
-  padding: 5px 11px 5px 10px !important;
+/* Navbar search-trigger, acct-trigger, and single-row hero CTA buttons */
+.header .search-trigger,
+.header .acct-trigger {
+  background: var(--card-alt) !important;
+  color: var(--paper) !important;
+  border: 1px solid var(--line) !important;
+  box-shadow: none !important;
 }
-.header .h-right {
-  flex-wrap: nowrap !important;
-  gap: 8px !important;
-}
-
-
-/* === FULL-BLEED BACKGROUND, NAVBAR & CTA POLISH FOR ALL 5 BUILD.HTML STYLES === */
-html,
-body,
-body[data-style="vibe"],
-body[data-style="bubblegum"],
-body[data-style="glass"],
-body[data-style="brutalist"],
-body[data-style="minimal"] {
-  background-color: var(--bg) !important;
+.header .search-trigger .search-trigger-text,
+.header .acct-trigger .acct-name,
+.header .acct-trigger .acct-caret {
   color: var(--paper) !important;
 }
-
-body[data-style="bubblegum"] .bg.grid,
-body[data-style="bubblegum"] .bg.glow,
-body[data-style="bubblegum"] #xc-particle-canvas,
-body[data-style="minimal"] .bg.grid,
-body[data-style="minimal"] .bg.glow,
-body[data-style="minimal"] #xc-particle-canvas {
-  opacity: 0.12 !important;
+.header .search-trigger .search-trigger-kbd {
+  background: var(--card) !important;
+  color: var(--mut) !important;
+  border: 1px solid var(--line) !important;
 }
-
-/* Spacious single-row navbar like build.html */
-.header {
-  width: min(1380px, calc(100% - 24px)) !important;
+.hero.opening .crow.hero-btns {
+  flex-wrap: nowrap !important;
+  gap: 10px !important;
 }
-.header .h-right .nav-cta-workspace {
-  display: none !important;
-}
-.header .h-right .nav-cta-upload {
-  white-space: nowrap !important;
-  flex-shrink: 0 !important;
-}
-.header .h-center .search-trigger {
+.hero.opening .crow.hero-btns .btn {
+  padding: 10px 16px !important;
+  font-size: 11.5px !important;
   white-space: nowrap !important;
 }
-
-/* Vibe Studio electric lime buttons & highlights matching build.html */
-body[data-style="vibe"] .btn-primary,
-body[data-style="vibe"] .btn-hero {
-  background: var(--lime) !important;
-  color: var(--limeink) !important;
-  border: 1px solid var(--lime) !important;
-  box-shadow: 0 10px 28px rgba(200, 255, 61, 0.28) !important;
-  font-weight: 800 !important;
-}
-body[data-style="vibe"] .hero h1 .hl-blue {
-  color: var(--lime) !important;
-  -webkit-text-fill-color: var(--lime) !important;
-  background: none !important;
-}
-body[data-style="vibe"] .hero h1 .hl-accent {
-  color: var(--cyan) !important;
-  -webkit-text-fill-color: var(--cyan) !important;
-  background: none !important;
+@media (max-width: 720px) {
+  .hero.opening .crow.hero-btns {
+    flex-wrap: wrap !important;
+  }
 }
 
-/* Secondary outline button readability across light & dark styles */
-body[data-style="bubblegum"] .btn-hero-outline {
-  background: #ffffff !important;
-  color: #231438 !important;
-  border: 2.5px solid #231438 !important;
-  box-shadow: 0 4px 0 #231438 !important;
+body[data-style] .header .acct-trigger,
+body[data-style] .acct-trigger {
+  background: var(--card-alt) !important;
+  color: var(--paper) !important;
+  border: 1px solid var(--line) !important;
 }
-body[data-style="minimal"] .btn-hero-outline {
-  background: #fffdf9 !important;
-  color: #1a1916 !important;
-  border: 1px solid rgba(26, 25, 22, 0.25) !important;
+body[data-style] .header .acct-trigger .acct-name,
+body[data-style] .header .acct-trigger .acct-caret {
+  color: var(--paper) !important;
 }
-body[data-style="glass"] .btn-primary,
-body[data-style="glass"] .btn-hero {
-  background: linear-gradient(135deg, #38e8ff 0%, #6366f1 100%) !important;
-  color: #03101c !important;
-  border: 1px solid rgba(255, 255, 255, 0.45) !important;
-  box-shadow: 0 10px 28px rgba(56, 232, 255, 0.32) !important;
+body[data-style="minimal"] .aura-fab,
+body[data-style="minimal"] #auraFab,
+body[data-style="bubblegum"] .aura-fab,
+body[data-style="bubblegum"] #auraFab,
+body[data-style="brutalist"] .aura-fab,
+body[data-style="brutalist"] #auraFab {
+  background: var(--card) !important;
+  color: var(--paper) !important;
+  border: 1.5px solid var(--line) !important;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.12) !important;
 }
-
-/* Full-bleed html + hero.opening for all 5 data-style modes */
-html[data-style="vibe"] { --bg: #060803; --paper: #f1efe3; }
-html[data-style="bubblegum"] { --bg: #fff5fb; --paper: #231438; }
-html[data-style="glass"] { --bg: #040914; --paper: #f0f7ff; }
-html[data-style="brutalist"] { --bg: #0d0d0d; --paper: #fffbe6; }
-html[data-style="minimal"] { --bg: #f6f3ec; --paper: #1a1916; }
-
-.hero.opening {
-  max-width: 100% !important;
-  width: 100% !important;
-  padding-left: clamp(20px, 4vw, 48px) !important;
-  padding-right: clamp(20px, 4vw, 48px) !important;
-  box-sizing: border-box !important;
-}
-.hero.opening .hero-dock,
-.hero.opening #heroPipelineMount {
-  max-width: 1360px !important;
-  margin-left: auto !important;
-  margin-right: auto !important;
-}
-body[data-style="bubblegum"] .hero .stats {
-  background: #ffffff !important;
-  border: 2.5px solid #231438 !important;
-  box-shadow: 0 6px 0 #231438 !important;
-}
-body[data-style="bubblegum"] .hero .stats b { color: #ff3d9a !important; }
-body[data-style="bubblegum"] .hero .stats small { color: #231438 !important; }
-body[data-style="minimal"] .hero .stats {
-  background: #fffdf9 !important;
-  border: 1px solid rgba(26, 25, 22, 0.14) !important;
-}
-body[data-style="minimal"] .hero .stats b { color: #d96b27 !important; }
-body[data-style="minimal"] .hero .stats small { color: #5c584f !important; }
