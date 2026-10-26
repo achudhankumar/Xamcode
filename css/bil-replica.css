@@ -2384,20 +2384,11 @@ button[data-open="upload"].btn-primary:hover,
 
 /* Ensure inner page containers clear the floating top header dock */
 .study-breadcrumbs,
-.ws-head,
-.library-head,
-.formulas-head,
-.formula-head,
 .ai-study-shell {
-  padding-top: 84px !important;
+  padding-top: 92px !important;
 }
-
 
 /* === XAMCODE BUILD-IN-PUBLIC 5-STYLE 3D EXPERIENCE ENGINE (FROM build.html) === */
-  }
-  .cine-hud .ch-dot{animation:none!important}
-  .pbar>span{transition:none!important}
-}
 
 /* Multi-style & 3D extensions follow in p02-p05 */
 /* ==========================================================================
@@ -4713,9 +4704,14 @@ body[data-style="vibe"] {
   --text: #f1efe3 !important;
   --card: #0e1206 !important;
   --card-alt: #141a0a !important;
+  --surface: #0e1206 !important;
+  --surface-strong: #141a0a !important;
   --mut: #9aa38d !important;
+  --muted: #9aa38d !important;
   --dim: #6b745c !important;
   --lime: #c8ff3d !important;
+  --accent: #c8ff3d !important;
+  --accent-2: #a855f7 !important;
   --limeink: #121804 !important;
   --inkink: #0b0e05 !important;
   --cyan: #5eead4 !important;
@@ -4739,9 +4735,14 @@ body[data-style="bubblegum"] {
   --text: #261021 !important;
   --card: #ffffff !important;
   --card-alt: #fff7fa !important;
+  --surface: #ffffff !important;
+  --surface-strong: #fff7fa !important;
   --mut: #633958 !important;
+  --muted: #633958 !important;
   --dim: #87587a !important;
   --lime: #e62e7a !important;
+  --accent: #e62e7a !important;
+  --accent-2: #9333ea !important;
   --limeink: #ffffff !important;
   --inkink: #261021 !important;
   --cyan: #0284c7 !important;
@@ -4765,9 +4766,14 @@ body[data-style="glass"] {
   --text: #eef6ff !important;
   --card: rgba(15, 28, 56, 0.62) !important;
   --card-alt: rgba(22, 38, 74, 0.72) !important;
+  --surface: rgba(15, 28, 56, 0.62) !important;
+  --surface-strong: rgba(22, 38, 74, 0.72) !important;
   --mut: #9db4d4 !important;
+  --muted: #9db4d4 !important;
   --dim: #647ea3 !important;
   --lime: #38bdf8 !important;
+  --accent: #38bdf8 !important;
+  --accent-2: #818cf8 !important;
   --limeink: #031124 !important;
   --inkink: #030914 !important;
   --cyan: #2dd4bf !important;
@@ -4791,9 +4797,14 @@ body[data-style="brutalist"] {
   --text: #0d0d0d !important;
   --card: #ffffff !important;
   --card-alt: #fffbe6 !important;
+  --surface: #ffffff !important;
+  --surface-strong: #fffbe6 !important;
   --mut: #2e2e2c !important;
+  --muted: #2e2e2c !important;
   --dim: #4a4a46 !important;
   --lime: #ffe600 !important;
+  --accent: #ff4d00 !important;
+  --accent-2: #2563eb !important;
   --limeink: #0d0d0d !important;
   --inkink: #0d0d0d !important;
   --cyan: #00d68f !important;
@@ -4817,9 +4828,14 @@ body[data-style="minimal"] {
   --text: #181816 !important;
   --card: #ffffff !important;
   --card-alt: #f2efe9 !important;
+  --surface: #ffffff !important;
+  --surface-strong: #f2efe9 !important;
   --mut: #57534e !important;
+  --muted: #57534e !important;
   --dim: #78716c !important;
   --lime: #23533d !important;
+  --accent: #23533d !important;
+  --accent-2: #b4532a !important;
   --limeink: #faf8f5 !important;
   --inkink: #181816 !important;
   --cyan: #23533d !important;
@@ -5118,12 +5134,159 @@ body[data-style="minimal"] .hero.opening h1.frag .out {
 }
 
 /* ==========================================================================
-   4. PER-STYLE HEADER, BUTTONS & STUDY CARDS (ALL 5 STYLES)
+   4. PER-STYLE HEADER, BUTTONS & STUDY CARDS (ALL 5 STYLES WITH #app SPECIFICITY)
    ========================================================================== */
+
+/* --- Top Spacing & Alignment for Inner Views (Study, Formula, Workspace, Library) --- */
+#app > .study-breadcrumbs {
+  max-width: min(1320px, calc(100% - 48px)) !important;
+  margin: 0 auto !important;
+  padding: 96px 4px 10px !important;
+  box-sizing: border-box !important;
+  position: relative !important;
+  z-index: 2 !important;
+}
+#app > .study-bar {
+  max-width: min(1320px, calc(100% - 48px)) !important;
+  margin: 0 auto 16px !important;
+  height: auto !important;
+  min-height: 48px !important;
+  padding: 10px 18px !important;
+  box-sizing: border-box !important;
+  position: relative !important;
+  z-index: 2 !important;
+}
+#app > .header + .study-bar {
+  margin-top: 96px !important;
+}
+#app > .study-grid {
+  max-width: 1360px !important;
+  margin: 0 auto !important;
+  padding: 6px 24px 72px !important;
+  box-sizing: border-box !important;
+}
+.page-shell > .ws-head,
+.page-shell > .library-head,
+.page-shell > .formulas-head,
+.page-shell > .formula-head {
+  padding-top: 24px !important;
+}
+
+/* --- Universal High-Specificity #app Card & Surface Bindings --- */
+html body[data-style] #app .card,
+html body[data-style] #app .panel,
+html body[data-style] #app .concept-card,
+html body[data-style] #app .formula-card,
+html body[data-style] #app .q-card,
+html body[data-style] #app .ai-question-card,
+html body[data-style] #app .tree,
+html body[data-style] #app .ai-outline-tree,
+html body[data-style] #app .study-tabs,
+html body[data-style] #app .q-step-bar,
+html body[data-style] #app .q-results,
+html body[data-style] #app .cc-card,
+html body[data-style] #app .v-row,
+html body[data-style] #app .v-board,
+html body[data-style] #app .v-flash,
+html body[data-style] #app .v-eli5-body,
+html body[data-style] #app .v-cmp-table,
+html body[data-style] #app .v-content,
+html body[data-style] #app .study-bar,
+html body[data-style] #app .ai-plan-card,
+html body[data-style] #app .ai-unit-row,
+html body[data-style] #app .ai-plan-hero,
+html body[data-style] #app .ai-page-hero,
+html body[data-style] #app .ai-study-top,
+html body[data-style] #app .wc-pipeline-container,
+html body[data-style] #app .wc-dilemma-card,
+html body[data-style] #app .wc-visual-card,
+html body[data-style] #app .wc-quiz-showcase,
+html body[data-style] #app .wc-vaathiyar-showcase,
+html body[data-style] #app .wc-curriculum-card,
+html body[data-style] #app .hero-dock {
+  background: var(--card) !important;
+  background-color: var(--card) !important;
+  color: var(--paper) !important;
+  border: 1px solid var(--line) !important;
+}
+
+html body[data-style] #app .kp,
+html body[data-style] #app .score-bar,
+html body[data-style] #app .step-card,
+html body[data-style] #app .opt,
+html body[data-style] #app .q-option,
+html body[data-style] #app .ai-answer-option,
+html body[data-style] #app .pdf-q,
+html body[data-style] #app .f-step-card,
+html body[data-style] #app .f-ex-line,
+html body[data-style] #app .v-problem-q,
+html body[data-style] #app .ws-pill,
+html body[data-style] #app .tree-btn,
+html body[data-style] #app .study-tab:not(.active),
+html body[data-style] #app .visual-cap {
+  background: var(--card-alt) !important;
+  background-color: var(--card-alt) !important;
+  color: var(--paper) !important;
+  border: 1px solid var(--line) !important;
+}
+
+html body[data-style] #app .panel h2,
+html body[data-style] #app .panel h3,
+html body[data-style] #app .q-text,
+html body[data-style] #app .q-card h3,
+html body[data-style] #app .cc-title,
+html body[data-style] #app .fc-title,
+html body[data-style] #app .ws-title,
+html body[data-style] #app .study-title,
+html body[data-style] #app .kp-quote,
+html body[data-style] #app .score-row,
+html body[data-style] #app .step-card span,
+html body[data-style] #app .f-step-title,
+html body[data-style] #app .f-worked-q {
+  color: var(--paper) !important;
+}
+
+html body[data-style] #app .panel p.desc,
+html body[data-style] #app .kp ul,
+html body[data-style] #app .kp li,
+html body[data-style] #app .cc-head,
+html body[data-style] #app .cc-foot,
+html body[data-style] #app .f-step-desc,
+html body[data-style] #app .f-step-why {
+  color: var(--mut) !important;
+}
+
+/* Keep 2D SVG Simulation Viewports Dark so Neon Diagrams Pop in Every Style */
+html body[data-style] #app .visual-box,
+html body[data-style] #app .mini-visual,
+html body[data-style] #app .v-stage,
+html body[data-style] #app .v-figure,
+html body[data-style] #app .fc-visual {
+  background: #0b101b !important;
+  background-color: #0b101b !important;
+  color: #f1efe3 !important;
+  border: 1.5px solid var(--line) !important;
+}
+html body[data-style] #app .mini-visual .mini-tag {
+  color: #94a3b8 !important;
+}
+html body[data-style] #app .mini-visual .mini-tag span:first-child {
+  color: #fb923c !important;
+}
+html body[data-style] #app .mini-visual .mini-cap {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #e2e8f0 !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+}
+html body[data-style] #app .visual-box .narration-bar {
+  background: rgba(11, 16, 27, 0.92) !important;
+  color: #f1efe3 !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+}
 
 /* Style 2: Bubblegum Playground */
 body[data-style="bubblegum"] .header .h-inner {
-  background: rgba(255, 255, 255, 0.92) !important;
+  background: rgba(255, 255, 255, 0.94) !important;
   border: 2px solid rgba(255, 133, 179, 0.5) !important;
   box-shadow: 0 14px 34px rgba(230, 46, 122, 0.14), inset 0 3px 6px #ffffff !important;
   border-radius: 999px !important;
@@ -5145,6 +5308,19 @@ body[data-style="bubblegum"] .btn-hero-outline {
   color: #261021 !important;
   border: 2px solid rgba(230, 46, 122, 0.28) !important;
   box-shadow: 0 6px 16px rgba(230, 46, 122, 0.10) !important;
+}
+html body[data-style="bubblegum"] #app .panel,
+html body[data-style="bubblegum"] #app .q-card,
+html body[data-style="bubblegum"] #app .tree,
+html body[data-style="bubblegum"] #app .concept-card,
+html body[data-style="bubblegum"] #app .formula-card,
+html body[data-style="bubblegum"] #app .study-bar {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  color: #261021 !important;
+  border: 2px solid #ffc2db !important;
+  border-radius: 24px !important;
+  box-shadow: 0 16px 36px -12px rgba(230, 46, 122, 0.14) !important;
 }
 
 /* Style 4: Neo-Brutalist Creative Lab */
@@ -5178,32 +5354,71 @@ body[data-style="brutalist"] .btn-hero-outline {
   border-radius: 0 !important;
   box-shadow: 5px 5px 0 #0d0d0d !important;
 }
-body[data-style="brutalist"] .hero-dock,
-body[data-style="brutalist"] .wc-pipeline-container,
-body[data-style="brutalist"] .wc-dilemma-card,
-body[data-style="brutalist"] .preview,
-body[data-style="brutalist"] .wc-visual-card,
-body[data-style="brutalist"] .wc-quiz-showcase,
-body[data-style="brutalist"] .wc-vaathiyar-showcase,
-body[data-style="brutalist"] .wc-curriculum-card,
-body[data-style="brutalist"] .course-cta,
-body[data-style="brutalist"] .ws-head,
-body[data-style="brutalist"] .tree,
-body[data-style="brutalist"] .concept-card,
-body[data-style="brutalist"] .ai-page-hero,
-body[data-style="brutalist"] .ai-plan-hero,
-body[data-style="brutalist"] .ai-concept-card,
-body[data-style="brutalist"] .study-bar,
-body[data-style="brutalist"] .panel,
-body[data-style="brutalist"] .kp,
-body[data-style="brutalist"] .q-card,
-body[data-style="brutalist"] .ai-question-card,
-body[data-style="brutalist"] .upload-modal {
+html body[data-style="brutalist"] #app .hero-dock,
+html body[data-style="brutalist"] #app .wc-pipeline-container,
+html body[data-style="brutalist"] #app .wc-dilemma-card,
+html body[data-style="brutalist"] #app .preview,
+html body[data-style="brutalist"] #app .wc-visual-card,
+html body[data-style="brutalist"] #app .wc-quiz-showcase,
+html body[data-style="brutalist"] #app .wc-vaathiyar-showcase,
+html body[data-style="brutalist"] #app .wc-curriculum-card,
+html body[data-style="brutalist"] #app .course-cta,
+html body[data-style="brutalist"] #app .tree,
+html body[data-style="brutalist"] #app .concept-card,
+html body[data-style="brutalist"] #app .formula-card,
+html body[data-style="brutalist"] #app .ai-page-hero,
+html body[data-style="brutalist"] #app .ai-plan-hero,
+html body[data-style="brutalist"] #app .ai-concept-card,
+html body[data-style="brutalist"] #app .study-bar,
+html body[data-style="brutalist"] #app .panel,
+html body[data-style="brutalist"] #app .q-card,
+html body[data-style="brutalist"] #app .q-step-bar,
+html body[data-style="brutalist"] #app .q-results,
+html body[data-style="brutalist"] #app .ai-question-card,
+html body[data-style="brutalist"] .upload-modal {
   background: #ffffff !important;
+  background-color: #ffffff !important;
   color: #0d0d0d !important;
   border: 3px solid #0d0d0d !important;
   border-radius: 0 !important;
-  box-shadow: 7px 7px 0 #0d0d0d !important;
+  box-shadow: 6px 6px 0 #0d0d0d !important;
+}
+html body[data-style="brutalist"] #app .kp,
+html body[data-style="brutalist"] #app .score-bar,
+html body[data-style="brutalist"] #app .step-card,
+html body[data-style="brutalist"] #app .opt,
+html body[data-style="brutalist"] #app .q-option,
+html body[data-style="brutalist"] #app .ai-answer-option,
+html body[data-style="brutalist"] #app .f-step-card,
+html body[data-style="brutalist"] #app .visual-cap {
+  background: #fffbe6 !important;
+  background-color: #fffbe6 !important;
+  color: #0d0d0d !important;
+  border: 2.5px solid #0d0d0d !important;
+  border-radius: 0 !important;
+  box-shadow: 4px 4px 0 #0d0d0d !important;
+}
+/* Ensure Neo-Brutalist text tags on white/cream surfaces use high-contrast #ff4d00 or #0d0d0d instead of yellow-on-white */
+html body[data-style="brutalist"] #app .panel-tag,
+html body[data-style="brutalist"] #app .visual-head,
+html body[data-style="brutalist"] #app .quiz-head,
+html body[data-style="brutalist"] #app .kp-tag.accent,
+html body[data-style="brutalist"] #app .step-card b,
+html body[data-style="brutalist"] #app .ws-eyebrow,
+html body[data-style="brutalist"] #app .crumb-topic,
+html body[data-style="brutalist"] #app .wc-visual-action,
+html body[data-style="brutalist"] #app .wc-curriculum-unit,
+html body[data-style="brutalist"] #app .wc-section-title span,
+html body[data-style="brutalist"] #app .hero.opening .hp.stats span b {
+  color: #ff4d00 !important;
+}
+html body[data-style="brutalist"] #app .study-bar .badge,
+html body[data-style="brutalist"] #app .wc-section-kicker,
+html body[data-style="brutalist"] #app .hero.opening .tag.kick {
+  background: #ffe600 !important;
+  color: #0d0d0d !important;
+  border: 2px solid #0d0d0d !important;
+  border-radius: 0 !important;
 }
 
 /* Style 5: Soft Minimal Studio (matching Image 2 build.html) */
@@ -5255,32 +5470,49 @@ body[data-style="minimal"] .btn-hero-outline {
   border-radius: 10px !important;
   box-shadow: none !important;
 }
-body[data-style="minimal"] .hero-dock,
-body[data-style="minimal"] .wc-pipeline-container,
-body[data-style="minimal"] .wc-dilemma-card,
-body[data-style="minimal"] .preview,
-body[data-style="minimal"] .wc-visual-card,
-body[data-style="minimal"] .wc-quiz-showcase,
-body[data-style="minimal"] .wc-vaathiyar-showcase,
-body[data-style="minimal"] .wc-curriculum-card,
-body[data-style="minimal"] .course-cta,
-body[data-style="minimal"] .ws-head,
-body[data-style="minimal"] .tree,
-body[data-style="minimal"] .concept-card,
-body[data-style="minimal"] .ai-page-hero,
-body[data-style="minimal"] .ai-plan-hero,
-body[data-style="minimal"] .ai-concept-card,
-body[data-style="minimal"] .study-bar,
-body[data-style="minimal"] .panel,
-body[data-style="minimal"] .kp,
-body[data-style="minimal"] .q-card,
-body[data-style="minimal"] .ai-question-card,
-body[data-style="minimal"] .upload-modal {
+html body[data-style="minimal"] #app .hero-dock,
+html body[data-style="minimal"] #app .wc-pipeline-container,
+html body[data-style="minimal"] #app .wc-dilemma-card,
+html body[data-style="minimal"] #app .preview,
+html body[data-style="minimal"] #app .wc-visual-card,
+html body[data-style="minimal"] #app .wc-quiz-showcase,
+html body[data-style="minimal"] #app .wc-vaathiyar-showcase,
+html body[data-style="minimal"] #app .wc-curriculum-card,
+html body[data-style="minimal"] #app .course-cta,
+html body[data-style="minimal"] #app .tree,
+html body[data-style="minimal"] #app .concept-card,
+html body[data-style="minimal"] #app .formula-card,
+html body[data-style="minimal"] #app .ai-page-hero,
+html body[data-style="minimal"] #app .ai-plan-hero,
+html body[data-style="minimal"] #app .ai-concept-card,
+html body[data-style="minimal"] #app .study-bar,
+html body[data-style="minimal"] #app .panel,
+html body[data-style="minimal"] #app .q-card,
+html body[data-style="minimal"] #app .q-step-bar,
+html body[data-style="minimal"] #app .q-results,
+html body[data-style="minimal"] #app .ai-question-card,
+html body[data-style="minimal"] .upload-modal {
   background: #ffffff !important;
+  background-color: #ffffff !important;
   color: #181816 !important;
   border: 1px solid rgba(24, 24, 22, 0.11) !important;
   border-radius: 14px !important;
   box-shadow: 0 16px 40px -20px rgba(24, 24, 22, 0.07) !important;
+}
+html body[data-style="minimal"] #app .kp,
+html body[data-style="minimal"] #app .score-bar,
+html body[data-style="minimal"] #app .step-card,
+html body[data-style="minimal"] #app .opt,
+html body[data-style="minimal"] #app .q-option,
+html body[data-style="minimal"] #app .ai-answer-option,
+html body[data-style="minimal"] #app .f-step-card,
+html body[data-style="minimal"] #app .visual-cap {
+  background: #f2efe9 !important;
+  background-color: #f2efe9 !important;
+  color: #181816 !important;
+  border: 1px solid rgba(24, 24, 22, 0.12) !important;
+  border-radius: 10px !important;
+  box-shadow: none !important;
 }
 body[data-style="minimal"] .site-footer {
   background: #f2efe9 !important;
@@ -5288,8 +5520,9 @@ body[data-style="minimal"] .site-footer {
   color: #181816 !important;
 }
 
-/* Navbar search-trigger, acct-trigger, and single-row hero CTA buttons */
+/* Navbar .search-trigger, .acct-btn, .aura-launcher, and single-row hero CTA buttons */
 .header .search-trigger,
+.header .acct-btn,
 .header .acct-trigger {
   background: var(--card-alt) !important;
   color: var(--paper) !important;
@@ -5297,6 +5530,8 @@ body[data-style="minimal"] .site-footer {
   box-shadow: none !important;
 }
 .header .search-trigger .search-trigger-text,
+.header .acct-btn .acct-name,
+.header .acct-btn .acct-caret,
 .header .acct-trigger .acct-name,
 .header .acct-trigger .acct-caret {
   color: var(--paper) !important;
@@ -5306,6 +5541,120 @@ body[data-style="minimal"] .site-footer {
   color: var(--mut) !important;
   border: 1px solid var(--line) !important;
 }
+body[data-style="brutalist"] .header .search-trigger,
+body[data-style="brutalist"] .header .acct-btn,
+body[data-style="brutalist"] .header .h-right .xc-dock-3d-select {
+  background: #f4f0e6 !important;
+  color: #0d0d0d !important;
+  border: 2.5px solid #0d0d0d !important;
+  border-radius: 0 !important;
+  box-shadow: 3px 3px 0 #0d0d0d !important;
+}
+.aura-launcher,
+.aura-fab,
+#auraFab,
+#auraBtn {
+  background: var(--card) !important;
+  color: var(--paper) !important;
+  border: 1.5px solid var(--line) !important;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18) !important;
+}
+body[data-style="brutalist"] .aura-launcher,
+body[data-style="brutalist"] .aura-fab {
+  background: #ffe600 !important;
+  color: #0d0d0d !important;
+  border: 2.5px solid #0d0d0d !important;
+  border-radius: 0 !important;
+  box-shadow: 4px 4px 0 #0d0d0d !important;
+}
+.aura-panel {
+  background: var(--card) !important;
+  color: var(--paper) !important;
+  border: 1.5px solid var(--line) !important;
+}
+.aura:not(.open) .aura-panel {
+  display: none !important;
+}
+
+/* Strip outer .header box, border, and gradient line so only .h-inner dock shows */
+html body .header,
+html body[data-style] .header,
+html body[data-mode="light"] .header,
+html body[data-mode="dark"] .header {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: 0 !important;
+  border-bottom: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+html body .header::before,
+html body .header::after {
+  display: none !important;
+  content: none !important;
+}
+
+/* Brand wordmark & AI badge in navbar */
+html body[data-style] .header .brand {
+  color: var(--paper) !important;
+  -webkit-text-fill-color: var(--paper) !important;
+  background: none !important;
+}
+html body[data-style] .header .brand-ai {
+  background: var(--lime) !important;
+  color: var(--limeink) !important;
+  -webkit-text-fill-color: var(--limeink) !important;
+  border: 1px solid var(--line) !important;
+}
+html body[data-style="minimal"] .header .brand-ai {
+  background: #f2efe9 !important;
+  color: #57534e !important;
+  -webkit-text-fill-color: #57534e !important;
+  border: 1px solid rgba(24, 24, 22, 0.14) !important;
+}
+html body[data-style="brutalist"] .header .brand-ai {
+  background: #ffe600 !important;
+  color: #0d0d0d !important;
+  -webkit-text-fill-color: #0d0d0d !important;
+  border: 2px solid #0d0d0d !important;
+  border-radius: 0 !important;
+}
+
+/* Workspace, Formulas, Library top spacing below floating dock */
+main:not(.page-shell) > .ws-head {
+  padding-top: 104px !important;
+}
+.page-shell > .ws-head,
+.page-shell > .library-head,
+.page-shell > .formulas-head,
+.page-shell > .formula-head,
+.formula-catalog > .ws-head {
+  padding-top: 28px !important;
+}
+.page-shell > .ai-page-hero {
+  margin-top: 28px !important;
+}
+
+/* Neo-Brutalist concept card badge & Show Hint button */
+html body[data-style="brutalist"] #app .concept-card .cc-head span:last-child,
+html body[data-style="brutalist"] #app .act.hint,
+html body[data-style="brutalist"] #app .act.eli {
+  background: #ffe600 !important;
+  color: #0d0d0d !important;
+  border: 2px solid #0d0d0d !important;
+  border-radius: 0 !important;
+  box-shadow: 3px 3px 0 #0d0d0d !important;
+}
+html body[data-style="minimal"] #app .act.hint,
+html body[data-style="minimal"] #app .act.eli,
+html body[data-style="bubblegum"] #app .act.hint,
+html body[data-style="bubblegum"] #app .act.eli {
+  background: var(--card-alt) !important;
+  color: var(--paper) !important;
+  border: 1px solid var(--line) !important;
+}
+
 .hero.opening .crow.hero-btns {
   flex-wrap: nowrap !important;
   gap: 10px !important;
@@ -5319,26 +5668,4 @@ body[data-style="minimal"] .site-footer {
   .hero.opening .crow.hero-btns {
     flex-wrap: wrap !important;
   }
-}
-
-body[data-style] .header .acct-trigger,
-body[data-style] .acct-trigger {
-  background: var(--card-alt) !important;
-  color: var(--paper) !important;
-  border: 1px solid var(--line) !important;
-}
-body[data-style] .header .acct-trigger .acct-name,
-body[data-style] .header .acct-trigger .acct-caret {
-  color: var(--paper) !important;
-}
-body[data-style="minimal"] .aura-fab,
-body[data-style="minimal"] #auraFab,
-body[data-style="bubblegum"] .aura-fab,
-body[data-style="bubblegum"] #auraFab,
-body[data-style="brutalist"] .aura-fab,
-body[data-style="brutalist"] #auraFab {
-  background: var(--card) !important;
-  color: var(--paper) !important;
-  border: 1.5px solid var(--line) !important;
-  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.12) !important;
 }
