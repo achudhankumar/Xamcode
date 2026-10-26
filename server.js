@@ -9,10 +9,15 @@ const zlib = require('node:zlib');
    Lazy-loaded so the study app boots identically even if bip/ is absent. */
 let bipRoutes = null;
 try{ bipRoutes = require('./bip/routes'); }catch{ bipRoutes = null; }
-let pdfExtractor = null, v2Suite = null, auraTutorMod = null;
+let pdfExtractor = null, v2Suite = null, auraTutorMod = null, genPipelineMod = null, geminiSchemasMod = null;
 try{ pdfExtractor = require('./lib/pdf-extractor'); }catch{ pdfExtractor = null; }
 try{ v2Suite = require('./lib/xamcode-upgrade-suite'); }catch{ v2Suite = null; }
 try{ auraTutorMod = require('./lib/aura-grounded-tutor'); }catch{ auraTutorMod = null; }
+try{ genPipelineMod = require('./lib/generation-pipeline'); }catch{ genPipelineMod = null; }
+try{ geminiSchemasMod = require('./lib/gemini-schemas'); }catch{ geminiSchemasMod = null; }
+const { extractPdfPages } = pdfExtractor || {};
+const { computePdfCacheKey, slicePagesForTopic } = genPipelineMod || v2Suite || {};
+const { TopicPackGeminiSchema } = geminiSchemasMod || {};
 let activeStudyChunks = [];
 (function loadDotEnv(){
   try{
@@ -2218,23 +2223,29 @@ async function runAnalyzeJob(job){
     /* SUBJECT FIDELITY GUARD — capture the document's own vocabulary once,
        before any model output exists, so every later check compares against
        the PDF's literal words rather than the model's self-assessment. */
-    const cacheKey = (v2Suite && typeof v2Suite.computePdfCacheKey === 'function' && job.pdf && job.pdf.length > 64) ? v2Suite.computePdfCacheKey(job.pdf, job.examDaysMode || '10days', job.level || 'standard') : null;
-    if (cacheKey && v2Suite.pdfHashCache && v2Suite.pdfHashCache.has(cacheKey)) {
+    const cacheKey = (typeof computePdfCacheKey === 'function' && job.pdf && job.pdf.length > 64) ? computePdfCacheKey(job.pdf, job.examDaysMode || '10days', job.level || 'standard') : null;
+    if (cacheKey && v2Suite && v2Suite.pdfHashCache && v2Suite.pdfHashCache.has(cacheKey)) {
       job.cached = true;
+      job.pdfBuffer = null;
       setJobStage(job, 'ready');
       finishJob(job, { status: 'done', study: v2Suite.pdfHashCache.get(cacheKey), cached: true });
       return;
     }
-    job.literalFingerprint = buildLiteralSubjectFingerprint(extractPdfTextLite(job.pdf), []);
-    if (pdfExtractor && typeof pdfExtractor.extractPdfPages === 'function' && job.pdf && job.pdf.length > 200) {
-      pdfExtractor.extractPdfPages(job.pdf).then(extracted => {
-        if (extracted && Array.isArray(extracted.pages)) {
-          const fullTxt = extracted.pages.map(p => p.text || '').join(' ');
+    let extractedPagesDoc = null;
+    if (typeof extractPdfPages === 'function' && job.pdf && job.pdf.length > 200) {
+      try {
+        extractedPagesDoc = await extractPdfPages(job.pdf);
+        if (extractedPagesDoc && Array.isArray(extractedPagesDoc.pages)) {
+          const fullTxt = extractedPagesDoc.pages.map(p => p.text || '').join(' ');
           if (fullTxt.trim().length > 40) job.literalFingerprint = buildLiteralSubjectFingerprint(fullTxt, []);
-          if (auraTutorMod && typeof auraTutorMod.chunkDocumentPages === 'function') activeStudyChunks = auraTutorMod.chunkDocumentPages(extracted.pages);
+          if (auraTutorMod && typeof auraTutorMod.chunkDocumentPages === 'function') activeStudyChunks = auraTutorMod.chunkDocumentPages(extractedPagesDoc.pages);
         }
-      }).catch(() => {});
+      } catch {}
     }
+    if (!job.literalFingerprint) {
+      job.literalFingerprint = buildLiteralSubjectFingerprint(extractPdfTextLite(job.pdf), []);
+    }
+    job.pdfBuffer = null;
     setJobStage(job, 'outline');
     if (job.cancelled){ finishJob(job, { status: 'cancelled', error: 'The study build was cancelled.' }); return; }
     const outlinePrompt = outlinePromptWithFingerprint(job);
@@ -2284,7 +2295,12 @@ async function runAnalyzeJob(job){
     if (Array.isArray(study.concepts)) {
       study.topics = study.concepts.map((c, i) => {
         const qList = (study.questions || []).filter(q => q.conceptIndex === i);
+        const slicedText = (extractedPagesDoc && typeof slicePagesForTopic === 'function')
+          ? slicePagesForTopic(extractedPagesDoc, c.startPage || 1, c.endPage || Math.min(8, extractedPagesDoc.totalPages || 8))
+          : '';
         return {
+          responseSchema: TopicPackGeminiSchema ? 'TopicPackGeminiSchema' : undefined,
+          slicedContextPreview: slicedText ? slicedText.slice(0, 80) : undefined,
           id: 'concept-' + (i + 1),
           unit: 'I',
           unitTitle: study.title || 'Course Units',

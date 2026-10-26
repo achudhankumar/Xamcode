@@ -255,14 +255,10 @@ function header(){
       </button>
     </div>
     <div class="h-right">
-      <select id="xc-theme-select" class="xc-dock-3d-select" title="3D Experience Theme" aria-label="3D Experience Theme" onchange="if(window.applyXamCode3DTheme) window.applyXamCode3DTheme(this.value)">
-        <option value="default-bil" ${(typeof localStorage!=='undefined'&&localStorage.getItem('xc_3d_theme'))==='default-bil'?'selected':''}>🎨 Studio Default</option>
-        <option value="quantum-holo" ${(typeof localStorage!=='undefined'&&localStorage.getItem('xc_3d_theme'))==='quantum-holo'?'selected':''}>🌌 Quantum Holo 3D</option>
-        <option value="cyber-vaathiyar" ${(typeof localStorage!=='undefined'&&localStorage.getItem('xc_3d_theme'))==='cyber-vaathiyar'?'selected':''}>⚡ Cyber-Vaathiyar 3D</option>
-        <option value="neural-synapse" ${(typeof localStorage!=='undefined'&&localStorage.getItem('xc_3d_theme'))==='neural-synapse'?'selected':''}>🧬 Neural Synapse 3D</option>
-        <option value="solaris-chrono" ${(typeof localStorage!=='undefined'&&localStorage.getItem('xc_3d_theme'))==='solaris-chrono'?'selected':''}>☀️ Solaris Glass 3D</option>
-        <option value="abyssal-prism" ${(typeof localStorage!=='undefined'&&localStorage.getItem('xc_3d_theme'))==='abyssal-prism'?'selected':''}>🌊 Abyssal Prism 3D</option>
-        <option value="obsidian-monolith" ${(typeof localStorage!=='undefined'&&localStorage.getItem('xc_3d_theme'))==='obsidian-monolith'?'selected':''}>🖤 Obsidian 3D</option>
+      <button class="style-trigger" id="styleBtn" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="styleModal" aria-label="Experience style selector"><span class="st-cube-icon" aria-hidden="true"><span class="fc f1"></span><span class="fc f2"></span><span class="fc f3"></span></span><span class="st-trig-lbl">Experience</span><span class="st-trig-cur" id="styleCurrentBadge">Vibe Studio</span></button>
+      <select id="xc-nav-exam-days" class="xc-dock-3d-select" title="Exam Countdown Mode (2 Days vs 10 Days)" aria-label="Exam Countdown Mode" onchange="var s=document.getElementById('xc-exam-days-select');if(s)s.value=this.value;try{localStorage.setItem('xc_exam_days_mode',this.value);}catch(e){}">
+        <option value="10days" selected>🎯 10-Day Mastery</option>
+        <option value="2days" >🔥 2-Day Crash</option>
       </select>
       <button type="button" class="btn-ghost nav-cta-workspace" data-nav="workspace">Workspace</button>
       <button type="button" class="btn-primary nav-cta-upload" data-open="upload">Upload PDF ↗</button>
@@ -605,22 +601,27 @@ function landingView(){
   const unitCount = new Set(TOPICS.map(t=>t.unit||'I')).size;
   return header() + '<main class="page-shell">' +
     '<!-- HERO SECTION -->' +
-    '<section class="hero">' +
-      '<div class="hero-copy">' +
-        '<div class="hero-kicker"><span></span> AI PEDAGOGICAL PLATFORM • GROUNDED KNOWLEDGE ENGINE</div>' +
-        '<h1>Transform 20 to 400+ Page PDFs Into<br><span class="hl-blue">Human-Paced,</span> <span class="hl-accent">Interactive 3D Spatial Environments.</span></h1>' +
-        '<p>Upload dense technical textbooks, lecture slides, or complex research papers. XAMCODE AI parses the document into structured units, topic hierarchies, pedagogical slow-motion simulations, and continuous in-situ quizzes for verified exam readiness.</p>' +
-        '<div class="hero-btns">' +
-          '<button class="btn-hero" data-open="upload">Upload PDF &amp; Build 3D Space <span aria-hidden="true">↗</span></button>' +
-          '<button class="btn-hero-outline" data-nav="workspace">Open Interactive Workspace</button>' +
+    '<section class="hero opening" id="opening">' +
+      '<canvas id="heroCanvas" aria-hidden="true"></canvas>' +
+      '<div class="shade" aria-hidden="true"></div>' +
+      '<div class="hero-layout">' +
+        '<div class="hero-copy hero-in">' +
+          '<div class="hero-kicker"><span class="dot"></span> AI PEDAGOGICAL PLATFORM • GROUNDED KNOWLEDGE ENGINE</div>' +
+          '<h1>Transform 20 to 400+ Page PDFs Into<br><span class="hl-blue">Human-Paced,</span> <span class="hl-accent">Interactive 3D Spatial Environments.</span></h1>' +
+          '<p class="sub">Upload dense technical textbooks, lecture slides, or complex research papers. XAMCODE AI parses the document into structured units, topic hierarchies, pedagogical slow-motion simulations, and continuous in-situ quizzes for verified exam readiness.</p>' +
+          '<div class="hero-btns">' +
+            '<button class="btn-hero" data-open="upload">Upload PDF &amp; Build 3D Space <span aria-hidden="true">↗</span></button>' +
+            '<button class="btn-hero-outline" data-nav="workspace">Open Interactive Workspace</button>' +
+          '</div>' +
+          '<div class="hero-proof"><span class="proof-avatars" aria-hidden="true"><i>AI</i><i>PDF</i><i>↗</i></span><span>Start with the material you already have</span></div>' +
+          '<div class="stats" aria-label="Sample course contents">' +
+            '<span><b>' + unitCount + '</b><small>reference units</small></span>' +
+            '<span><b>' + TOPICS.length + '</b><small>grounded concepts</small></span>' +
+            '<span><b>' + totalQuestions + '</b><small>Socratic questions</small></span>' +
+            '<span><b>5</b><small>3D style engines</small></span>' +
+          '</div>' +
         '</div>' +
-        '<div class="hero-proof"><span class="proof-avatars" aria-hidden="true"><i>AI</i><i>PDF</i><i>↗</i></span><span>Start with the material you already have</span></div>' +
-        '<div class="stats" aria-label="Sample course contents">' +
-          '<span><b>' + unitCount + '</b><small>reference units</small></span>' +
-          '<span><b>' + TOPICS.length + '</b><small>grounded concepts</small></span>' +
-          '<span><b>' + totalQuestions + '</b><small>Socratic questions</small></span>' +
-          '<span><b>4</b><small>interactive 3D engines</small></span>' +
-        '</div>' +
+        "<div class=\"hero-3d-stage\" id=\"hero3dStage\" aria-hidden=\"true\"><div class=\"scene-3d-root\" id=\"scene3dRoot\"><div class=\"orb-ring or-1\"></div><div class=\"orb-ring or-2\"></div><div class=\"orb-ring or-3\"></div><div class=\"poly-3d\"><div class=\"poly-face pf-front\"><span class=\"pf-tag\">CORE // ENGINE</span><span class=\"pf-code\">Subject-Agnostic<br>Syllabus Pipeline</span></div><div class=\"poly-face pf-back\"><span class=\"pf-tag\">AURA // TUTOR</span><span class=\"pf-code\">Context-Grounded<br>Visual Recipes</span></div><div class=\"poly-face pf-right\"><span class=\"pf-tag\">DEMO // COURSE</span><span class=\"pf-code\">Computer Networks<br>Sample Syllabus</span></div><div class=\"poly-face pf-left\"><span class=\"pf-tag\">PROOF // WEIGHT</span><span class=\"pf-code\">Deterministic<br>Milestone State</span></div><div class=\"poly-face pf-top\"><span class=\"pf-tag\">UNITS // CHUNKED</span><span class=\"pf-code\">Lexical Grounding</span></div><div class=\"poly-face pf-bottom\"><span class=\"pf-tag\">RECALL // QUIZ</span><span class=\"pf-code\">Vaathiyar Mode</span></div><div class=\"poly-core\"><div class=\"core-face cf-1\"></div><div class=\"core-face cf-2\"></div><div class=\"core-face cf-3\"></div><div class=\"core-face cf-4\"></div><div class=\"core-face cf-5\"></div><div class=\"core-face cf-6\"></div></div></div><div class=\"sat-3d s1\"><span class=\"sat-k\">Architecture</span><span class=\"sat-v\">Subject-Agnostic Core</span></div><div class=\"sat-3d s2\"><span class=\"sat-k\">Demo Course</span><span class=\"sat-v\">Computer Networks</span></div><div class=\"sat-3d s3\"><span class=\"sat-k\">Telemetry</span><span class=\"sat-v\">Verified Milestones</span></div></div></div>" +
       '</div>' +
 
       '<!-- Original Dock-Inspired Lower Controls -->' +

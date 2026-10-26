@@ -60,10 +60,11 @@
 <meta name="author" content="XamCode AI (Achudhan) - support@xamcode.ai">
 <meta name="robots" content="index, follow">
 
-<body data-theme="bil" data-mode="dark">
+<body data-theme="bil" data-mode="dark" data-style="vibe">
 
 <div class="bg grid" aria-hidden="true"></div>
 <div class="bg glow" aria-hidden="true"></div>
+<div class="scroll-prog-rail" id="scrollProgRail" aria-hidden="true"><div class="scroll-prog-bar" id="scrollProgBar"></div></div>
 
 <div id="bootLoader" role="status" aria-live="polite" aria-label="XamCode AI is loading">
   <div class="bl-mark" aria-hidden="true" style="display:flex;align-items:center;justify-content:center;background:transparent;box-shadow:none;"><img src="/assets/xamcode-metallic-x.png" alt="XamCode AI" style="width:48px;height:48px;object-fit:contain;filter:drop-shadow(0 0 12px rgba(34,197,94,0.6));"></div>
@@ -84,6 +85,101 @@
   <div class="fc-nav"><button id="fcPrev">← Prev</button><span class="fc-counter" id="fcCounter">1 / 1</span><button id="fcNext">Next →</button></div>
 </div>
 
+</div>
+<div class="style-veil" id="styleVeil" aria-hidden="true"></div>
+<div class="style-modal" id="styleModal" aria-hidden="true">
+  <div class="style-dialog" role="dialog" aria-modal="true" aria-labelledby="styleModalTitle" aria-describedby="styleModalDesc">
+    <div class="st-head">
+      <div>
+        <span class="st-kicker">Multi-Style 3D Architecture · Live Experience Switcher</span>
+        <h2 class="st-title" id="styleModalTitle">Choose Your Website Experience</h2>
+        <p class="st-sub" id="styleModalDesc">Switch between five genuinely distinct visual compositions, 3D geometries, typographic systems, and scroll choreographies. Live Build-in-Public data remains synchronized across all styles.</p>
+      </div>
+      <button type="button" class="st-close" id="styleCloseBtn" aria-label="Close experience selector">ESC · Close</button>
+    </div>
+    <div class="st-status-bar" role="status" aria-live="polite">
+      <div class="st-status-left"><span class="st-status-dot" aria-hidden="true"></span><span id="styleStatusText">Active: Vibe Coding Studio · Preview any experience below</span></div>
+      <div class="st-status-right">Saved locally · Zero impact on server telemetry</div>
+    </div>
+    <div class="style-grid" id="styleCardGrid" role="radiogroup" aria-label="Website experience styles">
+      <div class="style-card is-active" data-style-card="vibe" role="radio" aria-checked="true" tabindex="0" aria-label="Vibe Coding Studio">
+        <div>
+          <div class="st-card-vis vis-vibe" aria-hidden="true"><div class="mini-3d-obj"><span class="mface mf1"></span><span class="mface mf2"></span><span class="mface mf3"></span></div></div>
+          <div class="st-card-top"><span class="st-card-num">STYLE 01</span><span class="st-card-badge" data-badge-for="vibe">Active</span></div>
+          <h3 class="st-card-name">Vibe Coding Studio</h3>
+          <p class="st-card-desc">Asymmetric dark AI studio with 3D tesseract core, IDE module chrome, and lime/orange/violet accents.</p>
+          <div class="st-card-tags"><span>Asymmetric Split</span><span>3D Tesseract</span><span>Studio Chrome</span></div>
+        </div>
+        <div class="st-card-actions">
+          <button type="button" class="st-btn st-preview-btn" data-preview="vibe" aria-label="Preview Vibe Coding Studio">Preview</button>
+          <button type="button" class="st-btn st-apply-btn" data-apply="vibe" aria-label="Apply Vibe Coding Studio">Apply</button>
+        </div>
+      </div>
+
+      <div class="style-card" data-style-card="bubblegum" role="radio" aria-checked="false" tabindex="-1" aria-label="Bubblegum Playground">
+        <div>
+          <div class="st-card-vis vis-bubblegum" aria-hidden="true"><div class="mini-3d-obj"><span class="mring"></span></div></div>
+          <div class="st-card-top"><span class="st-card-num">STYLE 02</span><span class="st-card-badge" data-badge-for="bubblegum">Available</span></div>
+          <h3 class="st-card-name">Bubblegum Playground</h3>
+          <p class="st-card-desc">Playful pastel showcase with inflated 3D claymorphic surfaces, glossy spheres, and spring physics.</p>
+          <div class="st-card-tags"><span>Centered Showcase</span><span>3D Clay Spheres</span><span>Spring Motion</span></div>
+        </div>
+        <div class="st-card-actions">
+          <button type="button" class="st-btn st-preview-btn" data-preview="bubblegum" aria-label="Preview Bubblegum Playground">Preview</button>
+          <button type="button" class="st-btn st-apply-btn" data-apply="bubblegum" aria-label="Apply Bubblegum Playground">Apply</button>
+        </div>
+      </div>
+
+      <div class="style-card" data-style-card="glass" role="radio" aria-checked="false" tabindex="-1" aria-label="Liquid Glass 3D">
+        <div>
+          <div class="st-card-vis vis-glass" aria-hidden="true"><div class="mini-3d-obj"><span class="mslab ms1"></span><span class="mslab ms2"></span></div></div>
+          <div class="st-card-top"><span class="st-card-num">STYLE 03</span><span class="st-card-badge" data-badge-for="glass">Available</span></div>
+          <h3 class="st-card-name">Liquid Glass 3D</h3>
+          <p class="st-card-desc">Futuristic spatial interface with translucent frosted glass windows, refractive prisms, and depth layers.</p>
+          <div class="st-card-tags"><span>Spatial Window</span><span>3D Glass Prisms</span><span>Depth Glide</span></div>
+        </div>
+        <div class="st-card-actions">
+          <button type="button" class="st-btn st-preview-btn" data-preview="glass" aria-label="Preview Liquid Glass 3D">Preview</button>
+          <button type="button" class="st-btn st-apply-btn" data-apply="glass" aria-label="Apply Liquid Glass 3D">Apply</button>
+        </div>
+      </div>
+
+      <div class="style-card" data-style-card="brutalist" role="radio" aria-checked="false" tabindex="-1" aria-label="Neo-Brutalist Creative Lab">
+        <div>
+          <div class="st-card-vis vis-brutalist" aria-hidden="true"><div class="mini-3d-obj"></div></div>
+          <div class="st-card-top"><span class="st-card-num">STYLE 04</span><span class="st-card-badge" data-badge-for="brutalist">Available</span></div>
+          <h3 class="st-card-name">Neo-Brutalist Creative Lab</h3>
+          <p class="st-card-desc">High-contrast poster architecture with 3px black borders, acid yellow blocks, and 3D extruded monoliths.</p>
+          <div class="st-card-tags"><span>Poster Grid</span><span>3D Monolith</span><span>Hard Offset</span></div>
+        </div>
+        <div class="st-card-actions">
+          <button type="button" class="st-btn st-preview-btn" data-preview="brutalist" aria-label="Preview Neo-Brutalist Creative Lab">Preview</button>
+          <button type="button" class="st-btn st-apply-btn" data-apply="brutalist" aria-label="Apply Neo-Brutalist Creative Lab">Apply</button>
+        </div>
+      </div>
+
+      <div class="style-card" data-style-card="minimal" role="radio" aria-checked="false" tabindex="-1" aria-label="Soft Minimal Studio">
+        <div>
+          <div class="st-card-vis vis-minimal" aria-hidden="true"><div class="mini-3d-obj"></div></div>
+          <div class="st-card-top"><span class="st-card-num">STYLE 05</span><span class="st-card-badge" data-badge-for="minimal">Available</span></div>
+          <h3 class="st-card-name">Soft Minimal Studio</h3>
+          <p class="st-card-desc">Warm editorial monograph on alabaster stone with serif typography, hairline grids, and kinetic rings.</p>
+          <div class="st-card-tags"><span>Editorial Spread</span><span>3D Armillary</span><span>Warm Stone</span></div>
+        </div>
+        <div class="st-card-actions">
+          <button type="button" class="st-btn st-preview-btn" data-preview="minimal" aria-label="Preview Soft Minimal Studio">Preview</button>
+          <button type="button" class="st-btn st-apply-btn" data-apply="minimal" aria-label="Apply Soft Minimal Studio">Apply</button>
+        </div>
+      </div>
+    </div>
+    <div class="st-foot">
+      <span class="st-foot-hint">Use <span class="kbd">←</span> <span class="kbd">→</span> or <span class="kbd">Tab</span> to inspect styles · <span class="kbd">Enter</span> to apply</span>
+      <div class="st-foot-btns">
+        <button type="button" class="st-btn" id="styleResetBtn">Revert Preview</button>
+        <button type="button" class="st-btn st-apply-btn" id="styleApplyConfirmBtn">Apply Selected Experience</button>
+      </div>
+    </div>
+  </div>
 </div>
 <dialog id="uploadModal" class="upload-modal" aria-labelledby="uploadTitle">
   <form id="pdfUploadForm" class="upload-modal-content">

@@ -16,3 +16,4 @@ jobs:
             -H "Content-Type: application/json" \
             -H "x-bip-secret: $BIP_SYNC_SECRET" \
             -d '{"repo":"Xamcode","commit":"'"$GITHUB_SHA"'","ref":"'"$GITHUB_REF"'"}'
+

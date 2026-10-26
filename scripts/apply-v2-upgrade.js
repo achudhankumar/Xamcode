@@ -34,3 +34,4 @@ if (allPresent) {
 } else {
   process.exitCode = 1;
 }
+
