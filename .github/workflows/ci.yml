@@ -63,6 +63,7 @@ jobs:
       # altering the build step's own outcome (it reads steps.build.outcome).
       - name: Report build result to Build-in-Public ingest
         if: always()
+        continue-on-error: true
         env:
           BIP_INGEST_TOKEN: ${{ secrets.BIP_INGEST_TOKEN }}
           PUBLIC_URL: ${{ vars.PUBLIC_URL }}
@@ -88,6 +89,7 @@ jobs:
       # Reuses .github/report-bip.js for identical validation and reporting.
       - name: Report test result to Build-in-Public ingest
         if: always()
+        continue-on-error: true
         env:
           BIP_INGEST_TOKEN: ${{ secrets.BIP_INGEST_TOKEN }}
           PUBLIC_URL: ${{ vars.PUBLIC_URL }}

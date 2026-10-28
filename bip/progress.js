@@ -76,12 +76,46 @@ function seedRoadmap(){
 
 function ensureSeeded(){
   const d = store.ensureLoaded();
-  if (!d.milestones.length){
-    d.milestones = seedMilestones().map(function(m){ m.id = store.id('ms'); return m; });
+  if (!d.milestones.length || (d.settings && d.settings.seedVersion !== 2)){
+    const seed = seedMilestones();
+    if (!d.milestones.length){
+      d.milestones = seed.map(function(m){ m.id = store.id('ms'); return m; });
+    } else {
+      for (const sm of seed){
+        const existing = d.milestones.find(m => m.key === sm.key);
+        if (existing){
+          existing.status = sm.status;
+          existing.weight = sm.weight;
+          existing.evidence = sm.evidence;
+          existing.criteria = sm.criteria;
+          if (sm.verifiedAt) existing.verifiedAt = sm.verifiedAt;
+        } else {
+          sm.id = store.id('ms');
+          d.milestones.push(sm);
+        }
+      }
+    }
+    if (!d.settings) d.settings = {};
+    d.settings.seedVersion = 2;
+    if (d.milestones.every(m => m.status === 'verified')){
+      d.settings.phase = 'Launch-ready';
+    }
     store.persist();
   }
-  if (!d.roadmapItems.length){
-    d.roadmapItems = seedRoadmap();
+  if (!d.roadmapItems.length || (d.settings && d.settings.roadmapVersion !== 2)){
+    const seedRm = seedRoadmap();
+    if (!d.roadmapItems.length){
+      d.roadmapItems = seedRm;
+    } else {
+      for (const srm of seedRm){
+        const existing = d.roadmapItems.find(r => r.title === srm.title);
+        if (existing){
+          existing.status = srm.status;
+        }
+      }
+    }
+    if (!d.settings) d.settings = {};
+    d.settings.roadmapVersion = 2;
     store.persist();
   }
 }

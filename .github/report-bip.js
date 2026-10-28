@@ -59,34 +59,40 @@ async function main(){
     source: process.env.SOURCE || 'ci'
   });
 
-  const controller = new AbortController();
-  const timer = setTimeout(() => { try { controller.abort(); } catch (e) {} }, 15000);
+  let res = null, lastError = null, parsed = null, raw = '';
+  const maxAttempts = 3;
 
-  let res, transportError = null;
-  try {
-    res = await fetch(base + '/api/bip/events/ingest', {
-      method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + TOKEN, 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: body,
-      signal: controller.signal
-    });
-  } catch (e) {
-    transportError = e;
-  } finally {
-    clearTimeout(timer);
+  for (let attempt = 1; attempt <= maxAttempts; attempt++){
+    const controller = new AbortController();
+    const timer = setTimeout(() => { try { controller.abort(); } catch (e) {} }, 15000);
+    try {
+      res = await fetch(base + '/api/bip/events/ingest', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + TOKEN, 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: body,
+        signal: controller.signal
+      });
+      clearTimeout(timer);
+      raw = await res.text();
+      try { parsed = JSON.parse(raw); } catch (e) { parsed = null; }
+      if (res.status === 200){
+        lastError = null;
+        break;
+      }
+      const snippet = String(raw || '').slice(0, 300);
+      lastError = new Error('HTTP ' + res.status + ' posting ' + eventType + '. Body: ' + snippet);
+    } catch (e) {
+      clearTimeout(timer);
+      lastError = new Error('transport error (' + (e.name || 'Error') + ') posting ' + eventType + '.');
+    }
+    if (attempt < maxAttempts){
+      console.log('Ingest attempt ' + attempt + ' failed; retrying in ' + (2 * attempt) + 's...');
+      await new Promise(r => setTimeout(r, 2000 * attempt));
+    }
   }
 
-  if (transportError){
-    fail('transport error (' + (transportError.name || 'Error') + ') posting ' + eventType + '. The build/test result is unaffected.');
-  }
-
-  const status = res.status;
-  let parsed = null, raw = '';
-  try { raw = await res.text(); parsed = JSON.parse(raw); } catch (e) { parsed = null; }
-
-  if (status !== 200){
-    const snippet = String(raw || '').slice(0, 300);
-    fail('HTTP ' + status + ' posting ' + eventType + '. Body: ' + snippet);
+  if (lastError && (!res || res.status !== 200)){
+    fail(lastError.message || ('failed posting ' + eventType));
   }
   if (!parsed || parsed.received !== true){
     fail('HTTP 200 but the response was missing received=true for ' + eventType + '.');
