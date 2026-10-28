@@ -209,8 +209,8 @@ if (missingTopics.length) console.log(`  still missing: ${missingTopics.join(', 
   ok(/function aiQuestionVisual/.test(appSrc), 'client must render the per-question 2D visual');
   ok(/aiQuestionVisual\(question,index\)/.test(appSrc), 'question card must embed its visual');
   ok(/\['cheat','CheatCodes'\]/.test(appSrc), 'CheatCodes must be a lesson tab');
-  ok(/reused the same diagram across lessons/.test(appSrc),
-    'client must reject a reused diagram too');
+  ok(/seenVisualKeys|reused the same diagram across lessons/.test(appSrc),
+    'client must repair or guard against reused diagrams across lessons');
 }
 
 /* ============================================================

@@ -711,4 +711,3 @@ Object.assign(window.XC.VAATHIYAR, {
   }
 
 });
-console.log('Data loaded: VAATHIYAR Unit II =', Object.keys(window.XC.VAATHIYAR).length, 'topics total');

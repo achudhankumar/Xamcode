@@ -389,5 +389,5 @@ const FORMULA_NOTES = {
     };
   });
   window.XC.FORMULA_NOTES = FORMULA_NOTES;
-  console.log('Data loaded: FORMULA notes =', written, '/', F.length, 'with written walkthroughs');
+
 })();

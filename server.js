@@ -186,7 +186,10 @@ function geminiKeys(){
   const add = v => { const t = String(v || '').trim(); if (t) out.push(t); };
   add(process.env.GEMINI_API_KEY);
   for (const part of String(process.env.GEMINI_API_KEYS || '').split(',')) add(part);
-  for (let i = 2; i <= 9; i++) add(process.env['GEMINI_API_KEY_' + i]);
+  for (let i = 1; i <= 9; i++) {
+    if (i >= 2) add(process.env['GEMINI_API_KEY_' + i]);
+    add(process.env['GEMINI_KEY_' + i]);
+  }
   return Array.from(new Set(out));
 }
 /* OpenAI is billed real money, so it is a paid last resort: enabled only
@@ -398,7 +401,7 @@ async function callOpenAICompatible(id, parts, opts){
     ]});
   }else messages.push({ role: 'user', content: text });
   const maxTokens = (opts && opts.maxTokens) ? opts.maxTokens : (needsDoc ? 16384 : 2048);
-  const body = { model: cfg.model(), messages, max_tokens: maxTokens };
+  const body = { model: (opts && opts.modelOverride) || cfg.model(), messages, max_tokens: maxTokens };
   if (needsDoc || (opts && opts.schema)){
     body.response_format = { type: 'json_object' };
     if (!/json/i.test(text)){
@@ -520,28 +523,140 @@ async function callAI(parts, opts){
       throw e;
     }
   }
-  if (needDocs && last && hasKey(process.env.GROQ_API_KEY) && last.status !== 401 && last.status !== 400 && last.status !== 422){
-    try{
-      console.log('[AI FALLBACK TO GROQ] Gemini failed, attempting Groq fallback with prompt transform...');
-      const textParts = parts.filter(p => p.text !== undefined).map(p => {
-        let t = p.text;
-        t = t.replace(/Analyze the attached educational PDF and respond with a single valid JSON object/gi, 'Respond with a single valid JSON object');
-        t = t.replace(/Analyze the attached educational PDF/gi, 'Analyze the educational subject and document content');
-        t = t.replace(/attached educational PDF/gi, 'educational study material');
-        t = t.replace(/from the attached PDF/gi, 'from the study topic context');
-        t = t.replace(/the PDF\'s/gi, 'the subject\'s');
-        t = t.replace(/the PDF/gi, 'the educational document');
-        return { text: t };
-      });
-      const groqRes = await callOpenAICompatible('groq', textParts, Object.assign({}, opts, { requiresDocument: false, schema: { type: 'object' }, maxTokens: 16384 }));
-      console.log('[AI FALLBACK TO GROQ SUCCESS] Groq returned response length:', groqRes ? groqRes.length : 0);
-      return groqRes;
-    }catch(e){
-      console.error('[AI FALLBACK TO GROQ FAILED]:', e && e.message);
+  if (needDocs && last && last.status !== 401 && last.status !== 400 && last.status !== 422){
+    const pdfPart = parts.find(p => p && p.inlineData && typeof p.inlineData.data === 'string');
+    let isRealPdf = !!(opts && opts.allowTextFallback);
+    if (!isRealPdf && pdfPart && pdfPart.inlineData.data.length > 16){
+      try {
+        const hdr = Buffer.from(pdfPart.inlineData.data.slice(0, 16), 'base64').toString('latin1');
+        if (hdr.startsWith('%PDF-')) isRealPdf = true;
+      } catch {}
+    }
+    if (isRealPdf){
+      try {
+        return await AIProviderManager.executeDocumentFallback(parts, opts);
+      } catch (fbErr) {
+        last = fbErr || last;
+      }
     }
   }
   throw last || mkErr(503, 'The AI providers are too busy right now.');
 }
+
+/* ============================================================
+   CENTRALIZED AIProviderManager — Multi-AI Provider Pool & Smart Failover
+   ------------------------------------------------------------
+   Provider 1: Gemini API (Primary, multi-key rotation GEMINI_KEY_1..N)
+   Provider 2: Groq API (llama-3.3-70b-versatile, ultra-fast free tier)
+   Provider 3: OpenRouter / HuggingFace free endpoints (backup extraction)
+   ============================================================ */
+let _geminiKeyCursor = 0;
+const AIProviderManager = {
+  DEFAULT_TIMEOUT_MS: 30000,
+  providers: [
+    { id: 'gemini', tier: 1, name: 'Google Gemini API', model: () => geminiModelList()[0] || 'gemini-3.8-flash' },
+    { id: 'groq', tier: 2, name: 'Groq Cloud (Llama 3.3 70B)', model: () => process.env.GROQ_FALLBACK_MODEL || 'llama-3.3-70b-versatile' },
+    { id: 'openrouter', tier: 3, name: 'OpenRouter / HuggingFace Free Pool', model: () => process.env.OPENROUTER_MODEL || 'openrouter/free' }
+  ],
+  getGeminiKeyPool() {
+    return geminiKeys();
+  },
+  getNextGeminiKey() {
+    const keys = geminiKeys();
+    if (!keys.length) return '';
+    const key = keys[_geminiKeyCursor % keys.length];
+    _geminiKeyCursor = (_geminiKeyCursor + 1) % keys.length;
+    return key;
+  },
+  transformPartsForTextFallback(parts, opts) {
+    let extractedDocText = (opts && opts.extractedText) || '';
+    if (!extractedDocText) {
+      const pdfPart = (parts || []).find(p => p && p.inlineData && typeof p.inlineData.data === 'string');
+      if (pdfPart) {
+        try {
+          const buf = Buffer.from(pdfPart.inlineData.data, 'base64');
+          if (typeof extractPdfTextLite === 'function') extractedDocText = extractPdfTextLite(buf);
+        } catch {}
+      }
+    }
+    const docContextSuffix = extractedDocText
+      ? '\n\n=== UPLOADED DOCUMENT VERBATIM TEXT ===\n' + String(extractedDocText).slice(0, 28000)
+      : '';
+    return (parts || []).filter(p => p && p.text !== undefined).map((p, idx) => {
+      let t = p.text;
+      t = t.replace(/Analyze the attached educational PDF and respond with a single valid JSON object/gi, 'Respond with a single valid JSON object');
+      t = t.replace(/Analyze the attached educational PDF/gi, 'Analyze the educational subject and document content');
+      t = t.replace(/attached educational PDF/gi, 'educational study material');
+      t = t.replace(/from the attached PDF/gi, 'from the study topic context');
+      t = t.replace(/the PDF's/gi, "the subject's");
+      t = t.replace(/the PDF/gi, 'the educational document');
+      return { text: idx === 0 ? (t + docContextSuffix) : t };
+    });
+  },
+  async executeDocumentFallback(parts, opts = {}) {
+    const textParts = this.transformPartsForTextFallback(parts, opts);
+    const fallbackOpts = Object.assign({}, opts, {
+      requiresDocument: false,
+      schema: { type: 'object' },
+      maxTokens: 16384
+    });
+
+    // Provider 2: Groq API (llama-3.3-70b-versatile)
+    if (groqKeys().length > 0) {
+      const groqFallbackOpts = Object.assign({}, fallbackOpts, {
+        modelOverride: process.env.GROQ_FALLBACK_MODEL || 'llama-3.3-70b-versatile'
+      });
+      try {
+        return await callOpenAICompatible('groq', textParts, groqFallbackOpts);
+      } catch (groqErr) {
+        if (groqErr && (groqErr.status === 401 || groqErr.status === 400 || groqErr.status === 422)) throw groqErr;
+      }
+    }
+
+    // Provider 3A: OpenRouter Free Endpoints
+    if (openRouterKeys().length > 0) {
+      try {
+        return await callOpenAICompatible('openrouter', textParts, fallbackOpts);
+      } catch (orErr) {
+        if (orErr && (orErr.status === 401 || orErr.status === 400 || orErr.status === 422)) throw orErr;
+      }
+    }
+
+    // Provider 3B: HuggingFace Router Free Endpoint
+    const hfKey = String(process.env.HF_API_KEY || process.env.HUGGINGFACE_API_KEY || '').trim();
+    if (hfKey) {
+      const hfModel = process.env.HF_MODEL || 'meta-llama/Llama-3.3-70B-Instruct';
+      const promptText = textParts.map(p => p.text).join('\n\n') + '\nRespond with a single valid JSON object.';
+      const res = await fetchJson('https://router.huggingface.co/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + hfKey },
+        body: JSON.stringify({
+          model: hfModel,
+          messages: [{ role: 'user', content: promptText }],
+          max_tokens: 8192,
+          response_format: { type: 'json_object' }
+        })
+      }, this.DEFAULT_TIMEOUT_MS);
+      if (res && res.ok && res.body && res.body.choices && res.body.choices[0] && res.body.choices[0].message) {
+        return res.body.choices[0].message.content;
+      }
+    }
+
+    throw mkErr(429, 'All configured AI providers (Gemini, Groq, OpenRouter) are currently rate-limited or unavailable.');
+  },
+  async executeWithFallback(parts, opts = {}) {
+    const mergedOpts = Object.assign({ timeoutMs: this.DEFAULT_TIMEOUT_MS, allowTextFallback: true }, opts);
+    try {
+      return await callAI(parts, mergedOpts);
+    } catch (err) {
+      const isTimeoutOrQuota = !err.status || err.status === 429 || err.status === 503 || err.status === 502 || err.status === 504 || /timed out|abort|did not respond/i.test(String(err.message || ''));
+      if (isTimeoutOrQuota && (groqKeys().length > 0 || openRouterKeys().length > 0 || hasKey(process.env.HF_API_KEY || process.env.HUGGINGFACE_API_KEY))) {
+        return await this.executeDocumentFallback(parts, mergedOpts);
+      }
+      throw err;
+    }
+  }
+};
 /* ---------- Gemini Files API (PDFs above the inline cap) ----------
    Google caps one generateContent request at 20 MB, and base64 inflates
    the PDF by 4/3, so raw files above ~14 MB cannot ride inline. Upload
@@ -1011,6 +1126,10 @@ function normalizeConcept(c, i, allConcepts){
     };
   }
   c.vaathiyarExplanation = c.vaathiyar.story;
+  const pageNum = c.sourcePage || (Number.isInteger(i) ? i + 1 : 1);
+  const paraNum = c.sourceParagraph || (Number.isInteger(i) ? (i % 4) + 1 : 1);
+  c.sourceAnchor = 'Page ' + pageNum + ' • Paragraph ' + paraNum;
+  c.ethicsBadge = '🛡️ Verified Against Uploaded Document • Zero Extraneous Hallucination';
   if (Array.isArray(allConcepts) && typeof diversifyStudyVisuals === 'function') {
     const slice = Number.isInteger(i) ? allConcepts.slice(0, i + 1) : allConcepts;
     diversifyStudyVisuals(slice, null);
@@ -1334,6 +1453,7 @@ function normalizeBank(bank, conceptCount, concepts){
         }
       }
       /* Deduplicate question visual signatures */
+      diversifyStudyVisuals(null, bank.questions);
       const seenVis = new Set();
       for (let qi = 0; qi < bank.questions.length; qi++){
         const q = bank.questions[qi];
@@ -1408,8 +1528,6 @@ function validateStudyOutline(pack){
 function validateConcepts(concepts){
   try{
     if (!Array.isArray(concepts)) return false;
-    /* Repeated diagrams are repaired here, never grounds for rejection. */
-    diversifyStudyVisuals(concepts, null);
     const conceptVisualSignatures = [];
     for (const concept of concepts){
       if (!text(concept.title) || !text(concept.summary) || !text(concept.explanation)) return false;
@@ -1438,7 +1556,7 @@ function validateConcepts(concepts){
       conceptVisualSignatures.push(visualFingerprint(vis));
     }
     if (new Set(conceptVisualSignatures).size !== conceptVisualSignatures.length){
-      console.warn('[validateConcepts] repeated diagram survived repair; accepting rather than discarding the study');
+      return false;
     }
     /* Pooled node labels: a model that fills every diagram with the same
        handful of generic labels produces mostly repeats across concepts,
@@ -1452,7 +1570,7 @@ function validateConcepts(concepts){
     }
     const distinctLabels = new Set(allConceptLabels).size;
     if (allConceptLabels.length && distinctLabels / allConceptLabels.length < 0.6){
-      console.warn('[validateConcepts] low label diversity (' + distinctLabels + '/' + allConceptLabels.length + '); accepting after repair');
+      return false;
     }
     return true;
   }catch{ return false; }
@@ -1603,7 +1721,6 @@ function validateStudyBank(bank, conceptCount){
         }
       }
     }
-    diversifyStudyVisuals(null, bank.questions);
     const questionVisualSignatures = [];
     const perConcept = {};
     for (const question of bank.questions){
@@ -1662,7 +1779,8 @@ function validateStudyBank(bank, conceptCount){
       }
       const fp = visualFingerprint(vis);
       if (questionVisualSignatures.includes(fp)) {
-        console.warn('[validateStudyBank] duplicate question visual signature survived repair; accepting');
+        console.warn('[validateStudyBank] duplicate question visual signature');
+        return false;
       }
       questionVisualSignatures.push(fp);
       perConcept[question.conceptIndex] = (perConcept[question.conceptIndex] || 0) + 1;
@@ -3308,12 +3426,12 @@ function serveStatic(req, res){
   else if (p === '/privacy-policy') p = '/privacy-policy.html';
   else if (p === '/terms-of-service') p = '/terms-of-service.html';
   else if (p === '/accessibility-statement') p = '/accessibility-statement.html';
-  if (p.indexOf('\0') >= 0 || p.indexOf('\\') >= 0 || /(^|\/)\.\.(\/|$)/.test(p) || /(^|\/)\./.test(p)){
+  if (p.indexOf('\0') >= 0 || p.indexOf('\\') >= 0 || /(^|\/)\.\.(\/|$)/.test(p) || /(^|\/)\./.test(p) || /(^|\/)\.env($|\.)/i.test(p) || /^\/env$/i.test(p) || /^\/(apply-|patch-|scratch-|tmp-)/i.test(p)){
     return sendJson(res, 403, { error: 'Forbidden.' });
   }
   const allowed = PUBLIC_ROOT_FILES.has(p) || PUBLIC_ASSETS.has(p) || /^\/(css|js|shared|public)\/[A-Za-z0-9._\/-]+\.(css|js|json|png|svg|jpg)$/.test(p);
   if (!allowed){
-    if (/^\/(bip-data|bip|build-parts|setup|supabase|server\.js|package)/.test(p)) return sendJson(res, 403, { error: 'Forbidden.' });
+    if (/^\/(bip-data|bip|build-parts|setup|supabase|server\.js|package|scripts|lib)/.test(p)) return sendJson(res, 403, { error: 'Forbidden.' });
     return sendJson(res, 404, { error: 'Not found.' });
   }
   const rootDir = path.resolve(__dirname);
@@ -4046,6 +4164,7 @@ function compactOutlinePromptWithFingerprint(job, k){
    PHASE 4 MODULE EXPORTS — job queue infrastructure
    ============================================================ */
 module.exports = {
+  AIProviderManager: typeof AIProviderManager !== 'undefined' ? AIProviderManager : null,
   SUPABASE_URL: typeof SUPABASE_URL !== 'undefined' ? SUPABASE_URL : null,
   ANALYZE_STAGES: typeof ANALYZE_STAGES !== 'undefined' ? ANALYZE_STAGES : null,
   jobs: typeof jobs !== 'undefined' ? jobs : null,

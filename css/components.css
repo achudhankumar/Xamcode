@@ -2078,3 +2078,140 @@ body[data-mode="light"] .v-cmp-bar-right>span{color:#04140d}
   border-color: rgba(139, 92, 246, 0.55) !important;
   transform: translateY(-1px);
 }
+
+
+/* ── 70% Milestone: Modular Skeleton, Glowing Focus Rings, 3D Canvas Stability & Source Grounding ── */
+.pdf-modular-skeleton {
+  margin-top: 14px;
+  padding: 14px;
+  border-radius: 12px;
+  background: rgba(8, 14, 28, 0.88);
+  border: 1px solid rgba(45, 212, 191, 0.25);
+}
+
+.skeleton-stage-track {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.skeleton-stage-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #94a3b8;
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.skeleton-stage-pill.active {
+  color: #2dd4bf;
+  background: rgba(45, 212, 191, 0.14);
+  border-color: rgba(45, 212, 191, 0.55);
+  box-shadow: 0 0 14px rgba(45, 212, 191, 0.28);
+}
+
+.skeleton-stage-pill.complete {
+  color: #34d399;
+  border-color: rgba(16, 185, 129, 0.4);
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.skel-pulse {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: skelPulseAnim 1.2s ease-in-out infinite;
+}
+
+@keyframes skelPulseAnim {
+  0%, 100% { opacity: 0.35; transform: scale(0.85); }
+  50% { opacity: 1; transform: scale(1.18); }
+}
+
+.skeleton-stage-arrow {
+  color: #475569;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.skeleton-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.skel-card {
+  height: 36px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, rgba(30, 41, 59, 0.5) 25%, rgba(45, 212, 191, 0.16) 50%, rgba(30, 41, 59, 0.5) 75%);
+  background-size: 200% 100%;
+  animation: skelShimmer 1.8s infinite linear;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+@keyframes skelShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Glowing focus rings and micro-transitions for quiz options, assembly pills & chapter tabs */
+.opt:focus-visible,
+.ai-answer-option:focus-visible,
+.assembly-part-pill:focus-visible,
+.part-isolate-toggle:focus-visible,
+.study-tab:focus-visible,
+.unit-hdr:focus-visible,
+.t-item:focus-visible {
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(8, 14, 28, 0.9), 0 0 0 4px rgba(45, 212, 191, 0.75), 0 0 18px rgba(45, 212, 191, 0.45) !important;
+}
+
+.assembly-part-pill,
+.part-isolate-toggle,
+.study-tab,
+.unit-hdr,
+.t-item {
+  transition: transform 0.16s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.16s ease, border-color 0.16s ease, background 0.16s ease;
+}
+
+.assembly-part-pill:hover,
+.study-tab:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(45, 212, 191, 0.18);
+}
+
+/* 3D Viewport Canvas zero-layout-jump & responsive resize */
+.ai-aura-player-mount,
+#studyAuraMount,
+#aiAuraMount {
+  min-height: 320px;
+  aspect-ratio: 16 / 9;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  contain: layout paint;
+  transition: height 0.18s ease;
+}
+
+@media (max-width: 640px) {
+  .ai-aura-player-mount,
+  #studyAuraMount,
+  #aiAuraMount {
+    min-height: 220px;
+    aspect-ratio: 4 / 3;
+    padding: 8px !important;
+  }
+  .skeleton-preview-grid {
+    grid-template-columns: 1fr;
+  }
+}

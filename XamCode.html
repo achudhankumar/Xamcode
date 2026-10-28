@@ -276,6 +276,20 @@
       <p id="pdfProgressStatus" class="pdf-progress-status" role="status" aria-live="polite">Reading your PDF on this device…</p>
       <p id="pdfProgressElapsed" class="pdf-progress-elapsed" aria-label="Elapsed time: 0 seconds">0:00 elapsed</p>
       <p class="pdf-progress-note">Larger documents can take a little longer. Keep this window open.</p>
+      <div id="pdfModularSkeleton" class="pdf-modular-skeleton" data-active-stage="1" aria-label="Live processing stages">
+        <div class="skeleton-stage-track">
+          <div class="skeleton-stage-pill active" data-skel-stage="1"><span class="skel-pulse" aria-hidden="true"></span><span>1. Scanning Pages</span></div>
+          <span class="skeleton-stage-arrow" aria-hidden="true">→</span>
+          <div class="skeleton-stage-pill" data-skel-stage="2"><span class="skel-pulse" aria-hidden="true"></span><span>2. Synthesizing Architecture</span></div>
+          <span class="skeleton-stage-arrow" aria-hidden="true">→</span>
+          <div class="skeleton-stage-pill" data-skel-stage="3"><span class="skel-pulse" aria-hidden="true"></span><span>3. Generating Visual Assembly</span></div>
+        </div>
+        <div class="skeleton-preview-grid" aria-hidden="true">
+          <div class="skel-card skel-visual"></div>
+          <div class="skel-card skel-cheat"></div>
+          <div class="skel-card skel-quiz"></div>
+        </div>
+      </div>
     </section>
     <p id="pdfUploadStatus" class="ai-upload-status" role="status" aria-live="polite"></p>
     <button id="analyzePdfButton" type="submit" class="btn-primary"><span>Build my study space</span><span aria-hidden="true">↗</span></button>

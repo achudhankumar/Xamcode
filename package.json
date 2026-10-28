@@ -5,10 +5,10 @@
   "description": "XamCode AI v2.0 — 3D Interactive Exam Study Platform with Visual Mode, Cheat Code, 8-Section Vaathiyar Mode, Dynamic Quiz Diagrams, and Grounded Aura AI Tutor",
   "main": "server.js",
   "scripts": {
-    "build": "npm run check && npm --prefix aura-visuals run build && npm --prefix aura-visuals run build:browser",
+    "build": "node scripts/clean-production.js && npm run check && npm --prefix aura-visuals run build && npm --prefix aura-visuals run build:browser",
+    "clean:prod": "node scripts/clean-production.js",
     "start": "node server.js",
     "dev": "node server.js",
-    "patch:existing": "node scripts/apply-v2-upgrade.js",
     "test:v2-smoke": "node scripts/smoke-test.js",
     "test": "npm run test:v2-smoke && npm run test:offline && npm run test:simulations && npm run test:aura-visuals && npm run test:providers && npm run test:aura && npm run test:fidelity && npm run test:quiz && npm run test:content && npm run test:sections && npm run test:diagrams && npm run test:mermaid && npm run test:journey && npm run test:markup && npm run test:jobs && npm run test:jobs-http && npm run test:topics && npm run test:chunks && npm run test:render && npm run test:allowance && npm run test:bip && npm run test:bip-smoke && npm run test:bip-security && npm run test:bip-durable && npm run test:bip-countdown && npm run test:subjects",
     "test:offline": "node test-offline-plumbing.js",

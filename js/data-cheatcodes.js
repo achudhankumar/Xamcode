@@ -251,4 +251,3 @@ const CHEATCODES = {
 
 window.XC.CHEATCODES = CHEATCODES;
 
-console.log('Data loaded: CHEATCODES =', Object.keys(CHEATCODES).length, 'entries');

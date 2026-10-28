@@ -661,4 +661,3 @@ window.XC.SVG = Object.assign(window.XC.SVG || {}, {
   fFtpPorts, fSmtpPort, fTelnetPort, fRtpHeader
 });
 
-console.log('Data loaded: FORMULA visuals = 31 stage visuals');

@@ -795,4 +795,3 @@ TOPICS.push(
 
 window.XC.TOPICS = TOPICS;
 
-console.log('Data loaded: TOPICS =', TOPICS.length, 'topics');

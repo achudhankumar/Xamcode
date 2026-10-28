@@ -627,4 +627,3 @@ function convertSampleToUnifiedSchema(){
 }
 try { convertSampleToUnifiedSchema(); } catch(e) {}
 window.XC.convertSampleToUnifiedSchema = convertSampleToUnifiedSchema;
-console.log('Data loaded: VAATHIYAR =', Object.keys(VAATHIYAR).length, 'topics (unified schema synced)');

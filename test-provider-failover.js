@@ -44,7 +44,7 @@ function loadPool(keys){
     source.slice(0, cut) +
     '\nglobalThis.__pool={callAI,configuredProviders,providerStatus,isFailoverWorthy,PROVIDERS,' +
     'OPENAI_COMPATIBLE,geminiModelList,geminiKeys,quotaSnapshot,callGemini,callGeminiOnce,' +
-    'openaiEnabled,callOpenAI,openaiTextOf,' +
+    'openaiEnabled,callOpenAI,openaiTextOf,AIProviderManager,' +
     'readGoogleQuota,pdfAllowanceFor,consumePdfAllowance,quotaForToday};',
     sandbox, { filename: 'server.js' }
   );
@@ -739,6 +739,47 @@ test('providerStatus never leaks the openai key', () => {
   const json = JSON.stringify(loadPool(env({ ENABLE_OPENAI_FAILOVER: '1', OPENAI_API_KEY: 'sk-secret' })).providerStatus());
   assert.ok(!json.includes('sk-secret'), 'openai key leaked into status');
 });
+
+/* ---------- 13. AIProviderManager: GEMINI_KEY_1..N + Groq Llama-3.3-70b + OpenRouter PDF Failover ---------- */
+test('AIProviderManager collects GEMINI_KEY_1 and GEMINI_KEY_2 slots', () => {
+  const pool = loadPool(env({ GEMINI_KEY_1: 'gk-1', GEMINI_KEY_2: 'gk-2' }));
+  assert.deepStrictEqual(Array.from(pool.AIProviderManager.getGeminiKeyPool()), ['gk-1', 'gk-2']);
+  assert.strictEqual(pool.AIProviderManager.getNextGeminiKey(), 'gk-1');
+  assert.strictEqual(pool.AIProviderManager.getNextGeminiKey(), 'gk-2');
+});
+
+test('AIProviderManager.executeWithFallback fails over PDF from Gemini 429 to Groq llama-3.3-70b-versatile', () => withFetch([
+  { status: 429, body: { error: { message: 'quota exhausted' } } },
+  { status: 200, body: { choices: [{ message: { content: '{"title":"Groq Fallback Study"}' } }] } }
+], async calls => {
+  const pool = loadPool(env({ GEMINI_KEY_1: 'gk-1', GROQ_API_KEY: 'q-test' }));
+  const pdfB64 = Buffer.from('%PDF-1.4\n(Thermodynamics Partition Function)').toString('base64');
+  const res = await pool.AIProviderManager.executeWithFallback(
+    [{ text: 'Analyze the attached educational PDF' }, { inlineData: { mimeType: 'application/pdf', data: pdfB64 } }],
+    { requiresDocument: true, schema: { type: 'object' } }
+  );
+  assert.strictEqual(res, '{"title":"Groq Fallback Study"}');
+  assert.strictEqual(calls.length, 2);
+  assert.match(calls[0].url, /generativelanguage/);
+  assert.match(calls[1].url, /api\.groq\.com/);
+  assert.strictEqual(JSON.parse(calls[1].init.body).model, 'llama-3.3-70b-versatile');
+}));
+
+test('AIProviderManager.executeWithFallback cascades Gemini 429 -> Groq 429 -> OpenRouter free endpoint', () => withFetch([
+  { status: 429, body: { error: { message: 'gemini quota' } } },
+  { status: 429, body: { error: { message: 'groq rate limit' } } },
+  { status: 200, body: { choices: [{ message: { content: '{"title":"OpenRouter Backup Study"}' } }] } }
+], async calls => {
+  const pool = loadPool(env({ GEMINI_KEY_1: 'gk-1', GROQ_API_KEY: 'q-test', OPENROUTER_API_KEY: 'or-test' }));
+  const pdfB64 = Buffer.from('%PDF-1.4\n(Quantum Mechanics)').toString('base64');
+  const res = await pool.AIProviderManager.executeWithFallback(
+    [{ text: 'Analyze the attached educational PDF' }, { inlineData: { mimeType: 'application/pdf', data: pdfB64 } }],
+    { requiresDocument: true, schema: { type: 'object' } }
+  );
+  assert.strictEqual(res, '{"title":"OpenRouter Backup Study"}');
+  assert.strictEqual(calls.length, 3);
+  assert.match(calls[2].url, /openrouter\.ai/);
+}));
 
 /* ---------- runner ---------- */
 (async () => {

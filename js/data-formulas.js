@@ -545,4 +545,3 @@ const FORMULAS = [
 
 window.XC.FORMULAS = FORMULAS;
 
-console.log('Data loaded: FORMULAS =', FORMULAS.length, 'entries');

@@ -9,18 +9,22 @@ const path = require('path');
 const PORT = 4173;
 const BASE_URL = `http://127.0.0.1:${PORT}`;
 
-function checkServerListening() {
+function httpGetStatus(urlPath) {
   return new Promise((resolve) => {
-    const req = http.get(`${BASE_URL}/api/health`, (res) => {
+    const req = http.get(`${BASE_URL}${urlPath}`, (res) => {
       res.resume();
-      resolve(res.statusCode === 200);
+      resolve(res.statusCode);
     });
-    req.on('error', () => resolve(false));
+    req.on('error', () => resolve(0));
     req.setTimeout(1500, () => {
       req.destroy();
-      resolve(false);
+      resolve(0);
     });
   });
+}
+
+function checkServerListening() {
+  return httpGetStatus('/api/health').then(code => code === 200);
 }
 
 async function ensureServer() {
@@ -43,7 +47,7 @@ async function ensureServer() {
 }
 
 async function runAudit() {
-  console.log('=== PHASE 4: PRODUCTION REPAIR & UI INTEGRITY VERIFICATION ===\n');
+  console.log('=== 70% PROJECT MILESTONE & PRODUCTION INTEGRITY BENCHMARK ===\n');
   const results = [];
   function record(name, condition, details = '') {
     const passed = Boolean(condition);
@@ -55,8 +59,34 @@ async function runAudit() {
   let browser = null;
 
   try {
+    // 0. Static Code Shielding & Bundle Cleanliness Audit
+    console.log('--- 0. Code Shielding, Security Purge & AIProviderManager Audit ---');
+    const serverExports = require('./server.js');
+    record('AIProviderManager exported from server.js with 3-tier pool', Boolean(serverExports.AIProviderManager && Array.isArray(serverExports.AIProviderManager.providers) && serverExports.AIProviderManager.providers.length === 3));
+
+    const jsFiles = fs.readdirSync(path.join(__dirname, 'js')).filter(f => f.endsWith('.js'));
+    let leakedConsoleLogs = 0;
+    for (const f of jsFiles) {
+      const content = fs.readFileSync(path.join(__dirname, 'js', f), 'utf8');
+      if (/^[ \t]*console\.(log|debug)\(/m.test(content)) leakedConsoleLogs++;
+    }
+    record('Zero console.log / console.debug in public client bundles (js/*.js)', leakedConsoleLogs === 0, `leakedFiles=${leakedConsoleLogs}`);
+
+    const scratchInScripts = fs.existsSync(path.join(__dirname, 'scripts'))
+      ? fs.readdirSync(path.join(__dirname, 'scripts')).filter(f => /^(apply-|patch-|scratch-|tmp-)/i.test(f))
+      : [];
+    record('Zero scratch/patch scripts (apply-*, patch-*) in production directory', scratchInScripts.length === 0);
+
     serverHandle = await ensureServer();
     console.log(`Server ready on ${BASE_URL} (reused=${serverHandle.reused})\n`);
+
+    const dotEnvStatus = await httpGetStatus('/.env');
+    const encodedEnvStatus = await httpGetStatus('/%2eenv');
+    const bareEnvStatus = await httpGetStatus('/env');
+    const patchRouteStatus = await httpGetStatus('/apply-v2-upgrade.js');
+    record('.env and internal routes strictly blocked with HTTP 403 Forbidden',
+      dotEnvStatus === 403 && encodedEnvStatus === 403 && bareEnvStatus === 403 && patchRouteStatus === 403,
+      `/.env=${dotEnvStatus}, /%2eenv=${encodedEnvStatus}, /env=${bareEnvStatus}`);
 
     const chromePath = process.env.CHROME_PATH || 'C:\\Users\\asus1\\AppData\\Local\\ms-playwright\\chromium-1248\\chrome-win64\\chrome.exe';
     const launchOpts = { headless: true };
@@ -66,8 +96,8 @@ async function runAudit() {
     const context = await browser.newContext({ viewport: { width: 1440, height: 960 } });
     const page = await context.newPage();
 
-    // 1. Load Home Page & Verify Branding + No Leaked Internal Labels
-    console.log('--- 1. Branding & Leaked Internal Metadata Audit ---');
+    // 1. Load Home Page & Verify Branding + No Leaked Internal Labels + Modular Skeleton UI
+    console.log('\n--- 1. Branding, Leaked Metadata & Interactive Modular Skeleton Audit ---');
     await page.goto(BASE_URL + '/', { waitUntil: 'networkidle' });
     await page.waitForTimeout(300);
 
@@ -75,6 +105,11 @@ async function runAudit() {
       const bodyText = document.body.innerText || '';
       const headerLogo = document.querySelector('header .logo-mark img');
       const footerLogo = document.querySelector('footer .logo-mark img');
+
+      // Test interactive modular skeleton stage transitions
+      const skel = document.getElementById('pdfModularSkeleton');
+      const skelStagesText = skel ? skel.innerText : '';
+
       return {
         hasAstExtractor: /AST\s*EXTRACTOR/i.test(bodyText),
         hasCurriculumDag: /Curriculum\s*DAG/i.test(bodyText),
@@ -82,7 +117,8 @@ async function runAudit() {
         headerLogoSrc: headerLogo ? headerLogo.getAttribute('src') : null,
         headerLogoLoaded: headerLogo ? (headerLogo.complete && headerLogo.naturalWidth > 0) : false,
         footerLogoSrc: footerLogo ? footerLogo.getAttribute('src') : null,
-        footerLogoLoaded: footerLogo ? (footerLogo.complete && footerLogo.naturalWidth > 0) : false
+        footerLogoLoaded: footerLogo ? (footerLogo.complete && footerLogo.naturalWidth > 0) : false,
+        hasModularSkeleton: Boolean(skel && /1\.\s*Scanning Pages/i.test(skelStagesText) && /2\.\s*Synthesizing Architecture/i.test(skelStagesText) && /3\.\s*Generating Visual Assembly/i.test(skelStagesText))
       };
     });
 
@@ -91,11 +127,11 @@ async function runAudit() {
     record('No internal .ts/.json engineering paths leaked', !homeAudit.hasInternalPaths);
     record('Official metallic X logo rendered in Header', homeAudit.headerLogoSrc === '/assets/xamcode-metallic-x.png' && homeAudit.headerLogoLoaded, homeAudit.headerLogoSrc || 'missing');
     record('Official metallic X logo rendered in Footer', homeAudit.footerLogoSrc === '/assets/xamcode-metallic-x.png' && homeAudit.footerLogoLoaded, homeAudit.footerLogoSrc || 'missing');
+    record('Interactive Modular Skeleton present with [1. Scanning Pages] -> [2. Synthesizing Architecture] -> [3. Generating Visual Assembly]', homeAudit.hasModularSkeleton);
 
-    // 2. Simulate Uploaded PDF Study via Library & Open Study View
-    console.log('\n--- 2. Strict PDF Grounding & Dynamic Study Workspace ---');
+    // 2. Simulate Uploaded PDF Study & Verify Grounding + Ethics Badge + Sequential Hierarchy
+    console.log('\n--- 2. Strict PDF Grounding, AI Ethics Footer & Sequential Workspace ---');
     const studyAudit = await page.evaluate(async () => {
-      // Seed stale sample answer at key "0-0" to prove opening a PDF study resets it
       const st = window.XC.state;
       st.answers = { '0-0': 1, '0-1': 0 };
       localStorage.setItem('xc-progress', JSON.stringify({ answers: { '0-0': 1, '0-1': 0 }, visited: [0] }));
@@ -137,6 +173,7 @@ async function runAudit() {
             archetype: 'flow',
             summary: 'The canonical partition function Z normalizes the Boltzmann probability distribution across microstates E_i at temperature T.',
             sourcePage: 14,
+            sourceParagraph: 2,
             sourceExcerpt: 'For a canonical ensemble at fixed (N, V, T), the partition function is Z = Σ_i exp(-E_i / k_B T), and Helmholtz free energy is F = -k_B T ln Z.',
             keyPoints: [
               'Microstate Energy Spectrum — Discrete quantum energy states E_i accessible to the system',
@@ -198,18 +235,6 @@ async function runAudit() {
         ]
       };
 
-      // Save to XC.library and trigger data-library-open click to exercise real library flow
-      if (window.XC.library && typeof window.XC.library.saveStudy === 'function') {
-        await window.XC.library.saveStudy({
-          id: 'pdf-thermo-101',
-          title: customPdfStudy.title,
-          subject: customPdfStudy.subject,
-          summary: customPdfStudy.summary,
-          study: customPdfStudy
-        });
-      }
-
-      // Apply exact same state transitions as library/upload completion
       window.XC.TOPICS = window.XC.studyToTopics(customPdfStudy);
       st.aiStudy = customPdfStudy;
       st.aiCourseName = customPdfStudy.title;
@@ -227,12 +252,14 @@ async function runAudit() {
       const visualEl = document.getElementById('studyVisualSection');
       const cheatEl = document.getElementById('studyCheatSection');
       const vaathiyarEl = document.getElementById('studyVaathiyarSection');
+      const groundingEl = document.getElementById('sourceGroundingFooter');
       const auraEl = document.getElementById('auraChatPane');
       const studyBarLogo = document.querySelector('.study-bar img');
 
       const vRect = visualEl ? visualEl.getBoundingClientRect() : null;
       const cRect = cheatEl ? cheatEl.getBoundingClientRect() : null;
       const vaRect = vaathiyarEl ? vaathiyarEl.getBoundingClientRect() : null;
+      const gRect = groundingEl ? groundingEl.getBoundingClientRect() : null;
       const aRect = auraEl ? auraEl.getBoundingClientRect() : null;
 
       return {
@@ -245,6 +272,8 @@ async function runAudit() {
         visualTop: vRect ? Math.round(vRect.top) : -1,
         cheatTop: cRect ? Math.round(cRect.top) : -1,
         vaathiyarTop: vaRect ? Math.round(vaRect.top) : -1,
+        groundingPresent: Boolean(groundingEl && gRect && gRect.height > 30),
+        groundingText: groundingEl ? groundingEl.innerText : '',
         cheatHasContent: cheatEl ? cheatEl.innerText.trim().length > 80 : false,
         vaathiyarHasContent: vaathiyarEl ? /Vaathiyar Mode/i.test(vaathiyarEl.innerText) && vaathiyarEl.innerText.trim().length > 120 : false,
         auraMounted: Boolean(auraEl && aRect && aRect.width > 200 && aRect.height > 150),
@@ -265,6 +294,8 @@ async function runAudit() {
     );
     record('Cheat Code section populated with grounded topic summary & formulas', studyAudit.cheatHasContent);
     record('Vaathiyar Mode section populated with bilingual intuitive explanation & 8 modes', studyAudit.vaathiyarHasContent);
+    record('Source Grounding Footer rendered with verbatim anchor (Page 14 • Paragraph 2) & AI Ethics Badge',
+      studyAudit.groundingPresent && /Page 14\s*•\s*Paragraph 2/i.test(studyAudit.groundingText) && /Verified Against Uploaded Document\s*•\s*Zero Extraneous Hallucination/i.test(studyAudit.groundingText));
 
     // 3. Verify Quiz Option Clicking & Answer Selection State
     console.log('\n--- 3. Interactive Quiz Option Selection Audit ---');
@@ -313,6 +344,34 @@ async function runAudit() {
 
     record('Clicking AURA quick mastery chip appends user question & grounded response', auraChatAudit.msgCount >= 3 && auraChatAudit.hasResponse, `messages=${auraChatAudit.msgCount}`);
 
+    // 5. Responsive Mobile (390px) & Desktop (1440px) Visual Audit
+    console.log('\n--- 5. Responsive Mobile (390px) & Desktop (1440px) Audit ---');
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.waitForTimeout(200);
+    const mobileAudit = await page.evaluate(() => {
+      const v = document.getElementById('studyVisualSection');
+      const g = document.getElementById('sourceGroundingFooter');
+      const a = document.getElementById('auraChatPane');
+      return {
+        visualVisible: Boolean(v && v.getBoundingClientRect().width > 280 && v.getBoundingClientRect().width <= 390),
+        groundingVisible: Boolean(g && g.getBoundingClientRect().width > 280),
+        auraVisible: Boolean(a && a.getBoundingClientRect().width > 280)
+      };
+    });
+    record('Mobile (390px) renders Visual, Source Grounding & AURA Co-Pilot cleanly within viewport',
+      mobileAudit.visualVisible && mobileAudit.groundingVisible && mobileAudit.auraVisible);
+
+    await page.setViewportSize({ width: 1440, height: 960 });
+    await page.waitForTimeout(200);
+    const desktopAudit = await page.evaluate(() => {
+      const v = document.getElementById('studyVisualSection');
+      const a = document.getElementById('auraChatPane');
+      return {
+        twoColLayout: Boolean(v && a && v.getBoundingClientRect().left < a.getBoundingClientRect().left)
+      };
+    });
+    record('Desktop (1440px) restores side-by-side main study column & right rail layout', desktopAudit.twoColLayout);
+
   } finally {
     if (browser) {
       try { await browser.close(); } catch (_) {}
@@ -323,7 +382,7 @@ async function runAudit() {
   }
 
   const failed = results.filter(r => !r.passed);
-  console.log(`\n=== AUDIT SUMMARY: ${results.length - failed.length}/${results.length} CHECKS PASSED ===`);
+  console.log(`\n=== BENCHMARK SUMMARY: ${results.length - failed.length}/${results.length} CHECKS PASSED ===`);
   if (failed.length > 0) {
     console.error('Failed checks:', failed);
     process.exit(1);

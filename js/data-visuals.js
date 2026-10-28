@@ -1090,4 +1090,3 @@ window.XC.SVG = {
   svgRingBreak, svgHybrid, svgFiberMini, svgCoaxMini, svgRadioMini, svgFiberEMI
 };
 
-console.log('Data loaded: SVG functions =', Object.keys(window.XC.SVG).length);
