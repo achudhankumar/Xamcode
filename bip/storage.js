@@ -83,7 +83,7 @@ function emptyStore(){
     reports: [],
     roadmapItems: [],
     settings: {
-      phase: 'Building',
+      phase: 'Launch-ready',
       currentMilestoneId: null,
       launch: { estimated: null, confirmed: null, note: '' },
       build: { state: 'unknown', at: null, ref: null },

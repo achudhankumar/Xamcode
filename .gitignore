@@ -35,7 +35,6 @@ server_backup.txt
 xamcode.diff
 build-parts/inline.js
 dom-dump*.txt
-fixtures/real/
 
 scratch/
 *_diff.txt
