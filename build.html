@@ -3473,10 +3473,11 @@ function rest(){
     var e=(r&&r.estimate)||null;
     if(!e)throw new Error('estimate payload missing');
     S.est=e;S.estFetchedAt=Date.now();
-    rs(function(){restRender();});rs(function(){restTick();});
+    rs(function(){restRender();});
+    rs(function(){restTick();});
     if(!S.estTimer){try{S.estTimer=setInterval(restTick,1000);}catch(x){}}
   }).catch(function(){
-    S.est=null;stopEstTick();
+    S.est=null;
     st('estStage','unavailable');try{$('estStage').setAttribute('data-state','failed');}catch(x){}
     st('estNote','The live estimate could not be loaded right now — no projection is shown rather than a stale or invented one.');
     st('estTarget','projected date —');
@@ -3509,27 +3510,44 @@ function restRender(){
     return;
   }
   var tgt=Date.parse(e.projectedAt);
-  var srv=Date.parse(e.at);
   if(!isFinite(tgt)){stopEstTick();st('estNote','The server returned an unreadable projection — hiding the countdown rather than guessing.');var cc1=$('estCells');if(cc1)cc1.hidden=true;return;}
-  S.estAnchor={targetMs:tgt,serverAtMs:isFinite(srv)?srv:tgt,fetchLocalMs:S.estFetchedAt};
+  S.targetTimestamp=tgt;
   st('estNote','Model projection — recalculated from live task, bug and blocker data. Not a promise; it moves only when the underlying work moves.');
   st('estTarget','projected '+fm(e.projectedAt)+' · as of server time '+fm(e.at));
-  var cc=$('estCells');if(cc)cc.hidden=false;
+  var cc=$('estCells');
+  if(cc){
+    cc.hidden=false;
+    try{cc.removeAttribute('hidden');cc.style.display='flex';}catch(x){}
+  }
+  restTick();
 }
 function restTick(){
-  var a=S.estAnchor;if(!a)return;
-  var serverNow=a.serverAtMs+(Date.now()-a.fetchLocalMs);
-  var ms=a.targetMs-serverNow;
-  if(ms<0)ms=0;
-  var s=Math.floor(ms/1000);
-  st('ecdD',String(Math.floor(s/86400)));
-  st('ecdH',String(Math.floor(s%86400/3600)).padStart(2,'0'));
-  st('ecdM',String(Math.floor(s%3600/60)).padStart(2,'0'));
-  st('ecdS',String(s%60).padStart(2,'0'));
+  try{
+    var targetTimestamp=S.targetTimestamp||(S.est&&S.est.projectedAt?Date.parse(S.est.projectedAt):0);
+    if(!targetTimestamp||!isFinite(targetTimestamp))return;
+    const diff=Math.max(0,targetTimestamp-Date.now());
+    const days=Math.floor(diff/(1000*60*60*24));
+    const hours=Math.floor((diff/(1000*60*60))%24);
+    const minutes=Math.floor((diff/(1000*60))%60);
+    const seconds=Math.floor((diff/1000)%60);
+
+    var dEl=$('ecdD'),hEl=$('ecdH'),mEl=$('ecdM'),sEl=$('ecdS');
+    if(dEl){dEl.innerText=String(days);dEl.textContent=String(days);}
+    if(hEl){var vh=String(hours).padStart(2,'0');hEl.innerText=vh;hEl.textContent=vh;}
+    if(mEl){var vm=String(minutes).padStart(2,'0');mEl.innerText=vm;mEl.textContent=vm;}
+    if(sEl){var vs=String(seconds).padStart(2,'0');sEl.innerText=vs;sEl.textContent=vs;}
+
+    var cc=$('estCells');
+    if(cc&&cc.hidden){
+      cc.hidden=false;
+      try{cc.removeAttribute('hidden');cc.style.display='flex';}catch(x){}
+    }
+  }catch(err){}
 }
 function stopEstTick(){if(S.estTimer){clearInterval(S.estTimer);S.estTimer=null;}}
 function restRefreshBind(){
   rs(function(){rest();});
+  if(!S.estTimer){try{S.estTimer=setInterval(restTick,1000);}catch(e){}}
   try{window.addEventListener('focus',function(){rest();});}catch(e){}
   try{document.addEventListener('visibilitychange',function(){if(!document.hidden)rest();});}catch(e){}
   if(!S.estRefreshTimer){try{S.estRefreshTimer=setInterval(function(){rest();},60000);}catch(e){}}
