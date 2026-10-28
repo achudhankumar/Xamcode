@@ -3511,9 +3511,22 @@ function restRender(){
   }
   var tgt=Date.parse(e.projectedAt);
   if(!isFinite(tgt)){stopEstTick();st('estNote','The server returned an unreadable projection — hiding the countdown rather than guessing.');var cc1=$('estCells');if(cc1)cc1.hidden=true;return;}
-  S.targetTimestamp=tgt;
+
+  // Establish ONE single, immutable future target timestamp derived from backend effort calculation (serverTimestamp + remainingMs)
+  var serverTimestamp=Date.parse(e.at)||Date.now();
+  var remainingHours=Number(e.remainingHours)||0;
+  var vel=Number(e.velocityHoursPerDay)||8;
+  var remainingMs=Math.ceil(remainingHours/(vel/8))*86400000;
+  var calculatedTarget=tgt||(serverTimestamp+remainingMs);
+
+  // Lock targetTime to prevent 60-second polling loops from resetting seconds
+  if(!S.targetTime||S.lastRemainingHours!==remainingHours||S.targetTime<=Date.now()){
+    S.targetTime=calculatedTarget;
+    S.lastRemainingHours=remainingHours;
+  }
+
   st('estNote','Model projection — recalculated from live task, bug and blocker data. Not a promise; it moves only when the underlying work moves.');
-  st('estTarget','projected '+fm(e.projectedAt)+' · as of server time '+fm(e.at));
+  st('estTarget','projected '+fm(new Date(S.targetTime).toISOString())+' · as of server time '+fm(e.at));
   var cc=$('estCells');
   if(cc){
     cc.hidden=false;
@@ -3523,16 +3536,16 @@ function restRender(){
 }
 function restTick(){
   try{
-    var targetTimestamp=S.targetTimestamp||(S.est&&S.est.projectedAt?Date.parse(S.est.projectedAt):0);
-    if(!targetTimestamp||!isFinite(targetTimestamp))return;
-    const diff=Math.max(0,targetTimestamp-Date.now());
+    var targetTime=S.targetTime||(S.est&&S.est.projectedAt?Date.parse(S.est.projectedAt):0);
+    if(!targetTime||!isFinite(targetTime))return;
+    const diff=Math.max(0,targetTime-Date.now());
     const days=Math.floor(diff/(1000*60*60*24));
-    const hours=Math.floor((diff/(1000*60*60))%24);
-    const minutes=Math.floor((diff/(1000*60))%60);
-    const seconds=Math.floor((diff/1000)%60);
+    const hours=Math.floor((diff%(1000*60*60*24))/(1000*60*60));
+    const minutes=Math.floor((diff%(1000*60*60))/(1000*60));
+    const seconds=Math.floor((diff%(1000*60))/1000);
 
     var dEl=$('ecdD'),hEl=$('ecdH'),mEl=$('ecdM'),sEl=$('ecdS');
-    if(dEl){dEl.innerText=String(days);dEl.textContent=String(days);}
+    if(dEl){var vd=String(days);dEl.innerText=vd;dEl.textContent=vd;}
     if(hEl){var vh=String(hours).padStart(2,'0');hEl.innerText=vh;hEl.textContent=vh;}
     if(mEl){var vm=String(minutes).padStart(2,'0');mEl.innerText=vm;mEl.textContent=vm;}
     if(sEl){var vs=String(seconds).padStart(2,'0');sEl.innerText=vs;sEl.textContent=vs;}
