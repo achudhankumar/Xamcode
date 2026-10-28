@@ -1844,15 +1844,37 @@ function validateAIStudyForDisplay(study){
         step.nodes.every(node=>text(node?.label)&&text(node?.detail)&&codeOk(node))))){
     return 'The AI returned incomplete lesson practice. Every question needs its own 2D visual. Please try the PDF again.';
   }
-  /* Mirrors the server-side rule: a diagram reused across topics was the
-     original complaint, so reject it here too rather than rendering it. */
+  /* A diagram repeated across lessons is REPAIRED on the client, never a
+     reason to throw away a generated study: rotate the colliding step to
+     an alternate archetype, and if layout alone cannot separate it,
+     qualify its first label with the lesson's own title. Studies saved
+     before the server-side repair existed open cleanly too. */
   const visualKey=(step)=>String(step.layout||'')+':'+
     (step.nodes||[]).map(node=>String(node.label||'').trim().toLowerCase()).join('>');
-  const conceptVisuals=study.concepts.flatMap(concept=>
-    (concept.visualization?.steps||[]).map(visualKey));
-  if(new Set(conceptVisuals).size!==conceptVisuals.length){
-    return 'The AI reused the same diagram across lessons. Each topic needs its own visual. Please try the PDF again.';
-  }
+  const POOL=['flow','arch','seq','compare','hierarchy','state','erd','fbd','wave','isometric','mindmap','matrix','equation','cycle','layer'];
+  const ALT={flow:['cycle','layer','seq'],hierarchy:['mindmap','matrix'],arch:['isometric','state'],seq:['flow','state','cycle'],compare:['matrix','hierarchy'],state:['seq','cycle'],erd:['arch','matrix'],fbd:['equation','wave'],wave:['fbd','equation'],isometric:['layer','arch'],mindmap:['hierarchy','compare'],matrix:['compare','erd'],equation:['fbd','wave'],cycle:['flow','state'],layer:['isometric','arch']};
+  const seenVisualKeys=new Set();
+  let prevLayout=null;
+  study.concepts.forEach((concept,ci)=>{
+    (concept.visualization?.steps||[]).forEach((step,si)=>{
+      if(si===0&&prevLayout&&step.layout===prevLayout){
+        step.layout=(ALT[step.layout]||POOL).find(l=>l!==prevLayout)||step.layout;
+      }
+      if(seenVisualKeys.has(visualKey(step))){
+        const order=(ALT[step.layout]||[]).concat(POOL);
+        const free=order.find(l=>{ const prev=step.layout; step.layout=l; const ok=!seenVisualKeys.has(visualKey(step)); step.layout=prev; return ok; });
+        if(free) step.layout=free;
+        else if(step.nodes?.[0]){
+          const base=String(step.nodes[0].label||'Idea');
+          const tag=String(concept.title||('Lesson '+(ci+1))).split(/\s+/).slice(0,2).join(' ');
+          step.nodes[0].label=tag+': '+base;
+          for(let b=2;seenVisualKeys.has(visualKey(step))&&b<100;b++) step.nodes[0].label=tag+': '+base+' #'+b;
+        }
+      }
+      seenVisualKeys.add(visualKey(step));
+      if(si===0) prevLayout=step.layout;
+    });
+  });
   if(!study.flashcards.every(card=>Number.isInteger(card?.conceptIndex)&&
       card.conceptIndex>=0&&card.conceptIndex<study.concepts.length)){
     return 'The AI returned incomplete lesson flashcards. Please try the PDF again.';

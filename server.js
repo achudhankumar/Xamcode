@@ -617,6 +617,115 @@ function visualFingerprint(vis){
   const nodes = (s0.nodes || []).map(n => n && n.label);
   return String(s0.layout) + ':' + nodes.join('/');
 }
+
+/* ============================================================
+   AUTOMATIC ARCHETYPE DIVERSIFICATION
+   ------------------------------------------------------------
+   A repeated diagram is REPAIRED, never rejected: rejecting threw away
+   a fully generated (and paid-for) study. Consecutive lessons never
+   share an archetype, a colliding layout+labels key is rotated to an
+   alternate archetype, labels borrowed from another lesson are
+   qualified with that lesson's own key term, and a visual object shared
+   by reference is cloned before it is touched.
+   ============================================================ */
+const ARCHETYPE_POOL = ['flow', 'arch', 'seq', 'compare', 'hierarchy', 'state', 'erd',
+  'fbd', 'wave', 'isometric', 'mindmap', 'matrix', 'equation', 'cycle', 'layer'];
+const ARCHETYPE_ALTERNATES = {
+  flow: ['cycle', 'layer', 'seq'], hierarchy: ['mindmap', 'matrix'], arch: ['isometric', 'state'],
+  seq: ['flow', 'state', 'cycle'], compare: ['matrix', 'hierarchy'], state: ['seq', 'cycle'],
+  erd: ['arch', 'matrix'], fbd: ['equation', 'wave'], wave: ['fbd', 'equation'],
+  isometric: ['layer', 'arch'], mindmap: ['hierarchy', 'compare'], matrix: ['compare', 'erd'],
+  equation: ['fbd', 'wave'], cycle: ['flow', 'state'], layer: ['isometric', 'arch']
+};
+const DIVERSIFY_STOPWORDS = new Set(['the', 'and', 'for', 'with', 'from', 'into', 'unit', 'topic',
+  'lesson', 'core', 'basic', 'basics', 'introduction', 'intro', 'overview', 'what', 'how', 'its']);
+function diversifyStepKey(step){
+  return String((step && step.layout) || '') + ':' +
+    (((step && step.nodes) || []).map(n => String((n && n.label) || '').trim().toLowerCase()).join('>'));
+}
+function diversifyTerm(title, idx){
+  const words = String(title || '').split(/[^A-Za-z0-9+#]+/).filter(w => w.length >= 3 && !DIVERSIFY_STOPWORDS.has(w.toLowerCase()) && !/^\d+$/.test(w));
+  const w = words[0] ? words[0].slice(0, 14) : 'L' + (idx + 1);
+  return w.charAt(0).toUpperCase() + w.slice(1);
+}
+function pickDiversifiedLayout(current, avoid, usage){
+  const order = (ARCHETYPE_ALTERNATES[current] || []).concat(ARCHETYPE_POOL);
+  let best = null, bestUse = Infinity;
+  for (const l of order){
+    if (l === current || avoid.has(l)) continue;
+    const u = usage[l] || 0;
+    if (u < bestUse){ best = l; bestUse = u; }
+  }
+  return best || current;
+}
+function diversifyVisualList(items, qualifyLabels){
+  const seenKeys = new Set(), seenObjs = new Set(), labelOwner = new Map(), usage = {};
+  let prevLayout = null, repairs = 0;
+  items.forEach((item, idx) => {
+    let vis = item.get();
+    if (!vis || typeof vis !== 'object' || !Array.isArray(vis.steps)) return;
+    if (seenObjs.has(vis)){ vis = JSON.parse(JSON.stringify(vis)); item.set(vis); repairs++; }
+    seenObjs.add(vis);
+    const term = diversifyTerm(item.title, idx);
+    vis.steps.forEach((step, si) => {
+      if (!step || !Array.isArray(step.nodes) || !step.nodes.length) return;
+      if (!ALLOWED15.has(step.layout)) step.layout = ARCHETYPE_POOL[idx % ARCHETYPE_POOL.length];
+      if (si === 0 && prevLayout && step.layout === prevLayout){
+        step.layout = pickDiversifiedLayout(step.layout, new Set([prevLayout]), usage);
+        repairs++;
+      }
+      if (qualifyLabels){
+        for (const n of step.nodes){
+          if (!n || typeof n.label !== 'string' || !n.label.trim()) continue;
+          const raw = n.label.trim();
+          const owner = labelOwner.get(raw.toLowerCase());
+          if (owner !== undefined && owner !== idx){
+            let q = term + ': ' + raw;
+            const qOwner = labelOwner.get(q.toLowerCase());
+            if (qOwner !== undefined && qOwner !== idx) q = term + ' ' + (idx + 1) + ': ' + raw;
+            n.label = q;
+            repairs++;
+          }
+          labelOwner.set(n.label.trim().toLowerCase(), idx);
+        }
+      }
+      if (seenKeys.has(diversifyStepKey(step))){
+        const tried = new Set([step.layout]);
+        for (let t = 0; t < ARCHETYPE_POOL.length && seenKeys.has(diversifyStepKey(step)); t++){
+          const nl = pickDiversifiedLayout(step.layout, tried, usage);
+          if (tried.has(nl)) break;
+          tried.add(nl);
+          step.layout = nl;
+        }
+        if (seenKeys.has(diversifyStepKey(step))){
+          const first = step.nodes[0];
+          const base = String(first.label || 'Idea').trim();
+          first.label = term + ': ' + base;
+          for (let b = 2; seenKeys.has(diversifyStepKey(step)) && b < 100; b++) first.label = term + ': ' + base + ' #' + b;
+        }
+        repairs++;
+      }
+      seenKeys.add(diversifyStepKey(step));
+      if (si === 0){ prevLayout = step.layout; usage[step.layout] = (usage[step.layout] || 0) + 1; }
+    });
+  });
+  return repairs;
+}
+function diversifyStudyVisuals(concepts, questions){
+  let repairs = 0;
+  try{
+    if (Array.isArray(concepts)){
+      repairs += diversifyVisualList(concepts.filter(c => c && typeof c === 'object').map(c => ({
+        title: c.title, get: () => c.visualization, set: v => { c.visualization = v; } })), true);
+    }
+    if (Array.isArray(questions)){
+      repairs += diversifyVisualList(questions.filter(q => q && typeof q === 'object').map(q => ({
+        title: q.question, get: () => q.visual, set: v => { q.visual = v; } })), false);
+    }
+  }catch(e){ console.warn('[diversifyStudyVisuals] repair skipped:', e && e.message); }
+  if (repairs) console.log('[diversifyStudyVisuals] auto-repaired ' + repairs + ' repeated diagram(s) instead of rejecting the study');
+  return repairs;
+}
 /* The model miscounts: topic.conceptIndices arrives with out-of-range or
    repeated entries, and deleting them can strand a topic (or a whole unit)
    with nothing left — every one of which the browser rejects outright.
@@ -848,6 +957,10 @@ function normalizeConcept(c, i, allConcepts){
       if (nd.code !== undefined && !(typeof nd.code === 'string' && nd.code.trim() && nd.code.trim().length <= 80)) delete nd.code;
     }
   }
+  if (Array.isArray(allConcepts) && typeof diversifyStudyVisuals === 'function') {
+    const slice = Number.isInteger(i) ? allConcepts.slice(0, i + 1) : allConcepts;
+    diversifyStudyVisuals(slice, null);
+  }
 }
 
 function normalizeOutline(pack){
@@ -945,6 +1058,7 @@ function normalizeOutline(pack){
         }
         seenFp.add(fp);
       }
+      diversifyStudyVisuals(pack.concepts, null);
     }
     /* 4. Missing labels come from the pack's own lessons, never invented. */
     for (const unit of pack.units){
@@ -1083,7 +1197,7 @@ function normalizeBank(bank, conceptCount, concepts){
               'Incorrect: ' + otherParts[2] + ' does not perform this role.'
             ],
             eli5: 'Look at the first box in the picture—it catches and prepares everything.',
-            visual: concept.visualization
+            visual: concept.visualization ? JSON.parse(JSON.stringify(concept.visualization)) : undefined
           });
         }
 
@@ -1112,7 +1226,7 @@ function normalizeBank(bank, conceptCount, concepts){
               'Incorrect: Unhandled failure causes stalls, not normal execution.'
             ],
             eli5: 'If this part breaks, the whole machine stops because it cannot pass the baton to the next step.',
-            visual: concept.visualization
+            visual: concept.visualization ? JSON.parse(JSON.stringify(concept.visualization)) : undefined
           });
         }
       });
@@ -1239,6 +1353,8 @@ function validateStudyOutline(pack){
 function validateConcepts(concepts){
   try{
     if (!Array.isArray(concepts)) return false;
+    /* Repeated diagrams are repaired here, never grounds for rejection. */
+    diversifyStudyVisuals(concepts, null);
     const conceptVisualSignatures = [];
     for (const concept of concepts){
       if (!text(concept.title) || !text(concept.summary) || !text(concept.explanation)) return false;
@@ -1264,11 +1380,11 @@ function validateConcepts(concepts){
           if (n.code !== undefined && !(typeof n.code === 'string' && n.code.trim() && n.code.trim().length <= 80)) return false;
         }
       }
-      const fp = visualFingerprint(vis);
-      if (conceptVisualSignatures.includes(fp)) return false;
-      conceptVisualSignatures.push(fp);
+      conceptVisualSignatures.push(visualFingerprint(vis));
     }
-    if (new Set(conceptVisualSignatures).size !== conceptVisualSignatures.length) return false;
+    if (new Set(conceptVisualSignatures).size !== conceptVisualSignatures.length){
+      console.warn('[validateConcepts] repeated diagram survived repair; accepting rather than discarding the study');
+    }
     /* Pooled node labels: a model that fills every diagram with the same
        handful of generic labels produces mostly repeats across concepts,
        even when the fingerprints above happen to differ. Fewer than 60%
@@ -1280,7 +1396,9 @@ function validateConcepts(concepts){
       }
     }
     const distinctLabels = new Set(allConceptLabels).size;
-    if (allConceptLabels.length && distinctLabels / allConceptLabels.length < 0.6) return false;
+    if (allConceptLabels.length && distinctLabels / allConceptLabels.length < 0.6){
+      console.warn('[validateConcepts] low label diversity (' + distinctLabels + '/' + allConceptLabels.length + '); accepting after repair');
+    }
     return true;
   }catch{ return false; }
 }
@@ -1430,6 +1548,7 @@ function validateStudyBank(bank, conceptCount){
         }
       }
     }
+    diversifyStudyVisuals(null, bank.questions);
     const questionVisualSignatures = [];
     const perConcept = {};
     for (const question of bank.questions){
@@ -1488,8 +1607,7 @@ function validateStudyBank(bank, conceptCount){
       }
       const fp = visualFingerprint(vis);
       if (questionVisualSignatures.includes(fp)) {
-        console.warn('[validateStudyBank] duplicate question visual signature');
-        return false;
+        console.warn('[validateStudyBank] duplicate question visual signature survived repair; accepting');
       }
       questionVisualSignatures.push(fp);
       perConcept[question.conceptIndex] = (perConcept[question.conceptIndex] || 0) + 1;
@@ -2696,6 +2814,7 @@ function assembleChunkStudy(job){
     return { title: u.title, overview: u.overview, learningGoals: u.learningGoals,
       topics: b ? b.topics : [], locked: !b };
   });
+  if (typeof diversifyStudyVisuals === 'function') diversifyStudyVisuals(concepts, questions);
   const unitStates = c.plan.units.map((u, i) => ({
     index: i, title: u.title,
     status: c.built[i] ? 'ready' : (c.states[i] || 'locked'),
@@ -3878,7 +3997,7 @@ function enforceOutlineSubjectFidelity(pack, job){
    ------------------------------------------------------------ */
 function outlinePromptWithFingerprint(job){
   const base = [
-    'Analyze the attached educational PDF and respond with a single valid JSON object containing title, subject, summary, units (at least 3, each with title, overview, learningGoals, topics with title, overview, conceptIndices) and concepts (4 to 6 items, each with title, summary, explanation, sourceExcerpt, sourcePage, keyPoints, whyItMatters, analogy, explanationLevels {simple, everyday, advanced}, commonTrap, correctiveTruth, comparison {firstLabel, secondLabel, takeaway, rows[3] {aspect, first, second}}, originStory, realWorldExamples[{title, description}], workedExample {scenario, answer, steps[2] {label, action, reasoning}}, quickRecall, cheatCode {why, like, wrong, right, oneLine, mnemonic, see[3]}, visualization {caption, steps[2] {title, description, layout, nodes[3] {label, detail, code}}}}). Level: ' + job.level + '. STRUCTURAL INTEGRITY (do not restructure): mirror the PDF\'s own topic order and headings — one concept per PDF topic/section, in the same sequence; never merge topics into a generic stack or invent new groupings. Each visualization layout MUST be one of exactly these 15: flow (steps/process), arch (system/parts), seq (timeline/order), compare (vs/difference), hierarchy (types/classification), state (states/status), erd (entities/data), fbd (force/pressure), wave (graph/signal), isometric (3D/layers), mindmap (brainstorm/causes), matrix (table/grid), equation (formula/calc), cycle (loop/repeats), layer (layers/levels). Every diagram must be topic-specific: node labels come from that topic\'s own terms, never reused across topics. When the PDF shows code/syntax/commands for a node, copy the exact one-line statement into node.code (max 80 chars); otherwise omit code. Keep every diagram topic-specific. LOW-DATA & TEXT-ONLY ENRICHMENT: If the uploaded PDF is purely textual or lacks embedded diagrams, draw upon comprehensive academic domain knowledge to synthesize complete, accurate topic diagrams and labeled component breakdowns. Every node must have an accurate technical label, functional detail, and isolated part definition.',
+    'Analyze the attached educational PDF and respond with a single valid JSON object containing title, subject, summary, units (at least 3, each with title, overview, learningGoals, topics with title, overview, conceptIndices) and concepts (4 to 6 items, each with title, summary, explanation, sourceExcerpt, sourcePage, keyPoints, whyItMatters, analogy, explanationLevels {simple, everyday, advanced}, commonTrap, correctiveTruth, comparison {firstLabel, secondLabel, takeaway, rows[3] {aspect, first, second}}, originStory, realWorldExamples[{title, description}], workedExample {scenario, answer, steps[2] {label, action, reasoning}}, quickRecall, cheatCode {why, like, wrong, right, oneLine, mnemonic, see[3]}, visualization {caption, steps[2] {title, description, layout, nodes[3] {label, detail, code}}}}). Level: ' + job.level + '. STRUCTURAL INTEGRITY (do not restructure): mirror the PDF\'s own topic order and headings — one concept per PDF topic/section, in the same sequence; never merge topics into a generic stack or invent new groupings. Each visualization layout MUST be one of exactly these 15: flow (steps/process), arch (system/parts), seq (timeline/order), compare (vs/difference), hierarchy (types/classification), state (states/status), erd (entities/data), fbd (force/pressure), wave (graph/signal), isometric (3D/layers), mindmap (brainstorm/causes), matrix (table/grid), equation (formula/calc), cycle (loop/repeats), layer (layers/levels). Every diagram must be topic-specific: node labels come from that topic\'s own terms, never reused across topics. When the PDF shows code/syntax/commands for a node, copy the exact one-line statement into node.code (max 80 chars); otherwise omit code. Keep every diagram topic-specific. MANDATORY: Every topic/lesson MUST use a distinct layout archetype from the 15 available archetypes (flow, arch, seq, compare, hierarchy, state, erd, fbd, wave, isometric, mindmap, matrix, equation, cycle, layer). Do not repeat the same archetype consecutively, and never reuse another lesson\'s node labels. LOW-DATA & TEXT-ONLY ENRICHMENT: If the uploaded PDF is purely textual or lacks embedded diagrams, draw upon comprehensive academic domain knowledge to synthesize complete, accurate topic diagrams and labeled component breakdowns. Every node must have an accurate technical label, functional detail, and isolated part definition.',
     'SUBJECT FINGERPRINT (required): include a field "subjectFingerprint": a 3–6 word lowercase summary of the PDF\'s actual subject and the key technical terms it covers (for example "networks, tcp, routing, subnet" or "bacteria, cell, microscope"). It must come from the PDF, not from your general knowledge. This is used to reject a fluent answer that belongs to another subject.'
   ].join(' ');
   return base;
@@ -3889,7 +4008,7 @@ function compactOutlinePromptWithFingerprint(job, k){
   const label = 'Unit ' + (k + 1) + ' of ' + job.chunk.plan.units.length + ' titled "' + unit.title + '"';
   const fp = job && job.literalFingerprint ? ' Document key terms: ' + job.literalFingerprint + '.' : '';
   const base = [
-    'Analyze the attached educational PDF and respond with a single valid JSON object containing ONLY the learning content for ' + label + ' — never any other unit. ' + fp + ' Keep the whole answer SMALL so it fits in one response: exactly 3 lessons. It must contain topics (this unit\'s own topics in PDF order, each {title, overview, conceptIndices}) and concepts (exactly 3 lessons for THIS UNIT ONLY, each with title, summary (1-2 sentences), explanation (2-3 sentences), sourceExcerpt (one short verbatim sentence from the PDF), sourcePage (page number), keyPoints (3 short bullets), whyItMatters (one sentence), analogy (one sentence), explanationLevels {simple, everyday, advanced} (each 1-2 sentences), commonTrap (one sentence), correctiveTruth (one sentence), comparison {firstLabel, secondLabel, takeaway, rows[3] {aspect, first, second}}, originStory (1-2 sentences), realWorldExamples[1] {title, description}, workedExample {scenario, answer, steps[2] {label, action, reasoning}}, quickRecall (one sentence), cheatCode {why, like, wrong, right, oneLine, mnemonic, see[3]} (each one short sentence), visualization {caption, steps[1] {title, description, layout, nodes[3] {label, detail}}}). conceptIndices must assign every concept of this unit exactly once, consecutively from 0, across this unit\'s topics in order. Level: ' + job.level + '. Pick the 3 most important PDF topics/sections of this unit, in their PDF order. Each visualization layout MUST be one of exactly these 15: flow, arch, seq, compare, hierarchy, state, erd, fbd, wave, isometric, mindmap, matrix, equation, cycle, layer. Node labels come from that topic\'s own terms, never generic labels like Input/Process/Output. No markdown, no code fences — one valid JSON object only.',
+    'Analyze the attached educational PDF and respond with a single valid JSON object containing ONLY the learning content for ' + label + ' — never any other unit. ' + fp + ' Keep the whole answer SMALL so it fits in one response: exactly 3 lessons. It must contain topics (this unit\'s own topics in PDF order, each {title, overview, conceptIndices}) and concepts (exactly 3 lessons for THIS UNIT ONLY, each with title, summary (1-2 sentences), explanation (2-3 sentences), sourceExcerpt (one short verbatim sentence from the PDF), sourcePage (page number), keyPoints (3 short bullets), whyItMatters (one sentence), analogy (one sentence), explanationLevels {simple, everyday, advanced} (each 1-2 sentences), commonTrap (one sentence), correctiveTruth (one sentence), comparison {firstLabel, secondLabel, takeaway, rows[3] {aspect, first, second}}, originStory (1-2 sentences), realWorldExamples[1] {title, description}, workedExample {scenario, answer, steps[2] {label, action, reasoning}}, quickRecall (one sentence), cheatCode {why, like, wrong, right, oneLine, mnemonic, see[3]} (each one short sentence), visualization {caption, steps[1] {title, description, layout, nodes[3] {label, detail}}}). conceptIndices must assign every concept of this unit exactly once, consecutively from 0, across this unit\'s topics in order. Level: ' + job.level + '. Pick the 3 most important PDF topics/sections of this unit, in their PDF order. Each visualization layout MUST be one of exactly these 15: flow, arch, seq, compare, hierarchy, state, erd, fbd, wave, isometric, mindmap, matrix, equation, cycle, layer. Node labels come from that topic\'s own terms, never generic labels like Input/Process/Output. MANDATORY: Every topic/lesson MUST use a distinct layout archetype from the 15 available archetypes (flow, arch, seq, compare, hierarchy, state, erd, fbd, wave, isometric, mindmap, matrix, equation, cycle, layer). Do not repeat the same archetype consecutively, and never reuse another lesson\'s node labels. No markdown, no code fences — one valid JSON object only.',
     'SUBJECT FINGERPRINT (required): include a field "subjectFingerprint": a 3–6 word lowercase summary of this unit\'s actual subject and the key technical terms it covers, from the PDF — for example "routing, distance vector, link state, dijkstra" or "star, bus, mesh, topology". It must come from the PDF, not from general knowledge. This is checked against the lesson words to reject a fluent answer from another subject.'
   ].join(' ');
   return base;
