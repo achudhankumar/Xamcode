@@ -5,6 +5,7 @@
   "description": "XamCode AI v2.0 — 3D Interactive Exam Study Platform with Visual Mode, Cheat Code, 8-Section Vaathiyar Mode, Dynamic Quiz Diagrams, and Grounded Aura AI Tutor",
   "main": "server.js",
   "scripts": {
+    "build": "npm run check && npm --prefix aura-visuals run build && npm --prefix aura-visuals run build:browser",
     "start": "node server.js",
     "dev": "node server.js",
     "patch:existing": "node scripts/apply-v2-upgrade.js",

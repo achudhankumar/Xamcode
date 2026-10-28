@@ -90,6 +90,9 @@ aiQuizVisualStep: 0,
   simSpeed: 1
 };
 
+
+
+
 function escapeHtml(value){
   return String(value ?? '').replace(/[&<>"']/g, character => ({
     '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
@@ -99,18 +102,30 @@ function escapeHtml(value){
 function loadSavedAnswers(){
   const raw = localStorage.getItem('xc-progress');
   if(!raw) return {};
+
+
+
   let saved;
   try{
     saved = JSON.parse(raw);
   }catch(error){
     console.warn('Saved quiz progress could not be parsed; starting with empty progress.', error);
     return {};
+
+
+
   }
   if(!saved || typeof saved!=='object' || Array.isArray(saved)){
     console.warn('Saved quiz progress has an invalid shape; starting with empty progress.');
     return {};
+
+
+
   }
   const answers = {};
+
+
+
   Object.entries(saved).forEach(([key, value])=>{
     const match = /^(\d+)-(\d+)$/.exec(key);
     if(!match){
@@ -162,6 +177,9 @@ function applyTheme(theme, mode){
       knob.parentElement?.setAttribute('title', label);
     }
   };
+
+
+
   if(!applyTheme.ready){
     applyTheme.ready = true;
     commit();
@@ -390,30 +408,48 @@ function initInteractivePreview(){
       if(titleEl) titleEl.textContent = 'Kinematic Mechanical Drive';
       if(subEl) subEl.textContent = 'Pedal crank rotation, moving chain, gear ratio transmission & live km/h speed';
       if(askBtn) askBtn.onclick = () => { if(window.XC.aura){ window.XC.aura.open(); window.XC.aura.ask('How does a bicycle work?'); } };
+
+
+
     } else if(type === 'engine' && window.XC && window.XC.auraVisuals){
       activePreviewPlayer = window.XC.auraVisuals.createPlayer('engine', { rpm: 1800 });
       stage.appendChild(activePreviewPlayer.el);
       if(titleEl) titleEl.textContent = 'Four-Stroke Otto Cycle';
       if(subEl) subEl.textContent = 'Slider-crank kinematics, reciprocating piston, spark flame & 4-stroke cycle phases';
       if(askBtn) askBtn.onclick = () => { if(window.XC.aura){ window.XC.aura.open(); window.XC.aura.ask('Explain the four-stroke internal combustion engine cycle'); } };
+
+
+
     } else if(type === 'heart' && window.XC && window.XC.auraVisuals){
       activePreviewPlayer = window.XC.auraVisuals.createPlayer('heart', { bpm: 72 });
       stage.appendChild(activePreviewPlayer.el);
       if(titleEl) titleEl.textContent = 'Cardiac Cycle & ECG Waveform';
       if(subEl) subEl.textContent = 'Atrial/ventricular systole & diastole with real-time synchronized ECG voltage graph';
       if(askBtn) askBtn.onclick = () => { if(window.XC.aura){ window.XC.aura.open(); window.XC.aura.ask('How does the human heart pump blood through the cardiac chambers?'); } };
+
+
+
     } else if(type === 'sort' && window.XC && window.XC.interactiveSimulations){
       const steps = window.XC.interactiveSimulations.generateBubbleSortSteps([5, 1, 4, 2, 8]);
       const initialStep = steps[0] || {};
+
+
+
       stage.innerHTML = window.XC.interactiveSimulations.renderBubbleSortPlayerHtml('pvStageBubble', 0, steps.length, initialStep, 1, false);
       if(titleEl) titleEl.textContent = 'Algorithm State Machine';
       if(subEl) subEl.textContent = 'Bubble Sort deterministic trace with step-by-step comparisons, swaps & pseudocode';
       if(askBtn) askBtn.onclick = () => { if(window.XC.aura){ window.XC.aura.open(); window.XC.aura.ask('How does Bubble Sort work step by step?'); } };
+
+
+
     } else {
       stage.innerHTML = renderNetworkSvg();
       if(titleEl) titleEl.textContent = 'Network Layer Architecture';
       if(subEl) subEl.textContent = 'OSI 7-layer packet journey, router routing tables & TCP/IP stack';
       if(askBtn) askBtn.onclick = () => { if(window.XC.aura){ window.XC.aura.open(); window.XC.aura.ask('Explain the OSI 7-layer model vs TCP/IP architecture'); } };
+
+
+
     }
   }
 
@@ -593,6 +629,9 @@ function initLandingQuiz(){
         }
       }
     };
+
+
+
   });
 }
 
@@ -969,6 +1008,9 @@ let libraryCacheAt = 0;
 function libraryView(){
   const trial = window.XC?.library ? window.XC.library.trialStatus()
     : { daysLeft: 30, expired: false };
+
+
+
   const items = Array.isArray(libraryCache) ? libraryCache : [];
   const banner = trial.expired
     ? `<div class="ai-study-notice" role="alert">Your 30-day trial ended — stored studies were deleted. <button type="button" class="btn-primary" data-library-renew>Renew trial</button></div>`
@@ -1005,9 +1047,15 @@ function wsUnitProgress(list){
   const done = list.filter(t=>wsConceptDone(t._idx)).length;
   const unitQ = list.reduce((s,t)=>s+t.questions.length,0);
   return { done, unitQ };
+
+
+
 }
 function workspaceViewInner(){
   const units = {};
+
+
+
   getTopics().forEach((t, i) => {
     const u = t.unit || 'I';
     if(!units[u]) units[u] = [];
@@ -1020,6 +1068,9 @@ function workspaceViewInner(){
     'IV':'UNIT IV: Transport Layer',
     'V':'UNIT V: Application Layer'
   };
+
+
+
   const totalConcepts = TOPICS.length;
   const totalQuestions = TOPICS.reduce((s,t)=>s+t.questions.length,0);
   const totalVisuals = TOPICS.filter(t=>typeof t.visual==='function' || (t.visual && t.visual.steps)).length;
@@ -1141,6 +1192,9 @@ function aiEngineLayout(serverLayout, step, conceptTitle){
     cycle: 'cycle', layer: 'layers',
     tree: 'tree', layers: 'layers', stack: 'stack',
     timeline: 'timeline', stepchain: 'stepchain', radial: 'radial' };
+
+
+
   if (map[s]) return map[s];
   return aiPickLayout(step, conceptTitle);
 }
@@ -1212,6 +1266,9 @@ function aiDiagramPositions(layout,count){
   if(layout==='tree'){
     /* Root with a binary fan below, which is what "branches" implies. */
     const root={x:centerX,y:74};
+
+
+
     const kids=Array.from({length:Math.max(1,count-1)},(_,index)=>({
       x:centerX+(index-(count-2)/2)*Math.min(150,330/Math.max(1,count-2)),
       y:238
@@ -1231,6 +1288,9 @@ function aiDiagramPositions(layout,count){
   return Array.from({length:count},(_,index)=>{
     const angle=-Math.PI/2+(Math.PI*2*index/count);
     return {x:centerX+Math.cos(angle)*radius,y:centerY+Math.sin(angle)*radius};
+
+
+
   });
 }
 
@@ -1478,7 +1538,12 @@ function aiDiagramChrome(layout,nodes,positions,id){
 }
 
 function aiDiagramSvg(step,conceptIndex,stepIndex,conceptTitle){
-  const nodes=step.nodes;
+  const rawNodes = step && Array.isArray(step.nodes) && step.nodes.length > 0 ? step.nodes : null;
+  const nodes = rawNodes || [
+    { label: String(step?.title || conceptTitle || 'Core Concept').trim().slice(0, 20), detail: String(step?.description || step?.desc || 'Operational premise').trim().slice(0, 38) },
+    { label: 'Process Dynamics', detail: 'State transformation & validation' },
+    { label: 'Asserted State', detail: 'Verified boundary invariants' }
+  ];
   /* The archetype is chosen from the content, not trusted blindly from
      the model, so a lesson can never render as another lesson's picture. */
   const layout=aiEngineLayout(step.layout, step, conceptTitle);
@@ -1509,7 +1574,10 @@ function aiDiagramSvg(step,conceptIndex,stepIndex,conceptTitle){
     },['']).filter(Boolean).slice(0,code?1:2);
     const codeLine=code?`<text class="ai-diagram-node-code" x="12" y="55" textLength="${Math.max(20,Math.min(87,code.length*4.4)).toFixed(1)}" lengthAdjust="spacingAndGlyphs">${escapeHtml(code)}</text>`
       :detailLines[1]?`<text class="ai-diagram-node-detail" x="12" y="55" textLength="${Math.max(20,Math.min(87,detailLines[1].length*4.7)).toFixed(1)}" lengthAdjust="spacingAndGlyphs">${escapeHtml(detailLines[1])}</text>`:'';
-    return `<g class="ai-diagram-node ${index===0?'is-origin':''}" style="--diagram-delay:${120+index*105}ms" transform="translate(${(x-width/2).toFixed(1)} ${(y-height/2).toFixed(1)})">
+    const isNodeIsolated = state.isolatedPartIdx === index;
+    const nodeRole = node.role || node.detail || '';
+    const nodeFailure = node.failureImpact || '';
+    return `<g class="ai-diagram-node interactive-part ${index===0?'is-origin':''} ${isNodeIsolated?'is-isolated':''}" data-part-index="${index}" data-part-label="${escapeHtml(label)}" data-part-detail="${escapeHtml(detail)}" data-part-role="${escapeHtml(nodeRole)}" data-part-failure="${escapeHtml(nodeFailure)}" tabindex="0" role="button" aria-label="Inspect ${escapeHtml(label)}: ${escapeHtml(detail)}" style="--diagram-delay:${120+index*105}ms" transform="translate(${(x-width/2).toFixed(1)} ${(y-height/2).toFixed(1)})">
       <rect class="ai-diagram-node-card" width="${width}" height="${height}" rx="13"/>
       <circle class="ai-diagram-node-dot" cx="13" cy="17" r="3"/>
       <text class="ai-diagram-node-label" x="23" y="21" textLength="82" lengthAdjust="spacingAndGlyphs">${escapeHtml(label)}</text>
@@ -1517,7 +1585,7 @@ function aiDiagramSvg(step,conceptIndex,stepIndex,conceptTitle){
       ${codeLine}
     </g>`;
   }).join('');
-  const svg=`<svg class="ai-diagram-svg" data-diagram-layout="${escapeHtml(layout)}" viewBox="0 0 600 312" role="img" aria-labelledby="${id}-title ${id}-description" xmlns="http://www.w3.org/2000/svg">
+  const svg=`<svg class="ai-diagram-svg ${state.isolatedPartIdx !== null && state.isolatedPartIdx !== undefined ? 'has-isolated-part' : ''}" data-diagram-layout="${escapeHtml(layout)}" viewBox="0 0 600 312" role="img" aria-labelledby="${id}-title ${id}-description" xmlns="http://www.w3.org/2000/svg">
     <title id="${id}-title">${escapeHtml(step.title)}: ${escapeHtml(step.description)}</title>
     <desc id="${id}-description">${escapeHtml(nodes.map(node=>`${node.label}: ${node.detail}`).join('. '))}</desc>
     <defs><marker id="${markerId}" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto" markerUnits="strokeWidth"><path d="M0 0L8 4.5L0 9z" fill="currentColor"/></marker><pattern id="${id}-grid" width="24" height="24" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" fill="currentColor"/></pattern></defs>
@@ -1590,6 +1658,9 @@ function aiQuestionVisual(question,index){
   const stepIndex=Math.min(state.aiQuizVisualStep||0,visual.steps.length-1);
   const step=visual.steps[stepIndex];
   const stepObject={...step,layout:visual.layout};
+
+
+
   return `<section class="ai-question-visual" aria-label="Visual explanation for this question">
     <div class="ai-visual-stage-head"><div><div class="panel-tag">2D VISUAL · STEP ${stepIndex+1}/${visual.steps.length}</div><h3>${escapeHtml(step.title)}</h3></div><span class="ai-visual-stage-id">${escapeHtml(visual.caption)}</span></div>
     <figure class="ai-diagram-figure" data-layout="${escapeHtml(visual.layout)}">${aiDiagramSvg(stepObject,900+index,stepIndex,escapeHtml(question.question))}<figcaption><span>${escapeHtml(visual.layout.toUpperCase())}</span><p>${escapeHtml(step.description)}</p></figcaption></figure>
@@ -1795,6 +1866,9 @@ function aiStudyView(){
   const studyError=validateAIStudyForDisplay(study);
   if(studyError) return header()+`<main class="ai-study-shell"><section class="ai-study-error" role="alert"><div class="panel-tag">STUDY COULD NOT BE OPENED</div><h1>Your study needs to be generated again.</h1><p>${escapeHtml(studyError)}</p><button type="button" class="btn-primary" data-open="upload">Upload PDF again</button></section></main>`;
   const page=state.aiPage||{type:'plan'};
+
+
+
   const locationByConcept=new Map();
   study.units.forEach((unit,unitIndex)=>unit.topics.forEach((topic,topicIndex)=>{
     (topic.conceptIndices||[]).forEach(conceptIndex=>locationByConcept.set(conceptIndex,{unitIndex,topicIndex}));
@@ -1923,7 +1997,10 @@ function aiStudyView(){
     </section>`;
   }else if(page.type==='unit'){
     const unit=study.units[page.unitIndex];
-    if(!unit||unit.locked){state.aiPage={type:'plan'};return aiStudyView();}
+    if(!unit||unit.locked){state.aiPage={type:'plan'};
+
+
+return aiStudyView();}
     pageTitle=unit.title;
     content=`<div class="ai-breadcrumbs">${aiStudyPageButton('plan',escapeHtml(study.title))}<span>/</span><span>Unit ${page.unitIndex+1}</span></div>
       <section class="ai-page-hero"><div class="panel-tag">UNIT ${String(page.unitIndex+1).padStart(2,'0')} · ${study.units.length} UNITS</div><h1>${escapeHtml(unit.title)}</h1><p>${escapeHtml(unit.overview)}</p></section>
@@ -1933,7 +2010,10 @@ function aiStudyView(){
   }else if(page.type==='topic'){
     const unit=study.units[page.unitIndex];
     const topic=unit?.topics[page.topicIndex];
-    if(!topic){state.aiPage={type:'plan'};return aiStudyView();}
+    if(!topic){state.aiPage={type:'plan'};
+
+
+return aiStudyView();}
     pageTitle=topic.title;
     content=`<div class="ai-breadcrumbs">${aiStudyPageButton('plan',escapeHtml(study.title))}<span>/</span>${aiStudyPageButton('unit',escapeHtml(unit.title),{'unit-index':page.unitIndex})}<span>/</span><span>${escapeHtml(topic.title)}</span></div>
       <section class="ai-page-hero"><div class="panel-tag">UNIT ${String(page.unitIndex+1).padStart(2,'0')} · TOPIC ${String(page.topicIndex+1).padStart(2,'0')}</div><h1>${escapeHtml(topic.title)}</h1><p>${escapeHtml(topic.overview)}</p></section>
@@ -1942,7 +2022,10 @@ function aiStudyView(){
   }else if(page.type==='concept'){
     const conceptIndex=page.conceptIndex;
     const concept=study.concepts[conceptIndex];
-    if(!concept){state.aiPage={type:'plan'};return aiStudyView();}
+    if(!concept){state.aiPage={type:'plan'};
+
+
+return aiStudyView();}
     const location=locationByConcept.get(conceptIndex);
     const unit=location?study.units[location.unitIndex]:null;
     const topic=location?unit.topics[location.topicIndex]:null;
@@ -2001,6 +2084,7 @@ function aiStudyView(){
           <div class="narration-bar show" id="narration">${escapeHtml(currentVisual.description)}</div>
         </div>
         <div class="visual-cap" id="visualCap"><span class="cap-step">STEP ${visualStep+1}/${visualSteps.length}</span><b>${escapeHtml(currentVisual.title)}</b> — ${escapeHtml(currentVisual.description)}</div>
+        ${renderAssemblyExplorer(concept, visualStep)}
         <div class="step-controls">
           <div class="step-dots">${visualSteps.map((s,i)=>`<button type="button" class="step-dot ${i===visualStep?'active':''}" data-ai-visual="${i}" aria-label="Show step ${i+1}: ${escapeHtml(s.title)}" aria-pressed="${i===visualStep}"></button>`).join('')}</div>
           <button type="button" class="play-btn ${state.aiVisualPlaying?'':'paused'}" data-ai-visual-play>${state.aiVisualPlaying?'⏸ Pause':'▶ Play'}</button>
@@ -2169,6 +2253,75 @@ function aiStudyView(){
 /* ============================================================
    STUDY VIEW
    ============================================================ */
+
+
+/* ============================================================
+   PEDAGOGICAL EXPLORABLE ASSEMBLY & PART INSPECTOR
+   ------------------------------------------------------------
+   Never static SVGs: transforms AI visual diagrams into interactive
+   explorable assemblies with isolated component definitions, roles,
+   parameters, and failure causality breakdowns.
+   ============================================================ */
+function renderAssemblyExplorer(c, activeStepIdx) {
+  const step = (c.steps && c.steps[activeStepIdx]) || (c.steps && c.steps[0]) || {};
+  const nodes = Array.isArray(step.nodes) && step.nodes.length > 0 ? step.nodes : [
+    { label: c.title, detail: c.explanation || 'Operational mechanism', role: 'Primary operational unit', failureImpact: 'Process stalls and boundary assertions fail.' }
+  ];
+
+  const isolatedIdx = state.isolatedPartIdx;
+  const activePartIdx = (isolatedIdx !== null && isolatedIdx !== undefined && isolatedIdx >= 0 && isolatedIdx < nodes.length) ? isolatedIdx : 0;
+  const activePart = nodes[activePartIdx] || nodes[0];
+  const isIsolated = isolatedIdx !== null && isolatedIdx !== undefined && isolatedIdx >= 0;
+
+  let pillsHtml = '<button type="button" class="assembly-pill ' + (!isIsolated ? 'active' : '') + '" data-isolate-part="-1" aria-selected="' + (!isIsolated) + '">🌐 Full Assembly</button>';
+  for (let i = 0; i < nodes.length; i++) {
+    const isAct = isIsolated && activePartIdx === i;
+    pillsHtml += '<button type="button" class="assembly-pill ' + (isAct ? 'active' : '') + '" data-isolate-part="' + i + '" aria-selected="' + isAct + '">' + (i + 1) + '. ' + escapeHtml(nodes[i].label) + '</button>';
+  }
+
+  const codeRow = activePart.code
+    ? '<div class="part-code-row"><span class="part-code-tag">SYNTAX / ASSERTION</span><code>' + escapeHtml(activePart.code) + '</code></div>'
+    : '';
+
+  const partFailure = activePart.failureImpact || ('If ' + activePart.label + ' fails or drops, downstream state transitions stall and invariant assertions fail.');
+
+  return '' +
+    '<div class="assembly-explorer-deck" data-topic-id="' + escapeHtml(c.id || '') + '">' +
+      '<div class="assembly-deck-head">' +
+        '<span class="assembly-badge">EXPLORABLE ASSEMBLY • ' + nodes.length + ' ISOLATED COMPONENTS</span>' +
+        '<div class="assembly-pills" role="tablist" aria-label="Component selector">' +
+          pillsHtml +
+        '</div>' +
+      '</div>' +
+      '<div class="part-inspector-card">' +
+        '<div class="part-inspector-top">' +
+          '<div>' +
+            '<span class="part-tag">PART ' + String(activePartIdx + 1).padStart(2, '0') + ' OF ' + String(nodes.length).padStart(2, '0') + ' • ' + escapeHtml(step.layout ? step.layout.toUpperCase() : 'ASSEMBLY') + ' COMPONENT</span>' +
+            '<h4 class="part-name">' + escapeHtml(activePart.label) + '</h4>' +
+          '</div>' +
+          '<button type="button" class="part-isolate-toggle ' + (isIsolated ? 'active' : '') + '" data-isolate-part="' + (isIsolated ? -1 : activePartIdx) + '">' +
+            (isIsolated ? '↩ Restore Full Diagram' : '🔍 Isolate Component') +
+          '</button>' +
+        '</div>' +
+        '<div class="part-props-grid">' +
+          '<div class="part-prop-col">' +
+            '<span class="part-prop-k">OPERATIONAL ROLE</span>' +
+            '<p class="part-prop-v">' + escapeHtml(activePart.role || activePart.detail || 'Coordinates state transitions and boundary invariants') + '</p>' +
+          '</div>' +
+          '<div class="part-prop-col">' +
+            '<span class="part-prop-k">MECHANISM & INTERFACES</span>' +
+            '<p class="part-prop-v">' + escapeHtml(activePart.detail || 'Passes transformed state to adjacent components') + '</p>' +
+          '</div>' +
+        '</div>' +
+        codeRow +
+        '<div class="part-causality-panel">' +
+          '<span class="part-causality-k">⚡ FUNCTIONAL CAUSALITY & FAILURE MODE</span>' +
+          '<p class="part-causality-v">' + escapeHtml(partFailure) + '</p>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+}
+
 function studyView(){
   const c=getTopic(state.topicIdx);
   const attempted=Object.keys(state.answers).filter(k=>k.startsWith(state.topicIdx+'-')).length;
@@ -2187,12 +2340,12 @@ function studyView(){
     <button class="back-btn" data-nav="workspace">← Back to workspace</button>
     <span style="color:#1e2a44">/</span>
     <span class="study-title">${c.title} • UNIT ${c.unit||'I'}</span>
-    <span class="badge" style="margin-left:auto">${c.visId} • FIXED</span>
+    <span class="badge" style="margin-left:auto">${c.isAlgo ? 'SIMULATION' : c.isAuraVisual ? 'DYNAMIC 3D/2D' : 'DYNAMIC'} • ${escapeHtml(c.visId || 'VIS-001')}</span>
   </div>
   <div class="study-grid">
     <div style="display:flex;flex-direction:column;gap:14px;min-width:0">
       <div class="panel">
-        <div class="panel-tag">${c.unit==='II'?'UNIT II: Data Link Layer':'UNIT I: Introduction to Networks'} • ${c.topic}</div>
+        <div class="panel-tag">${c.unitTitle ? ('UNIT ' + (c.unit||'I') + ': ' + escapeHtml(c.unitTitle)) : ('UNIT ' + (c.unit||'I'))} • ${escapeHtml(c.topic || state.activeCourseTitle || 'Core Topic')}</div>
         <h2>${c.title}</h2>
         <p class="desc">${c.explanation}</p>
         <div class="kp-grid">
@@ -2202,12 +2355,21 @@ function studyView(){
       </div>
 ${state.studyTab==='cheat' ? cheatcodeTabView() : state.studyTab==='quiz' ? vaathiyarTabView() : `
       <div class="panel">
-        <div class="visual-head"><span>ANIMATED 2D VISUAL • STEP ${state.step+1}/${c.steps.length}</span><span>${c.visId}</span></div>
+        ${c.isAuraVisual ? `
+      <div class="panel" style="margin-bottom:14px">
+        <div class="visual-head"><span>DYNAMIC INTERACTIVE SIMULATION • ${c.auraType.toUpperCase()}</span><span>${escapeHtml(c.visId)}</span></div>
+        <div id="studyAuraMount" class="ai-aura-player-mount" data-aura-type="${c.auraType}" style="min-height:360px;background:rgba(8,12,20,0.85);border-radius:12px;overflow:hidden;padding:12px;display:flex;align-items:center;justify-content:center;"></div>
+        <div class="visual-cap" style="margin-top:10px"><span class="cap-step">SIMULATION</span><b>${escapeHtml(c.title)}</b> — Real-time reactive model with interactive physics sliders.</div>
+      </div>
+      ` : ''}
+      <div class="panel">
+        <div class="visual-head"><span>ANIMATED 2D VISUAL • STEP ${state.step+1}/${c.steps.length}</span><span>${escapeHtml(c.visId)}</span></div>
         <div class="visual-box">
           <div class="visual-inner" id="mainVisual">${(typeof c.visual === 'function') ? c.visual(state.step) : (window.XC && window.XC.renderVisualSvg ? window.XC.renderVisualSvg(c.visual, state.step) : '')}</div>
           <div class="narration-bar show" id="narration">${c.steps[state.step].desc}</div>
         </div>
         <div class="visual-cap" id="visualCap"><span class="cap-step">STEP ${state.step+1}/${c.steps.length}</span><b>${c.steps[state.step].title}</b> — ${c.steps[state.step].desc}</div>
+        ${renderAssemblyExplorer(c, state.step)}
         <div class="step-controls">
           <div class="step-dots">${c.steps.map((_,i)=>`<button type="button" class="step-dot ${i===state.step?'active':''}" data-step="${i}" aria-label="Show step ${i+1}: ${c.steps[i].title}" aria-pressed="${i===state.step}"></button>`).join('')}</div>
           <button class="play-btn ${state.playing?'':'paused'}" id="playBtn" data-play>${state.playing?'⏸ Pause':'▶ Play'}</button>
@@ -2310,6 +2472,25 @@ function quizResults(c){
         <div class="q-results-pct">${pct}% correct</div>
         <div class="progress"><div style="width:${pct}%"></div></div>
         <p class="q-results-verdict">${verdict}</p>
+      ${(()=>{
+        const isMastered = pct >= 80 && correct >= Math.min(2, total);
+        state.masteredTopics = state.masteredTopics || {};
+        if (isMastered) state.masteredTopics[c.id || state.topicIdx] = true;
+        return isMastered ? `
+          <div class="mastery-card mastered" role="status" style="margin-top:14px;padding:12px 14px;border-radius:10px;background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.35);text-align:left;">
+            <div style="font-size:0.72rem;font-weight:800;color:#22c55e;letter-spacing:0.06em;">🏆 TOPIC MASTERED • VERIFIED COMPETENCE</div>
+            <h4 style="margin:4px 0 6px;color:#f8fafc;font-size:0.96rem;">Mastery Verified (+100 XP)</h4>
+            <p style="margin:0;font-size:0.84rem;color:#94a3b8;line-height:1.5;">You have demonstrated comprehensive competence across Visual Identification, Functional Causality, and Core Principles.</p>
+          </div>
+        ` : `
+          <div class="mastery-card pending" role="status" style="margin-top:14px;padding:12px 14px;border-radius:10px;background:rgba(148,163,184,0.08);border:1px solid rgba(148,163,184,0.2);text-align:left;">
+            <div style="font-size:0.72rem;font-weight:800;color:#94a3b8;letter-spacing:0.06em;">🔒 MASTERY IN PROGRESS</div>
+            <h4 style="margin:4px 0 6px;color:#f8fafc;font-size:0.96rem;">Topic In Progress (80%+ Required)</h4>
+            <p style="margin:0;font-size:0.84rem;color:#94a3b8;line-height:1.5;">Verify both Visual Identification and Functional Causality checkpoints to unlock sequential progression.</p>
+            <div style="margin-top:8px;font-size:0.8rem;color:#fde68a;">💡 Tip: Review the <b>Isolated Part Definitions</b> in the Explorable Assembly above before retrying.</div>
+          </div>
+        `;
+      })()}
       </div>
       <div class="q-final-head">Your answers</div>
       <ol class="q-final-list">${rows}</ol>
@@ -2332,93 +2513,161 @@ function getTopic(idx) {
 
 function studyToTopics(study, defaultTitle = 'Course') {
   if (!study) return [];
-  if (Array.isArray(study.topics) && study.topics.length > 0) {
-    return study.topics.map((t, idx) => ({
-      id: t.id || ('topic-' + idx),
-      title: t.title || ('Lesson ' + (idx + 1)),
-      topic: t.topic || (study.subject || 'Core Curriculum'),
-      unit: String(t.unit || 'I'),
-      visId: t.visId || (t.visual?.type ? t.visual.type.toUpperCase() : ('NET-' + String(idx + 1).padStart(3, '0'))),
-      pdfPage: t.pdfPage || (t.page ? ('Page ' + t.page) : 'Reference'),
-      pdfQuote: t.pdfQuote || t.pdf_excerpt || t.quote || '',
-      explanation: t.explanation || t.lesson || t.overview || '',
-      keyPoints: Array.isArray(t.keyPoints) ? t.keyPoints : (Array.isArray(t.key_points) ? t.key_points : []),
-      steps: Array.isArray(t.steps) ? t.steps : (t.visual?.steps || [
-        { title: 'Core Concept', desc: t.explanation || t.lesson || '' },
-        { title: 'Mechanism', desc: 'Process execution and transition' },
-        { title: 'Verification', desc: 'State verified and complete' }
-      ]),
-      visual: t.visual,
-      questions: (Array.isArray(t.questions) ? t.questions : (Array.isArray(t.quiz) ? t.quiz : [])).map(q => ({
-        q: q.q || q.question || 'Review Question',
-        opts: Array.isArray(q.opts) ? q.opts : (Array.isArray(q.options) ? q.options : ['Option A', 'Option B', 'Option C', 'Option D']),
-        a: typeof q.a === 'number' ? q.a : (typeof q.answerIndex === 'number' ? q.answerIndex : 0),
-        diff: q.diff || q.difficulty || 'Easy',
-        cat: q.cat || q.category || 'CONCEPT',
-        why: q.why || q.explanation || 'Directly grounded in source text.',
-        wrong: Array.isArray(q.wrong) ? q.wrong : (Array.isArray(q.optionExplanations) ? q.optionExplanations : (q.opts || q.options || []).map(() => 'Alternative conceptual option')),
-        quote: q.quote || q.pdf_excerpt || '',
-        page: q.page ? ('Page ' + q.page) : '',
-        mini: q.mini || 'packet',
-        cap: q.cap || 'Visual model'
-      })),
-      cheatcode: t.cheatcode,
-      vaathiyar: t.vaathiyar
-    }));
-  }
 
-  if (Array.isArray(study.concepts) && study.concepts.length > 0) {
-    return study.concepts.map((concept, idx) => {
-      const relatedQuestions = (study.questions || []).filter(q => (q.conceptIndex ?? idx % study.concepts.length) === idx);
-      const steps = (concept.visualization && Array.isArray(concept.visualization.steps) && concept.visualization.steps.length > 0)
-        ? concept.visualization.steps.map(s => ({ title: s.title || 'Step', desc: s.description || s.desc || '' }))
-        : [
-            { title: 'Core Concept', desc: concept.overview || concept.explanation || concept.summary || concept.title || '' },
-            { title: 'Execution Dynamics', desc: (concept.keyPoints && concept.keyPoints[0]) || 'Operational principles and state transitions' },
-            { title: 'Validation & Assertions', desc: (concept.keyPoints && concept.keyPoints[1]) || 'Output verification and boundary assertions' }
-          ];
-      return {
-        id: 'concept-' + idx,
-        title: concept.title || ('Lesson ' + (idx + 1)),
-        topic: concept.topic || (study.subject || defaultTitle),
-        unit: String(concept.unit || (concept.unitIndex !== undefined ? concept.unitIndex + 1 : 'I')),
-        visId: (concept.visualization && concept.visualization.type ? concept.visualization.type.toUpperCase() : ('VIS-' + String(idx + 1).padStart(3, '0'))),
-        pdfPage: concept.page ? ('Page ' + concept.page) : 'Reference',
-        pdfQuote: concept.pdfExcerpt || concept.pdfQuote || concept.quote || (concept.keyPoints && concept.keyPoints[0]) || concept.overview || concept.summary || 'Direct excerpt from syllabus.',
-        explanation: concept.overview || concept.explanation || concept.summary || '',
-        keyPoints: Array.isArray(concept.keyPoints) ? concept.keyPoints : [concept.overview || concept.summary || 'Core concept principle'],
-        steps: steps,
-        visual: (concept.visualization && concept.visualization.svg) || (window.XC?.renderVisualSvg ? (step) => window.XC.renderVisualSvg(concept.visualization?.type || 'process_flow', step) : null),
-        questions: relatedQuestions.length > 0 ? relatedQuestions.map(q => ({
-          q: q.question || q.q || 'Concept evaluation question',
-          opts: q.options || q.opts || ['Option A', 'Option B', 'Option C', 'Option D'],
-          a: typeof q.answerIndex === 'number' ? q.answerIndex : (typeof q.a === 'number' ? q.a : 0),
-          diff: q.difficulty || q.diff || 'Easy',
-          cat: q.category || q.cat || 'CONCEPT',
-          why: q.explanation || q.why || q.hint || 'Directly grounded in source text.',
-          wrong: q.optionExplanations || q.wrong || (q.options || q.opts || []).map(() => 'Alternative conceptual option'),
-          quote: q.quote || concept.pdfExcerpt || '',
-          page: q.page ? ('Page ' + q.page) : '',
-          mini: q.mini || 'packet',
-          cap: q.cap || 'Visual model'
-        })) : [
-          {
-            q: 'What is the primary function of ' + concept.title + '?',
-            opts: [concept.overview || concept.summary || 'Core concept operation', 'Secondary mechanism', 'Unrelated component', 'Alternative framework'],
-            a: 0,
-            diff: 'Easy',
-            cat: 'CONCEPT',
-            why: concept.overview || concept.summary || 'Directly defined in lesson material.',
-            wrong: ['Correct principle', 'Secondary mechanism', 'Unrelated component', 'Alternative framework'],
-            quote: concept.pdfExcerpt || '',
-            page: concept.page ? ('Page ' + concept.page) : '',
-            mini: 'packet',
-            cap: 'Visual model'
-          }
-        ]
+  // Prioritize rich study.concepts if available
+  const rawItems = (Array.isArray(study.concepts) && study.concepts.length > 0)
+    ? study.concepts
+    : (Array.isArray(study.topics) && study.topics.length > 0)
+      ? study.topics
+      : [];
+
+  if (rawItems.length === 0) return [];
+
+  return rawItems.map((item, idx) => {
+    const isConcept = Array.isArray(study.concepts) && study.concepts.length > 0;
+    const title = item.title || ('Lesson ' + (idx + 1));
+    const topicName = item.topic || (study.subject || defaultTitle);
+    const unitIndex = (item.unitIndex !== undefined) ? item.unitIndex : (study.units ? study.units.findIndex(u => u.topics && u.topics.some(t => (t.conceptIndices || []).includes(idx))) : 0);
+    const unitNumber = String(item.unit || (unitIndex >= 0 ? unitIndex + 1 : 'I'));
+    const unitTitle = item.unitTitle || (study.units && study.units[Math.max(0, unitIndex)]?.title) || (study.subject || defaultTitle);
+
+    const fullText = `${title} ${item.summary || ''} ${item.overview || ''} ${item.explanation || ''} ${item.lesson || ''}`;
+    const auraType = window.XC?.auraVisuals?.detect ? window.XC.auraVisuals.detect(fullText) : null;
+    const isAuraVisual = !!auraType;
+    const algoType = window.XC?.simulations?.detectAlgorithmType ? window.XC.simulations.detectAlgorithmType(fullText) : null;
+    const isAlgo = !!algoType;
+
+    // Detect layout archetype
+    const rawLayout = (item.visualization?.steps?.[0]?.layout || item.visual?.type || item.visualization?.layout || item.visualization?.type || 'flow').toLowerCase();
+    const allowedLayouts = ['flow','arch','seq','compare','hierarchy','state','erd','fbd','wave','isometric','mindmap','matrix','equation','cycle','layer'];
+    const layout = allowedLayouts.includes(rawLayout) ? rawLayout : 'flow';
+    const visId = (layout.toUpperCase()) + '-' + String(idx + 1).padStart(3, '0');
+
+    // Extract visualization steps with nodes
+    const rawSteps = (item.visualization && Array.isArray(item.visualization.steps) && item.visualization.steps.length > 0)
+      ? item.visualization.steps
+      : (item.visual && Array.isArray(item.visual.steps) && item.visual.steps.length > 0)
+        ? item.visual.steps
+        : (Array.isArray(item.steps) && item.steps.length > 0)
+          ? item.steps
+          : [
+              { title: title, desc: item.overview || item.explanation || item.summary || '' },
+              { title: 'Execution Dynamics', desc: (item.keyPoints && item.keyPoints[0]) || 'Operational principles and state transitions' },
+              { title: 'Validation & Assertions', desc: (item.keyPoints && item.keyPoints[1]) || 'Output verification and boundary assertions' }
+            ];
+
+    const steps = rawSteps.map((s, si) => ({
+      title: s.title || ('Step ' + (si + 1)),
+      desc: s.description || s.desc || '',
+      layout: s.layout || layout,
+      nodes: Array.isArray(s.nodes) ? s.nodes : []
+    }));
+
+    // Dynamic, topic-grounded visual renderer
+    const visual = (stepIdx = 0) => {
+      const sIdx = Math.min(Math.max(0, stepIdx), steps.length - 1);
+      const step = steps[sIdx] || steps[0] || {};
+
+
+
+      const stepNodes = (Array.isArray(step.nodes) && step.nodes.length >= 2) ? step.nodes : [
+        { label: String(step.title || title).trim().slice(0, 20), detail: String(step.desc || item.explanation || 'Operational premise').trim().slice(0, 38) },
+        { label: String((item.keyPoints && item.keyPoints[0]) || 'Processing Dynamics').trim().slice(0, 20), detail: String((item.keyPoints && item.keyPoints[1]) || 'State transformation').trim().slice(0, 38) },
+        { label: 'Verification', detail: String((item.keyPoints && item.keyPoints[2]) || 'Validated state invariants').trim().slice(0, 38) }
+      ];
+
+      const stepObj = {
+        title: step.title || title,
+        description: step.desc || item.explanation || '',
+        layout: step.layout || layout,
+        nodes: stepNodes
       };
-    });
-  }
+
+
+
+
+      if (typeof aiDiagramSvg === 'function') {
+        return aiDiagramSvg(stepObj, idx, sIdx, title);
+      }
+      if (window.XC?.aiDiagramSvg) {
+        return window.XC.aiDiagramSvg(stepObj, idx, sIdx, title);
+      }
+      if (window.XC?.renderVisualSvg) {
+        return window.XC.renderVisualSvg({ type: step.layout || layout, steps: steps, nodes: stepNodes, title: title }, sIdx);
+      }
+      return '';
+    };
+
+
+
+
+    const relatedQuestions = (study.questions || []).filter(q => (q.conceptIndex ?? idx % (rawItems.length || 1)) === idx);
+    const questions = relatedQuestions.length > 0 ? relatedQuestions.map(q => ({
+      q: q.question || q.q || 'Concept evaluation question',
+      opts: q.options || q.opts || ['Option A', 'Option B', 'Option C', 'Option D'],
+      a: typeof q.answerIndex === 'number' ? q.answerIndex : (typeof q.a === 'number' ? q.a : 0),
+      diff: q.difficulty || q.diff || 'Easy',
+      cat: q.category || q.cat || 'CONCEPT',
+      why: q.explanation || q.why || q.hint || 'Directly grounded in source text.',
+      wrong: q.optionExplanations || q.wrong || (q.options || q.opts || []).map(() => 'Alternative conceptual option'),
+      quote: q.quote || item.pdfExcerpt || item.pdfQuote || '',
+      page: q.page ? ('Page ' + q.page) : '',
+      mini: q.mini || 'packet',
+      cap: q.cap || 'Visual model'
+    })) : (Array.isArray(item.questions) && item.questions.length > 0) ? item.questions : [
+      {
+        q: 'What is the primary function of ' + title + '?',
+        opts: [item.overview || item.summary || 'Core concept operation', 'Secondary mechanism', 'Unrelated component', 'Alternative framework'],
+        a: 0,
+        diff: 'Easy',
+        cat: 'CONCEPT',
+        why: item.overview || item.summary || 'Directly defined in lesson material.',
+        wrong: ['Correct principle', 'Secondary mechanism', 'Unrelated component', 'Alternative framework'],
+        quote: item.pdfExcerpt || item.pdfQuote || '',
+        page: item.page ? ('Page ' + item.page) : '',
+        mini: 'packet',
+        cap: 'Visual model'
+      }
+    ];
+
+    return {
+      id: 'concept-' + idx,
+      title: title,
+      topic: topicName,
+      unit: unitNumber,
+      unitTitle: unitTitle,
+      visId: visId,
+      pdfPage: item.page ? ('Page ' + item.page) : (item.sourcePage ? ('Page ' + item.sourcePage) : 'Reference'),
+      pdfQuote: item.sourceExcerpt || item.pdfExcerpt || item.pdfQuote || item.quote || (item.keyPoints && item.keyPoints[0]) || item.overview || item.summary || 'Direct excerpt from syllabus.',
+      explanation: item.explanation || item.overview || item.summary || '',
+      keyPoints: Array.isArray(item.keyPoints) ? item.keyPoints : [item.overview || item.summary || 'Core concept principle'],
+      steps: steps,
+      visual: visual,
+      questions: questions,
+      cheatcode: item.cheatCode || item.cheatcode || {
+        why: item.whyItMatters || 'Core reason',
+        like: item.analogy || 'Conceptual parallel',
+        wrong: item.commonTrap || 'Common error',
+        right: item.correctiveTruth || 'Target principle',
+        see: ['Key Property 1', 'Key Property 2', 'Key Property 3'],
+        oneLine: item.quickRecall || title,
+        mnemonic: 'Recall: ' + title
+      },
+      vaathiyar: item.vaathiyar || null,
+      workedExample: item.workedExample || null,
+      comparison: item.comparison || null,
+      realWorldExamples: item.realWorldExamples || [],
+      explanationLevels: item.explanationLevels || null,
+      visualization: item.visualization || null,
+      isAuraVisual: isAuraVisual,
+      auraType: auraType,
+      isAlgo: isAlgo,
+      algoType: algoType
+    };
+
+
+
+  });
 
   if (Array.isArray(study.units) && study.units.length > 0) {
     const list = [];
@@ -2513,7 +2762,7 @@ function qCard(c,q,qi){
   `:'';
   return `<div class="q-card ${done?(isCorrect?'correct':'wrong'):''}">
     <div class="q-meta">
-      <span class="pill cat">Q${qi+1} • ${catStr}</span>
+      <span class="pill cat">Q${qi+1} • ${(q.category==='visual_id'||q.cat==='VISUAL ID')?'👁️ VISUAL IDENTIFICATION':(q.category==='causality'||q.cat==='CAUSALITY')?'⚡ FUNCTIONAL CAUSALITY':(catStr||'CONCEPT')}</span>
       <span class="pill ${(q.diff||'').toLowerCase()==='easy'?'easy':'medium'}">${diffStr}</span>
       ${done?`<span class="pill ${isCorrect?'correct':'wrong'}">${isCorrect?'CORRECT':'WRONG'}</span>`:''}
     </div>
@@ -2643,6 +2892,9 @@ function formulaStudyView(){
     ? visual(state.step)
     : (window.XC.SVG.miniSvg ? window.XC.SVG.miniSvg(f.mini) : '');
   const notes = f.notes || { lead:f.meaning, why:[], takeaway:f.meaning, pitfall:'' };
+
+
+
   const step = f.steps[state.step];
   const total = f.steps.length;
   const isLast = state.step === total - 1;
@@ -3158,7 +3410,7 @@ function render(){
      Mermaid cannot load. Fire and forget: rendering must never block. */
   hydrateAiMermaid(app);
   refreshPlayBtn();
-  const auraMount = app.querySelector('#aiAuraMount[data-aura-type]');
+  const auraMount = app.querySelector('#aiAuraMount[data-aura-type], #studyAuraMount[data-aura-type]');
   if(auraMount && window.XC && window.XC.auraVisuals && typeof window.XC.auraVisuals.createPlayer === 'function'){
     const aType = auraMount.dataset.auraType;
     if(window._activeAiAuraPlayer){
@@ -3225,6 +3477,9 @@ window.XC.app = {
   TOPICS,
   FORMULAS,
   CHEATCODES,
+  studyToTopics,
+  studyView,
+  aiDiagramSvg,
   /* go('study', {topicIdx}) / go('formula', {formulaId}) / go(view) */
   go(view, options = {}){
     if(view==='study'){
@@ -3264,6 +3519,13 @@ window.XC.app = {
     return 'the home page';
   }
 };
+
+
+
+window.XC.TOPICS = TOPICS;
+
+
+
 
 /* Sign-in and sign-out both arrive as a custom event from auth.js so
    the two modules never import each other. Guarded the same way as the
@@ -3428,6 +3690,9 @@ document.addEventListener('click', async (e)=>{
       ...(aiPage.dataset.topicIndex!==undefined?{topicIndex:Number(aiPage.dataset.topicIndex)}:{}),
       ...(aiPage.dataset.conceptIndex!==undefined?{conceptIndex:Number(aiPage.dataset.conceptIndex)}:{})
     };
+
+
+
     if(type==='concept'){
       state.aiLessonMode='crash';
       state.aiVisualStep=0;
@@ -3610,11 +3875,23 @@ document.addEventListener('click', async (e)=>{
       state.aiPdfMeta = entry.pdfMeta || null;
       state.aiChunkNote = '';
       state.aiTopicImages = entry.images || {};
+
+
+
       state.aiTopicImageBusy = {};
+
+
+
       state.aiPage = { type: 'plan' };
+
+
+
       state.aiLessonMode = 'crash';
       state.aiVisualStep = 0;
       state.aiQuizAnswers = {};
+
+
+
 
       const topics = studyToTopics(study, entry.title || 'Course');
       if (topics.length > 0) {
@@ -3800,6 +4077,9 @@ function readFileAsBase64(file,onProgress){
         onProgress(Math.round(event.loaded/event.total*100));
       }
     };
+
+
+
     reader.onload=()=>{
       if(typeof reader.result!=='string'){
         reject(new Error('The selected PDF could not be read.'));
@@ -3807,6 +4087,9 @@ function readFileAsBase64(file,onProgress){
       }
       resolve(reader.result.slice(reader.result.indexOf(',')+1));
     };
+
+
+
     reader.readAsDataURL(file);
   });
 }
@@ -3901,6 +4184,9 @@ const JOB_STAGE_TO_UI={
   outline:'analyzing', sections:'analyzing',
   bank:'analyzing', validate:'building', ready:'building'
 };
+
+
+
 
 function applyJobStage(snapshot){
   if(!snapshot) return;
@@ -4062,6 +4348,9 @@ async function requestTopicImage(conceptIndex){
     else throw new Error(first?.error||'The image provider returned no image. Please try again.');
   }catch(error){
     state.aiTopicImages[conceptIndex]={error:error.message||'The image could not be generated.'};
+
+
+
   }finally{
     state.aiTopicImageBusy[conceptIndex]=false;
     render();
@@ -4208,17 +4497,26 @@ const updateUploadElapsed=()=>{
   pdfProgressElapsed.textContent=`${time} elapsed`;
   pdfProgressElapsed.setAttribute('aria-label',`Elapsed time: ${seconds} seconds`);
 };
+
+
+
 const startUploadElapsed=()=>{
   window.clearInterval(uploadElapsedTimer);
   uploadStartedAt=Date.now();
   updateUploadElapsed();
   uploadElapsedTimer=window.setInterval(updateUploadElapsed,1000);
 };
+
+
+
 const stopUploadElapsed=()=>{
   window.clearInterval(uploadElapsedTimer);
   uploadElapsedTimer=undefined;
   uploadStartedAt=0;
 };
+
+
+
 const setSelectedPdf=file=>{
   if(!selectedPdf) return;
   selectedPdf.hidden=!file;
@@ -4229,6 +4527,9 @@ const setSelectedPdf=file=>{
     : `${(file.size/(1024*1024)).toFixed(1)} MB`;
   document.getElementById('selectedPdfSize').textContent=`PDF document · ${size}`;
 };
+
+
+
 const validatePdfFile=file=>{
   if(!file.name.toLowerCase().endsWith('.pdf') && file.type!=='application/pdf'){
     return 'Please select a PDF file.';
@@ -4238,6 +4539,9 @@ const validatePdfFile=file=>{
   }
   return '';
 };
+
+
+
 /* ============================================================
    PDF PROCESSING JOURNEY — the arena scene
    ------------------------------------------------------------
@@ -4274,6 +4578,9 @@ const resetProgress=()=>{
     pdfProgressTrack.setAttribute('aria-valuenow','0');
   }
 };
+
+
+
 /* Runs the real journey through its real stages on a timer, so the
    scene can be reviewed without spending provider quota. It drives the
    same journeySetStage/journeyFinish pair the genuine job poll uses, with
@@ -4334,6 +4641,9 @@ const JOURNEY_STAGE_PHASE={
   outline:'run', sections:'run',
   bank:'run', validate:'charge', ready:'finale'
 };
+
+
+
 /* Order matters: a poll that arrives late or out of sequence must never
    rewind the bar to a beat the pipeline has already left. */
 const JOURNEY_STAGE_ORDER=['queued','extract','outline','sections','bank','validate','ready'];
@@ -4541,6 +4851,9 @@ const setUploadStage=(stage,message,description)=>{
     building:'Building your study space'
   }[stage]||'';
 };
+
+
+
 pdfFileInput?.addEventListener('change',()=>{
   const file=pdfFileInput.files?.[0];
   setSelectedPdf(file);
@@ -4573,6 +4886,9 @@ const QUOTA_LABEL = {
   untested: 'not used yet',
   error: 'error'
 };
+
+
+
 
 /* Last snapshot from the server, kept so an error response carrying a
    fresher allowance can update the panel without another request. */
@@ -4636,6 +4952,9 @@ function renderQuota(data){
        used to land in refreshQuota's catch and paint the panel "offline"
        even though the fetch had actually succeeded. */
     const t = data.today || { calls: 0, rotations: 0 };
+
+
+
     const parts = [
       `${usable} of ${data.totalModels} model${data.totalModels === 1 ? '' : 's'} ready`,
       `${t.calls} request${t.calls === 1 ? '' : 's'} today`
@@ -4702,6 +5021,9 @@ pdfUploadForm?.addEventListener('submit',async event=>{
     status.textContent=message;
     status.dataset.error=String(isError);
   };
+
+
+
   /* resetProgress is declared at module scope above, because the preview
      trigger needs it too. Do not redeclare it here: a `const` inside this
      callback shadows the shared one for the whole submit path, which is the
@@ -4768,10 +5090,22 @@ pdfUploadForm?.addEventListener('submit',async event=>{
     state.aiStudy=result.study;
     state.aiJobId=posted.jobId;
     state.aiPdfMeta={name:file.name,size:file.size};
+
+
+
     state.aiChunkNote='';
     state.aiTopicImages={};
+
+
+
     state.aiTopicImageBusy={};
+
+
+
     state.aiPage={type:'plan'};
+
+
+
     stopAIVisualAutoplay();
     state.aiLessonMode='crash';
     state.aiVisualStep=0;
@@ -4779,6 +5113,9 @@ pdfUploadForm?.addEventListener('submit',async event=>{
     state.aiLessonFlashFlipped=false;
     state.aiExplanationLevel='simple';
     state.aiQuizAnswers={};
+
+
+
     state.aiFlashIdx=0;
     state.aiFlashFlipped=false;
     state.aiMessages=[];
@@ -4849,6 +5186,9 @@ document.addEventListener('submit',async event=>{
       formulas:state.aiStudy.formulas,
       conversation:state.aiMessages.slice(-8)
     };
+
+
+
     /* Ask for a structured answer that carries a diagram recipe, so the
        ai-study chat panel can render a real chart beside the explanation when
        the topic fits. Falls back to the same plain text path either way. */
@@ -4917,6 +5257,9 @@ document.addEventListener('keydown',(e)=>{
    PARALLAX
    ============================================================ */
 const M = {tx:0, ty:0, x:0, y:0};
+
+
+
 document.querySelectorAll('.wash').forEach((el,i)=>{ el.dataset.parallax = 14*(i+1); });
 const pEls = Array.from(document.querySelectorAll('[data-parallax]'));
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -5108,6 +5451,9 @@ document.addEventListener('mousemove',(e)=>{
     }, 950);
   };
 
+
+
+
   video.addEventListener('ended', finishIntro);
   video.addEventListener('error', ()=>{
     status.textContent = 'The intro video could not be loaded. You can still continue to XamCode.';
@@ -5141,6 +5487,9 @@ document.addEventListener('mousemove',(e)=>{
       status.textContent = 'Press play to watch the intro, or skip to continue.';
     });
   };
+
+
+
   if(document.body.classList.contains('booted')) begin();
   else document.addEventListener('xc-boot-done', begin, {once:true});
 
@@ -5251,15 +5600,15 @@ document.addEventListener('mousemove',(e)=>{
 render();
 console.log('XamCode AI • merged build with continuous visuals • Created By Achudhan');
 
-})();
 
-document.addEventListener('click', e => {
-  const promptCard = e.target.closest('[data-launch-aura]');
-  if(promptCard){
-    const prompt = promptCard.dataset.launchAura;
-    if(window.XC && window.XC.aura){
-      window.XC.aura.open();
-      window.XC.aura.ask(prompt);
-    }
+  if (typeof window !== 'undefined') {
+    window.XC = window.XC || {};
+    window.XC.studyToTopics = studyToTopics;
+    window.XC.studyView = studyView;
+    window.XC.aiDiagramSvg = aiDiagramSvg;
+    window.XC.renderAssemblyExplorer = renderAssemblyExplorer;
+    window.XC.quizResults = quizResults;
+    window.XC.state = state;
   }
-});
+
+})();

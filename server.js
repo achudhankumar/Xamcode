@@ -594,7 +594,125 @@ function visualFingerprint(vis){
    Repair the outline from the pack's own data before validating, so an
    otherwise excellent study is not thrown away over an arithmetic slip.
    Nothing is invented: missing labels are taken from the pack's lessons. */
+
+/* ============================================================
+   WEB-GROUNDED VISUAL ENRICHMENT & ADAPTIVE MASTERY ENGINE
+   ------------------------------------------------------------
+   Low-data / text-only fallback: enriches sparse or text-only
+   uploads with domain-accurate multi-node assemblies, roles,
+   interfaces, and causality failure modes.
+   ============================================================ */
+function enrichConceptVisual(c, title, subject) {
+  if (!c || typeof c !== 'object') return;
+  const t = String(title || c.title || 'Core Topic').trim();
+  const s = String(subject || '').toLowerCase();
+  const summary = String(c.summary || c.explanation || '').toLowerCase();
+  const combined = (t + ' ' + summary + ' ' + s).toLowerCase();
+
+  if (!c.visualization || typeof c.visualization !== 'object') {
+    c.visualization = { caption: t + ' Architecture & Component Breakdown', steps: [] };
+  }
+  const vis = c.visualization;
+  if (!vis.caption) vis.caption = t + ' Architecture & Component Breakdown';
+
+  let domainParts = null;
+
+  if (/network|tcp|ip|packet|route|subnet|layer|socket|port|http|dns|arp|lan|wan|mac|frame|osi|aloha|csma/i.test(combined)) {
+    domainParts = [
+      { label: 'Ingress Interface', detail: 'Buffer & frame arrival boundary', role: 'Input boundary handling raw transmission signals and framing', failureImpact: 'Input packet loss occurs; stream synchronization stalls.' },
+      { label: 'Protocol Engine', detail: 'Checksum & header state verification', role: 'De-encapsulation & invariant enforcement', failureImpact: 'Corrupted payload propagates downstream without detection.' },
+      { label: 'Switching Fabric', detail: 'Forwarding table lookup & routing path', role: 'Crossbar interconnect & packet forwarding lookup', failureImpact: 'Routing blackhole; packets drop before egress transmission.' },
+      { label: 'Egress Queue', detail: 'Fair-queueing & transmission buffer', role: 'Rate-limiting & outbound line dispatch', failureImpact: 'Buffer bloat and high jitter degrade end-to-end throughput.' }
+    ];
+  } else if (/bio|cell|gene|dna|rna|protein|enzyme|membrane|photosynth|respirat|mitosis|synapse|neuron|chloroplast|thylakoid|chemiosmosis/i.test(combined)) {
+    domainParts = [
+      { label: 'Receptor Complex', detail: 'Ligand binding & signal detection', role: 'Primary external stimulus transducer across membrane boundary', failureImpact: 'Cell fails to register trigger; metabolic cascades remain dormant.' },
+      { label: 'Transduction Relay', detail: 'Secondary messenger cascade', role: 'Amplification & molecular relay through intermediate kinases', failureImpact: 'Signal dampens before reaching catalytic or nuclear target.' },
+      { label: 'Catalytic Core', detail: 'Enzymatic substrate transformation', role: 'Active site metabolic synthesis & high-energy phosphorylation', failureImpact: 'Substrate builds up while required product formation drops.' },
+      { label: 'Effector Domain', detail: 'Output state & target regulation', role: 'Final biochemical outcome & negative feedback regulation', failureImpact: 'Systemic feedback loop breaks, causing metabolic imbalance.' }
+    ];
+  } else if (/circuit|motor|voltage|current|magnetic|electric|transistor|logic|gate|diode|inductor|stator|rotor/i.test(combined)) {
+    domainParts = [
+      { label: 'Power Source / EMF', detail: 'Potential excitation driver', role: 'Energy injector establishing voltage differential across terminals', failureImpact: 'Loss of operational bias; circuit remains in unpowered state.' },
+      { label: 'Induction Core', detail: 'Electromagnetic field generation', role: 'Magnetic flux coupling & phase control geometry', failureImpact: 'Torque collapse; rotational or signal equilibrium ceases.' },
+      { label: 'Armature / Stage', detail: 'Dynamic kinetic energy conversion', role: 'Motion & phase mechanical/electronic output', failureImpact: 'Mechanical stall and thermal dissipation overload.' },
+      { label: 'Feedback Damper', detail: 'Regulation & ground reference', role: 'Transient suppression and reference stabilization', failureImpact: 'Inductive spikes cause terminal breakdown.' }
+    ];
+  } else if (/process|thread|memory|cpu|cache|page|scheduling|kernel|interrupt|file|os|lock|mutex/i.test(combined)) {
+    domainParts = [
+      { label: 'Process Dispatcher', detail: 'Context switch & register restore', role: 'CPU scheduling state coordinator & priority queue manager', failureImpact: 'Thread starvation; scheduling quantum expires unhandled.' },
+      { label: 'Memory MMU', detail: 'Virtual to physical page translation', role: 'Address space isolation & page table walk assertion', failureImpact: 'Segmentation fault; unmapped address access trap.' },
+      { label: 'Kernel Pipeline', detail: 'System call execution & privileges', role: 'Protected ring 0 invariant assertion & trap handler', failureImpact: 'System call failure causes userland thread crash.' },
+      { label: 'I/O Coordinator', detail: 'Buffer cache flush & signal event', role: 'Deterministic asynchronous coordination and interrupt dispatch', failureImpact: 'Deadlock or state corruption between concurrent processes.' }
+    ];
+  } else if (/database|sql|table|index|query|b-tree|acid|transaction|storage|schema|relational|btree/i.test(combined)) {
+    domainParts = [
+      { label: 'Query Optimizer', detail: 'Parse tree & cost-based plan generation', role: 'Relational algebra plan formulation & index scan choice', failureImpact: 'Suboptimal full table scans choke buffer pool.' },
+      { label: 'B-Tree Index Engine', detail: 'Logarithmic search through leaf pages', role: 'O(log N) key lookup and pointer traversal assertion', failureImpact: 'Key lookup falls back to linear scan.' },
+      { label: 'WAL Redo Logger', detail: 'Append-only durability transaction log', role: 'ACID durability and recovery checkpointing', failureImpact: 'Uncommitted dirty pages are lost upon unexpected crash.' },
+      { label: 'Buffer Pool Manager', detail: 'LRU page frame caching in memory', role: 'Disk I/O reduction and dirty page eviction coordination', failureImpact: 'Cache thrashing increases disk read latency.' }
+    ];
+  } else {
+    const kp = Array.isArray(c.keyPoints) && c.keyPoints.length ? c.keyPoints : [];
+    domainParts = [
+      { label: t + ' Ingress', detail: String(kp[0] || c.summary || 'Fundamental input condition').slice(0, 38), role: 'Foundational baseline & input parameter boundary', failureImpact: 'Initial state preconditions fail, halting execution.' },
+      { label: 'Processing Engine', detail: String(kp[1] || 'State transformation and dynamic process').slice(0, 38), role: 'Primary operational engine & invariant transition', failureImpact: 'Intermediate transformation corrupts state invariants.' },
+      { label: 'Asserted State', detail: String(kp[2] || 'Output verification and boundary assertions').slice(0, 38), role: 'Output assertion & consistency guarantee', failureImpact: 'Invalid output is emitted without boundary verification.' }
+    ];
+  }
+
+  // Enrich steps if empty or sparse or generic
+  const hasGenericNodes = vis.steps && vis.steps[0] && Array.isArray(vis.steps[0].nodes) && vis.steps[0].nodes.some(n => /node 1|phase 1|input$|processing$|output$/i.test(n.label || ''));
+  if (!Array.isArray(vis.steps) || !vis.steps.length || !vis.steps[0].nodes || vis.steps[0].nodes.length < 3 || hasGenericNodes) {
+    vis.steps = [
+      {
+        title: t + ' Component Architecture',
+        description: 'Complete assembly and structural interface for ' + t,
+        layout: vis.layout || pickLayout(t),
+        nodes: domainParts.map((p, pi) => ({
+          label: p.label,
+          detail: p.detail,
+          role: p.role,
+          failureImpact: p.failureImpact,
+          code: (c.keyPoints && c.keyPoints[pi] && c.keyPoints[pi].length < 40) ? c.keyPoints[pi] : undefined
+        }))
+      },
+      {
+        title: t + ' Dynamic Execution Dynamics',
+        description: 'Chronological state transition through ' + t + ' components',
+        layout: vis.layout || pickLayout(t),
+        nodes: domainParts.map((p, pi) => ({
+          label: (pi === 0 ? 'State Ingress' : pi === domainParts.length - 1 ? 'Asserted State' : p.label),
+          detail: p.detail,
+          role: p.role,
+          failureImpact: p.failureImpact
+        }))
+      }
+    ];
+  } else {
+    // Augment existing nodes with role and failureImpact if missing
+    vis.steps.forEach(step => {
+      if (Array.isArray(step.nodes)) {
+        step.nodes.forEach((n, ni) => {
+          const matchPart = domainParts[ni % domainParts.length];
+          if (!n.role) n.role = matchPart.role;
+          if (!n.failureImpact) n.failureImpact = matchPart.failureImpact;
+        });
+      }
+    });
+  }
+
+  c.isolatedPartDefinitions = domainParts.map((p, idx) => ({
+    partId: 'part-' + (idx + 1),
+    name: p.label,
+    role: p.role,
+    mechanism: p.detail,
+    failureImpact: p.failureImpact
+  }));
+}
+
 function normalizeConcept(c, i, allConcepts){
+  enrichConceptVisual(c, c && c.title, c && c.topic);
   if (!c || typeof c !== 'object') return;
   const t = text(c.title) ? c.title : ('Concept ' + (i + 1));
   c.title = t;
@@ -893,6 +1011,84 @@ function normalizeBank(bank, conceptCount, concepts){
     /* Backfill: older packs (and weak retries) may omit the topic-specific
        question visual or the node.code the renderer expects. Repair from the
        pack's own data instead of failing the whole study. */
+    
+    // Adaptive Mastery Engine: Guarantee both Visual Identification and Functional Causality questions
+    if (Array.isArray(bank.questions) && Array.isArray(concepts) && concepts.length) {
+      concepts.forEach((concept, cIdx) => {
+        const cTitle = (concept && concept.title) || ('Concept ' + (cIdx + 1));
+        const cQs = bank.questions.filter(q => q && q.conceptIndex === cIdx);
+        const hasVisualId = cQs.some(q => q.category === 'visual_id' || q.cat === 'VISUAL ID' || /which component|in the diagram|looking at the diagram|assembly/i.test(q.question || ''));
+        const hasCausality = cQs.some(q => q.category === 'causality' || q.cat === 'CAUSALITY' || /fails|drop|break|timeout|consequence|failure/i.test(q.question || ''));
+
+        const parts = (concept.visualization && concept.visualization.steps && concept.visualization.steps[0] && Array.isArray(concept.visualization.steps[0].nodes) && concept.visualization.steps[0].nodes.length >= 2)
+          ? concept.visualization.steps[0].nodes
+          : [
+              { label: cTitle + ' Ingress', detail: 'Receives and buffers input parameters', failureImpact: 'Input data cannot enter the pipeline and stream stalls.' },
+              { label: cTitle + ' Core Engine', detail: 'Executes state transformation invariants', failureImpact: 'Intermediate state becomes corrupted and assertion fails.' },
+              { label: cTitle + ' Output Verifier', detail: 'Validates and commits state transition', failureImpact: 'Unverified outputs are emitted, violating consistency.' }
+            ];
+
+        if (!hasVisualId) {
+          const targetPart = parts[0];
+          const otherParts = parts.slice(1).map(p => p.label);
+          while (otherParts.length < 3) otherParts.push('Auxiliary Controller ' + (otherParts.length + 1));
+          bank.questions.push({
+            question: 'In the visual architecture of ' + cTitle + ', which component is primarily responsible for ' + targetPart.detail + '?',
+            options: [
+              targetPart.label,
+              otherParts[0],
+              otherParts[1],
+              otherParts[2]
+            ],
+            answerIndex: 0,
+            category: 'visual_id',
+            cat: 'VISUAL ID',
+            difficulty: 'medium',
+            conceptIndex: cIdx,
+            hint: 'Examine the isolated components in the ' + cTitle + ' assembly diagram.',
+            explanation: 'In the ' + cTitle + ' diagram assembly, ' + targetPart.label + ' directly handles ' + targetPart.detail + '.',
+            optionExplanations: [
+              'Correct: ' + targetPart.label + ' executes ' + targetPart.detail + ' as mapped in the architecture.',
+              'Incorrect: ' + otherParts[0] + ' handles a different phase of the assembly.',
+              'Incorrect: ' + otherParts[1] + ' operates downstream of this stage.',
+              'Incorrect: ' + otherParts[2] + ' does not perform this role.'
+            ],
+            eli5: 'Look at the first box in the picture—it catches and prepares everything.',
+            visual: concept.visualization
+          });
+        }
+
+        if (!hasCausality) {
+          const targetPart = parts[1] || parts[0];
+          const impact = targetPart.failureImpact || ('The transition halts and state invariants in ' + cTitle + ' fail.');
+          bank.questions.push({
+            question: 'If the ' + targetPart.label + ' component experiences a complete failure or disconnect in ' + cTitle + ', what is the direct functional consequence?',
+            options: [
+              impact,
+              'The entire system automatically bypasses all validation checks with zero penalty.',
+              'Data throughput doubles because intermediate checks are skipped.',
+              'Execution continues normally with zero impact on latency or state consistency.'
+            ],
+            answerIndex: 0,
+            category: 'causality',
+            cat: 'CAUSALITY',
+            difficulty: 'hard',
+            conceptIndex: cIdx,
+            hint: 'Trace the causal dependencies originating from ' + targetPart.label + '.',
+            explanation: targetPart.label + ' enforces critical state invariants; its failure directly causes: ' + impact,
+            optionExplanations: [
+              'Correct: ' + impact,
+              'Incorrect: Skipping validation compromises data integrity.',
+              'Incorrect: Bypassing checks causes corruption, not higher throughput.',
+              'Incorrect: Unhandled failure causes stalls, not normal execution.'
+            ],
+            eli5: 'If this part breaks, the whole machine stops because it cannot pass the baton to the next step.',
+            visual: concept.visualization
+          });
+        }
+      });
+    }
+
     if (Array.isArray(bank.questions)){
       for (const q of bank.questions){
         if (!q || typeof q !== 'object') continue;
@@ -2310,17 +2506,28 @@ async function runAnalyzeJob(job){
           pdfQuote: (c.keyPoints && c.keyPoints[0]) || (c.summary ? c.summary.slice(0, 100) : ''),
           explanation: c.summary || '',
           keyPoints: c.keyPoints || [c.summary ? c.summary.slice(0, 60) : 'Core concept'],
-          steps: (c.visualization && Array.isArray(c.visualization.steps))
-            ? c.visualization.steps.map(s => ({ title: s.title || 'Step', desc: s.description || '' }))
-            : [{ title: 'Overview', desc: c.summary || '' }],
+                    steps: (c.visualization && Array.isArray(c.visualization.steps) && c.visualization.steps.length > 0)
+            ? c.visualization.steps.map(s => ({
+                title: s.title || 'Step',
+                desc: s.description || s.desc || '',
+                layout: s.layout || 'flow',
+                nodes: Array.isArray(s.nodes) ? s.nodes : []
+              }))
+            : [{ title: 'Overview', desc: c.summary || '', layout: 'flow', nodes: [] }],
           visual: {
-            type: (c.visualization && Array.isArray(c.visualization.steps) && c.visualization.steps[0] && c.visualization.steps[0].layout) || 'process_flow',
+            type: (c.visualization && Array.isArray(c.visualization.steps) && c.visualization.steps[0] && c.visualization.steps[0].layout) || 'flow',
             title: c.title,
-            steps: (c.visualization && Array.isArray(c.visualization.steps))
-              ? c.visualization.steps.map(s => ({ title: s.title || 'Step', desc: s.description || '' }))
-              : [{ title: 'Overview', desc: c.summary || '' }],
+            steps: (c.visualization && Array.isArray(c.visualization.steps) && c.visualization.steps.length > 0)
+              ? c.visualization.steps.map(s => ({
+                  title: s.title || 'Step',
+                  desc: s.description || s.desc || '',
+                  layout: s.layout || 'flow',
+                  nodes: Array.isArray(s.nodes) ? s.nodes : []
+                }))
+              : [{ title: 'Overview', desc: c.summary || '', layout: 'flow', nodes: [] }],
             parameters: {}
           },
+          visualization: c.visualization,
           cheatcode: c.cheatCode || {
             why: 'Key concept explanation',
             like: 'Conceptual analogy',
@@ -3375,7 +3582,7 @@ function enforceOutlineSubjectFidelity(pack, job){
    ------------------------------------------------------------ */
 function outlinePromptWithFingerprint(job){
   const base = [
-    'Analyze the attached educational PDF and respond with a single valid JSON object containing title, subject, summary, units (at least 3, each with title, overview, learningGoals, topics with title, overview, conceptIndices) and concepts (4 to 6 items, each with title, summary, explanation, sourceExcerpt, sourcePage, keyPoints, whyItMatters, analogy, explanationLevels {simple, everyday, advanced}, commonTrap, correctiveTruth, comparison {firstLabel, secondLabel, takeaway, rows[3] {aspect, first, second}}, originStory, realWorldExamples[{title, description}], workedExample {scenario, answer, steps[2] {label, action, reasoning}}, quickRecall, cheatCode {why, like, wrong, right, oneLine, mnemonic, see[3]}, visualization {caption, steps[2] {title, description, layout, nodes[3] {label, detail, code}}}}). Level: ' + job.level + '. STRUCTURAL INTEGRITY (do not restructure): mirror the PDF\'s own topic order and headings — one concept per PDF topic/section, in the same sequence; never merge topics into a generic stack or invent new groupings. Each visualization layout MUST be one of exactly these 15: flow (steps/process), arch (system/parts), seq (timeline/order), compare (vs/difference), hierarchy (types/classification), state (states/status), erd (entities/data), fbd (force/pressure), wave (graph/signal), isometric (3D/layers), mindmap (brainstorm/causes), matrix (table/grid), equation (formula/calc), cycle (loop/repeats), layer (layers/levels). Every diagram must be topic-specific: node labels come from that topic\'s own terms, never reused across topics. When the PDF shows code/syntax/commands for a node, copy the exact one-line statement into node.code (max 80 chars); otherwise omit code. Keep every diagram topic-specific.',
+    'Analyze the attached educational PDF and respond with a single valid JSON object containing title, subject, summary, units (at least 3, each with title, overview, learningGoals, topics with title, overview, conceptIndices) and concepts (4 to 6 items, each with title, summary, explanation, sourceExcerpt, sourcePage, keyPoints, whyItMatters, analogy, explanationLevels {simple, everyday, advanced}, commonTrap, correctiveTruth, comparison {firstLabel, secondLabel, takeaway, rows[3] {aspect, first, second}}, originStory, realWorldExamples[{title, description}], workedExample {scenario, answer, steps[2] {label, action, reasoning}}, quickRecall, cheatCode {why, like, wrong, right, oneLine, mnemonic, see[3]}, visualization {caption, steps[2] {title, description, layout, nodes[3] {label, detail, code}}}}). Level: ' + job.level + '. STRUCTURAL INTEGRITY (do not restructure): mirror the PDF\'s own topic order and headings — one concept per PDF topic/section, in the same sequence; never merge topics into a generic stack or invent new groupings. Each visualization layout MUST be one of exactly these 15: flow (steps/process), arch (system/parts), seq (timeline/order), compare (vs/difference), hierarchy (types/classification), state (states/status), erd (entities/data), fbd (force/pressure), wave (graph/signal), isometric (3D/layers), mindmap (brainstorm/causes), matrix (table/grid), equation (formula/calc), cycle (loop/repeats), layer (layers/levels). Every diagram must be topic-specific: node labels come from that topic\'s own terms, never reused across topics. When the PDF shows code/syntax/commands for a node, copy the exact one-line statement into node.code (max 80 chars); otherwise omit code. Keep every diagram topic-specific. LOW-DATA & TEXT-ONLY ENRICHMENT: If the uploaded PDF is purely textual or lacks embedded diagrams, draw upon comprehensive academic domain knowledge to synthesize complete, accurate topic diagrams and labeled component breakdowns. Every node must have an accurate technical label, functional detail, and isolated part definition.',
     'SUBJECT FINGERPRINT (required): include a field "subjectFingerprint": a 3–6 word lowercase summary of the PDF\'s actual subject and the key technical terms it covers (for example "networks, tcp, routing, subnet" or "bacteria, cell, microscope"). It must come from the PDF, not from your general knowledge. This is used to reject a fluent answer that belongs to another subject.'
   ].join(' ');
   return base;

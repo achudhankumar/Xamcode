@@ -170,11 +170,35 @@
     `;
   }
 
-  function renderVisualSvg(visual, stepIdx) {
+      function renderVisualSvg(visual, stepIdx) {
     if (!visual || typeof visual !== 'object') {
       return renderProcessFlow({ steps: [{ title: 'Overview', desc: '' }] }, 0);
     }
-    const type = visual.type || 'process_flow';
+
+    const type = visual.type || 'flow';
+
+    // If custom AI nodes or layout archetype are provided, use dynamic aiDiagramSvg
+    if (window.XC?.aiDiagramSvg && (visual.nodes || (visual.steps && visual.steps[stepIdx]?.nodes) || !['topology', 'packet_flow', 'sliding_window'].includes(type))) {
+      const steps = visual.steps || [{ title: visual.title || 'Overview', desc: '' }];
+      const activeIdx = Math.min(Math.max(0, stepIdx || 0), steps.length - 1);
+      const curStep = steps[activeIdx] || steps[0] || {};
+      const nodes = curStep.nodes || visual.nodes || [
+        { label: String(curStep.title || visual.title || 'Core Step').slice(0, 20), detail: String(curStep.desc || curStep.description || 'Process phase').slice(0, 38) },
+        { label: 'Transition', detail: 'State verification & transfer' },
+        { label: 'Validated Output', detail: 'Asserted boundary state' }
+      ];
+      try {
+        return window.XC.aiDiagramSvg({
+          title: curStep.title || visual.title || 'Visual Model',
+          description: curStep.desc || curStep.description || '',
+          layout: curStep.layout || type || 'flow',
+          nodes: nodes
+        }, 0, activeIdx, visual.title || 'Concept');
+      } catch (err) {
+        // Fall back to process flow below if dynamic diagram fails
+      }
+    }
+
     switch (type) {
       case 'topology':
         return renderTopology(visual, stepIdx);
