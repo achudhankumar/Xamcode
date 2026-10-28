@@ -97,6 +97,7 @@ async function testInteractions() {
 
   await browser.close();
   console.log('--- ALL INTERACTIVE VERIFICATIONS PASSED ---\n');
+  process.exit(0);
 }
 
 testInteractions().catch(err => {

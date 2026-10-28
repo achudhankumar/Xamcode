@@ -55,10 +55,12 @@ async function testMainVisual() {
     console.log('Warnings count:', consoleWarnings.length);
 
     console.log('\n*** VISUAL REVIEW PASSED ***');
+    await browser.close();
+    process.exit(0);
   } catch (err) {
     console.error('Test failed:', err);
-  } finally {
-    await browser.close();
+    if (browser) await browser.close().catch(() => {});
+    process.exit(1);
   }
 }
 
