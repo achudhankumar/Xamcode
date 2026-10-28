@@ -16,7 +16,7 @@ const PIPELINE_STEPS = [
     name: 'PDF Ingestion & OCR',
     short: 'Ingest PDF',
     badge: 'STAGE 1: MULTI-MODAL INGESTION',
-    file: 'parser/pdf-stream-ast.ts',
+    file: 'Stage 1 · Document Reader',
     desc: 'Deep multi-modal document decomposition: extracts 342 pages, table schemas, mathematical formulas, and hierarchical diagrams into zero-copy semantic tokens.'
   },
   {
@@ -25,7 +25,7 @@ const PIPELINE_STEPS = [
     name: 'Semantic Decomposition',
     short: 'Units & Topics',
     badge: 'STAGE 2: CURRICULUM ARCHITECTURE',
-    file: 'engine/curriculum-dag.json',
+    file: 'Stage 2 · Study Plan Builder',
     desc: 'Gemini reasoning decomposes unorganized text into an instructional DAG: 5 structured units, prerequisite dependencies, and targeted micro-learning concepts.'
   },
   {
@@ -34,7 +34,7 @@ const PIPELINE_STEPS = [
     name: 'Pedagogical 3D Simulation',
     short: '3D Simulation',
     badge: 'STAGE 3: SPATIAL MECHANICS',
-    file: 'simulations/four-stroke-kinematics.js',
+    file: 'Stage 3 · Interactive 3D Visuals',
     desc: 'Kinematic 3D/SVG simulation running at educational slow-motion (0.25x – 0.5x speed). Drag the HUD scrubber to inspect exact cycle strokes and isolate components.'
   },
   {
@@ -43,7 +43,7 @@ const PIPELINE_STEPS = [
     name: 'In-Situ Active Recall',
     short: 'Continuous Quiz',
     badge: 'STAGE 4: SOCRATIC VERIFICATION',
-    file: 'tutor/diagnostic-evaluator.ts',
+    file: 'Stage 4 · Practice Quiz',
     desc: 'Instant verification after every visual concept. Features targeted diagnostic feedback explaining why distractors fail and why the correct principle holds.'
   },
   {
@@ -52,7 +52,7 @@ const PIPELINE_STEPS = [
     name: 'Exam Readiness & Mnemonics',
     short: 'Cheat Sheets',
     badge: 'STAGE 5: EXAM MASTERY',
-    file: 'cards/high-yield-summary.md',
+    file: 'Stage 5 · Exam Cheat Sheet',
     desc: 'High-yield recall cards, memory cheat codes, formula derivation matrices, and quick revision sheets ready for the night before your exam.'
   }
 ];
@@ -394,7 +394,7 @@ function mountPipeline(container){
           <div class="wc-terminal-top">
             <div class="wc-terminal-dots"><i></i><i></i><i></i></div>
             <span class="wc-terminal-file" id="wcTerminalFile">${current.file}</span>
-            <span style="font-size:9.5px;color:#64748B;font-family:var(--wc-font-mono);">AST EXTRACTOR</span>
+            <span style="font-size:9.5px;color:#64748B;font-family:var(--wc-font-mono);">STUDY WORKSPACE</span>
           </div>
           <div class="wc-terminal-body" id="wcTerminalBody">
             ${getTerminalCode(state.currentStep)}

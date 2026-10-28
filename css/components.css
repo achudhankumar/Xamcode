@@ -2015,3 +2015,66 @@ body[data-mode="light"] .v-cmp-bar-right>span{color:#04140d}
   color: #fde68a;
   line-height: 1.5;
 }
+
+
+/* ── Study Workspace Sequential Hierarchy, Interactive Quiz & AURA Co-Pilot ── */
+.q-card,
+.opts,
+.opt,
+.ai-question-card,
+.ai-answer-option {
+  position: relative;
+  z-index: 2;
+  pointer-events: auto !important;
+}
+
+.opt,
+.ai-answer-option {
+  cursor: pointer !important;
+  user-select: none;
+  transition: transform 0.14s ease, border-color 0.14s ease, background 0.14s ease, box-shadow 0.14s ease;
+}
+
+.opt:hover,
+.ai-answer-option:hover {
+  border-color: rgba(45, 212, 191, 0.55);
+  transform: translateY(-1px);
+}
+
+.opt.selected,
+.ai-answer-option.selected {
+  box-shadow: 0 0 0 2px rgba(45, 212, 191, 0.45);
+  font-weight: 600;
+}
+
+.opt.correct,
+.ai-answer-option.correct {
+  border-color: rgba(16, 185, 129, 0.75) !important;
+  background: rgba(16, 185, 129, 0.16) !important;
+  color: #a7f3d0 !important;
+}
+
+.opt.incorrect,
+.opt.wrong,
+.ai-answer-option.incorrect,
+.ai-answer-option.wrong {
+  border-color: rgba(239, 68, 68, 0.75) !important;
+  background: rgba(239, 68, 68, 0.16) !important;
+  color: #fecaca !important;
+}
+
+.study-seq-section {
+  scroll-margin-top: 84px;
+}
+
+.study-aura-copilot {
+  position: relative;
+  z-index: 2;
+  pointer-events: auto;
+}
+
+.study-aura-chip:hover {
+  background: rgba(139, 92, 246, 0.24) !important;
+  border-color: rgba(139, 92, 246, 0.55) !important;
+  transform: translateY(-1px);
+}

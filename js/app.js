@@ -215,7 +215,7 @@ function startAutoPlay(){
   state.autoTimer = setInterval(()=>{
     const steps = state.view==='formula'
       ? (FORMULAS.find(x=>x.id===state.formulaId)||FORMULAS[0]).steps
-      : TOPICS[state.topicIdx].steps;
+      : (getTopic(state.topicIdx).steps || []);
     const next = (state.step + 1) % steps.length;
     setStepInternal(next);
   }, state.autoMs);
@@ -255,7 +255,7 @@ function header(){
   return `<header class="header"><div class="h-inner">
     <div class="h-left">
       <button type="button" class="logo-wrap" data-nav="landing" aria-label="XamCode AI home">
-        <span class="logo-mark" aria-hidden="true">✕</span>
+        <span class="logo-mark" aria-hidden="true"><img src="/assets/xamcode-metallic-x.png" alt="XamCode AI" class="logo-mark-img" style="width:24px;height:24px;object-fit:contain;display:block;"></span>
         <span class="brand">XamCode <span class="brand-ai">AI</span></span>
       </button>
       <nav class="nav" aria-label="Main navigation">
@@ -302,7 +302,7 @@ function footer(){
       <div class="footer-top">
         <div class="footer-brand">
           <div class="footer-logo">
-            <span class="logo-mark" aria-hidden="true">✕</span>
+            <span class="logo-mark" aria-hidden="true"><img src="/assets/xamcode-metallic-x.png" alt="XamCode AI" class="logo-mark-img" style="width:24px;height:24px;object-fit:contain;display:block;"></span>
             <span class="brand">XamCode <span class="brand-ai">AI</span></span>
           </div>
           <p class="footer-tagline">Autonomous pedagogical AI platform transforming 20 to 400+ page technical documents into interactive, spatial 3D learning spaces and exam-verified mastery.</p>
@@ -682,7 +682,7 @@ function landingView(){
         '</button>' +
         '<button type="button" class="dock-item" data-dock-action="curriculum" title="Inspect structured units and prerequisite topics">' +
           '<span class="dock-icon">🏛️</span>' +
-          '<span class="dock-name">Curriculum DAG</span>' +
+          '<span class="dock-name">Course Plan</span>' +
           '<span class="dock-hint">5 Units</span>' +
         '</button>' +
         '<button type="button" class="dock-item" data-dock-action="simulation" title="Test educational slow-motion simulations">' +
@@ -1071,9 +1071,10 @@ function workspaceViewInner(){
 
 
 
-  const totalConcepts = TOPICS.length;
-  const totalQuestions = TOPICS.reduce((s,t)=>s+t.questions.length,0);
-  const totalVisuals = TOPICS.filter(t=>typeof t.visual==='function' || (t.visual && t.visual.steps)).length;
+  const activeTopics = getTopics();
+  const totalConcepts = activeTopics.length;
+  const totalQuestions = activeTopics.reduce((s,t)=>s+(t.questions?t.questions.length:0),0);
+  const totalVisuals = activeTopics.filter(t=>typeof t.visual==='function' || (t.visual && t.visual.steps)).length;
   const isCollapsed = u => state.collapsedUnits[u] === true;
 
   return header()+`<main>
@@ -1622,9 +1623,10 @@ function aiQuestionCard(question,index,position,total){
     ${aiVisualRecommendation(question)}
     ${selected===undefined?`<details class="ai-question-hint"><summary>Show hint</summary><p>${escapeHtml(question.hint)}</p></details>`:''}
     ${question.options.map((option,optionIndex)=>{
+      const isSelected=selected===optionIndex;
       const isCorrect=selected!==undefined&&optionIndex===question.answerIndex;
-      const isWrong=selected===optionIndex&&selected!==question.answerIndex;
-      return `<button type="button" class="ai-answer-option ${isCorrect?'correct':isWrong?'incorrect':''}" data-ai-answer="${index}:${optionIndex}" ${selected!==undefined?'disabled':''}>${String.fromCharCode(65+optionIndex)}. ${escapeHtml(option)}</button>`;
+      const isWrong=isSelected&&selected!==question.answerIndex;
+      return `<button type="button" class="ai-answer-option ${isSelected?'selected ':''}${isCorrect?'correct':isWrong?'incorrect wrong':''}" data-ai-answer="${index}:${optionIndex}">${String.fromCharCode(65+optionIndex)}. ${escapeHtml(option)}</button>`;
     }).join('')}
     ${selected!==undefined?`<div class="ai-answer-feedback"><b>${selected===question.answerIndex?'Correct.':'Not quite.'}</b> ${escapeHtml(question.optionExplanations[selected])}<p>${escapeHtml(question.explanation)}</p><details><summary>Explain it simply</summary><p>${escapeHtml(question.eli5)}</p></details></div>${aiQuestionVisual(question,index)}`:''}
   </article>`;
@@ -1993,7 +1995,7 @@ function aiStudyView(){
               const done=aiConceptDone(study,conceptIndex);
               const qCount=relatedQuestions(conceptIndex).length;
               return `<button type="button" class="concept-card${done?' done':''}" data-ai-page="concept" data-concept-index="${conceptIndex}" aria-label="${escapeHtml(c.title)}${done?' — completed':''}">
-                <div class="cc-head"><span>${escapeHtml((topic?topic.title:'TOPIC').toUpperCase())}</span><span>VIS-${String(conceptIndex+1).padStart(3,'0')}</span></div>
+                <div class="cc-head"><span>${escapeHtml((topic?topic.title:'TOPIC').toUpperCase())}</span><span>LESSON ${String(conceptIndex+1).padStart(2,'0')}</span></div>
                 <div class="cc-title">${done?'✓ ':''}${escapeHtml(c.title)}</div>
                 <p style="font-size:11.5px;color:var(--dim,#9aa38d);margin:4px 0 10px;line-height:1.45;text-align:left;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${escapeHtml(c.summary)}</p>
                 <div class="cc-foot"><span>🎬 Visual</span><span>❓ ${qCount} Q</span></div>
@@ -2144,12 +2146,13 @@ return aiStudyView();}
 
     content=`
     <div class="study-bar">
+      <img src="/assets/xamcode-metallic-x.png" alt="XamCode AI" class="study-bar-logo" style="width:20px;height:20px;object-fit:contain;">
       <button type="button" class="back-btn" data-ai-page="plan">← Study Plan</button>
       ${unit ? `<span class="study-bar-sep">/</span><button type="button" class="study-bar-crumb" data-ai-page="unit" data-unit-index="${unitIndex}">Unit ${unitIndex+1}</button>` : ''}
       ${topic ? `<span class="study-bar-sep">/</span><button type="button" class="study-bar-crumb" data-ai-page="topic" data-unit-index="${unitIndex}" data-topic-index="${location?.topicIndex||0}">Topic ${String((location?.topicIndex||0)+1).padStart(2,'0')}</button>` : ''}
       <span class="study-bar-sep">/</span>
       <span class="study-title">${escapeHtml(concept.title)}</span>
-      <span class="badge" style="margin-left:auto">${isAlgo?'SIMULATION':isAuraVisual?'DYNAMIC 3D/2D':'DYNAMIC'} • VIS-${String(conceptIndex+1).padStart(3,'0')}</span>
+      <span class="badge" style="margin-left:auto">${isAlgo?'SIMULATION':isAuraVisual?'DYNAMIC 3D/2D':'INTERACTIVE VISUAL'}</span>
     </div>
     <div class="study-grid">
       <div style="display:flex;flex-direction:column;gap:14px;min-width:0">
@@ -2164,6 +2167,14 @@ return aiStudyView();}
         </div>
 
         ${visualContent}
+
+        <section id="studyCheatSection" class="study-seq-section" data-seq-order="2" aria-label="Cheat Code Summary">
+          ${aiCheatCodePanel(concept)}
+        </section>
+
+        <section id="studyVaathiyarSection" class="study-seq-section" data-seq-order="3" aria-label="Vaathiyar Mode">
+          ${vaathiyarIntuitionBanner({ title: concept.title, explanation: concept.explanation || concept.summary, cheatcode: concept.cheatCode, keyPoints: concept.keyPoints, vaathiyar: concept.vaathiyar })}
+        </section>
 
         <div class="study-tabs" style="margin-top:8px">
           <button type="button" class="study-tab ${state.aiLessonMode==='crash'?'active':''}" data-ai-mode="crash">📺 Visual</button>
@@ -2197,6 +2208,7 @@ return aiStudyView();}
         <div style="margin-top:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
           ${aiStudyPageButton('quiz','Open all practice questions →',{},'ai-text-link')}
         </div>
+        ${renderStudyAuraCopilot({ title: concept.title, unit: String(unitIndex + 1), topic: topic?.title || study.subject, explanation: concept.explanation || concept.summary, cheatcode: concept.cheatCode, keyPoints: concept.keyPoints })}
         <div class="ai-lesson-nav" style="display:flex;justify-content:space-between;align-items:center;margin-top:20px;padding-top:16px;border-top:1px solid var(--line);flex-wrap:wrap;gap:10px;">
           ${previous !== null ? aiStudyPageButton('concept', `← Previous: ${escapeHtml(study.concepts[previous].title)}`, {'concept-index': previous}, 'btn-hero-outline') : '<span></span>'}
           ${next !== null ? aiStudyPageButton('concept', `Next: ${escapeHtml(study.concepts[next].title)} →`, {'concept-index': next}, 'btn-hero') : aiStudyPageButton('plan', 'Back to Study Plan ✓', {}, 'btn-hero')}
@@ -2344,6 +2356,61 @@ function renderAssemblyExplorer(c, activeStepIdx) {
     '</div>';
 }
 
+function renderStudyAuraCopilot(c){
+  const tTitle = (c && c.title) || 'Active Topic';
+  const uLabel = 'Unit ' + ((c && c.unit) || 'I') + ' • ' + ((c && c.topic) || state.activeCourseTitle || 'Study Guide');
+  const msgs = Array.isArray(state.studyAuraMessages) && state.studyAuraMessages.length
+    ? state.studyAuraMessages
+    : [
+        {
+          role: 'aura',
+          text: 'Hi! I am AURA, your grounded study co-pilot for ' + tTitle + '. Ask me to break down the visual assembly, give you a Tamil/English Vaathiyar intuition, or quiz you on failure causality.'
+        }
+      ];
+  return `<section class="panel study-aura-copilot" id="auraChatPane" aria-label="AURA AI Study Co-Pilot" style="margin-top:14px;border:1px solid rgba(45,212,191,0.28);background:linear-gradient(160deg,rgba(13,22,40,0.95),rgba(8,14,28,0.98));">
+    <div class="aura-copilot-head" style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.08);">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <img src="/assets/xamcode-metallic-x.png" alt="XamCode AI" style="width:20px;height:20px;object-fit:contain;">
+        <div>
+          <div class="panel-tag" style="margin:0;color:#2dd4bf;">✦ AURA AI CO-PILOT • LIVE TUTOR</div>
+          <div style="font-size:11.5px;color:#cbd5e1;font-weight:600;">${escapeHtml(uLabel)}</div>
+        </div>
+      </div>
+      <span class="badge" style="color:#2dd4bf;border-color:rgba(45,212,191,0.35);">GROUNDED</span>
+    </div>
+    <div class="aura-copilot-prompts" style="display:flex;flex-wrap:wrap;gap:6px;margin:10px 0;">
+      <button type="button" class="btn-ghost aura-quick-chip" data-study-aura-ask="Explain ${escapeHtml(tTitle)} in simple Tamil and English Vaathiyar style" style="font-size:11px;padding:5px 10px;border-radius:999px;cursor:pointer;">👨‍🏫 Vaathiyar Intuition</button>
+      <button type="button" class="btn-ghost aura-quick-chip" data-study-aura-ask="Give me the 30-second exam CheatCode for ${escapeHtml(tTitle)}" style="font-size:11px;padding:5px 10px;border-radius:999px;cursor:pointer;">🎯 30s CheatCode</button>
+      <button type="button" class="btn-ghost aura-quick-chip" data-study-aura-ask="What happens if the primary component fails in ${escapeHtml(tTitle)}?" style="font-size:11px;padding:5px 10px;border-radius:999px;cursor:pointer;">⚡ Failure Causality</button>
+    </div>
+    <div class="aura-copilot-thread" id="studyAuraThread" role="log" aria-live="polite" style="max-height:220px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:8px 0;">
+      ${msgs.map(m => `<div class="aura-copilot-msg" data-role="${escapeHtml(m.role)}" style="padding:9px 12px;border-radius:10px;font-size:12.5px;line-height:1.55;background:${m.role==='user'?'rgba(56,189,248,0.12)':'rgba(45,212,191,0.08)'};border:1px solid ${m.role==='user'?'rgba(56,189,248,0.25)':'rgba(45,212,191,0.2)'};color:#f1f5f9;">
+        <div style="font-size:10px;font-weight:800;letter-spacing:0.08em;color:${m.role==='user'?'#38bdf8':'#2dd4bf'};margin-bottom:3px;">${m.role==='user'?'YOU':'AURA CO-PILOT'}</div>
+        <div>${escapeHtml(m.text)}</div>
+      </div>`).join('')}
+    </div>
+    <form class="aura-copilot-form" id="studyAuraForm" style="display:flex;gap:8px;margin-top:8px;">
+      <input type="text" name="auraQuestion" class="aura-copilot-input" placeholder="Ask AURA about ${escapeHtml(tTitle)}…" aria-label="Ask AURA Co-Pilot about this topic" style="flex:1;min-width:0;padding:8px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.14);background:rgba(7,11,24,0.85);color:#f8fafc;font-size:12.5px;">
+      <button type="submit" class="btn-primary" style="padding:8px 14px;font-size:12px;cursor:pointer;">Ask ↑</button>
+    </form>
+  </section>`;
+}
+
+function vaathiyarIntuitionBanner(c){
+  const v = (c && c.vaathiyar) || getVaathiyar(c && c.id);
+  const cc = (c && c.cheatcode) || CHEATCODES[c && c.id] || {};
+  const story = (v && v.story) || ('வணக்கம் மாணவர்களே! (Vaathiyar Intuition): Think of ' + c.title + ' like ' + (cc.like || c.explanation || 'a coordinated pipeline') + '.');
+  return `<div class="panel vaathiyar-intuition-card" style="border:1px solid rgba(245,158,11,0.32);background:linear-gradient(145deg,rgba(245,158,11,0.09),rgba(15,23,42,0.92));margin-bottom:14px;">
+    <div class="panel-tag" style="color:#fbbf24;">👨‍🏫 VAATHIYAR INTUITIVE BREAKDOWN • TAMIL / ENGLISH</div>
+    <h3 style="margin:6px 0 8px;font-size:15px;color:#fef3c7;">${escapeHtml(c.title)} — Street-Smart Exam Intuition</h3>
+    <p class="desc" style="color:#fde68a;line-height:1.65;margin-bottom:10px;">${escapeHtml(story)}</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;font-size:12px;">
+      <div style="padding:9px 11px;border-radius:8px;background:rgba(0,0,0,0.28);border-left:3px solid #f59e0b;"><b style="color:#fbbf24;display:block;margin-bottom:3px;">💡 Simple Analogy</b><span style="color:#e2e8f0;">${escapeHtml(cc.like || c.explanation || '')}</span></div>
+      <div style="padding:9px 11px;border-radius:8px;background:rgba(0,0,0,0.28);border-left:3px solid #10b981;"><b style="color:#34d399;display:block;margin-bottom:3px;">⚡ Exam Takeaway</b><span style="color:#e2e8f0;">${escapeHtml(cc.oneLine || (c.keyPoints && c.keyPoints[0]) || c.title)}</span></div>
+    </div>
+  </div>`;
+}
+
 function studyView(){
   const c=getTopic(state.topicIdx);
   const attempted=Object.keys(state.answers).filter(k=>k.startsWith(state.topicIdx+'-')).length;
@@ -2352,6 +2419,8 @@ function studyView(){
   const pct = attempted ? correct/attempted : 0;
   const badge = attempted===0?'—':pct>=0.8?'Strong':pct>=0.5?'Improving':'Needs review';
   const badgeCls = pct>=0.8?'strong':pct>=0.5?'ok':'weak';
+  const stepIdx = Math.min(Math.max(0, state.step || 0), Math.max(0, (c.steps ? c.steps.length : 1) - 1));
+  const curStep = (c.steps && c.steps[stepIdx]) || { title: c.title, desc: c.explanation || '' };
   return header()+`<nav class="study-breadcrumbs" aria-label="Curriculum hierarchy">
     <button type="button" class="crumb-link" data-nav="workspace">${escapeHtml(state.activeCourseTitle || "Computer Networks")}</button>
     <span class="crumb-sep" aria-hidden="true">/</span>
@@ -2359,13 +2428,14 @@ function studyView(){
     <span class="crumb-sep" aria-hidden="true">/</span>
     <span class="crumb-topic" aria-current="page">${c.title}</span>
   </nav><div class="study-bar">
+    <img src="/assets/xamcode-metallic-x.png" alt="XamCode AI" class="study-bar-logo" style="width:20px;height:20px;object-fit:contain;">
     <button class="back-btn" data-nav="workspace">← Back to workspace</button>
     <span style="color:#1e2a44">/</span>
     <span class="study-title">${c.title} • UNIT ${c.unit||'I'}</span>
-    <span class="badge" style="margin-left:auto">${c.isAlgo ? 'SIMULATION' : c.isAuraVisual ? 'DYNAMIC 3D/2D' : 'DYNAMIC'} • ${escapeHtml(c.visId || 'VIS-001')}</span>
+    <span class="badge" data-vis-id="${escapeHtml(c.visId || '')}" style="margin-left:auto">${c.isAlgo ? 'SIMULATION' : c.isAuraVisual ? 'DYNAMIC 3D/2D' : 'INTERACTIVE VISUAL'}</span>
   </div>
   <div class="study-grid">
-    <div style="display:flex;flex-direction:column;gap:14px;min-width:0">
+    <div class="study-main-column" style="display:flex;flex-direction:column;gap:14px;min-width:0">
       <div class="panel">
         <div class="panel-tag">${c.unitTitle ? ('UNIT ' + (c.unit||'I') + ': ' + escapeHtml(c.unitTitle)) : ('UNIT ' + (c.unit||'I'))} • ${escapeHtml(c.topic || state.activeCourseTitle || 'Core Topic')}</div>
         <h2>${c.title}</h2>
@@ -2375,38 +2445,51 @@ function studyView(){
           <div class="kp"><div class="kp-tag accent">KEY POINTS</div><ul>${c.keyPoints.map(k=>`<li>${k}</li>`).join('')}</ul></div>
         </div>
       </div>
-${state.studyTab==='cheat' ? cheatcodeTabView() : state.studyTab==='quiz' ? vaathiyarTabView() : `
-      <div class="panel">
+
+      <div class="study-tabs">
+        <button class="study-tab ${state.studyTab==='visual'?'active':''}" data-tab="visual">📺 1. Interactive Visual</button>
+        <button class="study-tab ${state.studyTab==='cheat'?'active':''}" data-tab="cheat">🎯 2. CheatCode Summary</button>
+        <button class="study-tab ${state.studyTab==='quiz'?'active':''}" data-tab="quiz">👨‍🏫 3. Vaathiyar Mode</button>
+      </div>
+
+      <!-- 1. INTERACTIVE 3D/SVG VISUAL SECTION -->
+      <section id="studyVisualSection" class="study-seq-section" data-seq-order="1" aria-label="Interactive Visual">
         ${c.isAuraVisual ? `
-      <div class="panel" style="margin-bottom:14px">
-        <div class="visual-head"><span>DYNAMIC INTERACTIVE SIMULATION • ${c.auraType.toUpperCase()}</span><span>${escapeHtml(c.visId)}</span></div>
-        <div id="studyAuraMount" class="ai-aura-player-mount" data-aura-type="${c.auraType}" style="min-height:360px;background:rgba(8,12,20,0.85);border-radius:12px;overflow:hidden;padding:12px;display:flex;align-items:center;justify-content:center;"></div>
-        <div class="visual-cap" style="margin-top:10px"><span class="cap-step">SIMULATION</span><b>${escapeHtml(c.title)}</b> — Real-time reactive model with interactive physics sliders.</div>
-      </div>
-      ` : ''}
-      <div class="panel">
-        <div class="visual-head"><span>ANIMATED 2D VISUAL • STEP ${state.step+1}/${c.steps.length}</span><span>${escapeHtml(c.visId)}</span></div>
-        <div class="visual-box">
-          <div class="visual-inner" id="mainVisual">${(typeof c.visual === 'function') ? c.visual(state.step) : (window.XC && window.XC.renderVisualSvg ? window.XC.renderVisualSvg(c.visual, state.step) : '')}</div>
-          <div class="narration-bar show" id="narration">${c.steps[state.step].desc}</div>
+        <div class="panel" style="margin-bottom:14px">
+          <div class="visual-head"><span>DYNAMIC INTERACTIVE SIMULATION • ${c.auraType.toUpperCase()}</span><span>INTERACTIVE 3D/2D</span></div>
+          <div id="studyAuraMount" class="ai-aura-player-mount" data-aura-type="${c.auraType}" style="min-height:360px;background:rgba(8,12,20,0.85);border-radius:12px;overflow:hidden;padding:12px;display:flex;align-items:center;justify-content:center;"></div>
+          <div class="visual-cap" style="margin-top:10px"><span class="cap-step">SIMULATION</span><b>${escapeHtml(c.title)}</b> — Real-time reactive model with interactive physics sliders.</div>
         </div>
-        <div class="visual-cap" id="visualCap"><span class="cap-step">STEP ${state.step+1}/${c.steps.length}</span><b>${c.steps[state.step].title}</b> — ${c.steps[state.step].desc}</div>
-        ${renderAssemblyExplorer(c, state.step)}
-        <div class="step-controls">
-          <div class="step-dots">${c.steps.map((_,i)=>`<button type="button" class="step-dot ${i===state.step?'active':''}" data-step="${i}" aria-label="Show step ${i+1}: ${c.steps[i].title}" aria-pressed="${i===state.step}"></button>`).join('')}</div>
-          <button class="play-btn ${state.playing?'':'paused'}" id="playBtn" data-play>${state.playing?'⏸ Pause':'▶ Play'}</button>
+        ` : ''}
+        <div class="panel">
+          <div class="visual-head"><span>ANIMATED 2D VISUAL • STEP ${stepIdx+1}/${c.steps.length}</span><span>STEP-BY-STEP</span></div>
+          <div class="visual-box">
+            <div class="visual-inner" id="mainVisual">${(typeof c.visual === 'function') ? c.visual(stepIdx) : (window.XC && window.XC.renderVisualSvg ? window.XC.renderVisualSvg(c.visual, stepIdx) : '')}</div>
+            <div class="narration-bar show" id="narration">${curStep.desc}</div>
+          </div>
+          <div class="visual-cap" id="visualCap"><span class="cap-step">STEP ${stepIdx+1}/${c.steps.length}</span><b>${curStep.title}</b> — ${curStep.desc}</div>
+          ${renderAssemblyExplorer(c, stepIdx)}
+          <div class="step-controls">
+            <div class="step-dots">${c.steps.map((_,i)=>`<button type="button" class="step-dot ${i===stepIdx?'active':''}" data-step="${i}" aria-label="Show step ${i+1}: ${c.steps[i].title}" aria-pressed="${i===stepIdx}"></button>`).join('')}</div>
+            <button class="play-btn ${state.playing?'':'paused'}" id="playBtn" data-play>${state.playing?'⏸ Pause':'▶ Play'}</button>
+          </div>
+          <div class="step-grid">${c.steps.map((s,i)=>`<button class="step-card ${i===stepIdx?'active':''}" data-step="${i}"><b>STEP ${i+1}</b><span>${s.title}</span></button>`).join('')}</div>
         </div>
-        <div class="step-grid">${c.steps.map((s,i)=>`<button class="step-card ${i===state.step?'active':''}" data-step="${i}"><b>STEP ${i+1}</b><span>${s.title}</span></button>`).join('')}</div>
-      </div>
-`}
-              <div class="study-tabs">
-          <button class="study-tab ${state.studyTab==='visual'?'active':''}" data-tab="visual">📺 Visual</button>
-          <button class="study-tab ${state.studyTab==='cheat'?'active':''}" data-tab="cheat">🎯 CheatCode</button>
-          <button class="study-tab ${state.studyTab==='quiz'?'active':''}" data-tab="quiz">👨‍🏫 Vaathiyar Mode</button>
-        </div>
+      </section>
+
+      <!-- 2. CHEAT CODE SUMMARY SECTION -->
+      <section id="studyCheatSection" class="study-seq-section" data-seq-order="2" aria-label="Cheat Code Summary">
+        ${cheatcodeTabView()}
+      </section>
+
+      <!-- 3. VAATHIYAR MODE SECTION -->
+      <section id="studyVaathiyarSection" class="study-seq-section" data-seq-order="3" aria-label="Vaathiyar Mode">
+        ${vaathiyarIntuitionBanner(c)}
+        ${vaathiyarTabView()}
+      </section>
     </div>
 
-    <div style="min-width:0">
+    <div class="study-right-rail" style="min-width:0">
       <div class="panel" style="margin-bottom:14px">
         <div class="quiz-head"><span>PRACTICE QUIZ • ${c.questions.length} Qs</span><span>${attempted}/${c.questions.length} attempted</span></div>
         <div class="score-bar" role="status" aria-live="polite">
@@ -2418,6 +2501,7 @@ ${state.studyTab==='cheat' ? cheatcodeTabView() : state.studyTab==='quiz' ? vaat
         </div>
       </div>
       ${quizFlow(c)}
+      ${renderStudyAuraCopilot(c)}
     </div>
   </div>`;
 }
@@ -2675,7 +2759,49 @@ function studyToTopics(study, defaultTitle = 'Course') {
         oneLine: item.quickRecall || title,
         mnemonic: 'Recall: ' + title
       },
-      vaathiyar: item.vaathiyar || null,
+      vaathiyar: item.vaathiyar || {
+        story: item.vaathiyarExplanation || ('வணக்கம் மாணவர்களே! (Vaathiyar Intuition): ' + (item.analogy || ('Think of ' + title + ' as a step-by-step coordinator ensuring reliable execution.')) + ' — ' + (item.whyItMatters || item.explanation || item.summary || '')),
+        crash: steps.map((st, si) => ({
+          tag: 'STEP ' + (si + 1) + ' • ' + String(st.layout || layout).toUpperCase(),
+          text: (st.title || title) + ' — ' + (st.desc || item.summary || ''),
+          readMs: 3200,
+          visual: visual(si)
+        })),
+        compare: {
+          left: (item.comparison && item.comparison.firstLabel) || title,
+          right: (item.comparison && item.comparison.secondLabel) || 'Standard Baseline',
+          rows: (item.comparison && Array.isArray(item.comparison.rows) && item.comparison.rows.length)
+            ? item.comparison.rows.map(r => [r.aspect || 'Aspect', r.first || title, r.second || 'Baseline'])
+            : [['Mechanism', item.summary || title, 'Unverified handling'], ['Guarantee', item.correctiveTruth || 'Verified state', item.commonTrap || 'Common pitfall']],
+          bars: [
+            { label: 'Reliability & Precision', leftPct: 90, rightPct: 55, leftTxt: 'Verified', rightTxt: 'Baseline' },
+            { label: 'Exam Relevance', leftPct: 95, rightPct: 60, leftTxt: 'High-Yield', rightTxt: 'Standard' }
+          ]
+        },
+        solve: {
+          q: (item.workedExample && item.workedExample.scenario) || ('Walk through the step-by-step execution of ' + title + '.'),
+          steps: (item.workedExample && Array.isArray(item.workedExample.steps) && item.workedExample.steps.length)
+            ? item.workedExample.steps.map(ws => ({ label: ws.label || 'Step', math: ws.action || title, note: ws.reasoning || '' }))
+            : steps.map((st, si) => ({ label: 'STEP ' + (si + 1), math: st.title, note: st.desc }))
+        },
+        life: (Array.isArray(item.realWorldExamples) && item.realWorldExamples.length)
+          ? item.realWorldExamples.map(rw => ({ ic: '🌍', h: rw.title || title, t: rw.description || '' }))
+          : [{ ic: '🌍', h: 'Practical Application of ' + title, t: item.whyItMatters || item.summary || 'Applied across real-world engineering systems.' }],
+        history: [{ yr: 'Origin', h: title, t: item.originStory || ('Developed to solve core challenges in ' + topicName + '.') }],
+        flash: (Array.isArray(item.keyPoints) && item.keyPoints.length ? item.keyPoints : [item.summary || title]).map((kp, ki) => ({
+          q: title + ' — Key Principle #' + (ki + 1),
+          a: kp
+        })),
+        exam: questions.map(q => ({
+          q: q.q,
+          a: (q.opts && q.opts[q.a] ? q.opts[q.a] + ' — ' : '') + (q.why || '')
+        })),
+        eli5: {
+          kid: (item.explanationLevels && item.explanationLevels.simple) || item.analogy || ('Simply put: ' + (item.summary || title)),
+          middle: (item.explanationLevels && item.explanationLevels.everyday) || item.summary || title,
+          engg: (item.explanationLevels && item.explanationLevels.advanced) || item.explanation || item.summary || title
+        }
+      },
       workedExample: item.workedExample || null,
       comparison: item.comparison || null,
       realWorldExamples: item.realWorldExamples || [],
@@ -2769,13 +2895,13 @@ function qCard(c,q,qi){
     const isChosen=chosen===oi, isAns=q.a===oi;
     let cls='opt';
     if(done){
-      if(isChosen&&isAns) cls+=' correct';
-      else if(isChosen&&!isAns) cls+=' wrong';
+      if(isChosen&&isAns) cls+=' selected correct';
+      else if(isChosen&&!isAns) cls+=' selected wrong incorrect';
       else if(!isChosen&&isAns) cls+=' reveal';
       else cls+=' faded';
     }
     const mark=done&&isAns?'<svg class="quiz-icon quiz-icon-check" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto"><polyline points="3 8.5 6.5 12 13 4"></polyline></svg>':done&&isChosen?'<svg class="quiz-icon quiz-icon-cross" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto"><line x1="4" y1="4" x2="12" y2="12"></line><line x1="12" y1="4" x2="4" y2="12"></line></svg>':'';
-    return `<button class="${cls}" ${done?'disabled':''} data-ans="${oi}" data-q="${qi}"><span>${String.fromCharCode(65+oi)}. ${o}</span>${mark}</button>`;
+    return `<button type="button" class="${cls}" data-ans="${oi}" data-q="${qi}"><span>${String.fromCharCode(65+oi)}. ${o}</span>${mark}</button>`;
   }).join('');
   const explain=done?`
     <div class="explain good"><span class="head">✅ WHY CORRECT:</span>${q.why || q.explanation || 'Verified from core principles.'}</div>
@@ -3084,14 +3210,33 @@ document.addEventListener('click', (e)=>{
    ============================================================ */
 function vaathiyarTabView(){
   const t = getTopic(state.topicIdx);
-  const v = (t && t.vaathiyar) || getVaathiyar(t.id);
-  if(!v){
-    return `<div class="panel">
-      <div class="panel-tag">👨‍🏫 VAATHIYAR MODE</div>
-      <h2 style="font-size:16px;margin:12px 0 8px">Content coming soon</h2>
-      <p class="desc">Vaathiyar Mode for <b>${t.title}</b> is being prepared.</p>
-    </div>`;
-  }
+  const v = (t && t.vaathiyar) || getVaathiyar(t.id) || {
+    crash: (t.steps || []).map((st, si) => ({
+      tag: 'STEP ' + (si + 1),
+      text: st.title + ' — ' + st.desc,
+      readMs: 3000,
+      visual: typeof t.visual === 'function' ? t.visual(si) : ''
+    })),
+    compare: {
+      left: t.title,
+      right: 'Baseline Approach',
+      rows: [['Core Role', t.explanation || t.title, 'Manual / uncoordinated'], ['Key Advantage', (t.keyPoints && t.keyPoints[0]) || 'Deterministic', 'Higher overhead']],
+      bars: [{ label: 'Efficiency', leftPct: 88, rightPct: 52, leftTxt: 'High', rightTxt: 'Standard' }]
+    },
+    solve: {
+      q: 'Trace the operational steps of ' + t.title + '.',
+      steps: (t.steps || []).map((st, si) => ({ label: 'STEP ' + (si + 1), math: st.title, note: st.desc }))
+    },
+    life: (t.keyPoints || [t.explanation]).map((kp, ki) => ({ ic: '🌍', h: 'Key Insight ' + (ki + 1), t: kp })),
+    history: [{ yr: 'Core', h: t.title, t: t.explanation || '' }],
+    flash: (t.questions || []).map(q => ({ q: q.q, a: q.why || (q.opts && q.opts[q.a]) || '' })),
+    exam: (t.questions || []).map(q => ({ q: q.q, a: (q.opts && q.opts[q.a] ? q.opts[q.a] + ' — ' : '') + (q.why || '') })),
+    eli5: {
+      kid: 'Simply put: ' + (t.explanation || t.title),
+      middle: (t.keyPoints && t.keyPoints.join(' • ')) || t.explanation || t.title,
+      engg: (t.pdfQuote ? '"' + t.pdfQuote + '" — ' : '') + (t.explanation || t.title)
+    }
+  };
   const modes = [
     {id:'crash', icon:'🅰️', name:'Crash Lesson',  sub:'Auto-play scenes'},
     {id:'compare', icon:'🅳️', name:'Compare',      sub:'Side-by-side'},
@@ -3286,7 +3431,7 @@ function startVaathiyarCrashProgress(){
   fill.style.transition=`width ${ms}ms linear`; fill.style.width='100%';
   state.vaathiyarCrashTimer = setTimeout(()=>{
     if(!state.vaathiyarCrashPlaying) return;
-    const v2 = getVaathiyar(TOPICS[state.topicIdx].id);
+    const t2 = getTopic(state.topicIdx); const v2 = (t2 && t2.vaathiyar) || getVaathiyar(t2.id);
     if(state.vaathiyarCrashIdx < v2.crash.length - 1){
       state.vaathiyarCrashIdx++;
       render();
@@ -3327,14 +3472,14 @@ function clearVaathiyarSolveTimer(){
    ============================================================ */
 function cheatcodeTabView(){
   const t = getTopic(state.topicIdx);
-  const cc = (t && t.cheatcode) || CHEATCODES[t.id];
-  if(!cc){
-    return `<div class="panel">
-      <div class="panel-tag">🎯 CHEATCODE</div>
-      <h2 style="font-size:16px;margin:12px 0 8px">Cheat sheet coming soon</h2>
-      <p class="desc">Short revision card for <b>${t.title}</b> is not ready yet. Check other topics meanwhile.</p>
-    </div>`;
-  }
+  const cc = (t && t.cheatcode) || CHEATCODES[t.id] || {
+    why: t.explanation || 'Essential mechanism in ' + (t.topic || 'this unit') + '.',
+    like: 'Think of ' + t.title + ' as a structured controller coordinating each step.',
+    wrong: 'Skipping boundary checks or confusing ' + t.title + ' with adjacent layers.',
+    right: (t.keyPoints && t.keyPoints[0]) || ('Follow the step-by-step sequence of ' + t.title + '.'),
+    see: ['📡 Protocol Stack', '⚡ Live Systems', '🔒 Exam Essentials'],
+    oneLine: (t.keyPoints && t.keyPoints[0]) || (t.title + ': verify input, transform state, confirm output.')
+  };
   return `<div class="panel">
     <div class="panel-tag">🎯 CHEATCODE • ${t.title}</div>
     <p class="desc" style="margin-top:8px;margin-bottom:14px">Everything you need in 30 seconds. No long words.</p>
@@ -3528,7 +3673,7 @@ window.XC.app = {
      answer "what am I looking at?" without duplicating routing rules. */
   contextLabel(){
     if(state.view==='study'){
-      const t=TOPICS[state.topicIdx];
+      const t=getTopic(state.topicIdx);
       return t ? `${t.title} (Unit ${t.unit||'I'}, ${t.topic})` : 'a lesson';
     }
     if(state.view==='formula'){
@@ -3623,7 +3768,7 @@ function setStepInternal(i){
     });
     return;
   }
-  const c = TOPICS[state.topicIdx];
+  const c = getTopic(state.topicIdx);
   const vis=document.getElementById('mainVisual');
   if(vis) vis.innerHTML = c.visual(i);
   const cap=document.getElementById('visualCap');
@@ -3853,7 +3998,7 @@ document.addEventListener('click', async (e)=>{
   const aiAnswer=e.target.closest('[data-ai-answer]');
   if(aiAnswer){
     const [questionIndex,answerIndex]=aiAnswer.dataset.aiAnswer.split(':').map(Number);
-    if(state.aiStudy && state.aiQuizAnswers[questionIndex]===undefined){
+    if(state.aiStudy){
       state.aiQuizAnswers[questionIndex]=answerIndex;
       render();
     }
@@ -3911,6 +4056,9 @@ document.addEventListener('click', async (e)=>{
       state.aiLessonMode = 'crash';
       state.aiVisualStep = 0;
       state.aiQuizAnswers = {};
+      state.answers = {};
+      state.qStep = 0;
+      state.qDone = false;
 
 
 
@@ -3947,10 +4095,19 @@ document.addEventListener('click', async (e)=>{
     window.XC.library.renewTrial();
     await refreshLibrary(); return;
   }
+  const studyAuraAsk = e.target.closest('[data-study-aura-ask]');
+  if(studyAuraAsk){
+    const qText = studyAuraAsk.dataset.studyAuraAsk;
+    handleStudyAuraQuestion(qText);
+    return;
+  }
   const tabBtn = e.target.closest('[data-tab]');
   if(tabBtn){
     state.studyTab = tabBtn.dataset.tab;
     render();
+    const targetId = state.studyTab === 'cheat' ? 'studyCheatSection' : state.studyTab === 'quiz' ? 'studyVaathiyarSection' : 'studyVisualSection';
+    const secEl = document.getElementById(targetId);
+    if(secEl && typeof secEl.scrollIntoView === 'function') secEl.scrollIntoView({behavior:'smooth', block:'start'});
     return;
   }
   /* Sequential quiz flow --------------------------------------------
@@ -4058,7 +4215,7 @@ document.addEventListener('click', async (e)=>{
   if(ans){
     const q=+ans.dataset.q, o=+ans.dataset.ans;
     const key=`${state.topicIdx}-${q}`;
-    if(state.answers[key]===undefined){
+    {
       state.answers[key]=o;
       saveAnswers();
       render();
@@ -5208,6 +5365,9 @@ pdfUploadForm?.addEventListener('submit',async event=>{
     state.aiLessonFlashFlipped=false;
     state.aiExplanationLevel='simple';
     state.aiQuizAnswers={};
+    state.answers={};
+    state.qStep=0;
+    state.qDone=false;
 
 
 
@@ -5286,7 +5446,43 @@ pdfUploadForm?.addEventListener('submit',async event=>{
   }
 });
 
+async function handleStudyAuraQuestion(questionText){
+  const q = String(questionText || '').trim();
+  if(!q) return;
+  const c = getTopic(state.topicIdx) || {};
+  const tTitle = c.title || 'Active Topic';
+  if(!Array.isArray(state.studyAuraMessages) || !state.studyAuraMessages.length){
+    state.studyAuraMessages = [{
+      role: 'aura',
+      text: 'Hi! I am AURA, your grounded study co-pilot for ' + tTitle + '. Ask me to break down the visual assembly, give you a Tamil/English Vaathiyar intuition, or quiz you on failure causality.'
+    }];
+  }
+  state.studyAuraMessages.push({ role: 'user', text: q });
+  const cc = c.cheatcode || CHEATCODES[c.id] || {};
+  let reply = '';
+  if(/cheatcode|30-second|30s/i.test(q)){
+    reply = '🎯 30s CheatCode for ' + tTitle + ': ' + (cc.oneLine || c.explanation || '') + ' | Analogy: ' + (cc.like || '') + ' | Watch out for: ' + (cc.wrong || 'skipping boundary checks');
+  } else if(/fail|causality|drop/i.test(q)){
+    const step0 = (c.steps && c.steps[0]) || {};
+    const node0 = (step0.nodes && step0.nodes[0]) || {};
+    reply = '⚡ Failure Causality in ' + tTitle + ': ' + (node0.failureImpact || ('If the primary stage (' + (node0.label || tTitle) + ') fails, downstream state transitions stall and boundary assertions fail.')) + ' Always verify: ' + (cc.right || (c.keyPoints && c.keyPoints[0]) || '');
+  } else {
+    reply = '👨‍🏫 Vaathiyar Breakdown (' + tTitle + '): ' + (c.explanation || '') + (cc.like ? ' Think of it like: ' + cc.like + '.' : '') + (c.pdfQuote ? ' Grounded Excerpt: "' + c.pdfQuote + '" (' + (c.pdfPage || 'Document') + ').' : '');
+  }
+  state.studyAuraMessages.push({ role: 'aura', text: reply });
+  render();
+}
+
 document.addEventListener('submit',async event=>{
+  if(event.target && event.target.id==='studyAuraForm'){
+    event.preventDefault();
+    const inp = event.target.querySelector('[name="auraQuestion"]');
+    const q = inp ? inp.value.trim() : '';
+    if(!q) return;
+    inp.value = '';
+    await handleStudyAuraQuestion(q);
+    return;
+  }
   if(event.target.id!=='aiChatForm') return;
   event.preventDefault();
   if(state.aiChatBusy || !state.aiStudy) return;
@@ -5728,6 +5924,9 @@ console.log('XamCode AI • merged build with continuous visuals • Created By 
     window.XC.renderAssemblyExplorer = renderAssemblyExplorer;
     window.XC.quizResults = quizResults;
     window.XC.state = state;
+    window.XC.render = render;
+    window.XC.getTopic = getTopic;
+    window.XC.getTopics = getTopics;
   }
 
 })();

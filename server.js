@@ -755,35 +755,35 @@ function enrichConceptVisual(c, title, subject) {
 
   let domainParts = null;
 
-  if (/network|tcp|ip|packet|route|subnet|layer|socket|port|http|dns|arp|lan|wan|mac|frame|osi|aloha|csma/i.test(combined)) {
+  if (/\b(network|tcp|ip|packet|route|routing|subnet|socket|http|dns|arp|lan|wan|mac|frame|osi|aloha|csma)\b/i.test(combined)) {
     domainParts = [
       { label: 'Ingress Interface', detail: 'Buffer & frame arrival boundary', role: 'Input boundary handling raw transmission signals and framing', failureImpact: 'Input packet loss occurs; stream synchronization stalls.' },
       { label: 'Protocol Engine', detail: 'Checksum & header state verification', role: 'De-encapsulation & invariant enforcement', failureImpact: 'Corrupted payload propagates downstream without detection.' },
       { label: 'Switching Fabric', detail: 'Forwarding table lookup & routing path', role: 'Crossbar interconnect & packet forwarding lookup', failureImpact: 'Routing blackhole; packets drop before egress transmission.' },
       { label: 'Egress Queue', detail: 'Fair-queueing & transmission buffer', role: 'Rate-limiting & outbound line dispatch', failureImpact: 'Buffer bloat and high jitter degrade end-to-end throughput.' }
     ];
-  } else if (/bio|cell|gene|dna|rna|protein|enzyme|membrane|photosynth|respirat|mitosis|synapse|neuron|chloroplast|thylakoid|chemiosmosis/i.test(combined)) {
+  } else if (/\b(bio|biology|cell|cellular|gene|dna|rna|protein|enzyme|membrane|photosynth|photosynthesis|respirat|mitosis|synapse|neuron|chloroplast|thylakoid|chemiosmosis)\b/i.test(combined)) {
     domainParts = [
       { label: 'Receptor Complex', detail: 'Ligand binding & signal detection', role: 'Primary external stimulus transducer across membrane boundary', failureImpact: 'Cell fails to register trigger; metabolic cascades remain dormant.' },
       { label: 'Transduction Relay', detail: 'Secondary messenger cascade', role: 'Amplification & molecular relay through intermediate kinases', failureImpact: 'Signal dampens before reaching catalytic or nuclear target.' },
       { label: 'Catalytic Core', detail: 'Enzymatic substrate transformation', role: 'Active site metabolic synthesis & high-energy phosphorylation', failureImpact: 'Substrate builds up while required product formation drops.' },
       { label: 'Effector Domain', detail: 'Output state & target regulation', role: 'Final biochemical outcome & negative feedback regulation', failureImpact: 'Systemic feedback loop breaks, causing metabolic imbalance.' }
     ];
-  } else if (/circuit|motor|voltage|current|magnetic|electric|transistor|logic|gate|diode|inductor|stator|rotor/i.test(combined)) {
+  } else if (/\b(circuit|motor|voltage|current|magnetic|electric|transistor|logic\s+gate|diode|inductor|stator|rotor)\b/i.test(combined)) {
     domainParts = [
       { label: 'Power Source / EMF', detail: 'Potential excitation driver', role: 'Energy injector establishing voltage differential across terminals', failureImpact: 'Loss of operational bias; circuit remains in unpowered state.' },
       { label: 'Induction Core', detail: 'Electromagnetic field generation', role: 'Magnetic flux coupling & phase control geometry', failureImpact: 'Torque collapse; rotational or signal equilibrium ceases.' },
       { label: 'Armature / Stage', detail: 'Dynamic kinetic energy conversion', role: 'Motion & phase mechanical/electronic output', failureImpact: 'Mechanical stall and thermal dissipation overload.' },
       { label: 'Feedback Damper', detail: 'Regulation & ground reference', role: 'Transient suppression and reference stabilization', failureImpact: 'Inductive spikes cause terminal breakdown.' }
     ];
-  } else if (/process|thread|memory|cpu|cache|page|scheduling|kernel|interrupt|file|os|lock|mutex/i.test(combined)) {
+  } else if (/\b(thread|memory|cpu|cache|scheduling|kernel|interrupt|os|operating\s+systems?|mutex|mmu|dispatcher|virtual\s+memory)\b/i.test(combined)) {
     domainParts = [
       { label: 'Process Dispatcher', detail: 'Context switch & register restore', role: 'CPU scheduling state coordinator & priority queue manager', failureImpact: 'Thread starvation; scheduling quantum expires unhandled.' },
       { label: 'Memory MMU', detail: 'Virtual to physical page translation', role: 'Address space isolation & page table walk assertion', failureImpact: 'Segmentation fault; unmapped address access trap.' },
       { label: 'Kernel Pipeline', detail: 'System call execution & privileges', role: 'Protected ring 0 invariant assertion & trap handler', failureImpact: 'System call failure causes userland thread crash.' },
       { label: 'I/O Coordinator', detail: 'Buffer cache flush & signal event', role: 'Deterministic asynchronous coordination and interrupt dispatch', failureImpact: 'Deadlock or state corruption between concurrent processes.' }
     ];
-  } else if (/database|sql|table|index|query|b-tree|acid|transaction|storage|schema|relational|btree/i.test(combined)) {
+  } else if (/\b(database|sql|query|b-tree|acid|transaction|schema|relational|btree)\b/i.test(combined)) {
     domainParts = [
       { label: 'Query Optimizer', detail: 'Parse tree & cost-based plan generation', role: 'Relational algebra plan formulation & index scan choice', failureImpact: 'Suboptimal full table scans choke buffer pool.' },
       { label: 'B-Tree Index Engine', detail: 'Logarithmic search through leaf pages', role: 'O(log N) key lookup and pointer traversal assertion', failureImpact: 'Key lookup falls back to linear scan.' },
@@ -792,10 +792,16 @@ function enrichConceptVisual(c, title, subject) {
     ];
   } else {
     const kp = Array.isArray(c.keyPoints) && c.keyPoints.length ? c.keyPoints : [];
+    const extractLabel = (str, fallback) => {
+      if (!str) return fallback;
+      const clean = String(str).replace(/^[-•*\d.)\s]+/, '').split(/[:—–-]/)[0].trim();
+      const words = clean.split(/\s+/).slice(0, 3).join(' ');
+      return words.length >= 3 ? words.slice(0, 26) : fallback;
+    };
     domainParts = [
-      { label: t + ' Ingress', detail: String(kp[0] || c.summary || 'Fundamental input condition').slice(0, 38), role: 'Foundational baseline & input parameter boundary', failureImpact: 'Initial state preconditions fail, halting execution.' },
-      { label: 'Processing Engine', detail: String(kp[1] || 'State transformation and dynamic process').slice(0, 38), role: 'Primary operational engine & invariant transition', failureImpact: 'Intermediate transformation corrupts state invariants.' },
-      { label: 'Asserted State', detail: String(kp[2] || 'Output verification and boundary assertions').slice(0, 38), role: 'Output assertion & consistency guarantee', failureImpact: 'Invalid output is emitted without boundary verification.' }
+      { label: extractLabel(kp[0], t + ' Foundation'), detail: String(kp[0] || c.summary || 'Primary input condition from document').slice(0, 48), role: 'Foundational premise & input boundary defined in ' + t, failureImpact: 'Initial preconditions fail, halting ' + t + ' execution.' },
+      { label: extractLabel(kp[1], t + ' Mechanism'), detail: String(kp[1] || c.explanation || 'Core transformation and mechanism').slice(0, 48), role: 'Core operational mechanism & state transition in ' + t, failureImpact: 'Intermediate transformation in ' + t + ' loses state consistency.' },
+      { label: extractLabel(kp[2], t + ' Verification'), detail: String(kp[2] || c.whyItMatters || 'Verified outcome and application').slice(0, 48), role: 'Output verification & applied result of ' + t, failureImpact: 'Unverified output violates the constraints of ' + t + '.' }
     ];
   }
 
@@ -957,6 +963,54 @@ function normalizeConcept(c, i, allConcepts){
       if (nd.code !== undefined && !(typeof nd.code === 'string' && nd.code.trim() && nd.code.trim().length <= 80)) delete nd.code;
     }
   }
+  c.visual = c.visualization;
+  c.cheatCodes = c.cheatCode;
+  if (!c.vaathiyar || typeof c.vaathiyar !== 'object') {
+    c.vaathiyar = {
+      story: 'Vaathiyar Note (தமிழ் / English): ' + t + ' — ' + c.analogy + ' ' + c.whyItMatters,
+      overview: c.explanation || c.summary,
+      analogy: c.analogy,
+      crash: vis.steps.map((st, si) => ({
+        tag: 'STEP ' + (si + 1) + ' • ' + String(st.layout || 'FLOW').toUpperCase(),
+        text: st.title + ': ' + st.description,
+        readMs: 3200,
+        visual: ''
+      })),
+      compare: {
+        left: c.comparison.firstLabel,
+        right: c.comparison.secondLabel,
+        rows: c.comparison.rows.map(r => [r.aspect, r.first, r.second]),
+        bars: [
+          { label: c.comparison.rows[0] ? c.comparison.rows[0].aspect : 'Reliability', leftPct: 88, rightPct: 54, leftTxt: 'High', rightTxt: 'Moderate' },
+          { label: c.comparison.rows[1] ? c.comparison.rows[1].aspect : 'Efficiency', leftPct: 84, rightPct: 60, leftTxt: 'Optimized', rightTxt: 'Baseline' }
+        ]
+      },
+      solve: {
+        q: c.workedExample.scenario,
+        steps: c.workedExample.steps.map(ws => ({
+          label: ws.label,
+          math: ws.action,
+          note: ws.reasoning
+        }))
+      },
+      life: c.realWorldExamples.map(rw => ({ ic: '🌍', h: rw.title, t: rw.description })),
+      history: [{ yr: 'Origin', h: t, t: c.originStory }],
+      flash: c.keyPoints.map((kp, ki) => ({
+        q: 'Key Principle ' + (ki + 1) + ' of ' + t + '?',
+        a: kp
+      })),
+      exam: [
+        { q: 'Explain the core mechanism of ' + t + ' and why it matters.', a: c.explanation + ' ' + c.whyItMatters },
+        { q: 'What is the most common mistake with ' + t + ' and how do you avoid it?', a: 'Trap: ' + c.commonTrap + ' Truth: ' + c.correctiveTruth }
+      ],
+      eli5: {
+        kid: c.explanationLevels.simple,
+        middle: c.explanationLevels.everyday,
+        engg: c.explanationLevels.advanced
+      }
+    };
+  }
+  c.vaathiyarExplanation = c.vaathiyar.story;
   if (Array.isArray(allConcepts) && typeof diversifyStudyVisuals === 'function') {
     const slice = Number.isInteger(i) ? allConcepts.slice(0, i + 1) : allConcepts;
     diversifyStudyVisuals(slice, null);
@@ -1318,6 +1372,7 @@ function normalizeBank(bank, conceptCount, concepts){
       counts[from]--;
       counts[k]++;
     }
+    bank.quizBank = bank.questions;
   }catch{ /* validation below decides whether the bank survives */ }
 }
 function validateStudyOutline(pack){
@@ -2992,38 +3047,36 @@ async function runLargePdfChunkingQueue(job, extractedDoc, pageCount) {
       visualKeys: new Set()
     };
 
+    // Extract grounded headings & sentences directly from each PDF slice
+    function extractConceptsFromSliceText(sliceObj, unitIdx, subjectLabel) {
+      const raw = String((sliceObj && sliceObj.text) || '').replace(/---\s*\[PAGE\s*\d+\]\s*---/gi, '\n');
+      const lines = raw.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+      const headings = lines.filter(l => l.length >= 6 && l.length <= 72 && /^[A-Z0-9]/.test(l) && !/[.;,]$/.test(l) && l.split(/\s+/).length <= 10);
+      const sentences = raw.replace(/\s+/g, ' ').split(/(?<=[.!?])\s+/).map(s => s.trim()).filter(s => s.length >= 35 && s.length <= 240);
+      const startP = (sliceObj && sliceObj.startPage) || (unitIdx * 18 + 1);
+      const endP = (sliceObj && sliceObj.endPage) || (startP + 15);
+      const subj = subjectLabel || 'Document Topic';
+      return [0, 1, 2].map(ci => {
+        const h = headings[ci * 2] || headings[ci] || (subj + ' Section ' + (unitIdx * 3 + ci + 1) + ' (Pages ' + startP + '-' + endP + ')');
+        const s1 = sentences[ci * 3] || ('Grounded analysis of ' + h + ' extracted from pages ' + startP + ' to ' + endP + '.');
+        const s2 = sentences[ci * 3 + 1] || ('Key relationships and definitions for ' + h + ' as presented in the source text.');
+        const s3 = sentences[ci * 3 + 2] || ('Applied principles and verification rules for ' + h + '.');
+        return {
+          title: h.replace(/^[\d.\s•-]+/, '').trim() || (subj + ' Concept ' + (ci + 1)),
+          topic: subj,
+          summary: s1.slice(0, 190),
+          explanation: (s1 + ' ' + s2).slice(0, 380),
+          keyPoints: [s1.slice(0, 110), s2.slice(0, 110), s3.slice(0, 110)],
+          whyItMatters: 'Directly covered in pages ' + startP + '-' + endP + ' of the uploaded document: ' + s2.slice(0, 120),
+          sourceExcerpt: s1.slice(0, 140),
+          sourcePage: Math.min(endP, startP + ci * 4)
+        };
+      });
+    }
+
     // Fast-build Unit 0 with 45s max timeout
     setJobStage(job, 'sections');
-    const u0Slice = chunkSlices[0].text;
-    const u0Concepts = [
-      {
-        title: 'Core Architectural Ingress & Buffer Engine',
-        summary: 'Primary interface managing incoming frame sequences and payload verification.',
-        explanation: 'Coordinates raw signal ingestion, aligns memory boundaries, and verifies header invariants.',
-        keyPoints: ['Boundary frame validation', 'Buffer queue management', 'Packet synchronization'],
-        whyItMatters: 'Essential for deterministic state transitions without buffer overruns.',
-        sourceExcerpt: u0Slice.slice(0, 100).replace(/[\r\n]+/g, ' ') || 'Primary component boundary.',
-        sourcePage: 1
-      },
-      {
-        title: 'Dynamic State Coordinator & Protocol Transformer',
-        summary: 'Enforces invariant state machine transitions and verifies cryptographic assertions.',
-        explanation: 'Processes incoming state events, drives state transitions, and emits verified payload representations.',
-        keyPoints: ['State invariant assertions', 'Dynamic protocol transition', 'Deterministic failure isolation'],
-        whyItMatters: 'Guarantees execution safety across concurrent operations.',
-        sourceExcerpt: u0Slice.slice(100, 200).replace(/[\r\n]+/g, ' ') || 'State coordination mechanism.',
-        sourcePage: Math.min(5, totalPages)
-      },
-      {
-        title: 'Egress Forwarding & Output Assertion Stage',
-        summary: 'Final delivery verification and feedback propagation to adjacent system nodes.',
-        explanation: 'Confirms complete transactional execution, flushes dirty buffers, and routes to destination.',
-        keyPoints: ['Transaction commit assurance', 'Rate-limiting & fair queueing', 'Downstream signal propagation'],
-        whyItMatters: 'Prevents corrupted outputs from propagating to external components.',
-        sourceExcerpt: u0Slice.slice(200, 300).replace(/[\r\n]+/g, ' ') || 'Output boundary verification.',
-        sourcePage: Math.min(10, totalPages)
-      }
-    ];
+    const u0Concepts = extractConceptsFromSliceText(chunkSlices[0], 0, plan.subject);
 
     u0Concepts.forEach((c, idx) => {
       normalizeConcept(c, idx, u0Concepts);
@@ -3036,8 +3089,8 @@ async function runLargePdfChunkingQueue(job, extractedDoc, pageCount) {
 
     const builtU0 = {
       topics: plan.units[0].topics.map((t, ti) => ({
-        title: t.title,
-        overview: t.overview,
+        title: u0Concepts[ti] ? u0Concepts[ti].title : t.title,
+        overview: u0Concepts[ti] ? u0Concepts[ti].summary : t.overview,
         conceptIndices: [ti]
       })),
       concepts: u0Concepts,
@@ -3063,33 +3116,7 @@ async function runLargePdfChunkingQueue(job, extractedDoc, pageCount) {
           job.chunk.states[k] = 'building';
           job.study = assembleChunkStudy(job);
 
-          const ukSlice = (chunkSlices[k] && chunkSlices[k].text) || '';
-          const ukConcepts = [
-            {
-              title: 'Unit ' + (k + 1) + ' Core Component Mechanism',
-              summary: 'Specialized structural component handling phase ' + (k + 1) + ' specifications.',
-              explanation: 'Applies operational logic and verifies boundary parameters for ' + plan.units[k].title + '.',
-              keyPoints: ['Phase invariant enforcement', 'Interface state verification', 'Fault tolerance checkpoint'],
-              sourceExcerpt: ukSlice.slice(0, 100).replace(/[\r\n]+/g, ' ') || 'Modular component specification.',
-              sourcePage: chunkSlices[k] ? chunkSlices[k].startPage : (k * 18 + 1)
-            },
-            {
-              title: 'Unit ' + (k + 1) + ' Operational Invariants',
-              summary: 'Deterministic invariant validation and execution flow coordination.',
-              explanation: 'Ensures state consistency, mitigates concurrency race conditions, and confirms outcomes.',
-              keyPoints: ['State consistency assertion', 'Resource allocation balance', 'Failure recovery handler'],
-              sourceExcerpt: ukSlice.slice(100, 200).replace(/[\r\n]+/g, ' ') || 'Execution flow coordination.',
-              sourcePage: chunkSlices[k] ? chunkSlices[k].startPage + 4 : (k * 18 + 5)
-            },
-            {
-              title: 'Unit ' + (k + 1) + ' Verification & Output Interface',
-              summary: 'Output assertion barrier verifying transactional completeness before egress.',
-              explanation: 'Validates phase deliverables and ensures integrity across module boundaries.',
-              keyPoints: ['Delivery integrity check', 'Cross-boundary assertion', 'Feedback loop stabilization'],
-              sourceExcerpt: ukSlice.slice(200, 300).replace(/[\r\n]+/g, ' ') || 'Output boundary verification.',
-              sourcePage: chunkSlices[k] ? chunkSlices[k].endPage : (k * 18 + 15)
-            }
-          ];
+          const ukConcepts = extractConceptsFromSliceText(chunkSlices[k], k, plan.subject);
 
           ukConcepts.forEach((c, idx) => {
             normalizeConcept(c, idx, ukConcepts);
@@ -3996,8 +4023,9 @@ function enforceOutlineSubjectFidelity(pack, job){
    PROMPT HELPERS (unchanged)
    ------------------------------------------------------------ */
 function outlinePromptWithFingerprint(job){
+  const fp = job && job.literalFingerprint ? ' STRICT PDF CONTEXT GROUNDING: Extract concepts, summaries, code, formulas, and terms ONLY from the attached PDF document text (key document terms: ' + job.literalFingerprint + '). Zero generic or hallucinated filler.' : ' STRICT PDF CONTEXT GROUNDING: Extract concepts, summaries, code, formulas, and terms ONLY from the attached PDF document text. Zero generic or hallucinated filler.';
   const base = [
-    'Analyze the attached educational PDF and respond with a single valid JSON object containing title, subject, summary, units (at least 3, each with title, overview, learningGoals, topics with title, overview, conceptIndices) and concepts (4 to 6 items, each with title, summary, explanation, sourceExcerpt, sourcePage, keyPoints, whyItMatters, analogy, explanationLevels {simple, everyday, advanced}, commonTrap, correctiveTruth, comparison {firstLabel, secondLabel, takeaway, rows[3] {aspect, first, second}}, originStory, realWorldExamples[{title, description}], workedExample {scenario, answer, steps[2] {label, action, reasoning}}, quickRecall, cheatCode {why, like, wrong, right, oneLine, mnemonic, see[3]}, visualization {caption, steps[2] {title, description, layout, nodes[3] {label, detail, code}}}}). Level: ' + job.level + '. STRUCTURAL INTEGRITY (do not restructure): mirror the PDF\'s own topic order and headings — one concept per PDF topic/section, in the same sequence; never merge topics into a generic stack or invent new groupings. Each visualization layout MUST be one of exactly these 15: flow (steps/process), arch (system/parts), seq (timeline/order), compare (vs/difference), hierarchy (types/classification), state (states/status), erd (entities/data), fbd (force/pressure), wave (graph/signal), isometric (3D/layers), mindmap (brainstorm/causes), matrix (table/grid), equation (formula/calc), cycle (loop/repeats), layer (layers/levels). Every diagram must be topic-specific: node labels come from that topic\'s own terms, never reused across topics. When the PDF shows code/syntax/commands for a node, copy the exact one-line statement into node.code (max 80 chars); otherwise omit code. Keep every diagram topic-specific. MANDATORY: Every topic/lesson MUST use a distinct layout archetype from the 15 available archetypes (flow, arch, seq, compare, hierarchy, state, erd, fbd, wave, isometric, mindmap, matrix, equation, cycle, layer). Do not repeat the same archetype consecutively, and never reuse another lesson\'s node labels. LOW-DATA & TEXT-ONLY ENRICHMENT: If the uploaded PDF is purely textual or lacks embedded diagrams, draw upon comprehensive academic domain knowledge to synthesize complete, accurate topic diagrams and labeled component breakdowns. Every node must have an accurate technical label, functional detail, and isolated part definition.',
+    'Analyze the attached educational PDF and respond with a single valid JSON object containing title, subject, summary, units (at least 3, each with title, overview, learningGoals, topics with title, overview, conceptIndices) and concepts (4 to 6 items, each with title, summary, explanation, sourceExcerpt, sourcePage, keyPoints, whyItMatters, analogy, explanationLevels {simple, everyday, advanced}, commonTrap, correctiveTruth, comparison {firstLabel, secondLabel, takeaway, rows[3] {aspect, first, second}}, originStory, realWorldExamples[{title, description}], workedExample {scenario, answer, steps[2] {label, action, reasoning}}, quickRecall, cheatCode {why, like, wrong, right, oneLine, mnemonic, see[3]}, visualization {caption, steps[2] {title, description, layout, nodes[3] {label, detail, code}}}}). Level: ' + job.level + '.' + fp + ' STRUCTURAL INTEGRITY (do not restructure): mirror the PDF\'s own topic order and headings — one concept per PDF topic/section, in the same sequence; never merge topics into a generic stack or invent new groupings. Each visualization layout MUST be one of exactly these 15: flow (steps/process), arch (system/parts), seq (timeline/order), compare (vs/difference), hierarchy (types/classification), state (states/status), erd (entities/data), fbd (force/pressure), wave (graph/signal), isometric (3D/layers), mindmap (brainstorm/causes), matrix (table/grid), equation (formula/calc), cycle (loop/repeats), layer (layers/levels). Every diagram must be topic-specific: node labels come from that topic\'s own terms, never reused across topics. When the PDF shows code/syntax/commands for a node, copy the exact one-line statement into node.code (max 80 chars); otherwise omit code. Keep every diagram topic-specific. MANDATORY: Every topic/lesson MUST use a distinct layout archetype from the 15 available archetypes (flow, arch, seq, compare, hierarchy, state, erd, fbd, wave, isometric, mindmap, matrix, equation, cycle, layer). Do not repeat the same archetype consecutively, and never reuse another lesson\'s node labels. LOW-DATA & TEXT-ONLY ENRICHMENT: If the uploaded PDF is purely textual or lacks embedded diagrams, draw upon comprehensive academic domain knowledge to synthesize complete, accurate topic diagrams and labeled component breakdowns. Every node must have an accurate technical label, functional detail, and isolated part definition.',
     'SUBJECT FINGERPRINT (required): include a field "subjectFingerprint": a 3–6 word lowercase summary of the PDF\'s actual subject and the key technical terms it covers (for example "networks, tcp, routing, subnet" or "bacteria, cell, microscope"). It must come from the PDF, not from your general knowledge. This is used to reject a fluent answer that belongs to another subject.'
   ].join(' ');
   return base;
@@ -4006,7 +4034,7 @@ function outlinePromptWithFingerprint(job){
 function compactOutlinePromptWithFingerprint(job, k){
   const unit = job.chunk.plan.units[k];
   const label = 'Unit ' + (k + 1) + ' of ' + job.chunk.plan.units.length + ' titled "' + unit.title + '"';
-  const fp = job && job.literalFingerprint ? ' Document key terms: ' + job.literalFingerprint + '.' : '';
+  const fp = job && job.literalFingerprint ? ' STRICT PDF CONTEXT GROUNDING: Extract concepts, summaries, code, formulas, and terms ONLY from the attached PDF document text (key document terms: ' + job.literalFingerprint + '). Zero generic or hallucinated filler.' : ' STRICT PDF CONTEXT GROUNDING: Extract concepts, summaries, code, formulas, and terms ONLY from the attached PDF document text. Zero generic or hallucinated filler.';
   const base = [
     'Analyze the attached educational PDF and respond with a single valid JSON object containing ONLY the learning content for ' + label + ' — never any other unit. ' + fp + ' Keep the whole answer SMALL so it fits in one response: exactly 3 lessons. It must contain topics (this unit\'s own topics in PDF order, each {title, overview, conceptIndices}) and concepts (exactly 3 lessons for THIS UNIT ONLY, each with title, summary (1-2 sentences), explanation (2-3 sentences), sourceExcerpt (one short verbatim sentence from the PDF), sourcePage (page number), keyPoints (3 short bullets), whyItMatters (one sentence), analogy (one sentence), explanationLevels {simple, everyday, advanced} (each 1-2 sentences), commonTrap (one sentence), correctiveTruth (one sentence), comparison {firstLabel, secondLabel, takeaway, rows[3] {aspect, first, second}}, originStory (1-2 sentences), realWorldExamples[1] {title, description}, workedExample {scenario, answer, steps[2] {label, action, reasoning}}, quickRecall (one sentence), cheatCode {why, like, wrong, right, oneLine, mnemonic, see[3]} (each one short sentence), visualization {caption, steps[1] {title, description, layout, nodes[3] {label, detail}}}). conceptIndices must assign every concept of this unit exactly once, consecutively from 0, across this unit\'s topics in order. Level: ' + job.level + '. Pick the 3 most important PDF topics/sections of this unit, in their PDF order. Each visualization layout MUST be one of exactly these 15: flow, arch, seq, compare, hierarchy, state, erd, fbd, wave, isometric, mindmap, matrix, equation, cycle, layer. Node labels come from that topic\'s own terms, never generic labels like Input/Process/Output. MANDATORY: Every topic/lesson MUST use a distinct layout archetype from the 15 available archetypes (flow, arch, seq, compare, hierarchy, state, erd, fbd, wave, isometric, mindmap, matrix, equation, cycle, layer). Do not repeat the same archetype consecutively, and never reuse another lesson\'s node labels. No markdown, no code fences — one valid JSON object only.',
     'SUBJECT FINGERPRINT (required): include a field "subjectFingerprint": a 3–6 word lowercase summary of this unit\'s actual subject and the key technical terms it covers, from the PDF — for example "routing, distance vector, link state, dijkstra" or "star, bus, mesh, topology". It must come from the PDF, not from general knowledge. This is checked against the lesson words to reject a fluent answer from another subject.'
