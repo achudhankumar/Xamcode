@@ -37,25 +37,25 @@ function seedMilestones(){
       criteria: 'Workspace, plan, unit, quiz, formulas, library render.',
       evidence: 'test-journey, test-markup-structure, test-quiz-flow.', verifiedAt: '2026-10-09' },
     { key: 'subject-fidelity', title: 'Subject-fidelity validation',
-      weight: 10, status: 'verified',
+      weight: 10, status: 'in_progress',
       criteria: 'Fingerprint gate wired into outline pipeline with retry.',
-      evidence: 'Fingerprint validation, syllabus verification, and retry pipeline verified in test-subject-fidelity.js', verifiedAt: '2026-10-20' },
+      evidence: 'Guard helpers exist; integration marked NEXT pass.' },
     { key: 'authentication', title: 'Authentication',
-      weight: 8, status: 'verified',
+      weight: 8, status: 'in_progress',
       criteria: 'Server-side sessions replace the localStorage gate.',
-      evidence: 'Server-side admin token, CSRF/session headers, and consent records verified in test-bip-units.js', verifiedAt: '2026-10-20' },
+      evidence: 'js/auth.js is client-side only, honestly documented.' },
     { key: 'security-review', title: 'Security review',
-      weight: 10, status: 'verified',
+      weight: 10, status: 'planned',
       criteria: 'Threat pass over webhooks, ingest, community, secrets.',
-      evidence: 'Threat pass, path traversal defense, fail-closed auth, DPDP Act 2023 compliance verified in test-bip-security.js', verifiedAt: '2026-10-20' },
+      evidence: null },
     { key: 'production-deploy', title: 'Production deployment',
-      weight: 8, status: 'verified',
+      weight: 8, status: 'planned',
       criteria: 'Live URL with HTTPS, health check green, monitoring.',
-      evidence: 'All 26 automated test suites passing, multi-provider failover verified', verifiedAt: '2026-10-20' },
+      evidence: 'render.yaml ready; week 25 still open in ROADMAP.' },
     { key: 'beta-testing', title: 'Beta testing',
-      weight: 8, status: 'verified',
+      weight: 8, status: 'planned',
       criteria: 'Real users run sample PDFs; feedback loop active.',
-      evidence: 'Interactive simulations, topic tree, and study plan UAT verified with 26/26 passing test suites', verifiedAt: '2026-10-21' }
+      evidence: null }
   ];
 }
 
@@ -67,16 +67,16 @@ function seedRoadmap(){
     { id: store.id('rm'), title: 'PDF to animated study pipeline', summary: 'Upload a lecture PDF, get unit-by-unit animated lessons.', status: 'completed', updatedAt: iso('2026-10-09') },
     { id: store.id('rm'), title: 'AURA AI tutor', summary: 'Document-grounded tutor with diagram recipes.', status: 'completed', updatedAt: iso('2026-10-09') },
     { id: store.id('rm'), title: 'Quiz + Vaathiyar modes', summary: 'Quiz flow, flashcards, explanations, formula bank.', status: 'completed', updatedAt: iso('2026-10-09') },
-    { id: store.id('rm'), title: 'Subject-fidelity guard', summary: 'Keep generated content anchored to the document subject.', status: 'completed', updatedAt: iso('2026-10-09') },
-    { id: store.id('rm'), title: 'Real server-side authentication', summary: 'Replace the client-side sign-in gate with server sessions.', status: 'completed', updatedAt: iso('2026-10-09') },
-    { id: store.id('rm'), title: 'System/UAT/performance testing', summary: 'Formal user testing plus load tests on heavy paths.', status: 'completed', updatedAt: iso('2026-10-09') },
-    { id: store.id('rm'), title: 'Production launch', summary: 'Deploy with monitoring and a feedback loop.', status: 'completed', updatedAt: iso('2026-10-09') }
+    { id: store.id('rm'), title: 'Subject-fidelity guard', summary: 'Keep generated content anchored to the document subject.', status: 'in_progress', updatedAt: iso('2026-10-09') },
+    { id: store.id('rm'), title: 'Real server-side authentication', summary: 'Replace the client-side sign-in gate with server sessions.', status: 'planned', updatedAt: iso('2026-10-09') },
+    { id: store.id('rm'), title: 'System/UAT/performance testing', summary: 'Formal user testing plus load tests on heavy paths.', status: 'planned', updatedAt: iso('2026-10-09') },
+    { id: store.id('rm'), title: 'Production launch', summary: 'Deploy with monitoring and a feedback loop.', status: 'planned', updatedAt: iso('2026-10-09') }
   ];
 }
 
 function ensureSeeded(){
   const d = store.ensureLoaded();
-  if (!d.milestones.length || (d.settings && d.settings.seedVersion !== 2)){
+  if (!d.milestones.length || (d.settings && d.settings.seedVersion !== 3)){
     const seed = seedMilestones();
     if (!d.milestones.length){
       d.milestones = seed.map(function(m){ m.id = store.id('ms'); return m; });
@@ -88,7 +88,7 @@ function ensureSeeded(){
           existing.weight = sm.weight;
           existing.evidence = sm.evidence;
           existing.criteria = sm.criteria;
-          if (sm.verifiedAt) existing.verifiedAt = sm.verifiedAt;
+          existing.verifiedAt = sm.verifiedAt || null;
         } else {
           sm.id = store.id('ms');
           d.milestones.push(sm);
@@ -96,13 +96,11 @@ function ensureSeeded(){
       }
     }
     if (!d.settings) d.settings = {};
-    d.settings.seedVersion = 2;
-    if (d.milestones.every(m => m.status === 'verified')){
-      d.settings.phase = 'Launch-ready';
-    }
+    d.settings.seedVersion = 3;
+    d.settings.phase = 'Building';
     store.persist();
   }
-  if (!d.roadmapItems.length || (d.settings && d.settings.roadmapVersion !== 2)){
+  if (!d.roadmapItems.length || (d.settings && d.settings.roadmapVersion !== 3)){
     const seedRm = seedRoadmap();
     if (!d.roadmapItems.length){
       d.roadmapItems = seedRm;
@@ -115,7 +113,7 @@ function ensureSeeded(){
       }
     }
     if (!d.settings) d.settings = {};
-    d.settings.roadmapVersion = 2;
+    d.settings.roadmapVersion = 3;
     store.persist();
   }
 }
