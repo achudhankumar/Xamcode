@@ -4212,22 +4212,95 @@ function applyJobStage(snapshot){
 }
 
 async function pollAnalyzeJob(jobId,onStage){
+  const WATCHDOG_TIMEOUT_MS = 180000; // 3 minutes maximum without heartbeat
+  let lastProgressTime = Date.now();
+  let lastProgressVal = -1;
+
+  // 1. Try Server-Sent Events (SSE) with keepalive
+  if (typeof window !== 'undefined' && window.EventSource) {
+    try {
+      const ssePromise = new Promise((resolve, reject) => {
+        let es = null;
+        try { es = new EventSource(`/api/analyze/${jobId}/events`); }
+        catch (e) { return reject(e); }
+
+        const watchdogTimer = setInterval(() => {
+          if (Date.now() - lastProgressTime > WATCHDOG_TIMEOUT_MS) {
+            clearInterval(watchdogTimer);
+            if (es) es.close();
+            const err = new Error('Document processing timed out after 3 minutes. Switching to fast unit extraction or retry.');
+            err.code = 'WATCHDOG_TIMEOUT';
+            reject(err);
+          }
+        }, 4000);
+
+        es.onmessage = (event) => {
+          try {
+            const snapshot = JSON.parse(event.data);
+            if (snapshot.progress !== lastProgressVal || snapshot.heartbeat) {
+              lastProgressVal = snapshot.progress;
+              lastProgressTime = Date.now();
+            }
+            onStage?.(snapshot);
+            if (snapshot.status === 'done') {
+              clearInterval(watchdogTimer);
+              es.close();
+              resolve(snapshot);
+            } else if (snapshot.status === 'failed') {
+              clearInterval(watchdogTimer);
+              es.close();
+              reject(new Error(snapshot.error || 'The study could not be generated. Please try again.'));
+            } else if (snapshot.status === 'cancelled') {
+              clearInterval(watchdogTimer);
+              es.close();
+              reject(new Error('The study build was cancelled.'));
+            }
+          } catch (parseErr) {
+            console.warn('SSE event parse error:', parseErr);
+          }
+        };
+
+        es.onerror = () => {
+          clearInterval(watchdogTimer);
+          if (es) es.close();
+          // Fall back to polling if SSE disconnected
+          reject(new Error('SSE_DISCONNECTED'));
+        };
+      });
+
+      return await ssePromise;
+    } catch (sseErr) {
+      if (sseErr && sseErr.code === 'WATCHDOG_TIMEOUT') throw sseErr;
+      // Fall through to polling loop below
+    }
+  }
+
+  // 2. Polling loop with watchdog timer
   for(;;){
+    if (Date.now() - lastProgressTime > WATCHDOG_TIMEOUT_MS) {
+      const timeoutErr = new Error('Document processing timed out after 3 minutes. Switching to fast unit extraction or retry.');
+      timeoutErr.code = 'WATCHDOG_TIMEOUT';
+      throw timeoutErr;
+    }
+
     let snapshot;
     try{
       const response=await fetch(`/api/analyze/${jobId}`);
       snapshot=await response.json();
     }catch{
-      /* A dropped poll is not a failed build: the job keeps running
-         server-side, so back off and try again rather than giving up. */
       await sleep(1500);
       continue;
     }
+
+    if (snapshot.progress !== lastProgressVal || snapshot.heartbeat) {
+      lastProgressVal = snapshot.progress;
+      lastProgressTime = Date.now();
+    }
+
     if(snapshot.status==='done') return snapshot;
     if(snapshot.status==='failed') throw new Error(snapshot.error||'The study could not be generated. Please try again.');
     if(snapshot.status==='cancelled') throw new Error('The study build was cancelled.');
     onStage?.(snapshot);
-    /* Poll faster while something is moving, slower when it is quiet. */
     await sleep(snapshot.stage==='outline'||snapshot.stage==='bank'?900:1400);
   }
 }
@@ -5156,10 +5229,34 @@ pdfUploadForm?.addEventListener('submit',async event=>{
       startChunkWatch(posted.jobId);
     }
   }catch(error){
-    /* A failed run must not leave the hero mid-fight with the door shut
-       and no way out, so tear the journey down and report the real error. */
     resetProgress();
-    setStatus(error.message||'The study could not be generated. Please try again.',true);
+    const isTimeout = error.code === 'WATCHDOG_TIMEOUT' || String(error.message).includes('timed out');
+    if (isTimeout) {
+      xcToast('Document processing timed out. Switching to fast unit extraction or retry.');
+      setStatus(`
+        <div class="timeout-recovery-card" style="margin-top:14px;padding:14px;border-radius:10px;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.35);text-align:center;">
+          <p style="margin:0 0 10px;font-size:0.9rem;color:#fca5a5;font-weight:600;">⚠️ Document processing timed out. Large or multi-page documents may require fast modular extraction.</p>
+          <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+            <button type="button" class="btn-primary" id="btnRetryCoreSummary" style="padding:7px 16px;font-size:0.84rem;cursor:pointer;">⚡ Retry with Core Summary</button>
+            <button type="button" class="btn-secondary" id="btnSwitchFastUnit" style="padding:7px 16px;font-size:0.84rem;cursor:pointer;">🔄 Fast Unit Extraction</button>
+          </div>
+        </div>
+      `, true);
+      setTimeout(() => {
+        const btnRetry = document.getElementById('btnRetryCoreSummary');
+        const btnFast = document.getElementById('btnSwitchFastUnit');
+        if (btnRetry) btnRetry.onclick = () => {
+          const radio2d = document.querySelector('input[name="examDaysMode"][value="2days"]');
+          if (radio2d) radio2d.checked = true;
+          pdfUploadForm.dispatchEvent(new Event('submit', { cancelable: true }));
+        };
+        if (btnFast) btnFast.onclick = () => {
+          pdfUploadForm.dispatchEvent(new Event('submit', { cancelable: true }));
+        };
+      }, 50);
+    } else {
+      setStatus(error.message||'The study could not be generated. Please try again.',true);
+    }
   }finally{
     submit.disabled=false;
     submitLabel.textContent='Build my study space';
