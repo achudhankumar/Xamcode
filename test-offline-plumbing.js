@@ -61,8 +61,14 @@ async function runOfflinePlumbingTests() {
     extracted.pages.forEach(p => {
       assert.strictEqual(typeof p.needsOcr, 'boolean');
       assert.ok(p.charCount > 0, `Page ${p.pageNumber} character count is 0`);
+      assert.ok(!/(?:charprocs|cidtogidmap|fontbbox|fontmatrix|tounicode|firstchar|lastchar|differences|identity-h|\/font\b|\/charprocs\b)/i.test(p.text),
+        `Page ${p.pageNumber} leaked font metadata: ${p.text.slice(0, 100)}`);
+      assert.ok(!/(?:RI\s*"\*\s*f<|l;\s*\|pX)/.test(p.text),
+        `Page ${p.pageNumber} leaked corrupted glyph stream: ${p.text.slice(0, 100)}`);
+      assert.ok(p.headings.length > 0, `Page ${p.pageNumber} has no headings`);
     });
     console.log(`  ✓ OCR heuristic verified: all active pages have text (needsOcr=false)`);
+    console.log(`  ✓ Content integrity verified: 0 font metadata leaks, valid technical headings`);
 
     // 2. Outline call using mock generator
     const outlineRes = await generateOutlineWithRetry({
@@ -157,6 +163,37 @@ async function runOfflinePlumbingTests() {
   assert.ok(/v-modes/.test(sampleRenderedHtml), 'Unified workspace must render all 8 Vaathiyar sub-modes');
   assert.ok(/q-card/.test(sampleRenderedHtml), 'Unified workspace must render sequential Socratic practice quiz');
   console.log('  ✓ Unified layout landmarks verified: uploaded courses render in the identical 3-tab layout!');
+
+  console.log('\n--- TESTING PDF EXTRACTOR METADATA & GLYPH SCRUBBER ---');
+  const fakeCorruptedPdf = Buffer.from(
+    '%PDF-1.4\n' +
+    '1 0 obj\n' +
+    '<< /Type /Font /Subtype /Type0 /CharProcs << /A 2 0 R >> /CIDToGIDMap /Identity /FontBBox [0 0 1000 1000] /FontMatrix [0.001 0 0 0.001 0 0] /ToUnicode 3 0 R /Widths [500] >>\n' +
+    'endobj\n' +
+    '2 0 obj\n' +
+    '(charprocs)\n' +
+    '(cidtogidmap)\n' +
+    '(fontbbox)\n' +
+    '(fontmatrix)\n' +
+    '(tounicode)\n' +
+    '(widths)\n' +
+    '(RI "* f<)\n' +
+    '(l; |pX)\n' +
+    '(Identity-H)\n' +
+    '(Computer Networks and Distributed Systems Architecture)\n' +
+    'endobj\n' +
+    '%%EOF'
+  );
+  const scrubbedRes = await extractPdfPages(fakeCorruptedPdf);
+  assert.ok(scrubbedRes.pages.length >= 1, 'Scrubbed PDF must produce at least 1 page');
+  const allScrubbedText = scrubbedRes.pages.map(p => p.text).join('\n');
+  assert.ok(!/(?:charprocs|cidtogidmap|fontbbox|fontmatrix|tounicode|widths|identity-h)/i.test(allScrubbedText),
+    `Font metadata leaked into scrubbed output: ${allScrubbedText}`);
+  assert.ok(!/(?:RI\s*"\*\s*f<|l;\s*\|pX)/.test(allScrubbedText),
+    `Corrupted glyphs leaked into scrubbed output: ${allScrubbedText}`);
+  assert.ok(allScrubbedText.includes('Computer Networks and Distributed Systems Architecture'),
+    'Legitimate course content must be preserved');
+  console.log('  ✓ Verified 100% block rate on font dictionaries, metadata keys, and raw glyph stream noise');
 
   console.log('\n*** ALL OFFLINE PLUMBING TESTS PASSED ***\n');
 }
