@@ -3279,7 +3279,7 @@ function rs(fn){try{fn();}catch(e){}}
 var S={launch:null,timer:null,seen:{},feedMode:'setup',est:null,estFetchedAt:0,estTimer:null,estRefreshTimer:null,estBusy:false,targetTime:null,lastRemainingHours:null,summaryPollTimer:null};
 try{var _ck=typeof localStorage!=='undefined'&&localStorage.getItem('xamcode_target_ms');if(_ck&&!isNaN(Number(_ck))&&Number(_ck)>Date.now()){S.targetTime=Number(_ck);}}catch(e){}
 function mc(m){m=m||{};var s=String(m.status||'planned');var d=el('div','mile');var t=el('div','t');t.appendChild(el('strong',null,m.title||'Untitled milestone'));var p=el('span','pill '+s,null);p.textContent=s.replace(/_/g,' ');t.appendChild(p);d.appendChild(t);d.appendChild(el('div','mono','weight '+(m.weight||0)+' · '+((m.verifiedAt)?('verified '+fm(m.verifiedAt)):s.replace(/_/g,' '))));if(m.criteria)d.appendChild(el('p','c','Check: '+m.criteria));return d;}
-function rp(d){if(!d||!d.progress)return;var p=d.progress;var ms=d.milestones||[];var c=p.counts||{total:ms.length,verified:0,inProgress:0,needsReview:0,planned:0};
+function rp(d){if(!d||!d.progress)return;var p=d.progress;S.phase=p.phase||'';var ms=d.milestones||[];var c=p.counts||{total:ms.length,verified:0,inProgress:0,needsReview:0,planned:0};
 st('pctNum',(p.percent!=null?p.percent:0)+'%');var f=$('pctFill');if(f&&f.style){try{f.style.strokeDashoffset=String(100-(p.percent||0));}catch(e){}}
 var pct=Math.max(0,Math.min(100,p.percent||0));st('pctLegR',pct+'%');
 st('pctLegL',(p.verifiedWeight||0)+' of '+(p.totalWeight||0)+' weight verified');
@@ -3502,6 +3502,9 @@ function rest(){
 function restStageOf(e){
   var c=e.counts||{};
   if(e.remainingHours<=0)return{label:'SYSTEM LAUNCHED • PRODUCTION ACTIVE',state:'passed'};
+  if((S.phase&&/AI Verification/i.test(S.phase))||(e.remainingHours>0&&e.remainingHours<=3)){
+    return{label:'ACTIVE AUDIT • AI PIPELINE TESTING',state:'running'};
+  }
   if(c.openBlockers>0)return{label:'blocked',state:'failed'};
   if(c.openBugs>0)return{label:'bugs open',state:'running'};
   if((c.tasksDone!=null&&c.tasksDone>0)||(e.tasksDone!=null&&e.tasksDone>0))return{label:'in progress',state:'running'};

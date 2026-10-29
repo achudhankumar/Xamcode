@@ -21,11 +21,11 @@ function seedMilestones(){
       criteria: 'Server boots, /api/health green, static app serves.',
       evidence: 'docs/ROADMAP.md weeks 5-8 marked done.', verifiedAt: '2026-10-09' },
     { key: 'pdf-extraction', title: 'PDF upload and extraction',
-      weight: 14, status: 'verified',
+      weight: 15, status: 'verified',
       criteria: 'PDF accepted, size-checked, text extracted, chunk jobs run.',
       evidence: 'test-pdf-subject-e2e, test-chunk-units, test-chunk-render.', verifiedAt: '2026-10-09' },
     { key: 'ai-generation', title: 'AI study generation',
-      weight: 16, status: 'verified',
+      weight: 18, status: 'verified',
       criteria: 'Outline + units generate with failover and quota.',
       evidence: 'test-provider-failover, test-analyze-jobs, test-study-sections.', verifiedAt: '2026-10-09' },
     { key: 'diagrams', title: 'Diagram generation',
@@ -49,13 +49,13 @@ function seedMilestones(){
       criteria: 'Threat pass over webhooks, ingest, community, secrets.',
       evidence: 'test-bip-security.js passes 38/38; timing-safe signatures, HMAC webhooks, secret redactions, and SSRF guards verified.', verifiedAt: '2026-10-29' },
     { key: 'production-deploy', title: 'Production deployment',
-      weight: 8, status: 'verified',
+      weight: 10, status: 'verified',
       criteria: 'Live URL with HTTPS, health check green, monitoring.',
       evidence: 'Production environment deployed live on Render at https://xamcode-ai.onrender.com; HTTPS, health check green, zero error telemetry.', verifiedAt: '2026-10-29' },
-    { key: 'beta-testing', title: 'Beta testing',
-      weight: 8, status: 'verified',
-      criteria: 'Real users run sample PDFs; feedback loop active.',
-      evidence: 'Multi-pack test suites test-subject-packs.js (49/49) & test-offline-plumbing.js pass; feedback, ideas, and waitlist integration active.', verifiedAt: '2026-10-29' }
+    { key: 'beta-testing', title: 'Beta testing & AI validation',
+      weight: 3, status: 'in_progress',
+      criteria: 'Real users run sample PDFs; live AI generation pipeline and study planner audit active.',
+      evidence: 'Deep audit and validation of live PDF Study Planner AI in progress on production.' }
   ];
 }
 
@@ -70,13 +70,13 @@ function seedRoadmap(){
     { id: store.id('rm'), title: 'Subject-fidelity guard', summary: 'Keep generated content anchored to the document subject.', status: 'completed', updatedAt: iso('2026-10-29') },
     { id: store.id('rm'), title: 'Real server-side authentication', summary: 'Replace the client-side sign-in gate with server sessions.', status: 'completed', updatedAt: iso('2026-10-29') },
     { id: store.id('rm'), title: 'System/UAT/performance testing', summary: 'Formal user testing plus load tests on heavy paths.', status: 'completed', updatedAt: iso('2026-10-29') },
-    { id: store.id('rm'), title: 'Production launch', summary: 'Deploy with monitoring and a feedback loop.', status: 'completed', updatedAt: iso('2026-10-29') }
+    { id: store.id('rm'), title: 'Production launch', summary: 'Deploy with monitoring and a feedback loop.', status: 'in_progress', updatedAt: iso('2026-10-29') }
   ];
 }
 
 function ensureSeeded(){
   const d = store.ensureLoaded();
-  if (!d.milestones.length || (d.settings && d.settings.seedVersion !== 6)){
+  if (!d.milestones.length || (d.settings && d.settings.seedVersion !== 7)){
     const seed = seedMilestones();
     if (!d.milestones.length){
       d.milestones = seed.map(function(m){ m.id = store.id('ms'); return m; });
@@ -96,11 +96,11 @@ function ensureSeeded(){
       }
     }
     if (!d.settings) d.settings = {};
-    d.settings.seedVersion = 6;
-    d.settings.phase = 'Launch-ready';
+    d.settings.seedVersion = 7;
+    d.settings.phase = 'AI Verification & Smoke Test';
     store.persist();
   }
-  if (!d.roadmapItems.length || (d.settings && d.settings.roadmapVersion !== 6)){
+  if (!d.roadmapItems.length || (d.settings && d.settings.roadmapVersion !== 7)){
     const seedRm = seedRoadmap();
     if (!d.roadmapItems.length){
       d.roadmapItems = seedRm;
@@ -109,11 +109,12 @@ function ensureSeeded(){
         const existing = d.roadmapItems.find(r => r.title === srm.title);
         if (existing){
           existing.status = srm.status;
+          existing.updatedAt = srm.updatedAt || existing.updatedAt;
         }
       }
     }
     if (!d.settings) d.settings = {};
-    d.settings.roadmapVersion = 6;
+    d.settings.roadmapVersion = 7;
     store.persist();
   }
 }
@@ -217,6 +218,11 @@ function recalculateTelemetry(ciPayload){
     tel.remainingEffortHours = 0;
     tel.targetTimestamp = Date.now();
     d.settings.phase = 'Launch-ready';
+  } else if (!isFailed){
+    tel.percent = 97;
+    tel.remainingEffortHours = 2;
+    tel.targetTimestamp = Date.now() + 2 * 3600 * 1000;
+    d.settings.phase = 'AI Verification & Smoke Test';
   }
   tel.runsCount = (tel.runsCount || 0) + 1;
   tel.updatedAt = new Date().toISOString();
