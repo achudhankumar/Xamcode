@@ -401,6 +401,34 @@ const pdfBuf = fs.readFileSync(path.join(__dirname, 'sample-networks.pdf'));
   ok(jobB.status === 'failed' && /does not match/i.test(jobB.error || ''),
     'chunked path rejects the off-subject unit (' + jobB.error + ')');
 
+  /* ================= 10. zero-hallucination anchor tags & fixture extraction ================= */
+  console.log('\nzero-hallucination anchor tags & fixture extraction audit');
+  const { extractPdfPages } = require('./lib/pdf-extractor');
+  const { excerptMatchesPage } = require('./lib/validator');
+
+  // Test fixtures/computer-networks.pdf
+  const cnBuf = fs.readFileSync(path.join(__dirname, 'fixtures', 'computer-networks.pdf'));
+  const cnExtracted = await extractPdfPages(cnBuf);
+  ok(cnExtracted.numPages === 3, 'computer-networks.pdf extracts exactly 3 pages');
+  ok(cnExtracted.pages.every(p => !p.needsOcr), 'computer-networks.pdf pages have non-trivial text (needsOcr=false)');
+  ok(/Computer Networks Lecture 1/i.test(cnExtracted.pages[0].text), 'computer-networks.pdf preserves Lecture 1 title');
+  ok(/(TCP|Protocol|Physical|Transmission)/i.test(cnExtracted.pages[0].text), 'computer-networks.pdf preserves technical terminology without dropping');
+
+  // Test fixtures/software-engineering.pdf
+  const seBuf = fs.readFileSync(path.join(__dirname, 'fixtures', 'software-engineering.pdf'));
+  const seExtracted = await extractPdfPages(seBuf);
+  ok(seExtracted.numPages === 3, 'software-engineering.pdf extracts exactly 3 pages');
+  ok(seExtracted.pages.every(p => !p.needsOcr), 'software-engineering.pdf pages have non-trivial text (needsOcr=false)');
+  ok(/Software Engineering Lecture 1/i.test(seExtracted.pages[0].text), 'software-engineering.pdf preserves Lecture 1 title');
+  ok(/(Agile|Scrum|User stories|Sprint)/i.test(seExtracted.pages[0].text), 'software-engineering.pdf preserves Agile/Scrum terminology');
+
+  // Zero-hallucination anchor tag assertions
+  const cnPage1Text = cnExtracted.pages[0].text;
+  const validAnchorQuote = 'Transmission media are categorized into guided copper or optical fiber';
+  const hallucinatedQuote = 'Photosynthesis uses chlorophyll to generate glucose from sunlight';
+  ok(excerptMatchesPage(validAnchorQuote, cnPage1Text) === true, 'verbatim source quote matches page text');
+  ok(excerptMatchesPage(hallucinatedQuote, cnPage1Text) === false, 'hallucinated quote without page anchor is rejected');
+
   console.log('\n' + (fail === 0
     ? '*** SUBJECT FIDELITY PASS (' + pass + ') ***'
     : '*** SUBJECT FIDELITY FAIL: ' + fail + ' failed, ' + pass + ' passed ***'));

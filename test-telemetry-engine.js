@@ -52,7 +52,7 @@ function req(method, p, body, headers){
   r = await req('GET', '/api/bip/summary');
   j = parse(r.body);
   ok(r.status === 200 && j && j.progress, 'GET /api/bip/summary returns 200');
-  ok(j.progress.percent === 56, 'initial progress percent is 56%');
+  ok(j.progress.percent === 66, 'initial progress percent is 66%');
   ok(j.estimate && j.estimate.remainingHours === 50, 'initial remaining effort is 50h');
   ok(typeof j.targetTimestamp === 'number' && j.targetTimestamp > Date.now(), 'initial targetTimestamp is in the future');
 
@@ -66,7 +66,7 @@ function req(method, p, body, headers){
   }, { 'Content-Type': 'application/json' });
   j = parse(r.body);
   ok(r.status === 200 && j && j.ok, 'POST /api/bip/events with status=passed returns 200');
-  ok(j.progress.percent === 58, 'progress percent increased from 56% -> 58% (+2% boost)');
+  ok(j.progress.percent === 68, 'progress percent increased from 66% -> 68% (+2% boost)');
   ok(j.estimate.remainingHours === 46, 'remaining effort reduced from 50h -> 46h (-4h effort)');
   ok(j.telemetry && j.telemetry.lastRun.status === 'passed', 'telemetry lastRun status is passed');
   ok(j.recentActivity && j.recentActivity.some(e => e.ref === '1a2b3c4'), 'commit event logged in activity feed');
@@ -81,7 +81,7 @@ function req(method, p, body, headers){
   }, { 'Content-Type': 'application/json' });
   j = parse(r.body);
   ok(r.status === 200 && j && j.ok, 'POST /api/bip/events with status=failed returns 200');
-  ok(j.progress.percent === 54, 'progress percent dropped by 4% (58% -> 54% penalty)');
+  ok(j.progress.percent === 64, 'progress percent dropped by 4% (68% -> 64% penalty)');
   ok(j.estimate.remainingHours === 58, 'remaining effort increased with 12h penalty (46h -> 58h)');
   ok(j.recentActivity && j.recentActivity.some(e => e.status === 'failed'), 'incident alert logged in activity feed');
 
@@ -93,7 +93,7 @@ function req(method, p, body, headers){
 
   r = await req('GET', '/api/bip/summary');
   j = parse(r.body);
-  ok(r.status === 200 && j.progress.percent === 54, 'after restart: progress percent persisted at 54%');
+  ok(r.status === 200 && j.progress.percent === 64, 'after restart: progress percent persisted at 64%');
   ok(j.estimate.remainingHours === 58, 'after restart: remaining hours persisted at 58h');
   ok(j.telemetry && j.telemetry.runsCount === 2, 'after restart: runsCount persisted (2 runs)');
 
@@ -116,3 +116,4 @@ function req(method, p, body, headers){
   try { child.kill(); } catch(x){}
   process.exit(1);
 });
+

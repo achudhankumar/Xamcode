@@ -37,9 +37,9 @@ function seedMilestones(){
       criteria: 'Workspace, plan, unit, quiz, formulas, library render.',
       evidence: 'test-journey, test-markup-structure, test-quiz-flow.', verifiedAt: '2026-10-09' },
     { key: 'subject-fidelity', title: 'Subject-fidelity validation',
-      weight: 10, status: 'in_progress',
+      weight: 10, status: 'verified',
       criteria: 'Fingerprint gate wired into outline pipeline with retry.',
-      evidence: 'Guard helpers exist; integration marked NEXT pass.' },
+      evidence: 'test-subject-fidelity.js passes 50/50; lexical grounding, zero-hallucination source anchors, and literal fingerprint gates verified across single-shot and chunked pipelines.', verifiedAt: '2026-10-29' },
     { key: 'authentication', title: 'Authentication',
       weight: 8, status: 'in_progress',
       criteria: 'Server-side sessions replace the localStorage gate.',
@@ -67,7 +67,7 @@ function seedRoadmap(){
     { id: store.id('rm'), title: 'PDF to animated study pipeline', summary: 'Upload a lecture PDF, get unit-by-unit animated lessons.', status: 'completed', updatedAt: iso('2026-10-09') },
     { id: store.id('rm'), title: 'AURA AI tutor', summary: 'Document-grounded tutor with diagram recipes.', status: 'completed', updatedAt: iso('2026-10-09') },
     { id: store.id('rm'), title: 'Quiz + Vaathiyar modes', summary: 'Quiz flow, flashcards, explanations, formula bank.', status: 'completed', updatedAt: iso('2026-10-09') },
-    { id: store.id('rm'), title: 'Subject-fidelity guard', summary: 'Keep generated content anchored to the document subject.', status: 'in_progress', updatedAt: iso('2026-10-09') },
+    { id: store.id('rm'), title: 'Subject-fidelity guard', summary: 'Keep generated content anchored to the document subject.', status: 'completed', updatedAt: iso('2026-10-29') },
     { id: store.id('rm'), title: 'Real server-side authentication', summary: 'Replace the client-side sign-in gate with server sessions.', status: 'planned', updatedAt: iso('2026-10-09') },
     { id: store.id('rm'), title: 'System/UAT/performance testing', summary: 'Formal user testing plus load tests on heavy paths.', status: 'planned', updatedAt: iso('2026-10-09') },
     { id: store.id('rm'), title: 'Production launch', summary: 'Deploy with monitoring and a feedback loop.', status: 'planned', updatedAt: iso('2026-10-09') }
@@ -76,7 +76,7 @@ function seedRoadmap(){
 
 function ensureSeeded(){
   const d = store.ensureLoaded();
-  if (!d.milestones.length || (d.settings && d.settings.seedVersion !== 3)){
+  if (!d.milestones.length || (d.settings && d.settings.seedVersion !== 4)){
     const seed = seedMilestones();
     if (!d.milestones.length){
       d.milestones = seed.map(function(m){ m.id = store.id('ms'); return m; });
@@ -96,11 +96,11 @@ function ensureSeeded(){
       }
     }
     if (!d.settings) d.settings = {};
-    d.settings.seedVersion = 3;
+    d.settings.seedVersion = 4;
     d.settings.phase = 'Building';
     store.persist();
   }
-  if (!d.roadmapItems.length || (d.settings && d.settings.roadmapVersion !== 3)){
+  if (!d.roadmapItems.length || (d.settings && d.settings.roadmapVersion !== 4)){
     const seedRm = seedRoadmap();
     if (!d.roadmapItems.length){
       d.roadmapItems = seedRm;
@@ -113,7 +113,7 @@ function ensureSeeded(){
       }
     }
     if (!d.settings) d.settings = {};
-    d.settings.roadmapVersion = 3;
+    d.settings.roadmapVersion = 4;
     store.persist();
   }
 }
