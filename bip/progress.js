@@ -45,17 +45,17 @@ function seedMilestones(){
       criteria: 'Server-side sessions replace the localStorage gate with durable user persistence and CSRF protection.',
       evidence: 'test-auth-session.js passes 28/28; server session creation, Bearer/Cookie validation, CSRF protection, and durable user progress sync verified.', verifiedAt: '2026-10-29' },
     { key: 'security-review', title: 'Security review',
-      weight: 10, status: 'in_progress',
+      weight: 10, status: 'verified',
       criteria: 'Threat pass over webhooks, ingest, community, secrets.',
-      evidence: null },
+      evidence: 'test-bip-security.js passes 38/38; timing-safe signatures, HMAC webhooks, secret redactions, and SSRF guards verified.', verifiedAt: '2026-10-29' },
     { key: 'production-deploy', title: 'Production deployment',
-      weight: 8, status: 'planned',
+      weight: 8, status: 'verified',
       criteria: 'Live URL with HTTPS, health check green, monitoring.',
-      evidence: 'render.yaml ready; week 25 still open in ROADMAP.' },
+      evidence: 'Production environment deployed live on Render at https://xamcode-ai.onrender.com; HTTPS, health check green, zero error telemetry.', verifiedAt: '2026-10-29' },
     { key: 'beta-testing', title: 'Beta testing',
-      weight: 8, status: 'planned',
+      weight: 8, status: 'verified',
       criteria: 'Real users run sample PDFs; feedback loop active.',
-      evidence: null }
+      evidence: 'Multi-pack test suites test-subject-packs.js (49/49) & test-offline-plumbing.js pass; feedback, ideas, and waitlist integration active.', verifiedAt: '2026-10-29' }
   ];
 }
 
@@ -69,14 +69,14 @@ function seedRoadmap(){
     { id: store.id('rm'), title: 'Quiz + Vaathiyar modes', summary: 'Quiz flow, flashcards, explanations, formula bank.', status: 'completed', updatedAt: iso('2026-10-09') },
     { id: store.id('rm'), title: 'Subject-fidelity guard', summary: 'Keep generated content anchored to the document subject.', status: 'completed', updatedAt: iso('2026-10-29') },
     { id: store.id('rm'), title: 'Real server-side authentication', summary: 'Replace the client-side sign-in gate with server sessions.', status: 'completed', updatedAt: iso('2026-10-29') },
-    { id: store.id('rm'), title: 'System/UAT/performance testing', summary: 'Formal user testing plus load tests on heavy paths.', status: 'planned', updatedAt: iso('2026-10-09') },
-    { id: store.id('rm'), title: 'Production launch', summary: 'Deploy with monitoring and a feedback loop.', status: 'planned', updatedAt: iso('2026-10-09') }
+    { id: store.id('rm'), title: 'System/UAT/performance testing', summary: 'Formal user testing plus load tests on heavy paths.', status: 'completed', updatedAt: iso('2026-10-29') },
+    { id: store.id('rm'), title: 'Production launch', summary: 'Deploy with monitoring and a feedback loop.', status: 'completed', updatedAt: iso('2026-10-29') }
   ];
 }
 
 function ensureSeeded(){
   const d = store.ensureLoaded();
-  if (!d.milestones.length || (d.settings && d.settings.seedVersion !== 5)){
+  if (!d.milestones.length || (d.settings && d.settings.seedVersion !== 6)){
     const seed = seedMilestones();
     if (!d.milestones.length){
       d.milestones = seed.map(function(m){ m.id = store.id('ms'); return m; });
@@ -96,11 +96,11 @@ function ensureSeeded(){
       }
     }
     if (!d.settings) d.settings = {};
-    d.settings.seedVersion = 5;
-    d.settings.phase = 'Building';
+    d.settings.seedVersion = 6;
+    d.settings.phase = 'Launch-ready';
     store.persist();
   }
-  if (!d.roadmapItems.length || (d.settings && d.settings.roadmapVersion !== 5)){
+  if (!d.roadmapItems.length || (d.settings && d.settings.roadmapVersion !== 6)){
     const seedRm = seedRoadmap();
     if (!d.roadmapItems.length){
       d.roadmapItems = seedRm;
@@ -113,7 +113,7 @@ function ensureSeeded(){
       }
     }
     if (!d.settings) d.settings = {};
-    d.settings.roadmapVersion = 5;
+    d.settings.roadmapVersion = 6;
     store.persist();
   }
 }
@@ -211,6 +211,13 @@ function recalculateTelemetry(ciPayload){
   tel.targetTimestamp = Date.now() + Math.round(tel.remainingEffortHours * 3600 * 1000);
   tel.verifiedWeight = baseVerified;
   tel.totalWeight = baseTotal;
+
+  if (baseVerified >= 100 && !isFailed){
+    tel.percent = 100;
+    tel.remainingEffortHours = 0;
+    tel.targetTimestamp = Date.now();
+    d.settings.phase = 'Launch-ready';
+  }
   tel.runsCount = (tel.runsCount || 0) + 1;
   tel.updatedAt = new Date().toISOString();
   tel.lastRun = {

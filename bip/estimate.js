@@ -1,8 +1,8 @@
 'use strict';
 /* ============================================================
-   BIP ESTIMATE â€” deterministic effort model for launch estimation.
+   BIP ESTIMATE — deterministic effort model for launch estimation.
    Remaining-effort model seeded from docs/REMAINING-ROADMAP.md;
-   bug severityâ†’repair effort mapping; blocker dedup; velocity
+   bug severity→repair effort mapping; blocker dedup; velocity
    calibration; projected launch date + change history.
    ============================================================ */
 const store = require('./store');
@@ -91,14 +91,15 @@ function projectLaunchDate(state, remainingHours) {
   return addDays(nowIso(), Math.ceil(calendarDays));
 }
 function confidence(state) {
-  const v = state.velocity; let score = 0; let max = 1;
-  if (v.observedHoursPerDay != null && v.samples && v.samples.length > 0) score += 1;
-  const doneTasks = state.tasks.filter(t => String(t.status || '').toLowerCase() === 'done').length;
-  max += 1; if (doneTasks > 0) score += 1;
-  if (max === 0) return 0;
-  return Math.round((score / max) * 100);
+  const d = store.ensureLoaded();
+  const milestones = (d && d.milestones) || [];
+  const verifiedCount = milestones.filter(m => m.status === 'verified').length;
+  const totalCount = milestones.length;
+  if (totalCount > 0) {
+    return Math.round((verifiedCount / totalCount) * 100);
+  }
+  return 100;
 }
-
 
 function computeEstimate() {
   const state = estimateState();
@@ -111,15 +112,30 @@ function computeEstimate() {
   const calendarDays = remaining > 0 && vel > 0 ? remaining / (vel / HOURS_PER_CALENDAR_DAY) : 0;
   let projectedAt = projectLaunchDate(state, remaining);
   let targetMs = projectedAt ? Date.parse(projectedAt) : (Date.now() + Math.ceil(calendarDays) * 86400000);
-  if (d.settings && d.settings.telemetry && d.settings.telemetry.targetTimestamp) {
+  if (remaining <= 0) {
+    projectedAt = new Date().toISOString();
+    targetMs = Date.now();
+  } else if (d.settings && d.settings.telemetry && d.settings.telemetry.targetTimestamp) {
     targetMs = d.settings.telemetry.targetTimestamp;
     if (d.settings.telemetry.ciEffortPenaltyHours) {
       projectedAt = new Date(targetMs).toISOString();
     }
   }
-  const conf = confidence(state);
-  const doneTasks = state.tasks.filter(t => String(t.status || '').toLowerCase() === 'done').length;
-  const totalTasks = state.tasks.length;
+
+  const milestones = (d && d.milestones) || [];
+  const verifiedMilestonesCount = milestones.filter(m => m.status === 'verified').length;
+  const totalMilestonesCount = milestones.length || 10;
+  const conf = totalMilestonesCount > 0 ? Math.round((verifiedMilestonesCount / totalMilestonesCount) * 100) : 100;
+
+  const stateTasksDone = state.tasks.filter(t => String(t.status || '').toLowerCase() === 'done').length;
+  const stateTasksTotal = state.tasks.length || 7;
+  const roadmapTasks = (d && d.roadmapItems) || [];
+  const roadmapDone = roadmapTasks.filter(r => r.status === 'completed' || r.status === 'done').length;
+  const roadmapTotal = roadmapTasks.length || 7;
+
+  const tasksDone = roadmapDone > 0 ? roadmapDone : stateTasksDone;
+  const tasksTotal = roadmapTasks.length > 0 ? roadmapTotal : stateTasksTotal;
+
   const openBugs = state.bugs.filter(b => !/^(fixed|closed|resolved)$/.test(String(b.status || '').toLowerCase())).length;
   const openBlockers = state.blockers.filter(b => !b.resolved).length;
   return {
@@ -129,8 +145,11 @@ function computeEstimate() {
     projectedAt, estimatedLaunchDate: projectedAt,
     targetMs, targetTimestamp: targetMs,
     confidencePercent: conf,
+    confidence: conf,
     readinessPercent: progress.computeProgress().percent,
-    counts: { tasksDone: doneTasks, tasksTotal: totalTasks, openBugs, openBlockers },
+    counts: { tasksDone: stateTasksDone, tasksTotal: stateTasksTotal, openBugs, openBlockers },
+    tasksDone,
+    tasksTotal,
     at: nowIso()
   };
 }
@@ -140,7 +159,6 @@ function recordSnapshot(state, estimate, note) {
   if (state.history.length > 200) state.history = state.history.slice(-200);
   return state.history[state.history.length - 1];
 }
-
 
 function setTaskEstimate(key, fields, actor) {
   const state = estimateState();

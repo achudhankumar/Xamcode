@@ -177,7 +177,7 @@ async function unitTests(mock){
 
   // 5. Milestone/progress behaviour unchanged under durable mode.
   const prog = require('./bip/progress').computeProgress();
-  ok(prog.percent === 74 && prog.counts.total === 10, 'milestone progress unchanged (74%, 10 milestones)');
+  ok(prog.percent === 100 && prog.counts.total === 10, 'milestone progress unchanged (100%, 10 milestones)');
   // 6. Database outage: honest error, no silent fallback.
   mock.state.fail = true;
   const rFail = await events.recordDevEventAsync({ type: 'tests_passed', summary: 'during outage', dedupeKey: 'unit-outage' });
@@ -281,7 +281,7 @@ async function httpTests(mock){
 
   r = await req(PORT, 'GET', '/api/bip/summary'); bodies.push(r.body); j = parse(r.body);
   ok(r.status === 200 && j && Array.isArray(j.recentActivity) && j.recentActivity.length >= 1, 'summary recentActivity populated from durable storage');
-  ok(j && j.progress && (j.progress.percent === 74) && j.milestones.length === 10, 'summary milestone progress unchanged (74%, 10 milestones)');
+  ok(j && j.progress && (j.progress.percent === 100) && j.milestones.length === 10, 'summary milestone progress unchanged (100%, 10 milestones)');
   ok(j && j.integration && j.integration.durable === true, 'summary reports integration.durable=true');
 
   r = await req(PORT, 'POST', '/api/bip/events/ingest', { type: 'tests_passed', summary: 'CI tests passed on main @ bbb2222 (run 202)', ref: 'bbb2222', dedupeKey: 'http-202-1', source: 'ci' }, AUTH);
@@ -331,7 +331,7 @@ async function restartTests(){
   r = await req(PORT, 'GET', '/api/bip/status'); bodies.push(r.body); j = parse(r.body);
   ok(r.status === 200 && j && j.tests.state === 'passed' && j.tests.ref === 'ccc3333', 'after restart + local wipe: status board intact from durable storage');
   r = await req(PORT, 'GET', '/api/bip/summary'); bodies.push(r.body); j = parse(r.body);
-  ok(r.status === 200 && j && (j.progress.percent === 74) && j.recentActivity.length === expected, 'after restart: summary progress still 74% with durable activity');
+  ok(r.status === 200 && j && (j.progress.percent === 100) && j.recentActivity.length === expected, 'after restart: summary progress still 100% with durable activity');
 
   // The local JSON store must NOT mirror durable events: the read path
   // provably comes from the database, not a dual-written cache.

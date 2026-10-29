@@ -287,7 +287,14 @@ async function handleBipApi(req, res, p, url, requestId){
     return sendJson(res, 200, Object.assign({ requestId }, admin.publicLaunch()), requestId);
   }
   if (req.method === 'GET' && p === '/api/bip/estimate'){
-    return sendJson(res, 200, Object.assign({ requestId, estimate: estimate.computeEstimate() }), requestId);
+    const est = estimate.computeEstimate();
+    return sendJson(res, 200, Object.assign({
+      requestId,
+      estimate: est,
+      tasksDone: est.tasksDone,
+      tasksTotal: est.tasksTotal,
+      confidence: est.confidence
+    }), requestId);
   }
   if (req.method === 'GET' && p === '/api/bip/estimate/history'){
     const limit = url.searchParams ? Number(url.searchParams.get('limit')) : NaN;
