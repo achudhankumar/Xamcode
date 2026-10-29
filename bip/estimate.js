@@ -102,10 +102,21 @@ function confidence(state) {
 
 function computeEstimate() {
   const state = estimateState();
-  const remaining = remainingEffortHours(state);
+  const d = store.ensureLoaded();
+  let remaining = remainingEffortHours(state);
+  if (d.settings && d.settings.telemetry && typeof d.settings.telemetry.remainingEffortHours === 'number' && d.settings.telemetry.ciEffortPenaltyHours) {
+    remaining = d.settings.telemetry.remainingEffortHours;
+  }
   const vel = effectiveVelocityHoursPerDay(state);
   const calendarDays = remaining > 0 && vel > 0 ? remaining / (vel / HOURS_PER_CALENDAR_DAY) : 0;
-  const projectedAt = projectLaunchDate(state, remaining);
+  let projectedAt = projectLaunchDate(state, remaining);
+  let targetMs = projectedAt ? Date.parse(projectedAt) : (Date.now() + Math.ceil(calendarDays) * 86400000);
+  if (d.settings && d.settings.telemetry && d.settings.telemetry.targetTimestamp) {
+    targetMs = d.settings.telemetry.targetTimestamp;
+    if (d.settings.telemetry.ciEffortPenaltyHours) {
+      projectedAt = new Date(targetMs).toISOString();
+    }
+  }
   const conf = confidence(state);
   const doneTasks = state.tasks.filter(t => String(t.status || '').toLowerCase() === 'done').length;
   const totalTasks = state.tasks.length;
@@ -115,7 +126,9 @@ function computeEstimate() {
     remainingHours: remaining, velocityHoursPerDay: vel,
     nominalVelocityHoursPerDay: state.velocity.nominalHoursPerDay || NOMINAL_VELOCITY_HOURS_PER_DAY,
     observedVelocityHoursPerDay: state.velocity.observedHoursPerDay || null,
-    projectedAt, estimatedLaunchDate: projectedAt, confidencePercent: conf,
+    projectedAt, estimatedLaunchDate: projectedAt,
+    targetMs, targetTimestamp: targetMs,
+    confidencePercent: conf,
     readinessPercent: progress.computeProgress().percent,
     counts: { tasksDone: doneTasks, tasksTotal: totalTasks, openBugs, openBlockers },
     at: nowIso()

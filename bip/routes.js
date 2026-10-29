@@ -202,6 +202,9 @@ async function publicSummary(){
   progress.ensureSeeded();
   const d = store.ensureLoaded();
   const p = progress.computeProgress();
+  const est = estimate.computeEstimate();
+  const targetMs = (d.settings && d.settings.telemetry && d.settings.telemetry.targetTimestamp)
+    || est.targetMs || (est.projectedAt ? Date.parse(est.projectedAt) : (Date.now() + 50 * 3600 * 1000));
   return {
     progress: p,
     milestones: d.milestones,
@@ -216,6 +219,15 @@ async function publicSummary(){
       ideas: d.ideas.length,
       chatMessages: d.chatMessages.filter(m => !m.deleted).length,
       openReports: d.reports.filter(r => r.status === 'open').length
+    },
+    estimate: est,
+    targetTimestamp: targetMs,
+    targetMs: targetMs,
+    telemetry: (d.settings && d.settings.telemetry) || {
+      percent: p.percent,
+      remainingEffortHours: est.remainingHours,
+      targetTimestamp: targetMs,
+      status: 'active'
     }
   };
 }
@@ -290,6 +302,51 @@ async function handleBipApi(req, res, p, url, requestId){
 async function handleBipPosts(req, res, p, url, requestId){
   const visitorId = getOrCreateVisitor(req, res);
   const ip = clientIp(req);
+
+  if (req.method === 'POST' && p === '/api/bip/events'){
+    const token = process.env.BIP_INGEST_TOKEN;
+    if (token && req.headers['authorization']){
+      const gate = bearerMatches(req, token);
+      if (!gate.ok) return sendJson(res, 401, { error: 'CI ingest authorization required.', code: 'UNAUTHORIZED', requestId }, requestId);
+    }
+    const body = await readJsonBody(req);
+    if (body.__bodyError) return sendJson(res, 400, { error: body.__bodyError, code: 'BAD_JSON', requestId }, requestId);
+
+    const sha = body.sha || (body.ref ? String(body.ref).slice(0, 7) : '');
+    const message = body.message || body.summary || '';
+    const status = (body.status === 'passed' || body.status === 'success') ? 'passed' : 'failed';
+    const passed = Number(body.passed) || 0;
+    const failed = Number(body.failed) || 0;
+
+    const tel = progress.recalculateTelemetry({
+      sha,
+      message,
+      status,
+      passed,
+      failed,
+      at: body.at || new Date().toISOString()
+    });
+
+    const shortSha = sha ? String(sha).slice(0, 7) : 'head';
+    const eventType = status === 'passed' ? 'tests_passed' : 'tests_failed';
+    const deltaBadge = status === 'passed' ? '+2% readiness, -4h effort' : '-4% readiness, +12h delay';
+    const eventSummary = status === 'passed'
+      ? 'CI verified commit @ ' + shortSha + (message ? ': ' + message.slice(0, 60) : '') + ' [' + deltaBadge + ']'
+      : 'CI tests failed on commit @ ' + shortSha + ' [' + deltaBadge + ']';
+
+    await events.recordDevEventAsync({
+      type: eventType,
+      summary: eventSummary,
+      detail: 'branch: ' + (body.branch || 'main') + ', commit: ' + shortSha + ', passed: ' + passed + ', failed: ' + failed + ', delta: ' + deltaBadge,
+      ref: shortSha,
+      status: status,
+      source: 'ci',
+      dedupeKey: 'ci-event-' + shortSha + '-' + Date.now()
+    });
+
+    const summary = await publicSummary();
+    return sendJson(res, 200, Object.assign({ ok: true, telemetry: tel, requestId }, summary), requestId);
+  }
 
   if (req.method === 'POST' && p === '/api/bip/chat'){
     if (denied(res, rlChat, ip, requestId)) return true;

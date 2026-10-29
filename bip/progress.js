@@ -1,4 +1,4 @@
-﻿'use strict';
+'use strict';
 /* ============================================================
    BIP PROGRESS â€” weighted milestone engine.
    Overall progress = sum of weights of VERIFIED milestones
@@ -128,7 +128,10 @@ function computeProgress(){
     total += w;
     if (m.status === 'verified') verified += w;
   }
-  const percent = total > 0 ? Math.round((verified / total) * 1000) / 10 : 0;
+  let percent = total > 0 ? Math.round((verified / total) * 1000) / 10 : 0;
+  if (d.settings && d.settings.telemetry && typeof d.settings.telemetry.percent === 'number' && d.settings.telemetry.ciBonusPercent){
+    percent = d.settings.telemetry.percent;
+  }
   return {
     percent,
     verifiedWeight: verified,
@@ -141,8 +144,84 @@ function computeProgress(){
       needsReview: d.milestones.filter(m => m.status === 'needs_review').length,
       planned: d.milestones.filter(m => m.status === 'planned').length,
       total: d.milestones.length
-    }
+    },
+    telemetry: (d.settings && d.settings.telemetry) || null
   };
+}
+
+/* Dynamic Event-Driven CI Telemetry Engine:
+   Adjusts readiness percentage and remaining effort based on CI run outcomes.
+   Passed CI run on main: +2% readiness bonus, -4h remaining effort.
+   Failed CI run: -4% readiness penalty, +12h delay/bug penalty.
+   Persisted atomically to store.json and synchronized via storage layer. */
+function recalculateTelemetry(ciPayload){
+  ensureSeeded();
+  const d = store.ensureLoaded();
+  const p = computeProgress();
+  const baseVerified = p.verifiedWeight;
+  const baseTotal = p.totalWeight || 100;
+  const basePercent = baseTotal > 0 ? (baseVerified / baseTotal) * 100 : 0;
+
+  if (!d.settings) d.settings = {};
+  if (!d.settings.telemetry || typeof d.settings.telemetry !== 'object'){
+    d.settings.telemetry = {
+      ciBonusPercent: 0,
+      ciEffortPenaltyHours: 0,
+      percent: p.percent,
+      remainingEffortHours: 50,
+      targetTimestamp: Date.now() + 50 * 3600 * 1000,
+      runsCount: 0,
+      lastRun: null,
+      updatedAt: new Date().toISOString()
+    };
+  }
+
+  const tel = d.settings.telemetry;
+  const pl = ciPayload || {};
+  const st = String(pl.status || pl.outcome || '').toLowerCase();
+  const isPassed = st === 'passed' || st === 'success';
+  const isFailed = st === 'failed' || st === 'failure';
+
+  if (isPassed){
+    tel.ciBonusPercent = Math.min(44, (tel.ciBonusPercent || 0) + 2); // bonus up to 100% total
+    tel.ciEffortPenaltyHours = (tel.ciEffortPenaltyHours || 0) - 4;
+  } else if (isFailed){
+    tel.ciBonusPercent = (tel.ciBonusPercent || 0) - 4;
+    tel.ciEffortPenaltyHours = (tel.ciEffortPenaltyHours || 0) + 12;
+  }
+
+  // Calculate clamped percent
+  const computedPercent = Math.round((basePercent + (tel.ciBonusPercent || 0)) * 10) / 10;
+  tel.percent = Math.min(100, Math.max(0, computedPercent));
+
+  // Base remaining effort (from tasks/bugs or default 50h)
+  let baseEffort = 50;
+  try {
+    const estMod = require('./estimate');
+    if (estMod && typeof estMod.remainingEffortHours === 'function'){
+      const estState = estMod.estimateState();
+      baseEffort = estMod.remainingEffortHours(estState);
+    }
+  } catch(e){}
+
+  const computedHours = Math.round((baseEffort + (tel.ciEffortPenaltyHours || 0)) * 10) / 10;
+  tel.remainingEffortHours = Math.max(0, computedHours);
+  tel.targetTimestamp = Date.now() + Math.round(tel.remainingEffortHours * 3600 * 1000);
+  tel.verifiedWeight = baseVerified;
+  tel.totalWeight = baseTotal;
+  tel.runsCount = (tel.runsCount || 0) + 1;
+  tel.updatedAt = new Date().toISOString();
+  tel.lastRun = {
+    sha: pl.sha ? String(pl.sha).slice(0, 40) : '',
+    message: pl.message ? String(pl.message).slice(0, 200) : '',
+    status: isPassed ? 'passed' : (isFailed ? 'failed' : 'unknown'),
+    passed: Number(pl.passed) || 0,
+    failed: Number(pl.failed) || 0,
+    at: tel.updatedAt
+  };
+
+  store.persist();
+  return tel;
 }
 
 function findMilestone(id){
@@ -201,7 +280,8 @@ function setMilestoneStatus(id, status, actor){
 module.exports = {
   STATUSES, seedMilestones, seedRoadmap, ensureSeeded,
   computeProgress, findMilestone,
-  verifyMilestone, reopenMilestone, setMilestoneStatus
+  verifyMilestone, reopenMilestone, setMilestoneStatus,
+  recalculateTelemetry
 };
 
 

@@ -108,3 +108,16 @@ jobs:
             ET="tests_failed"; SUM="CI tests failed on $BRANCH @ $SHORT_SHA (run $GITHUB_RUN_ID) [${TESTS_OUTCOME:-unknown}]"
           fi
           EVENT_TYPE="$ET" SUMMARY="$SUM" DETAIL="branch: $BRANCH, commit: $SHORT_SHA, tests: ${TESTS_OUTCOME:-unknown}" node .github/report-bip.js
+      # Step: Automated CI Telemetry Engine (triggers dynamic readiness boost/penalty & timer update)
+      - name: Sync CI Telemetry & Dynamic BIP Engine
+        if: always()
+        continue-on-error: true
+        env:
+          BIP_INGEST_TOKEN: ${{ secrets.BIP_INGEST_TOKEN }}
+          PUBLIC_URL: ${{ vars.PUBLIC_URL }}
+          PUBLIC_URL_SECRET: ${{ secrets.PUBLIC_URL }}
+          REF: ${{ github.sha }}
+          BRANCH: ${{ github.ref_name }}
+          TESTS_OUTCOME: ${{ steps.tests.outcome }}
+        run: |
+          node scripts/report-bip.js
