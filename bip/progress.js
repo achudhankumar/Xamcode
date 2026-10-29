@@ -41,11 +41,11 @@ function seedMilestones(){
       criteria: 'Fingerprint gate wired into outline pipeline with retry.',
       evidence: 'test-subject-fidelity.js passes 50/50; lexical grounding, zero-hallucination source anchors, and literal fingerprint gates verified across single-shot and chunked pipelines.', verifiedAt: '2026-10-29' },
     { key: 'authentication', title: 'Authentication',
-      weight: 8, status: 'in_progress',
-      criteria: 'Server-side sessions replace the localStorage gate.',
-      evidence: 'js/auth.js is client-side only, honestly documented.' },
+      weight: 8, status: 'verified',
+      criteria: 'Server-side sessions replace the localStorage gate with durable user persistence and CSRF protection.',
+      evidence: 'test-auth-session.js passes 28/28; server session creation, Bearer/Cookie validation, CSRF protection, and durable user progress sync verified.', verifiedAt: '2026-10-29' },
     { key: 'security-review', title: 'Security review',
-      weight: 10, status: 'planned',
+      weight: 10, status: 'in_progress',
       criteria: 'Threat pass over webhooks, ingest, community, secrets.',
       evidence: null },
     { key: 'production-deploy', title: 'Production deployment',
@@ -68,7 +68,7 @@ function seedRoadmap(){
     { id: store.id('rm'), title: 'AURA AI tutor', summary: 'Document-grounded tutor with diagram recipes.', status: 'completed', updatedAt: iso('2026-10-09') },
     { id: store.id('rm'), title: 'Quiz + Vaathiyar modes', summary: 'Quiz flow, flashcards, explanations, formula bank.', status: 'completed', updatedAt: iso('2026-10-09') },
     { id: store.id('rm'), title: 'Subject-fidelity guard', summary: 'Keep generated content anchored to the document subject.', status: 'completed', updatedAt: iso('2026-10-29') },
-    { id: store.id('rm'), title: 'Real server-side authentication', summary: 'Replace the client-side sign-in gate with server sessions.', status: 'planned', updatedAt: iso('2026-10-09') },
+    { id: store.id('rm'), title: 'Real server-side authentication', summary: 'Replace the client-side sign-in gate with server sessions.', status: 'completed', updatedAt: iso('2026-10-29') },
     { id: store.id('rm'), title: 'System/UAT/performance testing', summary: 'Formal user testing plus load tests on heavy paths.', status: 'planned', updatedAt: iso('2026-10-09') },
     { id: store.id('rm'), title: 'Production launch', summary: 'Deploy with monitoring and a feedback loop.', status: 'planned', updatedAt: iso('2026-10-09') }
   ];
@@ -76,7 +76,7 @@ function seedRoadmap(){
 
 function ensureSeeded(){
   const d = store.ensureLoaded();
-  if (!d.milestones.length || (d.settings && d.settings.seedVersion !== 4)){
+  if (!d.milestones.length || (d.settings && d.settings.seedVersion !== 5)){
     const seed = seedMilestones();
     if (!d.milestones.length){
       d.milestones = seed.map(function(m){ m.id = store.id('ms'); return m; });
@@ -96,11 +96,11 @@ function ensureSeeded(){
       }
     }
     if (!d.settings) d.settings = {};
-    d.settings.seedVersion = 4;
+    d.settings.seedVersion = 5;
     d.settings.phase = 'Building';
     store.persist();
   }
-  if (!d.roadmapItems.length || (d.settings && d.settings.roadmapVersion !== 4)){
+  if (!d.roadmapItems.length || (d.settings && d.settings.roadmapVersion !== 5)){
     const seedRm = seedRoadmap();
     if (!d.roadmapItems.length){
       d.roadmapItems = seedRm;
@@ -113,7 +113,7 @@ function ensureSeeded(){
       }
     }
     if (!d.settings) d.settings = {};
-    d.settings.roadmapVersion = 4;
+    d.settings.roadmapVersion = 5;
     store.persist();
   }
 }

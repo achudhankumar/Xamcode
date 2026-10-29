@@ -7,8 +7,9 @@ const crypto = require('node:crypto');
 const zlib = require('node:zlib');
 /* Build-in-Public platform (Phase 2+): isolated module, mounted below.
    Lazy-loaded so the study app boots identically even if bip/ is absent. */
-let bipRoutes = null;
+let bipRoutes = null, authSessionMod = null;
 try{ bipRoutes = require('./bip/routes'); }catch{ bipRoutes = null; }
+try{ authSessionMod = require('./lib/auth-session'); }catch{ authSessionMod = null; }
 let pdfExtractor = null, v2Suite = null, auraTutorMod = null, genPipelineMod = null, geminiSchemasMod = null;
 try{ pdfExtractor = require('./lib/pdf-extractor'); }catch{ pdfExtractor = null; }
 try{ v2Suite = require('./lib/xamcode-upgrade-suite'); }catch{ v2Suite = null; }
@@ -3805,6 +3806,10 @@ const server = http.createServer(async (req, res) => {
        routes above are untouched and keep priority. */
     if (bipRoutes && (p === '/build' || p === '/build/' || p === '/build/admin' || p === '/build/admin/' || p.startsWith('/api/bip/'))){
       if (await bipRoutes.handleBip(req, res, url, p, requestId)) return;
+    }
+    /* Server-side auth & user persistence engine */
+    if (authSessionMod && (p.startsWith('/api/auth/') || p === '/api/quiz/submit' || p.startsWith('/api/user/progress'))){
+      if (await authSessionMod.handleAuthAndProgress(req, res, url, p, requestId)) return;
     }
     if (p.startsWith('/api/')) return sendJson(res, 404, { error: 'Unknown API route.', requestId }, requestId);
     return serveStatic(req, res);

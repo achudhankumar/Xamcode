@@ -66,7 +66,8 @@ const CAPS = {
    status board live in their own relational tables. */
 const MANAGED = [
   'milestones', 'chatMessages', 'ideas', 'ideaVotes', 'ideaComments',
-  'waitlist', 'reports', 'roadmapItems', 'settings', 'deliveries'
+  'waitlist', 'reports', 'roadmapItems', 'settings', 'deliveries',
+  'userProgress', 'sessions'
 ];
 
 function emptyStore(){
@@ -91,7 +92,9 @@ function emptyStore(){
       deploy: { state: 'unknown', at: null, ref: null },
       blockers: []
     },
-    deliveries: []
+    deliveries: [],
+    userProgress: {},
+    sessions: {}
   };
 }
 

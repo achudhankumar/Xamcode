@@ -226,16 +226,30 @@
 
   /* ---------------- sign in / sign up ---------------- */
   function startSession(user, remember){
-    writeJSON(SESSION_KEY, {
+    const sObj = {
       email: user.email,
-      name: user.name || user.email.split('@')[0],
-      /* Without "remember me" the session still exists but expires sooner —
-         there is no server to refresh it against. */
-      expiresAt: remember ? Date.now() + HOURS * 3600_000 : Date.now() + 8 * 3600_000,
+      name: user.name || user.email.split("@")[0],
+      token: user.token || null,
+      csrfToken: user.csrfToken || null,
+      expiresAt: remember ? Date.now() + HOURS * 3600000 : Date.now() + 8 * 3600000,
       persistent: !!remember
-    });
+    };
+    writeJSON(SESSION_KEY, sObj);
     if(root){ root.remove(); root=null; }
-    announce({type:'signin', email:user.email});
+    announce({type:"signin", email:user.email});
+    if (typeof fetch === "function") {
+      fetch("/api/auth/signin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: user.email, name: sObj.name, isGuest: !!user.isGuest })
+      }).then(r => r.json()).then(data => {
+        if (data && data.token) {
+          sObj.token = data.token;
+          sObj.csrfToken = data.csrfToken;
+          writeJSON(SESSION_KEY, sObj);
+        }
+      }).catch(() => {});
+    }
   }
 
   async function submit(form){

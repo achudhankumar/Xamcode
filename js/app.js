@@ -2604,6 +2604,27 @@ function quizResults(c){
         const isMastered = pct >= 80 && correct >= Math.min(2, total);
         state.masteredTopics = state.masteredTopics || {};
         if (isMastered) state.masteredTopics[c.id || state.topicIdx] = true;
+        try {
+          if (typeof fetch === 'function') {
+            const s = (window.XC && window.XC.auth && window.XC.auth.session) ? window.XC.auth.session() : null;
+            if (s && s.token && s.csrfToken) {
+              fetch('/api/quiz/submit', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': 'Bearer ' + s.token,
+                  'X-CSRF-Token': s.csrfToken
+                },
+                body: JSON.stringify({
+                  topicId: c.id || state.topicIdx,
+                  score: correct,
+                  total: total,
+                  isMastered: isMastered
+                })
+              }).catch(() => {});
+            }
+          }
+        } catch (e) {}
         return isMastered ? `
           <div class="mastery-card mastered" role="status" style="margin-top:14px;padding:12px 14px;border-radius:10px;background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.35);text-align:left;">
             <div style="font-size:0.72rem;font-weight:800;color:#22c55e;letter-spacing:0.06em;">🏆 TOPIC MASTERED • VERIFIED COMPETENCE</div>
