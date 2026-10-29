@@ -16,7 +16,7 @@ try{ v2Suite = require('./lib/xamcode-upgrade-suite'); }catch{ v2Suite = null; }
 try{ auraTutorMod = require('./lib/aura-grounded-tutor'); }catch{ auraTutorMod = null; }
 try{ genPipelineMod = require('./lib/generation-pipeline'); }catch{ genPipelineMod = null; }
 try{ geminiSchemasMod = require('./lib/gemini-schemas'); }catch{ geminiSchemasMod = null; }
-const { extractPdfPages } = pdfExtractor || {};
+const { extractPdfPages, isPdfMetadata, isCorruptedGlyphNoise, isValidTextLine } = pdfExtractor || {};
 const { computePdfCacheKey, slicePagesForTopic } = genPipelineMod || v2Suite || {};
 const { TopicPackGeminiSchema } = geminiSchemasMod || {};
 let activeStudyChunks = [];
@@ -580,7 +580,12 @@ const AIProviderManager = {
         } catch {}
       }
     }
-    const docContextSuffix = extractedDocText
+    const isJunk = /(?:charprocs|cidtogidmap|fontbbox|fontmatrix|tounicode|firstchar|lastchar|differences|identity-h|\bwidths\b|\bidentity\b|\bencoding\b)/i.test(extractedDocText);
+    if (isJunk || (extractedDocText && extractedDocText.length < 50)) {
+      console.error('[Ingest] Extracted text contains PDF metadata garbage. Rejecting.');
+      extractedDocText = '';
+    }
+    const docContextSuffix = (extractedDocText && !isJunk && extractedDocText.length >= 50)
       ? '\n\n=== UPLOADED DOCUMENT VERBATIM TEXT ===\n' + String(extractedDocText).slice(0, 28000)
       : '';
     return (parts || []).filter(p => p && p.text !== undefined).map((p, idx) => {
@@ -974,8 +979,22 @@ function enrichConceptVisual(c, title, subject) {
 function normalizeConcept(c, i, allConcepts){
   enrichConceptVisual(c, c && c.title, c && c.topic);
   if (!c || typeof c !== 'object') return;
-  const t = text(c.title) ? c.title : ('Concept ' + (i + 1));
+  const isJunkConceptTitle = (title) => {
+    if (!title || typeof title !== 'string') return false;
+    if (/(?:charprocs|cidtogidmap|fontbbox|fontmatrix|tounicode|firstchar|lastchar|differences|identity-h|\bwidths\b|\bidentity\b|\bencoding\b)/i.test(title)) return true;
+    if (typeof isCorruptedGlyphNoise === 'function' && isCorruptedGlyphNoise(title)) return true;
+    const tokens = title.trim().split(/\s+/).filter(Boolean);
+    if (tokens.length >= 3 && tokens.filter(tok => tok.length <= 2).length / tokens.length > 0.65) return true;
+    return false;
+  };
+  let t = text(c.title) ? c.title : ('Concept ' + (i + 1));
+  if (isJunkConceptTitle(t)) {
+    t = 'Core Topic ' + (i + 1);
+  }
   c.title = t;
+  if (isJunkConceptTitle(c.topic)) {
+    c.topic = 'Core Curriculum';
+  }
   if (!text(c.summary)) c.summary = String(c.explanation || ('Core principles and mechanism of ' + t)).slice(0, 200);
   if (!text(c.explanation)) c.explanation = String(c.summary || ('Detailed study breakdown of ' + t + ' and its functional role in the subject.'));
   if (!text(c.sourceExcerpt)) c.sourceExcerpt = String(c.summary || ('Direct reference excerpt from study material on ' + t));
@@ -2647,9 +2666,27 @@ function extractPdfTextLite(buf){
     let pos = 0;
     let streamCount = 0;
 
+    const isJunkLite = (str) => {
+      if (!str || typeof str !== 'string') return true;
+      if (/(?:charprocs|cidtogidmap|fontbbox|fontmatrix|tounicode|firstchar|lastchar|differences|identity-h|\bwidths\b|\bidentity\b|\bencoding\b|\/font\b|\/charprocs\b)/i.test(str)) return true;
+      if (/^[0-9.]+\s+[0-9.]+\s+[0-9.]+\s+(?:rg|RG|g|G|m|l|re|cm|gs)\s*$/.test(str.trim())) return true;
+      if (/[;*<>{}[\]|\\^~]{2,}/.test(str)) return true;
+      const tokens = str.trim().split(/\s+/).filter(Boolean);
+      if (tokens.length >= 3 && tokens.filter(t => t.length <= 2).length / tokens.length > 0.65) return true;
+      return false;
+    };
+
     while (pos < latin.length && textLines.length < 300 && streamCount < 80) {
       const startTag = latin.indexOf('stream', pos);
       if (startTag === -1) break;
+
+      // Skip streams tagged as font dictionaries, CMaps, or images
+      const dictSlice = latin.substring(Math.max(0, startTag - 300), startTag);
+      if (/(?:\/Type\s*\/Font|\/Subtype\s*\/Image|\/CharProcs|\/CIDToGIDMap|\/FontDescriptor|\/ToUnicode)/i.test(dictSlice)) {
+        pos = startTag + 6;
+        continue;
+      }
+
       let dataStart = startTag + 6;
       if (latin.charCodeAt(dataStart) === 13) dataStart++;
       if (latin.charCodeAt(dataStart) === 10) dataStart++;
@@ -2666,13 +2703,14 @@ function extractPdfTextLite(buf){
       try{ data = zlib.inflateSync(raw).toString('latin1'); }
       catch{ try{ data = zlib.inflateRawSync(raw).toString('latin1'); }catch{ data = latin.slice(dataStart, endTag); } }
       if (!data) continue;
+      if (/(?:charprocs|cidtogidmap|fontbbox|fontmatrix|\/FontBBox)/i.test(data)) continue;
 
       // 1. First preference: TJ arrays (which assemble kerning and syllables into whole words)
       const tjRe = /\[([\s\S]*?)\]\s*TJ/g;
       let tjm;
       while ((tjm = tjRe.exec(data))){
         const parsed = parsePdfTjArray(tjm[1]).trim();
-        if (parsed.length >= 2) textLines.push(parsed);
+        if (parsed.length >= 2 && !isJunkLite(parsed)) textLines.push(parsed);
         if (textLines.length >= 300) break;
       }
       if (textLines.length >= 300) break;
@@ -2688,7 +2726,7 @@ function extractPdfTextLite(buf){
           const cleaned = t[1].replace(/\\([0-9]{3})/g, (_, oct) => String.fromCharCode(parseInt(oct, 8)))
                               .replace(/\\([()\\\\])/g, '$1')
                               .trim();
-          if (cleaned.length >= 2) textLines.push(cleaned);
+          if (cleaned.length >= 2 && !isJunkLite(cleaned)) textLines.push(cleaned);
           if (textLines.length >= 300) break;
         }
         if (textLines.length >= 300) break;
@@ -2702,12 +2740,13 @@ function extractPdfTextLite(buf){
         const cleaned = sm[1].replace(/\\([0-9]{3})/g, (_, oct) => String.fromCharCode(parseInt(oct, 8)))
                              .replace(/\\([()\\\\])/g, '$1')
                              .trim();
-        if (cleaned.length >= 2) textLines.push(cleaned);
+        if (cleaned.length >= 2 && !isJunkLite(cleaned)) textLines.push(cleaned);
         if (textLines.length >= 300) break;
       }
     }
     if (textLines.length > 0){
-      return textLines.join(' ').slice(0, 400000);
+      const out = textLines.join(' ').slice(0, 400000);
+      return isJunkLite(out) ? '' : out;
     }
     // Fallback if no stream text found (simple synthetic PDFs)
     const strings = [];
@@ -2716,9 +2755,11 @@ function extractPdfTextLite(buf){
     let count = 0;
     while ((t = strRe.exec(latin.slice(0, 50000))) && count < 100){
       count++;
-      strings.push(t[1]);
+      const val = t[1].trim();
+      if (val.length >= 3 && !isJunkLite(val)) strings.push(val);
     }
-    return strings.join(' ').slice(0, 400000);
+    const outFallback = strings.join(' ').slice(0, 400000);
+    return isJunkLite(outFallback) ? '' : outFallback;
   }catch{ return ''; }
 }
 function createAnalyzeJob(pdfBuffer, level, requestId, examDaysMode){
@@ -2750,20 +2791,32 @@ async function runAnalyzeJob(job){
        the PDF's literal words rather than the model's self-assessment. */
     const cacheKey = (typeof computePdfCacheKey === 'function' && job.pdf && job.pdf.length > 64) ? computePdfCacheKey(job.pdf, job.examDaysMode || '10days', job.level || 'standard') : null;
     if (cacheKey && v2Suite && v2Suite.pdfHashCache && v2Suite.pdfHashCache.has(cacheKey)) {
-      job.cached = true;
-      job.pdfBuffer = null;
-      setJobStage(job, 'ready');
-      finishJob(job, { status: 'done', study: v2Suite.pdfHashCache.get(cacheKey), cached: true });
-      return;
+      const cachedStudy = v2Suite.pdfHashCache.get(cacheKey);
+      const cachedStr = JSON.stringify(cachedStudy || '');
+      if (/(?:charprocs|cidtogidmap|fontbbox|fontmatrix|tounicode|firstchar|lastchar|differences|identity-h|\bwidths\b|\bidentity\b|\bencoding\b)/i.test(cachedStr) || /S&\s*v\s*0\s*Dzz/i.test(cachedStr)) {
+        console.error('[Cache] Evicting corrupted cache entry containing font metadata trash.');
+        v2Suite.pdfHashCache.delete(cacheKey);
+      } else {
+        job.cached = true;
+        job.pdfBuffer = null;
+        setJobStage(job, 'ready');
+        finishJob(job, { status: 'done', study: cachedStudy, cached: true });
+        return;
+      }
     }
-    let extractedPagesDoc = null;
     if (typeof extractPdfPages === 'function' && job.pdf && job.pdf.length > 200) {
       try {
-        extractedPagesDoc = await extractPdfPages(job.pdf);
+        if (!extractedPagesDoc) extractedPagesDoc = await extractPdfPages(job.pdf);
         if (extractedPagesDoc && Array.isArray(extractedPagesDoc.pages)) {
-          const fullTxt = extractedPagesDoc.pages.map(p => p.text || '').join(' ');
-          if (fullTxt.trim().length > 40) job.literalFingerprint = buildLiteralSubjectFingerprint(fullTxt, []);
-          if (auraTutorMod && typeof auraTutorMod.chunkDocumentPages === 'function') activeStudyChunks = auraTutorMod.chunkDocumentPages(extractedPagesDoc.pages);
+          const validPages = extractedPagesDoc.pages.filter(p => !p.needsOcr && p.text && p.text.trim().length > 30);
+          const fullTxt = validPages.map(p => p.text || '').join(' ');
+          const isJunkFull = /(?:charprocs|cidtogidmap|fontbbox|fontmatrix|tounicode|firstchar|lastchar|differences|identity-h|\bwidths\b|\bidentity\b|\bencoding\b)/i.test(fullTxt);
+          if (!isJunkFull && fullTxt.trim().length > 40) {
+            job.literalFingerprint = buildLiteralSubjectFingerprint(fullTxt, []);
+          }
+          if (auraTutorMod && typeof auraTutorMod.chunkDocumentPages === 'function') {
+            activeStudyChunks = auraTutorMod.chunkDocumentPages(extractedPagesDoc.pages);
+          }
         }
       } catch {}
     }
@@ -3112,22 +3165,26 @@ async function runLargePdfChunkingQueue(job, extractedDoc, pageCount) {
       let sliceText = '';
       if (extractedDoc && Array.isArray(extractedDoc.pages)) {
         sliceText = extractedDoc.pages
-          .filter(p => p.pageNumber >= startP && p.pageNumber <= endP)
+          .filter(p => p.pageNumber >= startP && p.pageNumber <= endP && !p.needsOcr)
           .map(p => '--- [PAGE ' + p.pageNumber + '] ---\n' + (p.text || '').trim())
           .join('\n\n')
           .slice(0, 32000);
       }
-      if (!sliceText || sliceText.length < 50) {
+      const isSliceJunk = /(?:charprocs|cidtogidmap|fontbbox|fontmatrix|tounicode|firstchar|lastchar|differences|identity-h|\bwidths\b|\bidentity\b|\bencoding\b)/i.test(sliceText);
+      if (isSliceJunk || !sliceText || sliceText.length < 50) {
         sliceText = 'Key study material covering pages ' + startP + ' to ' + endP + ' of ' + (job.literalFingerprint || 'the course curriculum') + '.';
       }
       chunkSlices.push({ index: i, startPage: startP, endPage: endP, text: sliceText });
     }
 
     job.chunkSlices = chunkSlices;
-    job.literalFingerprint = job.literalFingerprint || buildLiteralSubjectFingerprint(extractPdfTextLite(job.pdf), []);
+    if (!job.literalFingerprint) {
+      job.literalFingerprint = buildLiteralSubjectFingerprint(extractPdfTextLite(job.pdf), []);
+    }
 
     setJobStage(job, 'outline');
 
+    const cleanSubjectFp = (job.literalFingerprint && !/(?:charprocs|cidtogidmap|fontbbox|widths|encoding)/i.test(job.literalFingerprint)) ? job.literalFingerprint : '';
     // Generate high-level modular plan based on Chunk 0 and chapter headings
     const unitTitles = [
       'Foundations & Core Architecture (Pages 1-' + Math.min(20, totalPages) + ')',
@@ -3138,8 +3195,8 @@ async function runLargePdfChunkingQueue(job, extractedDoc, pageCount) {
     ].slice(0, numBatches);
 
     const plan = {
-      title: (job.literalFingerprint ? job.literalFingerprint.split(',')[0].trim().toUpperCase() + ' Study Guide' : 'Comprehensive Study Curriculum'),
-      subject: (job.literalFingerprint ? job.literalFingerprint.split(',').slice(0, 2).join(' / ') : 'Technical Engineering'),
+      title: (cleanSubjectFp ? cleanSubjectFp.split(',')[0].trim().toUpperCase() + ' Study Guide' : 'Comprehensive Study Curriculum'),
+      subject: (cleanSubjectFp ? cleanSubjectFp.split(',').slice(0, 2).join(' / ') : 'Technical Engineering'),
       summary: 'In-depth unit breakdown and verified competency curriculum generated from your ' + totalPages + '-page document.',
       units: unitTitles.map((ut, idx) => ({
         title: ut,
@@ -3169,12 +3226,21 @@ async function runLargePdfChunkingQueue(job, extractedDoc, pageCount) {
     // Extract grounded headings & sentences directly from each PDF slice
     function extractConceptsFromSliceText(sliceObj, unitIdx, subjectLabel) {
       const raw = String((sliceObj && sliceObj.text) || '').replace(/---\s*\[PAGE\s*\d+\]\s*---/gi, '\n');
-      const lines = raw.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+      const isJunkLine = (l) => {
+        if (!l || typeof l !== 'string') return true;
+        if (/(?:charprocs|cidtogidmap|fontbbox|fontmatrix|tounicode|firstchar|lastchar|differences|identity-h|\bwidths\b|\bidentity\b|\bencoding\b)/i.test(l)) return true;
+        if (/^[0-9.]+\s+[0-9.]+\s+[0-9.]+\s+(?:rg|RG|g|G|m|l|re|cm|gs)\s*$/.test(l.trim())) return true;
+        if (/[;*<>{}[\]|\\^~]{2,}/.test(l)) return true;
+        const tokens = l.trim().split(/\s+/).filter(Boolean);
+        if (tokens.length >= 3 && tokens.filter(t => t.length <= 2).length / tokens.length > 0.65) return true;
+        return false;
+      };
+      const lines = raw.split(/\r?\n/).map(l => l.trim()).filter(l => Boolean(l) && !isJunkLine(l));
       const headings = lines.filter(l => l.length >= 6 && l.length <= 72 && /^[A-Z0-9]/.test(l) && !/[.;,]$/.test(l) && l.split(/\s+/).length <= 10);
-      const sentences = raw.replace(/\s+/g, ' ').split(/(?<=[.!?])\s+/).map(s => s.trim()).filter(s => s.length >= 35 && s.length <= 240);
+      const sentences = raw.replace(/\s+/g, ' ').split(/(?<=[.!?])\s+/).map(s => s.trim()).filter(s => !isJunkLine(s) && s.length >= 35 && s.length <= 240);
       const startP = (sliceObj && sliceObj.startPage) || (unitIdx * 18 + 1);
       const endP = (sliceObj && sliceObj.endPage) || (startP + 15);
-      const subj = subjectLabel || 'Document Topic';
+      const subj = (!subjectLabel || /(?:charprocs|cidtogidmap|fontbbox|widths|encoding)/i.test(subjectLabel)) ? 'Document Topic' : subjectLabel;
       return [0, 1, 2].map(ci => {
         const h = headings[ci * 2] || headings[ci] || (subj + ' Section ' + (unitIdx * 3 + ci + 1) + ' (Pages ' + startP + '-' + endP + ')');
         const s1 = sentences[ci * 3] || ('Grounded analysis of ' + h + ' extracted from pages ' + startP + ' to ' + endP + '.');
@@ -3894,7 +3960,9 @@ function buildLiteralSubjectFingerprint(text, quotes){
     'contents','length','type','group','subtype','btox','xref','trailer','startxref',
     'catalog','pages','page','font','fontdescriptor','mediabox','resources','procset',
     'width','height','bitspercomponent','colorspace','glyph','glyf','hhea','hmtx',
-    'loca','maxp','post','prep','truetype','type1','cidfont'
+    'loca','maxp','post','prep','truetype','type1','cidfont',
+    'charprocs','cidtogidmap','fontbbox','fontmatrix','tounicode','firstchar','lastchar',
+    'differences','identity','widths','encoding','descendantfonts','basefont'
   ]);
 
   const byToken = new Map();   // stemmed token -> { raw, weight, fromQuote }
