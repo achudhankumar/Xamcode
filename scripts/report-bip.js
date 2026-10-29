@@ -41,6 +41,8 @@ async function reportTelemetry(){
     passed,
     failed,
     branch: branch || 'main',
+    ...(process.env.BIP_BONUS_PERCENT ? { bonusPercent: Number(process.env.BIP_BONUS_PERCENT) } : {}),
+    ...(process.env.BIP_EFFORT_CUT_HOURS ? { effortCutHours: Number(process.env.BIP_EFFORT_CUT_HOURS) } : {}),
     at: new Date().toISOString()
   };
 

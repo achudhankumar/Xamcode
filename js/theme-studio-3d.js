@@ -307,14 +307,34 @@
     var dpr = Math.min(window.devicePixelRatio || 1, 2);
     var W = 0, H = 0, t = 0;
     var pts = [];
+    var rafId = null, isContextLost = false;
+
+    /* WebGL & Canvas 2D Context Resilience */
+    function onLost(e) {
+      try { e.preventDefault(); } catch (x) {}
+      isContextLost = true;
+      if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+    }
+    function onRestored() {
+      isContextLost = false;
+      resize();
+      if (cv.isConnected && !document.hidden && !rafId) {
+        rafId = requestAnimationFrame(frame);
+      }
+    }
+    cv.addEventListener('webglcontextlost', onLost);
+    cv.addEventListener('webglcontextrestored', onRestored);
+    cv.addEventListener('contextlost', onLost);
+    cv.addEventListener('contextrestored', onRestored);
 
     function resize() {
       if (!cv.isConnected) return;
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
       var parent = cv.parentElement || document.body;
       W = parent.clientWidth || window.innerWidth;
       H = parent.clientHeight || 680;
-      cv.width = W * dpr;
-      cv.height = H * dpr;
+      cv.width = Math.round(W * dpr);
+      cv.height = Math.round(H * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
     resize();
@@ -345,18 +365,32 @@
       }, { passive: true });
     }
 
+    function onVisibility() {
+      if (document.hidden) {
+        if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+      } else if (cv.isConnected && !isContextLost && !rafId) {
+        rafId = requestAnimationFrame(frame);
+      }
+    }
+    document.addEventListener('visibilitychange', onVisibility);
+
     function frame() {
+      rafId = null;
       if (!cv.isConnected) {
         currentCanvasInstance = null;
+        document.removeEventListener('visibilitychange', onVisibility);
         return;
       }
+      if (isContextLost || document.hidden) return;
       t += 0.008;
       ctx.clearRect(0, 0, W, H);
 
       var curStyle = (document.body && document.body.getAttribute('data-style')) || 'vibe';
+      var isMobile = W < 680;
       var gx = W * (0.3 + 0.4 * mx), gy = H * (0.35 + 0.3 * my);
-      var cx = W * (window.innerWidth > 960 ? 0.74 : 0.5), cy = H * 0.5;
-      var scale = Math.min(W, H) * 0.16;
+      var cx = W * (isMobile ? 0.5 : (window.innerWidth > 960 ? 0.74 : 0.5));
+      var cy = H * (isMobile ? 0.46 : 0.5);
+      var scale = Math.min(W, H) * (isMobile ? 0.19 : 0.16);
       var ax = t * 0.7 + (my - 0.5) * 0.6, ay = t * 0.9 + (mx - 0.5) * 0.8, az = t * 0.35;
 
       if (curStyle === 'bubblegum') {
@@ -487,10 +521,14 @@
       }
       ctx.globalAlpha = 1;
 
-      requestAnimationFrame(frame);
+      if (cv.isConnected && !isContextLost && !document.hidden) {
+        rafId = requestAnimationFrame(frame);
+      }
     }
 
-    requestAnimationFrame(frame);
+    if (cv.isConnected && !isContextLost && !document.hidden) {
+      rafId = requestAnimationFrame(frame);
+    }
   }
 
   function initExperience() {

@@ -2577,8 +2577,8 @@ function quizResults(c){
   const total=c.questions.length;
   const correct=c.questions.filter((q,qi)=>state.answers[`${state.topicIdx}-${qi}`]===q.a).length;
   const pct=total?Math.round(correct/total*100):0;
-  const verdict=pct>=0.8?'Strong — you have this topic locked in.'
-            :pct>=0.5?'Improving — review the wrong answers below.'
+  const verdict=pct>=80?'Strong — you have this topic locked in.'
+            :pct>=50?'Improving — review the wrong answers below.'
             :'Needs review — read the explanations again, then retry.';
   const rows=c.questions.map((q,qi)=>{
     const chosen=state.answers[`${state.topicIdx}-${qi}`];
@@ -3842,6 +3842,22 @@ fcEl.addEventListener('click',(e)=>{ if(e.target===fcEl) closeFC(); });
    EVENTS
    ============================================================ */
 document.addEventListener('click', async (e)=>{
+  const isolateBtn = e.target.closest('[data-isolate-part]');
+  if(isolateBtn){
+    const idx = parseInt(isolateBtn.dataset.isolatePart, 10);
+    state.isolatedPartIdx = (isNaN(idx) || idx < 0) ? null : idx;
+    render();
+    return;
+  }
+  const interactiveNode = e.target.closest('.interactive-part');
+  if(interactiveNode){
+    const idx = parseInt(interactiveNode.dataset.partIndex, 10);
+    if(!isNaN(idx)){
+      state.isolatedPartIdx = (state.isolatedPartIdx === idx) ? null : idx;
+      render();
+    }
+    return;
+  }
   const dockBtn = e.target.closest('[data-dock-action]');
   if(dockBtn){
     const action = dockBtn.dataset.dockAction;

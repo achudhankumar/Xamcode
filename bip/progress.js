@@ -183,8 +183,10 @@ function recalculateTelemetry(ciPayload){
   const isFailed = st === 'failed' || st === 'failure';
 
   if (isPassed){
-    tel.ciBonusPercent = Math.min(44, (tel.ciBonusPercent || 0) + 2); // bonus up to 100% total
-    tel.ciEffortPenaltyHours = (tel.ciEffortPenaltyHours || 0) - 4;
+    const bonus = (typeof pl.bonusPercent === 'number' && !isNaN(pl.bonusPercent)) ? pl.bonusPercent : 2;
+    const effortCut = (typeof pl.effortCutHours === 'number' && !isNaN(pl.effortCutHours)) ? pl.effortCutHours : 4;
+    tel.ciBonusPercent = Math.min(44, (tel.ciBonusPercent || 0) + bonus); // bonus up to 100% total
+    tel.ciEffortPenaltyHours = (tel.ciEffortPenaltyHours || 0) - effortCut;
   } else if (isFailed){
     tel.ciBonusPercent = (tel.ciBonusPercent || 0) - 4;
     tel.ciEffortPenaltyHours = (tel.ciEffortPenaltyHours || 0) + 12;

@@ -324,12 +324,16 @@ async function handleBipPosts(req, res, p, url, requestId){
       status,
       passed,
       failed,
+      bonusPercent: body.bonusPercent,
+      effortCutHours: body.effortCutHours,
       at: body.at || new Date().toISOString()
     });
 
     const shortSha = sha ? String(sha).slice(0, 7) : 'head';
     const eventType = status === 'passed' ? 'tests_passed' : 'tests_failed';
-    const deltaBadge = status === 'passed' ? '+2% readiness, -4h effort' : '-4% readiness, +12h delay';
+    const bAmt = (typeof body.bonusPercent === 'number' && !isNaN(body.bonusPercent)) ? body.bonusPercent : 2;
+    const eAmt = (typeof body.effortCutHours === 'number' && !isNaN(body.effortCutHours)) ? body.effortCutHours : 4;
+    const deltaBadge = status === 'passed' ? ('+' + bAmt + '% readiness, -' + eAmt + 'h effort') : '-4% readiness, +12h delay';
     const eventSummary = status === 'passed'
       ? 'CI verified commit @ ' + shortSha + (message ? ': ' + message.slice(0, 60) : '') + ' [' + deltaBadge + ']'
       : 'CI tests failed on commit @ ' + shortSha + ' [' + deltaBadge + ']';
