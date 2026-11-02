@@ -1594,7 +1594,7 @@ function aiDiagramSvg(step,conceptIndex,stepIndex,conceptTitle){
     ${chrome}
     <g class="ai-diagram-edges">${edges}</g>
     <g class="ai-diagram-nodes">${nodeMarkup}</g>
-    <text class="ai-diagram-layout-label" x="20" y="292">${escapeHtml(step.layout.toUpperCase())} · ${String(nodes.length).padStart(2,'0')} CONNECTED IDEAS</text>
+    <text class="ai-diagram-layout-label" x="20" y="292">${escapeHtml(String(step?.layout || layout || 'flow').toUpperCase())} · ${String(nodes.length).padStart(2,'0')} CONNECTED IDEAS</text>
   </svg>`;
 
   /* Shapes the bespoke engine cannot express are handed to Mermaid, which
@@ -1665,7 +1665,7 @@ function aiQuestionVisual(question,index){
 
   return `<section class="ai-question-visual" aria-label="Visual explanation for this question">
     <div class="ai-visual-stage-head"><div><div class="panel-tag">2D VISUAL · STEP ${stepIndex+1}/${visual.steps.length}</div><h3>${escapeHtml(step.title)}</h3></div><span class="ai-visual-stage-id">${escapeHtml(visual.caption)}</span></div>
-    <figure class="ai-diagram-figure" data-layout="${escapeHtml(visual.layout)}">${aiDiagramSvg(stepObject,900+index,stepIndex,escapeHtml(question.question))}<figcaption><span>${escapeHtml(visual.layout.toUpperCase())}</span><p>${escapeHtml(step.description)}</p></figcaption></figure>
+    <figure class="ai-diagram-figure" data-layout="${escapeHtml(visual.layout || 'flow')}">${aiDiagramSvg(stepObject,900+index,stepIndex,escapeHtml(question.question))}<figcaption><span>${escapeHtml(String(visual.layout || 'flow').toUpperCase())}</span><p>${escapeHtml(step.description)}</p></figcaption></figure>
     ${visual.steps.length>1?`<div class="ai-visual-step-track">${visual.steps.map((s,i)=>`<button type="button" class="ai-visual-step ${i===stepIndex?'active':i<stepIndex?'done':''}" data-ai-quiz-visual="${index}:${i}"><span>${String(i+1).padStart(2,'0')}</span><b>${escapeHtml(s.title)}</b></button>`).join('')}</div>`:''}
   </section>`;
 }
@@ -3635,6 +3635,9 @@ function render(){
     if(aPlayer && aPlayer.el){
       auraMount.appendChild(aPlayer.el);
       window._activeAiAuraPlayer = aPlayer;
+    } else {
+      // Graceful fallback: if aType is not in VISUALS, hide empty mount box so it doesn't stay as a black void
+      auraMount.style.display = 'none';
     }
   }
   if(state.view==='landing'){

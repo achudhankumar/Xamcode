@@ -728,6 +728,40 @@ function text(v){ return typeof v === 'string' && v.trim().length > 0; }
    prompts so the three can never drift apart. */
 const ALLOWED15 = new Set(['flow', 'arch', 'seq', 'compare', 'hierarchy', 'state', 'erd',
   'fbd', 'wave', 'isometric', 'mindmap', 'matrix', 'equation', 'cycle', 'layer']);
+
+const LAYOUT_SYNONYMS = {
+  flowchart: 'flow',
+  process: 'flow',
+  process_flow: 'flow',
+  pipeline: 'flow',
+  stepchain: 'flow',
+  architecture: 'arch',
+  stack: 'arch',
+  layers: 'layer',
+  timeline: 'seq',
+  sequence: 'seq',
+  tree: 'hierarchy',
+  taxonomy: 'hierarchy',
+  versus: 'compare',
+  comparison: 'compare',
+  status: 'state',
+  radial: 'cycle',
+  grid: 'matrix',
+  table: 'matrix',
+  formula: 'equation',
+  '3d': 'isometric'
+};
+
+function normalizeLayoutName(raw, fallback = 'flow') {
+  if (!raw) return fallback;
+  const s = String(raw).toLowerCase().trim();
+  if (ALLOWED15.has(s)) return s;
+  if (LAYOUT_SYNONYMS[s]) return LAYOUT_SYNONYMS[s];
+  for (const [syn, canonical] of Object.entries(LAYOUT_SYNONYMS)) {
+    if (s.includes(syn)) return canonical;
+  }
+  return fallback;
+}
 function visualFingerprint(vis){
   const steps = (vis && vis.steps) || [];
   const s0 = steps[0];
@@ -790,7 +824,7 @@ function diversifyVisualList(items, qualifyLabels){
     const term = diversifyTerm(item.title, idx);
     vis.steps.forEach((step, si) => {
       if (!step || !Array.isArray(step.nodes) || !step.nodes.length) return;
-      if (!ALLOWED15.has(step.layout)) step.layout = ARCHETYPE_POOL[idx % ARCHETYPE_POOL.length];
+      step.layout = normalizeLayoutName(step.layout, ARCHETYPE_POOL[idx % ARCHETYPE_POOL.length]);
       if (si === 0 && prevLayout && step.layout === prevLayout){
         step.layout = pickDiversifiedLayout(step.layout, new Set([prevLayout]), usage);
         repairs++;
@@ -1081,7 +1115,7 @@ function normalizeConcept(c, i, allConcepts){
     const s = vis.steps[sIdx];
     if (!text(s.title)) s.title = t + ' Step ' + (sIdx + 1);
     if (!text(s.description)) s.description = 'Operational step ' + (sIdx + 1) + ' for ' + t;
-    if (!text(s.layout) || !ALLOWED15.has(s.layout)) s.layout = pickLayout(t);
+    s.layout = normalizeLayoutName(s.layout, pickLayout(t));
     if (!Array.isArray(s.nodes) || s.nodes.length < 3) {
       if (!Array.isArray(s.nodes)) s.nodes = [];
       while (s.nodes.length < 3) {
@@ -1445,7 +1479,7 @@ function normalizeBank(bank, conceptCount, concepts){
           q.eli5 = String(q.hint || q.explanation || 'Basic intuition: understand the core relationship first.');
         }
         if (!q.visual || typeof q.visual !== 'object') q.visual = { caption: String(q.question || 'Visual').slice(0, 80), layout: pickLayout(q.question), steps: [] };
-        if (!ALLOWED15.has(String(q.visual.layout))) q.visual.layout = pickLayout(q.question);
+        q.visual.layout = normalizeLayoutName(q.visual.layout, pickLayout(q.question));
         if (!text(q.visual.caption)) q.visual.caption = String(q.question || 'Visual').slice(0, 80);
         if (!Array.isArray(q.visual.steps) || !q.visual.steps.length){
           const opts = Array.isArray(q.options) ? q.options.slice(0, 3) : [];
