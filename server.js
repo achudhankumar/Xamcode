@@ -3439,11 +3439,11 @@ function streamJobEvents(req, res, job) {
   // Initial snapshot
   res.write('data: ' + JSON.stringify(jobSnapshot(job)) + '\n\n');
 
-  // Keep-alive heartbeat every 10s to prevent Render reverse proxy timeouts
+  // Keep-alive heartbeat every 10s to prevent Render reverse proxy timeouts and reset client watchdog
   const keepaliveTimer = setInterval(() => {
     if (res.writableEnded) { clearInterval(keepaliveTimer); return; }
-    res.write(': keepalive ' + Date.now() + '\n\n');
-  }, 10000);
+    res.write('data: ' + JSON.stringify({ heartbeat: true, at: Date.now() }) + '\n\n');
+  }, 8000);
 
   let lastProg = -1;
   let lastStg = '';

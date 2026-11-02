@@ -5351,7 +5351,11 @@ pdfUploadForm?.addEventListener('submit',async event=>{
   const status=document.getElementById('pdfUploadStatus');
   const file=fileInput.files?.[0];
   const setStatus=(message,isError=false)=>{
-    status.textContent=message;
+    if (typeof message === 'string' && message.includes('<div') || message.includes('<p')) {
+      status.innerHTML = message;
+    } else {
+      status.textContent = message;
+    }
     status.dataset.error=String(isError);
   };
 
